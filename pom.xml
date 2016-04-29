@@ -47,7 +47,7 @@
             <artifactId>commons-io</artifactId>
             <version>2.4</version>
         </dependency>
-        <dependency>\
+        <dependency>
             <groupId>com.nd.gaea</groupId>
             <artifactId>nd-rest</artifactId>
             <version>${waf-version}</version>
