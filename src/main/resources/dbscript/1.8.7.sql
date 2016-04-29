@@ -1,0 +1,1 @@
+ALTER TABLE `category_patterns` ADD `segment` VARCHAR(50) CHARACTER SET utf16 COLLATE utf16_general_ci NULL COMMENT '维度模式要求的段数' ;

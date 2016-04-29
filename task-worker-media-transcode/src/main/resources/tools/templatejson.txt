@@ -1,0 +1,44 @@
+Page;
+Page_Begin;{
+Page_Middle;
+Page_End;}
+
+File;
+File_Begin;
+File_Middle;
+File_End;
+
+General; "UniqueId":"%UniqueID/String%","Format":"%Format%","FormatVersion":"%Format_Version%","FileSize":"%FileSize%","Duration":"%Duration%","BitRate":"%OverallBitRate%","EncodedDate":"%Encoded_Date%","EncodedApplication":"%Encoded_Application%","EncodedLibrary":"%Encoded_Library%"
+General_Begin;
+General_Middle;
+General_End;
+
+Video; "Id":"%ID%","StreamId":"%StreamKindID%","Format":"%Format%","FormatInfo":"%Format/Info%","FormatProfile":"%Format_Profile%","FormatSettingsCABAC":"%Format_Settings_CABAC%","FormatSettingsRefFrames":"%Format_Settings_RefFrames%","CodecId":"%CodecID%","Duration":"%Duration%","BitRate":"%BitRate%","BitRateNominal":"%BitRate_Nominal%","Width":"%Width%","WidthOriginal":"%Width_Original%","Height":"%Height%","HeightOriginal":"%Height_Original%","DisplayAspectRatio":"%DisplayAspectRatio/String%","FrameRateMode":"%FrameRate_Mode/String%","FrameRate":"%FrameRate%","ColorSpace":"%ColorSpace%","Colorimetry":"%Colorimetry%","BitDepth":"%BitDepth%","ScanType":"%ScanType%","BitsPixelFrame":"%Bits-(Pixel*Frame)%","StreamSize":"%StreamSize%","Title":"%Title%","EncodedLibrary":"%Encoded_Library%","EncodedLibrarySettings":"%Encoded_Library_Settings%","Language":"%Language/String%","Default":"%Default%","Forced":"%Forced%"
+Video_Begin; ,"Video":[{
+Video_Middle;},{
+Video_End;}]
+
+Audio; "Id":"%ID%","StreamId":"%StreamKindID%","Format":"%Format%","FormatInfo":"%Format/Info%","FormatProfile":"%Format_Profile%","CodecId":"%CodecID%","Duration":"%Duration%","Channels":"%Channel(s)%","ChannelPositions":"%ChannelPositions%","BitRateMode":"%BitRate_Mode%","BitRate":"%BitRate%","SamplingRate":"%SamplingRate%","BitDepth":"%BitDepth%","CompressionMode":"%Compression_Mode/String%","StreamSize":"%StreamSize%","Title":"%Title%","Language":"%Language/String%","Default":"%Default%","Forced":"%Forced%"
+Audio_Begin;,"Audio":[{
+Audio_Middle;},{
+Audio_End;}]
+
+Text; "Id":"%ID%","StreamId":"%StreamKindID%","Format":"%Format%","CodecId":"%CodecID%","CodecIdInfo":"%CodecID/Info%","Title":"%Title%","Language":"%Language/String%","Default":"%Default%","Forced":"%Forced%"
+Text_Begin;,"Text":[{
+Text_Middle;},{
+Text_End;}]
+
+Chapters;
+Chapters_Begin;
+Chapters_Middle;
+Chapters_End;
+
+Image;
+Image_Begin;
+Image_Middle;
+Image_End;
+
+Menu;
+Menu_Begin;
+Menu_Middle;
+Menu_End;

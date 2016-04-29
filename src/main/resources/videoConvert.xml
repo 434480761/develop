@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<convert-rules>
+	<rule id="vcd2mpg" nextRuleRef="ffmpegConvert">
+		<fileType>cue,raw,cif,nrg,dat,sfd,bin,toc</fileType>
+		<command name="main">
+			<os name="Default">vcdgear -{1} 2mpg {2} {3}</os>
+		</command>
+	</rule>
+	<rule id="mencoderConvert" nextRuleRef="ffmpegConvert" commandRef="cutJpg">
+		<fileType>rm,rmvb,mov,wmv,asf</fileType>
+		<command name="main">
+			<os name="Default">
+				mencoder {1} -o {2} -of lavf -oac mp3lame -lameopts abr:br=56 -ovc lavc
+				-lavcopts vcodec =
+				flv:vbitrate=700:mbd=1:mv0:trell:v4mv:last_pred=3:dia=-1:cmp=6:vb_strategy=1
+				-vfscale=1024:-3 -ofps 12 -strate 22050
+			</os>
+		</command>
+	</rule>
+	<rule id="ffmpegConvert" nextRuleRef="flvmetadata">
+		<fileType>ALL</fileType>
+		<command name="main">
+			<os name="Default">ffmpeg -ab 56 -ar 22050 -qscale 6 -y -i {1} {2}</os>
+		</command>
+		<command name="cutJpg">
+			<os name="Default">
+				ffmpeg -ss 4 -i {1} -vframes 1 -y -f image2 {2}
+			</os>
+		</command>
+	</rule>
+	<rule id="flvmetadata">
+		<fileType>flv</fileType>
+		<command name="main">
+			<os name="Default">yamdi - i {1} -o {2}</os>
+		</command>
+	</rule>
+</convert-rules>

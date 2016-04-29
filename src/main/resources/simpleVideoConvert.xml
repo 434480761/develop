@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<convert-rules>
+	<rule id="audioNotConvert">
+		<fileType>mp3</fileType>
+		<command name="main">
+			<os name="Default"/>
+		</command>
+	</rule>
+
+	<rule id="audioConvert">
+		<fileType>wma, m4a, aac, wav, flac</fileType>
+		<command name="main">
+			<os name="Default">
+				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#target#"
+			</os>
+		</command>
+	</rule>
+
+	<rule id="ffmpegConvert" nextRuleRef="thumbnail">
+		<fileType>flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, 3gp, m4v, vob, ts</fileType>
+		<command name="1080p">
+			<os name="Default">
+				ffmpeg -i "#src#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+			</os>
+		</command>
+		<command name="720p">
+			<os name="Default">
+				ffmpeg -i "#src#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+			</os>
+		</command>
+		<command name="480p">
+			<os name="Default">
+				ffmpeg -i "#src#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+			</os>
+		</command>
+		<command name="360p">
+			<os name="Default">
+				ffmpeg -i "#src#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+			</os>
+		</command>
+	</rule>
+	
+	<rule id="thumbnail" nextRuleRef="cutFrame1">
+		<fileType></fileType>
+		<!-- <command name="main">
+			<os name="Default">thumbnail -in "#target#" -picint 6 -s 160x120 -out "#targetPreview#" -join 10x10</os>
+		</command> -->
+		<command name="cutCover">
+            <os name="Default">thumbnail -in "#src#" -picint #intervalTime# -s 160x120 -out "#targetCover#" -join 4x4</os>
+        </command>
+	</rule>
+	
+	<rule id="cutFrame1">
+		<fileType></fileType>
+		<!-- <command name="main">
+			<os name="Default">thumbnail -in "#target#" -picint 6 -s 160x120 -out "#targetPreview#" -join 10x10</os>
+		</command> -->
+		<command name="cutFrame">
+            <os name="Default">ffmpeg -y -ss 5 -i "#src#" -frames 1 -f image2 #targetPreview#/frame1.jpg</os>
+        </command>
+	</rule>
+</convert-rules>

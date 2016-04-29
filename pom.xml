@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.nd.sdp</groupId>
+        <artifactId>sdp-web-parent</artifactId>
+        <version>0.2.0</version>
+    </parent>
+    <groupId>com.nd.share.demo</groupId>
+    <artifactId>esp-lifecycle</artifactId>
+    <packaging>war</packaging>
+    <version>1.3.9</version>
+    <name>esp-lifecycle</name>
+    <properties>
+        <spring.version>4.0.3.RELEASE</spring.version>
+        <mockito.version>1.9.5</mockito.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-beanutils.version>1.9.1</commons-beanutils.version>
+        <commons-codec.version>1.9</commons-codec.version>
+        <compilerArgument>-Xlint:unchecked</compilerArgument>
+        <httpclent-version>4.3.3</httpclent-version>
+        <waf-version>0.9.7</waf-version>
+        <!-- reference to pre -->
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+        <war.version>${maven.build.timestamp}</war.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>3.4.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.12-beta1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.9</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <dependency>\
+            <groupId>com.nd.gaea</groupId>
+            <artifactId>nd-rest</artifactId>
+            <version>${waf-version}</version>
+            <exclusions>
+				<exclusion>
+		            <groupId>org.apache.commons</groupId>
+		            <artifactId>commons-io</artifactId>
+				</exclusion>
+			</exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <!--用于深拷贝 -->
+        <dependency>
+            <groupId>uk.com.robust-it</groupId>
+            <artifactId>cloning</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+			<groupId>c3p0</groupId>
+			<artifactId>c3p0</artifactId>
+			<version>0.9.1.2</version>
+		</dependency>
+		<dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>${commons-beanutils.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>${httpclent-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom</artifactId>
+            <version>1.1.3</version>
+        </dependency>
+        <!-- waf 0.9.5新增pom依赖 start -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>5.0.2.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>0.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.0.12</version>
+        </dependency>
+        <!-- waf 0.9.5新增pom依赖 end -->
+        <!-- 切面Aspect -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <!-- mockito -->
+        <!-- <dependency> <groupId>org.mockito</groupId> <artifactId>mockito-all</artifactId>
+            <version>1.8.5</version> <scope>test</scope> </dependency> -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.0.30-beta</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>  
+		    <groupId>org.springframework.data</groupId>  
+		    <artifactId>spring-data-redis</artifactId>  
+		    <version>1.6.2.RELEASE</version>  
+		    <exclusions>
+		    	<exclusion>
+		    	    <groupId>org.springframework</groupId>
+      				<artifactId>spring-context</artifactId>
+		    	</exclusion>
+		    	<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-tx</artifactId>
+		    	</exclusion>
+
+		    	<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-aop</artifactId>
+		    	</exclusion>
+		    </exclusions>
+		</dependency>
+		<dependency>  
+		    <groupId>redis.clients</groupId>  
+		    <artifactId>jedis</artifactId>  
+		    <version>2.8.0</version>  
+		</dependency> 
+		
+		<!-- from sdk -->
+		<dependency>
+			<groupId>org.hibernate.javax.persistence</groupId>
+			<artifactId>hibernate-jpa-2.0-api</artifactId>
+			<version>1.0.1.Final</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId>
+			<version>1.3.0.RELEASE</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-beans</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-context</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-aop</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-orm</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-tx</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.mysema.querydsl</groupId>
+			<artifactId>querydsl-jpa</artifactId>
+			<version>2.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>
+                guava
+            </artifactId>
+			<version>14.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<!-- Hibernate -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<version>4.1.9.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate.javax.persistence</groupId>
+			<artifactId>hibernate-jpa-2.0-api</artifactId>
+			<version>1.0.1.Final</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>4.1.9.Final</version>
+			<!-- <scope>runtime</scope> -->
+		</dependency>
+		<dependency>
+			<artifactId>solr-solrj</artifactId>
+			<groupId>org.apache.solr</groupId>
+			<version>4.8.1</version>
+			<type>jar</type>
+			<scope>compile</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
+				    <groupId>commons-io</groupId>
+            		<artifactId>commons-io</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.30.nd.1.7</version>
+		</dependency>
+		
+		<!-- elasticsearch -->
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<version>1.7.5</version>
+		</dependency>
+
+
+    </dependencies>
+
+    <build>
+        <finalName>esp-lifecycle</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+                <!--排除test目录的所有配置文件 -->
+                <excludes>
+                    <!--<exclude>test/**/*.*</exclude> -->
+                </excludes>
+            </resource>
+        </resources>
+
+
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.7</source>
+                    <target>1.7</target>
+
+
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <!--打包时是否略过测试 -->
+                    <skip>false</skip>
+                    <!--测试出现错误时是否忽略，如果为true，则会直接打包 -->
+                    <testFailureIgnore>true</testFailureIgnore>
+                </configuration>
+                <version>2.17</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <uriEncoding>UTF-8</uriEncoding>
+                    <path>/esp-lifecycle</path>
+                    <port>8080</port>
+                    <!--<httpsPort>443</httpsPort> -->
+                    <!-- 开发用，热部署 <hostName>debug.userapi.huayu.nd</hostName> -->
+                    <contextReloadable>true</contextReloadable>
+                </configuration>
+            </plugin>
+            <!--排除复制配置的文件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
+
+
+        </plugins>
+        <defaultGoal>compile</defaultGoal>
+    </build>
+    <distributionManagement>
+        <repository>
+            <id>java-releases</id>
+            <name>ND java releases nexus mirror.</name>
+            <url>http://nexus.sdp.nd/nexus/content/repositories/java/</url>
+        </repository>
+        <snapshotRepository>
+            <id>java-snapshots</id>
+            <name>ND java snapshots nexus mirror.</name>
+            <url>http://nexus.sdp.nd/nexus/content/repositories/java_snapshot/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
+    <repositories>
+        <repository>
+            <id>nd.hy.repository</id>
+            <name>NetDragon HY Maven Repository</name>
+            <url>http://nexus.sdp.nd/nexus/content/groups/public/</url>
+        </repository>
+    </repositories>
+    <profiles>
+        <profile>
+            <id>integration</id>
+            <properties>
+                <env>integration</env>
+            </properties>
+            <!-- <activation><activeByDefault>true</activeByDefault></activation>-->
+        </profile>
+        <profile>
+            <id>test</id>
+            <properties>
+                <env>test</env>
+            </properties>
+            <!-- <activation><activeByDefault>true</activeByDefault></activation> -->
+        </profile>
+        <profile>
+            <id>development</id>
+            <properties>
+                <env>development</env>
+            </properties>
+            <activation><activeByDefault>true</activeByDefault></activation>
+        </profile>
+        <profile>
+            <id>pressure</id>
+            <properties>
+                <env>pressure</env>
+            </properties>
+            <!-- <activation><activeByDefault>true</activeByDefault></activation> -->
+        </profile>
+        <profile>
+            <id>ssdpressure</id>
+            <properties>
+                <env>ssdpressure</env>
+            </properties>
+        </profile>
+        <profile>
+            <id>wxpressure</id>
+            <properties>
+                <env>wxpressure</env>
+            </properties>
+        </profile>
+        <profile>
+            <id>lwxdb</id>
+            <properties>
+                <env>lwxdb</env>
+            </properties>
+        </profile>
+    </profiles>
+</project>
