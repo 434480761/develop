@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -54,7 +55,7 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 public class ES_SearchImpl implements ES_Search {
 
 	static final private JacksonCustomObjectMapper ObjectMapper = new JacksonCustomObjectMapper();
-	
+
 	@Autowired
 	private EsResourceOperation esResourceOperation;
 
@@ -66,15 +67,25 @@ public class ES_SearchImpl implements ES_Search {
 		// deal with orderMap
 		List<SortBuilder> sortBuilders = new ArrayList<SortBuilder>();
 		if (CollectionUtils.isEmpty(orderMap)) {
-			SortBuilder sortBuilder = SortBuilders.fieldSort(
-					ES_SearchField.lc_create_time.getNameInEsWithNested())
-					.order(SortOrder.DESC);
+			SortBuilder sortBuilder = SortBuilders
+					.fieldSort(
+							ES_SearchField.lc_create_time
+									.getNameInEsWithNested())
+					.order(SortOrder.DESC)
+					.setNestedPath(ES_Field.life_cycle.toString());
 			sortBuilders.add(sortBuilder);
 		} else {
 			// bylsm 得注意下顺序，map, 实际为linkedhashmap
 			for (Map.Entry<String, String> entry : orderMap.entrySet()) {
-				SortBuilder sortBuilder = SortBuilders.fieldSort(ES_SearchField
-						.fromString(entry.getKey()).getNameInEsWithNested());
+				ES_SearchField searchField = ES_SearchField.fromString(entry
+						.getKey());
+				FieldSortBuilder sortBuilder = SortBuilders
+						.fieldSort(searchField.getNameInEsWithNested());
+				//need specific set nested path (in version 2.3.1)
+				if (searchField.getParent() != ES_SearchField.root) {
+					sortBuilder.setNestedPath(searchField.getParent()
+							.getNameInEsWithNested());
+				}
 				if (PropOperationConstant.OP_DESC.equalsIgnoreCase(entry
 						.getValue())) {
 					sortBuilder.order(SortOrder.DESC);
@@ -258,7 +269,7 @@ public class ES_SearchImpl implements ES_Search {
 				item.setPreview(stringJsonToMap(source.get(ES_Field.preview
 						.toString())));
 			}
-			
+
 			item.setNdresCode((String) source.get(ES_Field.ndres_code
 					.toString()));
 

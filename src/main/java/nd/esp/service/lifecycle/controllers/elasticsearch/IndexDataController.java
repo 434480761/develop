@@ -146,7 +146,8 @@ public class IndexDataController {
 	 *            资源类型
 	 * @author linsm
 	 */
-	@RequestMapping(value = "/{resourceType}", method = RequestMethod.DELETE)
+	@Deprecated
+	// @RequestMapping(value = "/{resourceType}", method = RequestMethod.DELETE)
 	public void deleteResource(@PathVariable String resourceType) {
 		// check type
 		ResourceTypeSupport.checkType(resourceType);
@@ -158,7 +159,8 @@ public class IndexDataController {
 	 * 
 	 * @author linsm
 	 */
-	@RequestMapping(value = "/all", method = RequestMethod.DELETE)
+	@Deprecated
+	// @RequestMapping(value = "/all", method = RequestMethod.DELETE)
 	public void deleteResourceAll() {
 		for (String resourceType : ResourceTypeSupport
 				.getAllValidEsResourceTypeList()) {

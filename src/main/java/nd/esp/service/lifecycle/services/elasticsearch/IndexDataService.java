@@ -35,6 +35,7 @@ public interface IndexDataService {
 	 *            资源类型
 	 * @author linsm
 	 */
+	@Deprecated
 	void deleteResource(String resourceType);
 	
 	ResourceModel getDetailForES(String resourceType, String uuid) throws EspStoreException;
