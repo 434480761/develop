@@ -134,8 +134,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.status)
 					.build(ES_Field.version)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					// EducationInfo
 					.startObject(ES_Field.education_info)
@@ -154,8 +154,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.semantic_density,
 							ElasticSearchReservedWords.INTEGER)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					// categories
 					.startObject(ES_Field.category_list)
@@ -169,8 +169,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.category_code)
 					.build(ES_Field.category_name)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					// coverages
 					.startObject(ES_Field.coverages)
@@ -180,8 +180,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.target_title)
 					.build(ES_Field.target_type)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					// techinfo 8
 					.startObject(ES_Field.tech_info_list)
@@ -207,12 +207,12 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.installation_file)
 					.build(ES_Field.value)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED)
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString())
 					.endObject()
 					// copyRight
 					.startObject(ES_Field.copyright)
@@ -221,8 +221,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.description)
 					.build(ES_Field.right)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED).endObject();
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString()).endObject();
 			// primaryCategory
 			// .build(ES_Field.primary_category).build(ES_Field.code);
 			// extend
@@ -261,8 +261,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.attachments)
 					.build(ES_Field.criterion)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED).endObject();
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString()).endObject();
 			break;
 		case questions:
 			builder.startObject(ES_Field.ext_properties)
@@ -287,8 +287,8 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.auto_remark,
 							ElasticSearchReservedWords.BOOLEAN)
 					.endObject()
-					.setFieldDefaultProperties(
-							ElasticSearchReservedWords.NESTED).endObject();
+					.field(ElasticSearchReservedWords.TYPE.toString(),
+							ElasticSearchReservedWords.NESTED.toString()).endObject();
 			break;
 
 		default:

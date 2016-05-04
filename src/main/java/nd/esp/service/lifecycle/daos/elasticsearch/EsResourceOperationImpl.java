@@ -140,6 +140,7 @@ public class EsResourceOperationImpl implements EsResourceOperation {
 	 *            资源类型
 	 * @author linsm
 	 */
+	@Deprecated
 	@Override
 	public void delete(String primaryCategory) {
 		DeleteRequest request = Requests.deleteRequest(Constant.ES_INDEX_NAME)
