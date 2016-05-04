@@ -95,7 +95,7 @@ public class DateUtils {
 	 * @return the date
 	 */
 	public static Date paser(String date, boolean ignore) {
-		Stopwatch stopwatch = new Stopwatch().start();
+//		Stopwatch stopwatch = new Stopwatch().start();
 		if (!StringUtils.isEmpty(date)) {
 			try {
 				
@@ -153,11 +153,11 @@ public class DateUtils {
 			}
 		}
 		
-		if (logger.isDebugEnabled()) {
-            
-		    logger.debug("paser cost time :{}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-		    
-        }
+//		if (logger.isDebugEnabled()) {
+//            
+//		    logger.debug("paser cost time :{}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+//		    
+//        }
 		        
 		return null;
 	}

@@ -1,8 +1,9 @@
 package nd.esp.service.lifecycle.daos.knowledgebase.v06;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -20,6 +21,7 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
+
 @Repository
 public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	@Autowired
@@ -43,7 +45,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	@Override
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKpid(String kpid) {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
-		String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier";
+		String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier";
 		Query query = em.createNativeQuery(sql);
 		query.setParameter("kpid", kpid);
 		List<Object[]> list = query.getResultList();
@@ -54,6 +56,11 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 				kbm.setKnid((String)o[1]);
 				kbm.setKpid((String)o[2]);
 				kbm.setTitle((String)o[3]);
+				kbm.setDescription((String)o[4]);
+				kbm.setCreator((String)o[5]);
+				if(o[6] != null){
+					kbm.setCreateTime(new Date(((BigInteger)o[6]).longValue()));
+				}
 				returnList.add(kbm);
 			}
 		}
@@ -66,7 +73,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
 		knTitle = "%"+knTitle+"%";
 		if(StringUtils.isNotEmpty(knTitle)){
-			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and nd.title like :knTitle";
+			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and nd.title like :knTitle";
 			Query query = em.createNativeQuery(sql);
 			query.setParameter("kpid", kpid);
 			query.setParameter("knTitle", knTitle);
@@ -78,6 +85,11 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 					kbm.setKnid((String)o[1]);
 					kbm.setKpid((String)o[2]);
 					kbm.setTitle((String)o[3]);
+					kbm.setDescription((String)o[4]);
+					kbm.setCreator((String)o[5]);
+					if(o[6] != null){
+						kbm.setCreateTime(new Date(((BigInteger)o[6]).longValue()));
+					}
 					returnList.add(kbm);
 				}
 			}

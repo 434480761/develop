@@ -1,10 +1,17 @@
 package nd.esp.service.lifecycle.models.v06;
 
+import java.util.Date;
+
+import com.ibm.icu.math.BigDecimal;
+
 public class KnowledgeBaseModel {
 	public String identifier;
 	public String kpid;
 	public String knid;
 	public String title;
+	public String description;
+	public String creator;
+	public Date createTime;
 	public String getIdentifier() {
 		return identifier;
 	}
@@ -28,6 +35,24 @@ public class KnowledgeBaseModel {
 	}
 	public void setTitle(String title) {
 		this.title = title;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public String getCreator() {
+		return creator;
+	}
+	public void setCreator(String creator) {
+		this.creator = creator;
+	}
+	public Date getCreateTime() {
+		return createTime;
+	}
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
 	}
 	
 }

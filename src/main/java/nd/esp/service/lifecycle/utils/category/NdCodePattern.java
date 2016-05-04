@@ -265,6 +265,17 @@ public enum NdCodePattern {
             map.put(4, 2);
         }
     },
+    KC("KC|KC[0-9]{3}", 5, 2, "") {
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 3);
+        }
+    },
+    KP("KP|KP[0-9]{3}|KP[0-9]{3}", 8, 2, "") {
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 3);
+            map.put(5, 3);
+        }
+    },
     WW("WW|WW[0-9]{2}|WW[0-9]{4}", 6, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 2);
