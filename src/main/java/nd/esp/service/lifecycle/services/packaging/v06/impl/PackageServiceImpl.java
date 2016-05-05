@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -508,7 +506,7 @@ public class PackageServiceImpl implements PackageService {
                             Constant.CS_INSTANCE_MAP.get(header).getPath(),
                             Constant.CS_INSTANCE_MAP.get(header).getServiceId());
         Map<String, Object> response =null;
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         response = wafSecurityHttpClient.getForObject( url, Map.class);
         Object msg = null;
         if(response == null || response.get("process") == null) {
@@ -655,7 +653,7 @@ public class PackageServiceImpl implements PackageService {
                     int dealTime=180;
                     do {
                         String queryUrl = csApiUrl+"/dentries/"+response.get("dentry_id")+"?session="+session;
-                        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+                        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
                         response = wafSecurityHttpClient.getForObject( queryUrl, Map.class);
                         String flag =String.valueOf(response.get("flag"));
                         LOG.error("cs合并返回的flag:" + flag);
@@ -880,7 +878,7 @@ public class PackageServiceImpl implements PackageService {
                             if(header.equals(Constant.CS_DEFAULT_INSTANCE)) {
                                 String queryUrl = Constant.CS_INSTANCE_MAP.get(header).getUrl()
                                         +"/dentries/"+response.get("dentry_id")+"?session="+session;
-                                WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+                                WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
                                 response = wafSecurityHttpClient.getForObject( queryUrl, Map.class);
                             }
                         } else if(percent == -1){
@@ -961,7 +959,7 @@ public class PackageServiceImpl implements PackageService {
      */
     public Map<String, String> GetAllFileList(String header, String uid, Map<String,
             String> pathsMap, String localStorePath, boolean webpFirst) throws Exception{
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         Map<String, Object> requestBody = new HashMap<String, Object>();
         String url = Constant.CS_INSTANCE_MAP.get(header).getUrl() + "/dentries?session="
                 +createSession(uid, Constant.CS_INSTANCE_MAP.get(header).getUrl(), 
@@ -1004,7 +1002,7 @@ public class PackageServiceImpl implements PackageService {
     public Map<String, String> GenarateFileList(String header, String uid, List<Map<String, Object>> dentryList,
             Map<String,String> pathsMap, String localStorePath, boolean webpFirst, Map<String,String> renameMap) throws Exception{
         Map<String, String> fileListMap = new HashMap<String, String>();
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         
         Set<String> fileNameSet = new HashSet<String>();
         Set<String> repeatedFileNameSet = new HashSet<String>();

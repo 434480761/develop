@@ -18,7 +18,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -106,6 +105,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
+import com.nd.gaea.client.WafResourceAccessException;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 @Service
@@ -588,10 +588,10 @@ public class NDResourceServiceImpl implements NDResourceService{
         Map<String, Object> response = new HashMap<String, Object>();
         try {
             response = wafSecurityHttpClient.getForObject(queryUrl, Map.class);
-//        } catch (WafResourceAccessException e) {
-        } catch (WafException e) {
-//            if("SMARTQ/NOT_FOUND".equalsIgnoreCase(e.getRemoteResponseEntity().getBody().getCode())){
-            if("WAF/API_NOT_FOUND".equalsIgnoreCase(e.getResponseEntity().getBody().getCode())){
+        } catch (WafResourceAccessException e) {
+//        } catch (WafException e) {
+            if("SMARTQ/NOT_FOUND".equalsIgnoreCase(e.getRemoteResponseEntity().getBody().getCode())){
+//            if("WAF/API_NOT_FOUND".equalsIgnoreCase(e.getResponseEntity().getBody().getCode())){
                 
                 rListViewModel.setTotal(0L);
                 rListViewModel.setItems(new ArrayList<ResourceViewModel>());

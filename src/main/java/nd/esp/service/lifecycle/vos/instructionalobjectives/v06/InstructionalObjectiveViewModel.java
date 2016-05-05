@@ -22,6 +22,10 @@ public class InstructionalObjectiveViewModel extends ResourceViewModel{
     @NotBlank(message="{resourceViewModel.title.notBlank.validmsg}",groups={InstructionalObjectiveDefault.class})
     @Length(message="{InstructionalObjectiveViewModel.title.maxlength.validmsg}",max=1000,groups={InstructionalObjectiveDefault.class})
 	private String title;
+    
+    private String kbId;
+    
+    private String ocId;
 	
     @JsonInclude(Include.NON_NULL)
     @Override
@@ -36,6 +40,20 @@ public class InstructionalObjectiveViewModel extends ResourceViewModel{
 	public void setTitle(String title) {
 		this.title = title;
 	}
-    
-    
+
+	public String getKbId() {
+		return kbId;
+	}
+
+	public void setKbId(String kbId) {
+		this.kbId = kbId;
+	}
+
+	public String getOcId() {
+		return ocId;
+	}
+
+	public void setOcId(String ocId) {
+		this.ocId = ocId;
+	}
 }

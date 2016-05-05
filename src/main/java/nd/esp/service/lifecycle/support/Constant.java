@@ -66,7 +66,7 @@ public class Constant {
     /**
      * WafHttpClient和WafSecurityHttpClient重试次数
      */
-    //public static final int WAF_CLIENT_RETRY_COUNT = 3;
+    public static final int WAF_CLIENT_RETRY_COUNT = 3;
     
     /**
      * 上传默认为空时候传递的值

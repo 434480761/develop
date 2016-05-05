@@ -116,7 +116,11 @@ public class Constant {
     //打包完成回调接口
     public final static String LC_PACK_CALLBACK_API = PackApplicationInitializer.properties.getProperty("sdp_lc_pack_callback_api");
     public final static String LC_COPY_API_CALLBACK = PackApplicationInitializer.properties.getProperty("lc_copy_api_callback");
-    //public static final int WAF_CLIENT_RETRY_COUNT = 3;
+    
+    /**
+     * WafHttpClient和WafSecurityHttpClient重试次数
+     */
+    public static final int WAF_CLIENT_RETRY_COUNT = 3;
     
     //生命周期地址
     public  static String LIFE_CYCLE_DOMAIN_URL = "";

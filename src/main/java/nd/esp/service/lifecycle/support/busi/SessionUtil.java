@@ -50,7 +50,7 @@ public class SessionUtil {
         requestBody.put("uid",uid);
         requestBody.put("role",Constant.FILE_OPERATION_ROLE);
         requestBody.put("expires",Constant.FILE_OPERATION_EXPIRETIME);
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         url = url + "/sessions";
         Map<String, Object> session = wafSecurityHttpClient.post( url, requestBody, Map.class);
         cacheSessions.put(uid+"@"+serviceId+path, session);

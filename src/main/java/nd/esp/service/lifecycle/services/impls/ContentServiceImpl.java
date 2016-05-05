@@ -134,7 +134,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public DentryArray getDentryItems(String path, String sessionId) {
         // TODO Auto-generated method stub
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         DentryArray result = wafSecurityHttpClient.getForObject(Constant.CS_API_URL
                 + "/dentries?path={path}&session={sessionId}&$limit=999", DentryArray.class, path, sessionId);
 

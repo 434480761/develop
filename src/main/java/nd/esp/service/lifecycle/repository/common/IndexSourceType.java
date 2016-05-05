@@ -84,6 +84,9 @@ public enum IndexSourceType {
 	
 	/**资源评注*/
     ResourceAnnotationType("ResourceAnnotationType",600,600) ,
+    
+    /**知识库*/
+    KnowledgebaseType("knowledgebase",700,700),
     ;
 	
 	
