@@ -214,13 +214,6 @@ public interface EspRepository<T extends EspEntity> {
 	 */
 	void deleteAllByExample(final T entity) throws EspStoreException;
 	
-	/**
-	 * Gets the index repository.
-	 *
-	 * @return the index repository
-	 */
-	public IndexRepository<T> getIndexRepository();
-	
 	
 	/**
 	 * Find one by criteria.
@@ -280,9 +273,6 @@ public interface EspRepository<T extends EspEntity> {
 	 */
 	JdbcTemplate getJdbcTemple();
 	
-//	public void addQuestionsCategories(String dataBase);
-
-
 
 	TransactionTemplate getTransactionTemplate();
 
