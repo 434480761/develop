@@ -11,8 +11,6 @@
 
 package nd.esp.service.lifecycle.repository.index;
 
-import org.apache.solr.client.solrj.SolrServer;
-
 import nd.esp.service.lifecycle.repository.IndexMapper;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 
@@ -51,13 +49,4 @@ public interface Searchable<T extends IndexMapper> {
 	 */
 	public  QueryResponse<T> search(QueryRequest queryRequest) throws EspStoreException;
 	
-	public  QueryResponse<String> searchFullText(QueryRequest queryRequest) throws EspStoreException;
-	public  QueryResponse<String> searchFullTextLike(QueryRequest queryRequest) throws EspStoreException;
-
-	/**
-	 * Gets the solr server.
-	 *
-	 * @return the solr server
-	 */
-	public SolrServer getSolrServer();
 }
