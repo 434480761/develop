@@ -116,7 +116,7 @@ table {
 var bearerToken = "DEBUG userid= 2000284696,realm=lc.service.esp.nd";
 
 $(function(){
-	//getToken();
+	getToken();
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey?limit=(0,1000)",
 		data:"",
