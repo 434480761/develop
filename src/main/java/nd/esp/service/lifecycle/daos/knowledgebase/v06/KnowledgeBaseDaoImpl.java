@@ -77,7 +77,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
 		knTitle = "%"+knTitle+"%";
 		if(StringUtils.isNotEmpty(knTitle)){
-			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cr.source=:kpid and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and (nd.title like :knTitle or nd.description like :knTitle)";
+			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cr.source=:kpid and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and (nd.title like :knTitle or nd.description like :knTitle)";
 			Query query = em.createNativeQuery(sql);
 			query.setParameter("kpid", kpid);
 			query.setParameter("knTitle", knTitle);
