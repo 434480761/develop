@@ -8,6 +8,7 @@ import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
 
 public interface KnowledgeBaseDao {
 	public KnowledgeBaseModel createKnowledgeBase(KnowledgeBaseModel kb);
+	public List<String> queryKpIdByKcId(String kcId);
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKpid(String kpid);
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByCond(String kcid,String kpid, String knTitle);
 	

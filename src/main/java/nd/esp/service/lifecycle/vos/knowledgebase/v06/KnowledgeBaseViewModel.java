@@ -6,6 +6,7 @@ public class KnowledgeBaseViewModel {
 	public String identifier;
 	public String kpid;
 	public String knid;
+	public String kcid;
 	public String title;
 	public String description;
 	public String creator;
@@ -13,6 +14,12 @@ public class KnowledgeBaseViewModel {
 	public String kcName;
 	public String kpName;
 	
+	public String getKcid() {
+		return kcid;
+	}
+	public void setKcid(String kcid) {
+		this.kcid = kcid;
+	}
 	public String getKcName() {
 		return kcName;
 	}

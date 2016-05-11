@@ -14,6 +14,13 @@ public interface KnowledgeBaseService {
 	public KnowledgeBaseModel createKnowledgeBase(KnowledgeBaseModel kbm);
 	
 	/**
+	 * 创建知识库
+	 * @param kbm
+	 * @return
+	 */
+	public List<KnowledgeBaseModel> batchCreateKnowledgeBase(KnowledgeBaseModel kbm);
+	
+	/**
 	 * 根据知识子结构查找知识库
 	 * @param kpid
 	 * @return
