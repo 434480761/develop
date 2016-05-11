@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.daos.knowledgebase.v06;
 
 import java.util.List;
+import java.util.Map;
 
 import nd.esp.service.lifecycle.models.v06.KnowledgeBaseModel;
 import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
@@ -12,4 +13,6 @@ public interface KnowledgeBaseDao {
 	
 	public List<String> queryKnowledgeByKcCode(String kcCode);
 	public void batchCreateKnowledgeBase(List<KnowledgeBase> kbList);
+	
+	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
 }
