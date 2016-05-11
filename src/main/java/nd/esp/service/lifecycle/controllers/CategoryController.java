@@ -297,7 +297,7 @@ public class CategoryController {
 	@RequestMapping(value = {"/categorys/datas","/categories/datas"}, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryDataViewModel requestAddCategoryData(
 			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,BindingResult bindingResult,
-			@RequestParam(value = "iskp", required=false, defaultValue = "false") Boolean iskp,
+			@RequestParam(value = "is_kp", required=false, defaultValue = "false") Boolean iskp,
             @RequestParam(value = "kc_code",required=false) String kcCode) {
 		// 入参校验
 		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
