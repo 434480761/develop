@@ -164,4 +164,18 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		}
 		return resultList;
 	}
+	
+	public List<String> queryKpIdByKcId(String kcId){
+		List<String> returnList = new ArrayList<String>();
+		String sql = "select target from category_relations where source = :kcId";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kcId", kcId);
+		List<String> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (String s : list) {
+				returnList.add(s);
+			}
+		}
+		return returnList;
+	}
 }

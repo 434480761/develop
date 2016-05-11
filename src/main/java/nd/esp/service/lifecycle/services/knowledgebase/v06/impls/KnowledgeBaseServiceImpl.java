@@ -75,4 +75,33 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid){
 		return kbd.queryInstructionalObjectiveByCond(kbid, ocid);
 	}
+
+	@Override
+	public List<KnowledgeBaseModel> batchCreateKnowledgeBase(
+			KnowledgeBaseModel kbm) {
+		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
+		List<String> kpIds = kbd.queryKpIdByKcId(kbm.getKcid());
+		List<KnowledgeBase> kbList = new ArrayList<KnowledgeBase>();
+		if(CollectionUtils.isNotEmpty(kpIds)){
+			for (String string : kpIds) {
+				KnowledgeBase kb = new KnowledgeBase();
+				String identifier = UUID.randomUUID().toString();
+				kb.setIdentifier(identifier);
+				kb.setKnid(kbm.getKnid());
+				kb.setKpid(string);
+				kbList.add(kb);
+				
+				KnowledgeBaseModel tmp = new KnowledgeBaseModel();
+				tmp.setIdentifier(identifier);
+				tmp.setKnid(kbm.getKnid());
+				tmp.setKpid(string);
+				tmp.setKcid(kbm.getKcid());
+				returnList.add(tmp);
+			}
+		}
+		if(CollectionUtils.isNotEmpty(kbList)){
+			kbd.batchCreateKnowledgeBase(kbList);
+		}
+		return returnList;
+	}
 }

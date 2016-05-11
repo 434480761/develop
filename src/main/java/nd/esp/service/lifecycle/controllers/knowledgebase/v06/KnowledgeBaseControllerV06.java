@@ -45,6 +45,24 @@ public class KnowledgeBaseControllerV06 {
 	}
 	
 	/**
+	 * 批量创建知识库
+	 * @param kbvm
+	 * @return
+	 */
+	@RequestMapping(value="/batchAdd", method = { RequestMethod.POST }, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<KnowledgeBaseViewModel> batchCreateKnowledgeBase(@RequestBody KnowledgeBaseViewModel kbvm){
+		KnowledgeBaseModel kbm = BeanMapperUtils.beanMapper(kbvm, KnowledgeBaseModel.class);
+		List<KnowledgeBaseModel> list = kbs.batchCreateKnowledgeBase(kbm);
+		List<KnowledgeBaseViewModel> returnList = new ArrayList<KnowledgeBaseViewModel>();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (KnowledgeBaseModel k : list) {
+				returnList.add(BeanMapperUtils.beanMapper(k, KnowledgeBaseViewModel.class));
+			}
+		}
+		return returnList;
+	}
+	
+	/**
 	 * 根据知识类型，知识子结构，知识点名称查询知识库列表
 	 */
 	@RequestMapping(value = "/query",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
