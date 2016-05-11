@@ -57,4 +57,30 @@
 	    <property name="checkoutTimeout" value="${c3p0.question.checkoutTimeout}"></property>
 	    <property name="preferredTestQuery" value="${c3p0.question.preferredTestQuery}"></property>
 	</bean>
+	
+	
+	<!-- 数据源配置-->
+	<bean id="dataSource4Report" name="reportDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${c3p0.report.driverClass}"></property>  
+	    <property name="jdbcUrl" value="${c3p0.report.url}"></property>  
+	    <property name="user" value="${c3p0.report.user}"></property>  
+	    <property name="password" value="${c3p0.report.password}"></property>  
+	    <property name="initialPoolSize" value="${c3p0.report.initialPoolSize}"></property>  
+	    <property name="maxIdleTime" value="${c3p0.report.maxIdleTime}"></property>  
+	    <property name="maxPoolSize" value="${c3p0.report.maxPoolSize}"></property>  
+	    <property name="minPoolSize" value="${c3p0.report.minPoolSize}"></property>  
+	      
+	    <property name="maxStatements" value="${c3p0.report.maxStatements}" />
+		<property name="maxStatementsPerConnection" value="${c3p0.report.maxStatementsPerConnection}" />
+		<property name="idleConnectionTestPeriod" value="${c3p0.report.idleConnectionTestPeriod}" />
+		<property name="autoCommitOnClose" value="${c3p0.report.autoCommitOnClose}" />
+		<property name="acquireIncrement" value="${c3p0.report.acquireIncrement}"></property>  
+	    <property name="acquireRetryDelay" value="${c3p0.report.acquireRetryDelay}"></property>  
+	    <property name="acquireRetryAttempts" value="${c3p0.report.acquireRetryAttempts}"></property>  
+	    <property name="breakAfterAcquireFailure" value="${c3p0.report.breakAfterAcquireFailure}"></property>
+	    <property name="testConnectionOnCheckout" value="${c3p0.report.testConnectionOnCheckout}"></property>
+	    <property name="checkoutTimeout" value="${c3p0.report.checkoutTimeout}"></property>
+	    <property name="preferredTestQuery" value="${c3p0.report.preferredTestQuery}"></property>
+	</bean>
 </beans>

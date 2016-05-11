@@ -115,7 +115,12 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             }
             relation.setSourceUuid(erm.getSource());
 
-            relation.setIdentifier(UUID.randomUUID().toString());
+            if(erm.getIdentifier() != null){
+            	relation.setIdentifier(erm.getIdentifier());
+            }else{
+            	relation.setIdentifier(UUID.randomUUID().toString());
+            }
+            
             if (erm.getLifeCycle() == null) {
                 relation.setCreator(null);
                 relation.setStatus("AUDIT_WAITING");

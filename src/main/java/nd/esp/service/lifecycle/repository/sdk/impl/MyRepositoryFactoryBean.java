@@ -15,6 +15,11 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceCategory4QuestionDBReposi
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceStatistical4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryDataRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportNdresourceRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceCategoryRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceRelationRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,6 +64,9 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 	
 	@PersistenceContext(unitName="questionEntityManagerFactory")
 	EntityManager questionEm;
+	
+	@PersistenceContext(unitName="reportEntityManagerFactory")
+	EntityManager reportEm;
 
 	@Override
 	@PersistenceContext()
@@ -75,7 +83,7 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 	 */
 
 	protected RepositoryFactorySupport createRepositoryFactory(EntityManager em) {
-		return new MyRepositoryFactory<T, I>(em,questionEm,jdbcTemplate,transactionTemplate);
+		return new MyRepositoryFactory<T, I>(em,questionEm,reportEm,jdbcTemplate,transactionTemplate);
 	}
 
 	/**
@@ -93,6 +101,8 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 		private final EntityManager em;
 		
 		private final EntityManager questionEm;
+		
+		private final EntityManager reportEm;
 
 		private JdbcTemplate jdbcTemplate;
 
@@ -104,13 +114,15 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 		 * @param em
 		 *            the em
 		 */
-		public MyRepositoryFactory(EntityManager em,EntityManager questionEm, JdbcTemplate jdbcTemplate,
+		public MyRepositoryFactory(EntityManager em,EntityManager questionEm,EntityManager reportEm,JdbcTemplate jdbcTemplate,
 				TransactionTemplate transactionTemplate) {
 
 			super(em);
 			this.em = em;
 			
 			this.questionEm = questionEm;
+			
+			this.reportEm = reportEm;
 
 			this.jdbcTemplate = jdbcTemplate;
 
@@ -133,10 +145,16 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 				return new ProxyRepositoryImpl<T, I>(
 						(Class<T>) metadata.getDomainType(), questionEm, jdbcTemplate,
 						transactionTemplate);
+			}else if(isReportDb(repositoryName)){
+				return new ProxyRepositoryImpl<T, I>(
+						(Class<T>) metadata.getDomainType(), reportEm, jdbcTemplate,
+						transactionTemplate);
+			}else{
+				return new ProxyRepositoryImpl<T, I>(
+						(Class<T>) metadata.getDomainType(), em, jdbcTemplate,
+						transactionTemplate);
 			}
-			return new ProxyRepositoryImpl<T, I>(
-					(Class<T>) metadata.getDomainType(), em, jdbcTemplate,
-					transactionTemplate);
+			
 		}
 		
 		/**
@@ -168,6 +186,31 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 									.toString())
 					|| repositoryName
 							.equals(Contribute4QuestionDBRepository.class
+									.toString())) {
+				return true;
+			}
+			return false;
+		}
+		
+		/**
+		 * 判断是否走报表库
+		 * @param repositoryName
+		 * @return
+		 */
+		private boolean isReportDb(String repositoryName){
+			if (repositoryName.equals(ReportNdresourceRepository.class
+					.toString())
+					|| repositoryName
+							.equals(ReportCategoryRepository.class
+									.toString())
+					|| repositoryName
+							.equals(ReportCategoryDataRepository.class
+									.toString())
+					|| repositoryName
+							.equals(ReportResourceCategoryRepository.class
+									.toString())
+					|| repositoryName
+							.equals(ReportResourceRelationRepository.class
 									.toString())) {
 				return true;
 			}

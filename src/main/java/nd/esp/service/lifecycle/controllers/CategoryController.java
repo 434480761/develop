@@ -19,6 +19,7 @@ import nd.esp.service.lifecycle.models.CategoryPatternModel;
 import nd.esp.service.lifecycle.models.CategoryRelationModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.CategoryService;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -81,6 +82,9 @@ public class CategoryController {
     
     @Autowired
     private StaticDataService staticDataService;
+    
+    @Autowired
+    private NotifyReportService nrs;
 	
 	//UUID格式
 	//这个用于验证uuid的正则表达式存在一定的问题（不够严格）
@@ -124,6 +128,8 @@ public class CategoryController {
 		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel,
 				CategoryViewModel.class);
 
+		//同步推送至报表系统
+		nrs.addCategory(resultModel);
 		return resultViewModel;
 	}
 
@@ -195,7 +201,8 @@ public class CategoryController {
 		// 转成出参：
 		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel,
 				CategoryViewModel.class);
-
+		//同步推送至报表系统
+		nrs.updateCategory(resultModel);
 		return resultViewModel;
 	}
 
@@ -266,6 +273,10 @@ public class CategoryController {
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getMessage());
 		}
+		
+		//同步推送至报表系统
+		nrs.deleteCategory(cid);
+		
 		return MessageConvertUtil
 				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategorySuccess); 
 	}
@@ -306,6 +317,9 @@ public class CategoryController {
 
 		// 转成出参
 		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
+		
+		//同步推送至报表系统
+		nrs.addCategoryData(resultModel);
 		return resultViewModel;
 	}
 
@@ -390,6 +404,9 @@ public class CategoryController {
 
 		// 转成出参：
 		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
+		
+		//同步推送至报表系统
+		nrs.updateCategoryData(resultModel);
 		return resultViewModel;
 	}
 
@@ -417,6 +434,9 @@ public class CategoryController {
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getMessage());
 		}
+		//同步推送至报表系统
+		nrs.deleteCategoryData(did);
+		
 		return MessageConvertUtil
 				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryDataSuccess); 
 	}

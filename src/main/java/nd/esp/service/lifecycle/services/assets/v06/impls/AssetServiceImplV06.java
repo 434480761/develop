@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.services.assets.v06.impls;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.v06.AssetModel;
 import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
 import org.springframework.beans.factory.annotation.Autowired;
