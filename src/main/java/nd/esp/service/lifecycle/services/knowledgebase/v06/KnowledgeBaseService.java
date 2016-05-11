@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.knowledgebase.v06;
 
 import java.util.List;
+import java.util.Map;
 
 import nd.esp.service.lifecycle.models.v06.KnowledgeBaseModel;
 
@@ -29,4 +30,6 @@ public interface KnowledgeBaseService {
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByCond(String kcid,String kpid,String knTitle);
 	
 	public void batchAddKbWhenKpAdd(final String kcCode, final String kpid);
+	
+	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
 }
