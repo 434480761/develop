@@ -27,4 +27,6 @@ public interface KnowledgeBaseService {
 	 * @return
 	 */
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByCond(String kcid,String kpid,String knTitle);
+	
+	public void batchAddKbWhenKpAdd(final String kcCode, final String kpid);
 }
