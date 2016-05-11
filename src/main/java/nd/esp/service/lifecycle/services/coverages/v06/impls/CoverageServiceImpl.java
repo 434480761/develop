@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -42,6 +43,9 @@ public class CoverageServiceImpl implements CoverageService{
     private ResCoverageRepository resCoverageRepository;
     @Autowired
     private CoverageDao coverageDao;
+    
+    @Autowired
+    private NotifyReportService nrs;
     
     @Override
     public CoverageViewModel createCoverage(CoverageModel coverageModel) {
@@ -77,6 +81,11 @@ public class CoverageServiceImpl implements CoverageService{
         
         //处理返回结果
         CoverageViewModel coverageViewModel = BeanMapperUtils.beanMapper(rc, CoverageViewModel.class);
+        
+        //同步推送至报表系统 add by xuzy 20160511
+        List<CoverageModel> l = new ArrayList<CoverageModel>();
+        l.add(coverageModel);
+        nrs.notifyReport4AddCoverage(coverageModel.getResType(), l);
         
         return coverageViewModel;
     }
@@ -147,6 +156,12 @@ public class CoverageServiceImpl implements CoverageService{
             CoverageViewModel cvm = BeanMapperUtils.beanMapper(rc, CoverageViewModel.class);
             resultList.add(cvm);
         }
+        
+        //同步推送至报表系统 add by xuzy 20160511
+        if(CollectionUtils.isNotEmpty(coverageModels)){
+        	nrs.notifyReport4AddCoverage(coverageModels.get(0).getResType(), coverageModels);
+        }
+        
         return resultList;
     }
 

@@ -1,9 +1,11 @@
 package nd.esp.service.lifecycle.services.notify.impls;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
@@ -13,6 +15,7 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
+import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.report.ReportCategory;
@@ -28,6 +31,7 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.DateUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -186,7 +190,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 		rcd.setIdentifier(cdm.getIdentifier());
 		rcd.setTitle(cdm.getTitle());
 		rcd.setLastUpdate(new BigDecimal(time));
-		rcd.setNdCode(rcd.getNdCode());
+		rcd.setNdCode(cdm.getNdCode());
 		rcd.setOperationFlag(INSERT);
 		if(cdm.getParent() != null){
 			rcd.setParent(cdm.getParent().getIdentifier());
@@ -215,7 +219,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 			rcd.setIdentifier(cdm.getIdentifier());
 			rcd.setTitle(cdm.getTitle());
 			rcd.setLastUpdate(new BigDecimal(System.currentTimeMillis()));
-			rcd.setNdCode(rcd.getNdCode());
+			rcd.setNdCode(cdm.getNdCode());
 			rcd.setOperationFlag(UPDATE);
 			if(cdm.getCategory() != null){
 				rcd.setCategory(cdm.getCategory().getIdentifier());
@@ -345,10 +349,105 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	}
 	
 	@Override
-	public void deleteResourceRelationBySourceId(String sourceId){
+	public void deleteResourceRelationBySourceId(String resType,String sourceId){
 		long lastUpdate = System.currentTimeMillis();
-		String sql = "update resource_relations set last_update = "+lastUpdate +",operation_flag = '"+DELETE+"' where source_uuid = '"+sourceId+"'";
+		Timestamp ts = new Timestamp(lastUpdate);
+		String sql = "update resource_relations set last_update = '"
+				+ DateUtils.format(ts, "yyyy-MM-dd HH:mm:ss") + "',operation_flag = '" + DELETE
+				+ "' where (res_type='" + resType + "' and source_uuid = '"
+				+ sourceId + "') or (resource_target_type='" + resType
+				+ "' and target = '" + sourceId + "')";
 		reportJdbcTemplate.execute(sql);
+	}
+	
+	
+	public void notifyReport4AddCoverage(String resType,List<CoverageModel> cmList){
+		long time = System.currentTimeMillis();
+		if(CollectionUtils.isNotEmpty(cmList)){
+			List<ReportResourceCategory> rcList = new ArrayList<ReportResourceCategory>();
+			List<ReportResourceRelation> rrList = new ArrayList<ReportResourceRelation>();
+			for (CoverageModel coverageModel : cmList) {
+				if("Org".equals(coverageModel.getTargetType()) && "nd".equals(coverageModel.getTarget())){
+					String resource = coverageModel.getResource();
+					String sql = "select identifier,resource,taxOnCode,category_name from resource_categories where primary_category = '"+resType+"' and resource = '"+resource+"'";
+					String relationSql = "select identifier,relation_type,res_type,resource_target_type,source_uuid,target,create_time from resource_relations where (res_type='"
+							+ resType
+							+ "' and source_uuid='"
+							+ resource
+							+ "') or (resource_target_type='"
+							+ resType
+							+ "' and target='" + resource + "')";
+					
+					List<Map<String,Object>> resultList = null;
+					List<Map<String,Object>> relationsList = null;
+					if(CommonServiceHelper.isQuestionDb(resType)){
+						resultList = questionJdbcTemplate.queryForList(sql);
+						relationsList = questionJdbcTemplate.queryForList(relationSql);
+					}else{
+						resultList = defaultJdbcTemplate.queryForList(sql);
+						relationsList = defaultJdbcTemplate.queryForList(relationSql);
+					}
+					if(CollectionUtils.isNotEmpty(resultList)){
+						for (Map<String, Object> map : resultList) {
+							String identifier = (String)map.get("identifier");
+							String res = (String)map.get("resource");
+							String taxOnCode = (String)map.get("taxOnCode");
+							String categoryName = (String)map.get("category_name");
+							ReportResourceCategory rrc = new ReportResourceCategory();
+							rrc.setCategoryName(categoryName);
+							rrc.setCreateTime(new Timestamp(time));
+							rrc.setIdentifier(identifier);
+							rrc.setLastUpdate(new BigDecimal(time));
+							rrc.setOperationFlag(INSERT);
+							rrc.setResource(res);
+							rrc.setTaxOnCode(taxOnCode);
+							rcList.add(rrc);
+						}
+					}
+					if(CollectionUtils.isNotEmpty(relationsList)){
+						for (Map<String, Object> map : relationsList) {
+							String identifier = (String)map.get("identifier");
+							String relationType = (String)map.get("relation_type");
+							String rt = (String)map.get("res_type");
+							String rtt = (String)map.get("resource_target_type");
+							String su = (String)map.get("source_uuid");
+							String t = (String)map.get("target");
+							Timestamp ct = (Timestamp)map.get("create_time");
+							
+							ReportResourceRelation rrr = new ReportResourceRelation();
+							rrr.setIdentifier(identifier);
+							rrr.setCreateTime(ct);
+							rrr.setLastUpdate(new Timestamp(time));
+							rrr.setOperationFlag(INSERT);
+							rrr.setRelationType(relationType);
+							rrr.setResType(rt);
+							rrr.setSourceUuid(su);
+							rrr.setTarget(t);
+							rrr.setResourceTargetType(rtt);
+							rrList.add(rrr);
+						}
+					}
+				}
+			}
+			
+			if(CollectionUtils.isNotEmpty(rcList)){
+				try {
+					rrcr.batchAdd(rcList);
+				} catch (EspStoreException e) {
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+		                    e.getMessage());
+				}
+			}
+			
+			if(CollectionUtils.isNotEmpty(rrList)){
+				try {
+					rrrr.batchAdd(rrList);
+				} catch (EspStoreException e) {
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+		                    e.getMessage());
+				}
+			}
+		}
 	}
 	
 	@Override

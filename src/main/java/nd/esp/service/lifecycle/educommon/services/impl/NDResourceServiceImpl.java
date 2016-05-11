@@ -1093,7 +1093,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         
         //同步推送至报表系统 add by xuzy 20160510
         nds.deleteResourceCategory(uuid);
-        nds.deleteResourceRelationBySourceId(uuid);
+        nds.deleteResourceRelationBySourceId(resourceType,uuid);
     }
     
     /**

@@ -5,6 +5,7 @@ import java.util.List;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
+import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 /**
@@ -28,7 +29,9 @@ public interface NotifyReportService {
 	public void addResourceRelation(List<ResourceRelation> relationList);
 	public void updateResourceRelation(ResourceRelation resourceRelation);
 	public void deleteResourceRelation(List<ResourceRelation> relationList);
-	public void deleteResourceRelationBySourceId(String sourceId);
+	public void deleteResourceRelationBySourceId(String resType,String sourceId);
 	
 	public void notifyReport4Resource(String resourceType,ResourceModel rm,OperationType ot);
+	
+	public void notifyReport4AddCoverage(String resType,List<CoverageModel> cmList);
 }
