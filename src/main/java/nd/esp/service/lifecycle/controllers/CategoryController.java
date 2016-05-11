@@ -19,6 +19,7 @@ import nd.esp.service.lifecycle.models.CategoryPatternModel;
 import nd.esp.service.lifecycle.models.CategoryRelationModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.CategoryService;
+import nd.esp.service.lifecycle.services.knowledgebase.v06.KnowledgeBaseService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -82,6 +83,9 @@ public class CategoryController {
     
     @Autowired
     private StaticDataService staticDataService;
+    
+    @Autowired
+	private KnowledgeBaseService kbs;
     
     @Autowired
     private NotifyReportService nrs;
@@ -292,7 +296,9 @@ public class CategoryController {
 	 */
 	@RequestMapping(value = {"/categorys/datas","/categories/datas"}, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryDataViewModel requestAddCategoryData(
-			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,BindingResult bindingResult,
+			@RequestParam(value = "iskp", required=false, defaultValue = "false") Boolean iskp,
+            @RequestParam(value = "kc_code",required=false) String kcCode) {
 		// 入参校验
 		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 
@@ -317,6 +323,10 @@ public class CategoryController {
 
 		// 转成出参
 		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
+		
+		if(iskp){
+			kbs.batchAddKbWhenKpAdd(kcCode, resultModel.getIdentifier());
+		}
 		
 		//同步推送至报表系统
 		nrs.addCategoryData(resultModel);

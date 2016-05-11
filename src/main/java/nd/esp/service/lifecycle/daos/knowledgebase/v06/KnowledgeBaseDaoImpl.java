@@ -97,4 +97,39 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		return returnList;
 	}
 
+	@Override
+	public List<String> queryKnowledgeByKcCode(String kcCode) {
+		List<String> resultList = new ArrayList<String>();
+		if(StringUtils.isNotEmpty(kcCode)){
+			String sql = "SELECT ndr.identifier FROM ndresource ndr INNER JOIN resource_categories rc";
+			sql += " ON ndr.identifier=rc.resource";
+			sql += " WHERE ndr.primary_category='knowledge' AND ndr.enable=1";
+			sql += " AND rc.primary_category='knowledge' AND rc.taxOnCode=:kccode";
+			
+			Query query = em.createNativeQuery(sql);
+			query.setParameter("kccode", kcCode);
+			List<Object[]> list = query.getResultList();
+			
+			if(CollectionUtils.isNotEmpty(list)){
+				for (Object[] o : list) {
+					String kid = (String)o[0];
+					resultList.add(kid);
+				}
+			}
+		}
+		
+		return resultList;
+	}
+
+	@Override
+	public void batchCreateKnowledgeBase(List<KnowledgeBase> kbList) {
+		if(CollectionUtils.isNotEmpty(kbList)){
+			try {
+				knowledgeBaseRepository.batchAdd(kbList);
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/BATCH_CREATE_KNOWLEDGEBASE_ERROR", "批量创建知识库出错了");
+			}
+		}
+	}
 }
