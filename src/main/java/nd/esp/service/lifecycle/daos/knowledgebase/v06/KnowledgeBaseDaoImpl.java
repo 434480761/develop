@@ -142,7 +142,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	public List<Map<String, Object>> queryInstructionalObjectiveByCond(
 			String kbid, String ocid) {
 		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
-		String sql = "select nd.title,nd.create_time,nd.creator,nd.identifier from ndresource nd,instructional_objectives io where nd.primary_category='instructionalobjectives' and nd.enable = 1 and nd.identifier = io.identifier and io.kb_id = :kbid and io.oc_id = :ocid";
+		String sql = "select nd.title,nd.create_time,nd.creator,nd.identifier,nd.description from ndresource nd,instructional_objectives io where nd.primary_category='instructionalobjectives' and nd.enable = 1 and nd.identifier = io.identifier and io.kb_id = :kbid and io.oc_id = :ocid";
 		Query query = em.createNativeQuery(sql);
 		query.setParameter("kbid", kbid);
 		query.setParameter("ocid", ocid);
@@ -153,11 +153,13 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 				BigInteger ct = (BigInteger)o[1];
 				String creator = (String)o[2];
 				String identifier = (String)o[3];
+				String description = (String)o[4];
 				Map<String,Object> m = new HashMap<String, Object>();
 				m.put("identifier", identifier);
 				m.put("create_time", new Date(ct.longValue()));
 				m.put("creator", creator);
 				m.put("title", title);
+				m.put("description", description);
 				resultList.add(m);
 			}
 		}
