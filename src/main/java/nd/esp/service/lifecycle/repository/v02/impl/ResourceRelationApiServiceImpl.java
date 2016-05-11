@@ -96,61 +96,62 @@ public class ResourceRelationApiServiceImpl extends BaseStoreApiImpl<ResourceRel
 	public List<ResourceRelationStatistics> statistics(
 			ResourceRelationStatisticsRequest relationStatisticsRequest)
 			throws EspStoreException {
-		SolrServer server = resourceRelationRepository.getSolrServer();
-		
-		StringBuffer sb = new StringBuffer("index_type_int:"+IndexSourceType.ResourceRelationType.getType()+" AND resType:"+relationStatisticsRequest.getGroup());
-		
-		sb.append(doListAppend("sourceUuid",relationStatisticsRequest.getSources())).append(doListAppend("categorys",relationStatisticsRequest.getCategorys())).append(doListAppend("resourceTargetType",relationStatisticsRequest.getTargetType()));
-		
-		SolrQuery query = new SolrQuery(sb.toString());
-		query.setFacet(true);
-		query.add("facet.pivot", "sourceUuid,resourceTargetType");
-		org.apache.solr.client.solrj.response.QueryResponse response = null;
-		try {
-			response = server.query(query);
-		} catch (SolrServerException e) {
-		    
-		    if (logger.isErrorEnabled()) {
-                
-		        logger.error("统计资源异常:{} {}", e.getCause(),e);
-            }
-		    
-			        
-			throw new EspStoreException("统计资源异常:"+e.getCause());
-		}
-		 
-		NamedList<List<PivotField>> namedList = response.getFacetPivot();
-        List<ResourceRelationStatistics> resourceRelationStatisticss = Lists.newArrayList();
-        if(namedList != null){
-        	List<PivotField> pivotList = null;
-        	 for(int i=0;i<namedList.size();i++){
-        		 //ResourceRelationStatistics relationStatistics = null;
-                 pivotList = namedList.getVal(i);
-                 if(pivotList!=null){
-                	 ResourceRelationStatistics relationStatistics = null;
-                	 for(PivotField pivot:pivotList){
-                		 relationStatistics = new ResourceRelationStatistics();
-                		 relationStatistics.setIdentifier((String)pivot.getValue());
-                		 relationStatistics.setResourceType(relationStatisticsRequest.getGroup());
-                		 relationStatistics.setCount(pivot.getCount());
-                		 List<PivotField>  itemPivots  = pivot.getPivot();
-                		 List<Item> items = Lists.newArrayList();
-                		 if(itemPivots!=null){
-                			 Item item = null;
-	                		 for(PivotField pivotItem:itemPivots){
-	                			 item = new Item();
-	                			 item.setCount(pivotItem.getCount());
-	                			 item.setResourceType((String)pivotItem.getValue());
-	                			 items.add(item);
-	                		 }
-                		 }
-                		 relationStatistics.setItems(items);
-                		 resourceRelationStatisticss.add(relationStatistics);
-                	 }
-                 }
-        	 }
-        }
-		return resourceRelationStatisticss;
+//		SolrServer server = resourceRelationRepository.getSolrServer();
+//		
+//		StringBuffer sb = new StringBuffer("index_type_int:"+IndexSourceType.ResourceRelationType.getType()+" AND resType:"+relationStatisticsRequest.getGroup());
+//		
+//		sb.append(doListAppend("sourceUuid",relationStatisticsRequest.getSources())).append(doListAppend("categorys",relationStatisticsRequest.getCategorys())).append(doListAppend("resourceTargetType",relationStatisticsRequest.getTargetType()));
+//		
+//		SolrQuery query = new SolrQuery(sb.toString());
+//		query.setFacet(true);
+//		query.add("facet.pivot", "sourceUuid,resourceTargetType");
+//		org.apache.solr.client.solrj.response.QueryResponse response = null;
+//		try {
+//			response = server.query(query);
+//		} catch (SolrServerException e) {
+//		    
+//		    if (logger.isErrorEnabled()) {
+//                
+//		        logger.error("统计资源异常:{} {}", e.getCause(),e);
+//            }
+//		    
+//			        
+//			throw new EspStoreException("统计资源异常:"+e.getCause());
+//		}
+//		 
+//		NamedList<List<PivotField>> namedList = response.getFacetPivot();
+//        List<ResourceRelationStatistics> resourceRelationStatisticss = Lists.newArrayList();
+//        if(namedList != null){
+//        	List<PivotField> pivotList = null;
+//        	 for(int i=0;i<namedList.size();i++){
+//        		 //ResourceRelationStatistics relationStatistics = null;
+//                 pivotList = namedList.getVal(i);
+//                 if(pivotList!=null){
+//                	 ResourceRelationStatistics relationStatistics = null;
+//                	 for(PivotField pivot:pivotList){
+//                		 relationStatistics = new ResourceRelationStatistics();
+//                		 relationStatistics.setIdentifier((String)pivot.getValue());
+//                		 relationStatistics.setResourceType(relationStatisticsRequest.getGroup());
+//                		 relationStatistics.setCount(pivot.getCount());
+//                		 List<PivotField>  itemPivots  = pivot.getPivot();
+//                		 List<Item> items = Lists.newArrayList();
+//                		 if(itemPivots!=null){
+//                			 Item item = null;
+//	                		 for(PivotField pivotItem:itemPivots){
+//	                			 item = new Item();
+//	                			 item.setCount(pivotItem.getCount());
+//	                			 item.setResourceType((String)pivotItem.getValue());
+//	                			 items.add(item);
+//	                		 }
+//                		 }
+//                		 relationStatistics.setItems(items);
+//                		 resourceRelationStatisticss.add(relationStatistics);
+//                	 }
+//                 }
+//        	 }
+//        }
+//		return resourceRelationStatisticss;
+		return null;
 	}
 
 	/**
