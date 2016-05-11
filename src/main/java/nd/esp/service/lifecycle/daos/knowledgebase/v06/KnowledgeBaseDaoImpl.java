@@ -109,17 +109,16 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		if(StringUtils.isNotEmpty(kcCode)){
 			String sql = "SELECT ndr.identifier FROM ndresource ndr INNER JOIN resource_categories rc";
 			sql += " ON ndr.identifier=rc.resource";
-			sql += " WHERE ndr.primary_category='knowledge' AND ndr.enable=1";
-			sql += " AND rc.primary_category='knowledge' AND rc.taxOnCode=:kccode";
+			sql += " WHERE ndr.primary_category='knowledges' AND ndr.enable=1";
+			sql += " AND rc.primary_category='knowledges' AND rc.taxOnCode=:kccode";
 			
 			Query query = em.createNativeQuery(sql);
 			query.setParameter("kccode", kcCode);
-			List<Object[]> list = query.getResultList();
+			List<String> list = query.getResultList();
 			
 			if(CollectionUtils.isNotEmpty(list)){
-				for (Object[] o : list) {
-					String kid = (String)o[0];
-					resultList.add(kid);
+				for (String o : list) {
+					resultList.add(o);
 				}
 			}
 		}
