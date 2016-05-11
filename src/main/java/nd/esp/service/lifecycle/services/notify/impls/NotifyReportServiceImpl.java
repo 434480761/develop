@@ -329,7 +329,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 			for (ResourceRelation resourceRelation : relationList) {
 				ReportResourceRelation rrr = new ReportResourceRelation();
 				rrr.setIdentifier(resourceRelation.getIdentifier());
-				rrr.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+				rrr.setLastUpdate(new Timestamp(time));
 				rrr.setOperationFlag(DELETE);
 				rrrList.add(rrr);
 			}
