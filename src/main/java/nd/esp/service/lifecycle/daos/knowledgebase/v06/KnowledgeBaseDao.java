@@ -16,4 +16,6 @@ public interface KnowledgeBaseDao {
 	public void batchCreateKnowledgeBase(List<KnowledgeBase> kbList);
 	
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
+	
+	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId);
 }
