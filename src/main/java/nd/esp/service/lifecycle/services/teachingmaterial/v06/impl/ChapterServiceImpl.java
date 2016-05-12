@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -60,6 +61,8 @@ public class ChapterServiceImpl implements ChapterService{
     private TeachingMaterialRepository teachingMaterialRepository;
     @Autowired
     private ChapterDao chapterDao;
+    @Autowired
+    private NotifyReportService nrs;
     
     @Override
     public ChapterModel createChapter(String resourceType,String mid, ChapterModel chapterModel) {
@@ -113,6 +116,9 @@ public class ChapterServiceImpl implements ChapterService{
         if(LOG.isInfoEnabled()){
         	LOG.info("教材章节V0.6添加章节成功，id:{}",chapter.getIdentifier());
         }
+        
+        //同步推送给报表系统 add by xuzy 20110512
+        nrs.addChapter(chapter);
         
         return changeChapterToChapterModel(chapter);
     }
@@ -229,6 +235,9 @@ public class ChapterServiceImpl implements ChapterService{
         	LOG.info("教材章节V0.6修改章节成功，id:{}",chapter.getIdentifier());
         }
         
+        //同步推送给报表系统 add by xuzy 20110512
+        nrs.updateChapter(chapter);
+        
         return changeChapterToChapterModel(chapter);
     }
 
@@ -319,6 +328,10 @@ public class ChapterServiceImpl implements ChapterService{
         if(LOG.isInfoEnabled()){
         	LOG.info("教材章节V0.6批量删除章节成功,mid:{},cids:{}",mid,chapterIds);
         }
+        
+        //同步推送给报表系统 add by xuzy 20110512
+        nrs.deleteChapterById(cid);
+        nrs.deleteResourceRelationBySourceId(resourceType, cid);
         
         return true;
     }
@@ -531,6 +544,10 @@ public class ChapterServiceImpl implements ChapterService{
         if (LOG.isInfoEnabled()) {
             LOG.info("教材章节V0.6批量删除章节成功,mid:{},cids:{}", mid, chapterIds);
         }
+        
+        //同步推送给报表系统 add by xuzy 20110512
+        nrs.deleteChapterById(cid);
+        nrs.deleteResourceRelationBySourceId(resourceType, cid);
 
         return true;
     }

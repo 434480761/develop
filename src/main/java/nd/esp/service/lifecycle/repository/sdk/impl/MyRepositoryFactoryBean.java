@@ -17,6 +17,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceStatistical4QuestionDBRep
 import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportNdresourceRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceCategoryRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceRelationRepository;
@@ -208,6 +209,9 @@ public class MyRepositoryFactoryBean<R extends JpaRepository<T, I>, T extends Ed
 									.toString())
 					|| repositoryName
 							.equals(ReportResourceCategoryRepository.class
+									.toString())
+					|| repositoryName
+							.equals(ReportChapterRepository.class
 									.toString())
 					|| repositoryName
 							.equals(ReportResourceRelationRepository.class

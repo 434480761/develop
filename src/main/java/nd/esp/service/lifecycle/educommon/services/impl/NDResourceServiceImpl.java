@@ -1091,9 +1091,14 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           e.getMessage());
         }
         
-        //同步推送至报表系统 add by xuzy 20160510
+        //同步推送至报表系统 add by xuzy 20160512
         nds.deleteResourceCategory(uuid);
         nds.deleteResourceRelationBySourceId(resourceType,uuid);
+        if(IndexSourceType.TeachingMaterialType.getName().equals(resourceType) || 
+              IndexSourceType.GuidanceBooksType.getName().equals(resourceType)){
+        	nds.deleteChapterByTmId(uuid);
+        }
+        
     }
     
     /**
