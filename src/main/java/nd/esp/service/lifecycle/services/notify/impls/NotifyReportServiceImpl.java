@@ -115,7 +115,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteResourceCategory(String resource) {
-		long lastUpdate = System.currentTimeMillis();
+		long lastUpdate = System.currentTimeMillis() - 10;
 		String sql = "update resource_categories set last_update = "+lastUpdate +",operation_flag = '"+DELETE+"' where resource = '"+resource+"'";
 		reportJdbcTemplate.execute(sql);
 	}
