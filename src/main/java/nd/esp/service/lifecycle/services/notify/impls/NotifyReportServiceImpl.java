@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.services.notify.impls;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +16,23 @@ import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.report.ReportCategory;
 import nd.esp.service.lifecycle.repository.model.report.ReportCategoryData;
+import nd.esp.service.lifecycle.repository.model.report.ReportChapter;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceCategory;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceRelation;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportCategoryRepository;
+import nd.esp.service.lifecycle.repository.sdk.report.ReportChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceCategoryRepository;
 import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceRelationRepository;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.OperationType;
+import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.DateUtils;
 
@@ -59,6 +62,9 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	private ReportCategoryDataRepository rcdr;
 	
 	@Autowired
+	private ReportChapterRepository rcrepo;
+	
+	@Autowired
 	@Qualifier(value="reportJdbcTemplate")
 	private JdbcTemplate reportJdbcTemplate;
 	
@@ -81,8 +87,11 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 				rrc.setIdentifier(UUID.randomUUID().toString());
 				rrc.setLastUpdate(new BigDecimal(System.currentTimeMillis()));
 				rrc.setOperationFlag(INSERT);
-				rrc.setResource(rm.getIdentifier());
-				rrc.setResource(rcm.getResourceId());
+				if(rcm.getResourceId() != null){
+					rrc.setResource(rcm.getResourceId());
+				}else{
+					rrc.setResource(rm.getIdentifier());
+				}
 				rrc.setTaxOnCode(rcm.getTaxoncode());
 				rrcList.add(rrc);
 			}
@@ -106,7 +115,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteResourceCategory(String resource) {
-		long lastUpdate = System.currentTimeMillis();
+		long lastUpdate = System.currentTimeMillis() - 10;
 		String sql = "update resource_categories set last_update = "+lastUpdate +",operation_flag = '"+DELETE+"' where resource = '"+resource+"'";
 		reportJdbcTemplate.execute(sql);
 	}
@@ -521,6 +530,58 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 			}
 		}
 		return isNd;
+	}
+
+	@Override
+	public void addChapter(Chapter chapter) {
+		ReportChapter rc = BeanMapperUtils.beanMapper(chapter, ReportChapter.class);
+		if(rc != null){
+			rc.setOperationFlag(INSERT);
+			try {
+				rcrepo.add(rc);
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+	                    e.getMessage());
+			}
+		}
+	}
+
+	@Override
+	public void deleteChapterByTmId(String tmId) {
+		long lastUpdate = System.currentTimeMillis();
+		Timestamp ts = new Timestamp(lastUpdate);
+		String sql = "update resource_relations set operation_flag = '"+DELETE+"',last_update = '"
+				+ DateUtils.format(ts, "yyyy-MM-dd HH:mm:ss") + "' where res_type = 'chapters' and source_uuid in (select identifier from chapters where teaching_material = '"+tmId+"')";
+		
+		String sql2 = "update chapters set operation_flag = '"+DELETE+"',last_update = '"
+				+ DateUtils.format(ts, "yyyy-MM-dd HH:mm:ss") + "' where teaching_material = '"+tmId+"'";
+		
+		reportJdbcTemplate.execute(sql);
+		reportJdbcTemplate.execute(sql2);
+	}
+
+	@Override
+	public void deleteChapterById(String cid) {
+		long lastUpdate = System.currentTimeMillis();
+		Timestamp ts = new Timestamp(lastUpdate);
+		String sql = "update chapters set operation_flag = '"+DELETE+"',last_update = '"
+				+ DateUtils.format(ts, "yyyy-MM-dd HH:mm:ss") + "' where identifier = '"+cid+"'";
+		reportJdbcTemplate.execute(sql);
+	}
+
+	@Override
+	public void updateChapter(Chapter chapter) {
+		ReportChapter rc = BeanMapperUtils.beanMapper(chapter, ReportChapter.class);
+		if(rc != null){
+			rc.setOperationFlag(UPDATE);
+			try {
+				rcrepo.update(rc);
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+	                    e.getMessage());
+			}
+		}
+		
 	}
 	
 }
