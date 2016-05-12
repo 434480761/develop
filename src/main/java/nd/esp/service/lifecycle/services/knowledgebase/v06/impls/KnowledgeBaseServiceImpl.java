@@ -104,4 +104,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 		}
 		return returnList;
 	}
+	
+	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId){
+		return kbd.queryInstructionalObjectiveByKid(kcCode, kpId);
+	}
 }

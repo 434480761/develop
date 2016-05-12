@@ -93,4 +93,11 @@ public class KnowledgeBaseControllerV06 {
 		return kbs.queryInstructionalObjectiveByCond(kbid, ocid);
 	}
 	
+	/**
+	 * 根据知识类型id、知识子类型id查询教学目标
+	 */
+	@RequestMapping(value = "/queryInstructionObjectiveByKid",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<Map<String,Object>> queryInstructionalObjectiveByKid(@RequestParam(required=false,value="kc_code") String kcCode,@RequestParam(required=false,value="kp_id") String kpId){
+		return kbs.queryInstructionalObjectiveByKid(kcCode, kpId);
+	}
 }
