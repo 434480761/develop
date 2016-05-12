@@ -8,7 +8,7 @@ File_Begin;
 File_Middle;
 File_End;
 
-General; "UniqueId":"%UniqueID/String%","Format":"%Format%","FormatVersion":"%Format_Version%","FileSize":"%FileSize%","Duration":"%Duration%","BitRate":"%OverallBitRate%","EncodedDate":"%Encoded_Date%","EncodedApplication":"%Encoded_Application%","EncodedLibrary":"%Encoded_Library%"
+General; "UniqueId":"%UniqueID/String%","Format":"%Format%","FormatVersion":"%Format_Version%","FileSize":"%FileSize%","Duration":"%Duration%","BitRate":"%OverallBitRate%","EncodedDate":"%Encoded_Date%","EncodedApplication":"%Encoded_Application%","EncodedLibrary":"%Encoded_Library%","Rotation":"%Rotation%"
 General_Begin;
 General_Middle;
 General_End;
