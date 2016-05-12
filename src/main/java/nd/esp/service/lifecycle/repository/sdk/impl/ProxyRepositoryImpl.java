@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.repository.sdk.impl;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +20,6 @@ import javax.persistence.metamodel.Metamodel;
 
 import nd.esp.service.lifecycle.repository.DataConverter;
 import nd.esp.service.lifecycle.repository.EspEntity;
-import nd.esp.service.lifecycle.repository.IndexRepository;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.ds.Item;
@@ -38,9 +36,6 @@ import nd.esp.service.lifecycle.repository.sdk.DBCallBack;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,9 +83,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	/** The entity manager. */
 	private final Class<T> domainClass;
 
-	/** The index repository. */
-	private IndexRepository<T> indexRepository;
-	
 	private JdbcTemplate jdbcTemplate;
 
 	private  TransactionTemplate transactionTemplate;
@@ -107,8 +99,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	public ProxyRepositoryImpl(Class<T> domainClass, EntityManager em, JdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
 		super(domainClass, em);
 		entityManager = em;
-		indexRepository = new IndexRepositoryImpl<T>(
-				this,domainClass);
 		this.domainClass = domainClass;
 		this.jdbcTemplate = jdbcTemplate;
 		this.transactionTemplate=transactionTemplate;
@@ -140,59 +130,7 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		return converterOut(result);
 	}
 	
-	class AddIndexThread extends Thread {
-	    private final T bean;
-	    private final List<T> beans;
-	    
-	    AddIndexThread(T bean) {
-	        this.bean = bean;
-	        this.beans = null;
-	    }
-	    
-	    AddIndexThread(List<T> beans) {
-	        this.bean = null;
-            this.beans = beans;
-        }
-	    
-	    @Override
-	    public void run() {
-	        UpdateResponse ur = null;
-            try {
-                if(beans != null) {
-                    ur = indexRepository.batchAddIndex(beans);
-                } else {
-                    ur = indexRepository.addIndex(bean);
-                }
-            } catch (EspStoreException e) {
-                logger.error("add index error: ", e);
-            }
-	        
-	        if (logger.isInfoEnabled()) {
-	            
-	            logger.info("add index response:{}", ur);
-	            
-	        }
-	    }
-	}
 	
-	class DelIndexThread extends Thread {
-        private final List<String> ids;
-        
-        DelIndexThread(List<String> ids) {
-            this.ids = ids;
-        }
-        
-        @Override
-        public void run() {
-            try {
-                indexRepository.getSolrServer().deleteById(ids);
-                indexRepository.getSolrServer().commit();
-            } catch (SolrServerException | IOException e) {
-                logger.error("ProxyRepositoryImpl.del{}", e);
-            }
-        }
-    }
-
 	/**
 	 * Description.
 	 *
@@ -205,17 +143,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	@Override
 	public void delete(String id) {
 		super.delete(id);
-		try {
-			this.indexRepository.getSolrServer().deleteById(id);
-		} catch (SolrServerException | IOException e) {
-			
-		    if (logger.isErrorEnabled()) {
-                
-		        logger.error("ProxyRepositoryImpl.del{}", e);
-		        
-            }
-		    
-		}
 	}
 
 	/**
@@ -382,23 +309,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		//return indexRepository.search(queryRequest);
 	}
 	
-	@Override
-	@Transactional(propagation=Propagation.NOT_SUPPORTED)
-	public QueryResponse<String> searchFullText(QueryRequest queryRequest)
-			throws EspStoreException {
-		return indexRepository.searchFullText(queryRequest);
-	}
-	
-
-	@Override
-	@Transactional(propagation=Propagation.NOT_SUPPORTED)
-	public QueryResponse<String> searchFullTextLike(QueryRequest queryRequest)
-			throws EspStoreException {
-		
-		return indexRepository.searchFullTextLike(queryRequest);
-	}
-
-
 	/**
 	 * Gets the entity manager.
 	 *
@@ -957,67 +867,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		List<String> ids = Lists.newArrayList();
 		for (T bean : beans) {
 			ids.add(bean.getIdentifier());
-			//更新记录删除标志位
-			//bean.setRecordStatus(1);
 		}
-		//save(beans);
-		try {
-			super.delete(beans);
-			this.indexRepository.getSolrServer().deleteById(ids);
-			this.indexRepository.getSolrServer().commit();
-		} catch (IOException e) {
-		    
-		    if (logger.isErrorEnabled()) {
-                
-		        logger.error("ProxyRepositoryImpl.del{}", e);
-		        
-            }
-			        
-			throw new EspStoreException(e);
-		} catch (SolrServerException e) {
-		    
-		    if (logger.isErrorEnabled()) {
-		        
-		        logger.error("ProxyRepositoryImpl.del{}", e);
-		        
-		    }
-			        
-			throw new EspStoreException(e);
-		}catch (Exception e) {
-			if(e instanceof EmptyResultDataAccessException){
-			    
-			    if (logger.isErrorEnabled()) {
-			        
-			        logger.error("被删除的数据：{}不存在！{}", entity, e);
-			        
-			    }
-				        
-				throw new EspStoreException("被删除的数据："+entity+"不存在！");
-			}
-			throw new EspStoreException(e);
-		}
-	}
-
-	/**
-	 * Description 
-	 * @return 
-	 * @see com.nd.esp.repository.index.Searchable#getSolrServer() 
-	 */ 
-		
-	@Override
-	public SolrServer getSolrServer() {
-		return indexRepository.getSolrServer();
-	}
-
-	/**
-	 * Description 
-	 * @return 
-	 * @see com.nd.esp.repository.ResourceRepository#getIndexRepository() 
-	 */ 
-		
-	@Override
-	public IndexRepository<T> getIndexRepository() {
-		return this.indexRepository;
+		super.delete(beans);
 	}
 
 	/**
@@ -1038,9 +889,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	
 	
 	
-	// ////////////////////////////////////////////
-	// ///////////////////////////////////////helper
-
 	public void converterIn(final T bean) throws EspStoreException {
 		if (bean == null)
 			return;

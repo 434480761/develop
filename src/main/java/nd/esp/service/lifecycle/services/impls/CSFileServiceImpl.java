@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.impls;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.services.CSFileService;
 import nd.esp.service.lifecycle.support.Constant;
@@ -9,11 +10,13 @@ import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 /**
@@ -51,7 +54,7 @@ public class CSFileServiceImpl implements CSFileService {
         	requestBody.put("expires",param.getExpires());//optional
         }
         
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
 //        String url = Constant.CS_API_URL + "/sessions";
         
         LOG.debug("调用cs获取session接口");

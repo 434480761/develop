@@ -22,6 +22,7 @@ import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -57,6 +58,9 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     
     @Autowired
     private QuestionRepository questionRepository;
+    
+    @Autowired
+    private NotifyReportService nrs;
     
     @Override
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
@@ -115,7 +119,12 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             }
             relation.setSourceUuid(erm.getSource());
 
-            relation.setIdentifier(UUID.randomUUID().toString());
+            if(erm.getIdentifier() != null){
+            	relation.setIdentifier(erm.getIdentifier());
+            }else{
+            	relation.setIdentifier(UUID.randomUUID().toString());
+            }
+            
             if (erm.getLifeCycle() == null) {
                 relation.setCreator(null);
                 relation.setStatus("AUDIT_WAITING");
@@ -195,6 +204,8 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CreateEducationRelationFail);
         }
+        //通知报表系统 add by xuzy 20160511
+        nrs.addResourceRelation(resourceRelations);
 
         // 处理返回结果
         if (!isCreateWithResource) {
@@ -319,6 +330,8 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.UpdateEducationRelationFail);
         }
+        //通知报表系统 add by xuzy 20160511
+        nrs.updateResourceRelation(relation);
 
         // 处理返回结果
         EducationRelationModel model = new EducationRelationModel();
@@ -374,6 +387,10 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.UpdateLessonFail);
         }
+        List<ResourceRelation> notifyRelationList = new ArrayList<ResourceRelation>();
+        notifyRelationList.add(rt);
+        //通知报表系统 add by xuzy 20160511
+        nrs.deleteResourceRelation(notifyRelationList);
 
         return true;
     }
@@ -481,6 +498,8 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
                                           LifeCircleErrorMessageMapper.UpdateBatchRelationFail.getCode(),
                                           e.getMessage());
         }
+        //通知报表系统 add by xuzy 20160511
+        nrs.deleteResourceRelation(relationsTotal);
         return true;
     }
 
@@ -587,6 +606,8 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
                                           LifeCircleErrorMessageMapper.UpdateBatchRelationFail.getCode(),
                                           e.getMessage());
         }
+        //通知报表系统 add by xuzy 20160511
+        nrs.deleteResourceRelation(relationsTotal);
         return true;
     }
 

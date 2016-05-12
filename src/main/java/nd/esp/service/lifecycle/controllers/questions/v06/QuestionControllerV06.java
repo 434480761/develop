@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.controllers.questions.v06;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import nd.esp.service.lifecycle.daos.questions.v06.QuestionDao;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
@@ -57,7 +56,7 @@ public class QuestionControllerV06 {
     private QuestionDao questionDao;
     
     private final static ExecutorService executorService = CommonHelper.getPrimaryExecutorService();
-    private final static WafSecurityHttpClient WAF_SECURITY_HTTP_CLIENT = new WafSecurityHttpClient();
+    private final static WafSecurityHttpClient WAF_SECURITY_HTTP_CLIENT = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
     
     
     

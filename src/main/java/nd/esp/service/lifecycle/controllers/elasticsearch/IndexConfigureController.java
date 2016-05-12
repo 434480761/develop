@@ -23,14 +23,14 @@ public class IndexConfigureController {
 	private IndexConfigureService indexConfigureService;
 
 	/**
-	 * 创建索引
+	 * 创建索引(同时创建mapping)
 	 * 
 	 * @author linsm
 	 * @return
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	Boolean createIndex() {
-		return indexConfigureService.createIndex();
+		return indexConfigureService.createIndex() && putMapping();
 
 	}
 

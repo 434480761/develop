@@ -20,7 +20,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
@@ -665,7 +664,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
 		List<String> resTypes = (List<String>)map.get("resTypes");
     	
         //最终sql
-        String sql = "SELECT rcgb.taxonCode AS taxonCode,COUNT(rcgb.taxonCode) AS counts FROM resource_categories rcgb "
+        String sql = "SELECT rcgb.taxonCode AS taxonCode,COUNT(DISTINCT rcgb.resource) AS counts FROM resource_categories rcgb "
         		+ " WHERE rcgb.primary_category='" + resType 
         		+ "' AND rcgb.resource IN (" + querySqls.get(0) + ")"
         		+ " AND rcgb.category_name=:cn"

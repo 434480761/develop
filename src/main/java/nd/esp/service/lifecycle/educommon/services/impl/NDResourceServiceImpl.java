@@ -18,7 +18,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +63,7 @@ import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -106,6 +106,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
+import com.nd.gaea.client.WafResourceAccessException;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 @Service
@@ -190,6 +191,9 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Autowired
     private ES_Search eS_Search;
+    
+    @Autowired
+    private NotifyReportService nds;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -588,10 +592,10 @@ public class NDResourceServiceImpl implements NDResourceService{
         Map<String, Object> response = new HashMap<String, Object>();
         try {
             response = wafSecurityHttpClient.getForObject(queryUrl, Map.class);
-//        } catch (WafResourceAccessException e) {
-        } catch (WafException e) {
-//            if("SMARTQ/NOT_FOUND".equalsIgnoreCase(e.getRemoteResponseEntity().getBody().getCode())){
-            if("WAF/API_NOT_FOUND".equalsIgnoreCase(e.getResponseEntity().getBody().getCode())){
+        } catch (WafResourceAccessException e) {
+//        } catch (WafException e) {
+            if("SMARTQ/NOT_FOUND".equalsIgnoreCase(e.getRemoteResponseEntity().getBody().getCode())){
+//            if("WAF/API_NOT_FOUND".equalsIgnoreCase(e.getResponseEntity().getBody().getCode())){
                 
                 rListViewModel.setTotal(0L);
                 rListViewModel.setItems(new ArrayList<ResourceViewModel>());
@@ -1086,6 +1090,15 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getMessage());
         }
+        
+        //同步推送至报表系统 add by xuzy 20160512
+        nds.deleteResourceCategory(uuid);
+        nds.deleteResourceRelationBySourceId(resourceType,uuid);
+        if(IndexSourceType.TeachingMaterialType.getName().equals(resourceType) || 
+              IndexSourceType.GuidanceBooksType.getName().equals(resourceType)){
+        	nds.deleteChapterByTmId(uuid);
+        }
+        
     }
     
     /**
@@ -1943,6 +1956,9 @@ public class NDResourceServiceImpl implements NDResourceService{
 
         // 7、relations属性处理
         dealRelations(resourceType, resourceModel,dbName);
+        
+        // 8、同步推送至报表系统
+        nds.notifyReport4Resource(resourceType,resourceModel,OperationType.CREATE);
         return resourceModel;
     }
     
@@ -2339,7 +2355,6 @@ public class NDResourceServiceImpl implements NDResourceService{
                 coverageModel.setTarget(resCoverageModel.getTarget());
                 coverageModel.setStrategy(resCoverageModel.getStrategy());
                 coverageModel.setTargetTitle(resCoverageModel.getTargetTitle());
-                
                 coverageModels.add(coverageModel);
             }
         }
@@ -2352,7 +2367,6 @@ public class NDResourceServiceImpl implements NDResourceService{
         	}
             
         }
-        
         return true;
 
     }
@@ -2390,6 +2404,9 @@ public class NDResourceServiceImpl implements NDResourceService{
         // 5、categories属性处理
         // 优化，当不是更新时，不必清空
         dealCategories(resourceType, resourceModel, OperationType.UPDATE,dbName);
+        
+        // 6、同步推送至报表系统
+        nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
         return resourceModel;
     }
 
@@ -2538,6 +2555,10 @@ public class NDResourceServiceImpl implements NDResourceService{
                 }
                 erlc.setStatus("AUDIT_WAITING");
                 erm.setLifeCycle(erlc);
+                relationModel.setIdentifier(UUID.randomUUID().toString());
+                relationModel.setTargetType(resourceType);
+                relationModel.setTarget(resourceModel.getIdentifier());
+                erm.setIdentifier(relationModel.getIdentifier());
                 
                 educationRelationModels.add(erm);
             }

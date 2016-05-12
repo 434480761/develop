@@ -20,7 +20,7 @@
         <commons-codec.version>1.9</commons-codec.version>
         <compilerArgument>-Xlint:unchecked</compilerArgument>
         <httpclent-version>4.3.3</httpclent-version>
-        <waf-version>0.9.7</waf-version>
+        <waf-version>0.10.2</waf-version>
         <!-- reference to pre -->
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
         <war.version>${maven.build.timestamp}</war.version>
@@ -56,7 +56,7 @@
 		            <groupId>org.apache.commons</groupId>
 		            <artifactId>commons-io</artifactId>
 				</exclusion>
-			</exclusions>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -177,12 +177,6 @@
 		
 		<!-- from sdk -->
 		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
-			<version>1.0.1.Final</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
 			<version>${spring.version}</version>
@@ -227,13 +221,12 @@
 			<groupId>com.mysema.querydsl</groupId>
 			<artifactId>querydsl-jpa</artifactId>
 			<version>2.9.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>
-                guava
-            </artifactId>
-			<version>14.0.1</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>guava</artifactId>
+					<groupId>com.google.guava</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
@@ -285,7 +278,7 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>1.7.5</version>
+			<version>2.3.1</version>
 		</dependency>
 
 

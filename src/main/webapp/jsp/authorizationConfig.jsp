@@ -125,7 +125,7 @@ table {
 var bearerToken = "DEBUG userid= 2000284696,realm=lc.service.esp.nd";
 
 $(function(){
-	//getToken();
+	getToken();
 	reflashPage();
 })
 

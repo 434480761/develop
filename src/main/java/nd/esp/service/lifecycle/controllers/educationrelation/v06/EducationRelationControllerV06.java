@@ -15,7 +15,6 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
-import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -102,7 +101,7 @@ public class EducationRelationControllerV06 {
             resultList = educationRelationService.createRelation(educationRelationModels, false);
         }
         
-        if(CollectionUtils.isEmpty(resultList) && resultList.size() != 1){
+        if(CollectionUtils.isEmpty(resultList) || resultList.size() != 1){
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CreateEducationRelationFail);
         }

@@ -62,6 +62,7 @@ public interface EsResourceOperation {
 	 *            资源类型
 	 * @author linsm
 	 */
+	@Deprecated
 	void delete(String primaryCategory);
 
 	/**

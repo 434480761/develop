@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi;
 
-import com.nd.gaea.client.http.WafSecurityHttpClient;
+import java.util.List;
+
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
@@ -12,15 +13,19 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 @Configuration
 @Component
@@ -137,7 +142,7 @@ public class CopyHelper {
      */
     public void callToCreate(String resType, ResourceViewModel   copyModel ){
         
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         String url = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + resType + "/" + copyModel.getIdentifier();
         LOG.info("拷贝回调创建元数据请求地址:"+url);
         HttpHeaders httpHeaders = new HttpHeaders();

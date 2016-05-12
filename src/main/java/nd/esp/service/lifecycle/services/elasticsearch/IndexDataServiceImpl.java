@@ -172,6 +172,7 @@ public class IndexDataServiceImpl implements IndexDataService {
 	 * @author linsm
 	 */
 	@Override
+	@Deprecated
 	public void deleteResource(String resourceType) {
 		esResourceOperation.delete(resourceType);
 
