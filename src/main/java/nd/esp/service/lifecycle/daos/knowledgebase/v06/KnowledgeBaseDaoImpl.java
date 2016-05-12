@@ -179,4 +179,56 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		}
 		return returnList;
 	}
+
+	@Override
+	public List<Map<String, Object>> queryInstructionalObjectiveByKid(
+			String kcCode, String kpId) {
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+		String sql = "SELECT "+
+					 " nd.title,"+
+					 " nd.create_time,"+
+					 " nd.creator,"+
+					 " nd.identifier,"+
+					 " nd.description "+
+					"FROM"+
+					"  ndresource nd,"+
+					"  instructional_objectives io,"+
+					"  chapters kn,"+
+					"  knowledge_base kb,"+
+					"  ndresource nd2,"+
+					"  resource_categories rc "+
+					"WHERE nd.primary_category = 'instructionalobjectives' "+
+					"  AND nd.enable = 1 "+
+					"  AND nd.identifier = io.identifier "+
+					"  AND io.kb_id = kb.identifier "+
+					"  AND kb.knid = kn.identifier "+
+					"  AND nd2.primary_category = 'knowledges' "+
+					"  AND nd2.identifier = kn.identifier "+
+					"  AND rc.taxOnCode = :kcCode "+
+					"  AND rc.primary_category = 'knowledges' "+
+					"  AND rc.resource = nd2.identifier "+
+					"  AND nd2.enable = 1 "+
+					"  AND kb.kpid = :kpId ";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kpId", kpId);
+		query.setParameter("kcCode",kcCode);
+		List<Object[]> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Object[] o : list) {
+				String title = (String)o[0];
+				BigInteger ct = (BigInteger)o[1];
+				String creator = (String)o[2];
+				String identifier = (String)o[3];
+				String description = (String)o[4];
+				Map<String,Object> m = new HashMap<String, Object>();
+				m.put("identifier", identifier);
+				m.put("create_time", new Date(ct.longValue()));
+				m.put("creator", creator);
+				m.put("title", title);
+				m.put("description", description);
+				resultList.add(m);
+			}
+		}
+		return resultList;
+	}
 }

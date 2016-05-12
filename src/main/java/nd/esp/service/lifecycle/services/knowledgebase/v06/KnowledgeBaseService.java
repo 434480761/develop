@@ -39,4 +39,6 @@ public interface KnowledgeBaseService {
 	public void batchAddKbWhenKpAdd(final String kcCode, final String kpid);
 	
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
+	
+	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId);
 }
