@@ -365,6 +365,30 @@ public class AdapterDBDataController {
     }
     
     /**
+     * 改变是否推送报表的变量
+     * @param canquery
+     * @return
+     */
+    @RequestMapping(value = "/report/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String changeReportSwitch(@RequestParam String canquery){
+        String message = "";
+        
+        if(canquery.equals("false") && StaticDatas.SYNC_REPORT_DATA){
+            message = "不同步推送给报表系统(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("SYNC_REPORT_DATA",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.SYNC_REPORT_DATA = false;
+        }else if(canquery.equals("true") && !StaticDatas.SYNC_REPORT_DATA){
+            message = "同步推送给报表系统(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("SYNC_REPORT_DATA",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.SYNC_REPORT_DATA = true;
+        }
+        
+        return message;
+    }
+    
+    /**
      * 访问控制的开关控制
      * <p>Create Time: 2015年11月26日   </p>
      * <p>Create author: xiezy   </p>
