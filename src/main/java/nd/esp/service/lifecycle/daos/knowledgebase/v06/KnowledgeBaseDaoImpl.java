@@ -3,7 +3,9 @@ package nd.esp.service.lifecycle.daos.knowledgebase.v06;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -45,7 +47,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	@Override
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKpid(String kpid) {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
-		String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier";
+		String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cr.source=:kpid and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier";
 		Query query = em.createNativeQuery(sql);
 		query.setParameter("kpid", kpid);
 		List<Object[]> list = query.getResultList();
@@ -61,6 +63,8 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 				if(o[6] != null){
 					kbm.setCreateTime(new Date(((BigInteger)o[6]).longValue()));
 				}
+				kbm.setKcName((String)o[7]);
+				kbm.setKpName((String)o[8]);
 				returnList.add(kbm);
 			}
 		}
@@ -73,7 +77,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
 		knTitle = "%"+knTitle+"%";
 		if(StringUtils.isNotEmpty(knTitle)){
-			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time FROM knowledge_base kb,ndresource nd where kb.kpid = :kpid and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and (nd.title like :knTitle or nd.description like :knTitle)";
+			String sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cr.source=:kpid and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and (nd.title like :knTitle or nd.description like :knTitle)";
 			Query query = em.createNativeQuery(sql);
 			query.setParameter("kpid", kpid);
 			query.setParameter("knTitle", knTitle);
@@ -90,6 +94,8 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 					if(o[6] != null){
 						kbm.setCreateTime(new Date(((BigInteger)o[6]).longValue()));
 					}
+					kbm.setKcName((String)o[7]);
+					kbm.setKpName((String)o[8]);
 					returnList.add(kbm);
 				}
 			}
@@ -97,4 +103,80 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		return returnList;
 	}
 
+	@Override
+	public List<String> queryKnowledgeByKcCode(String kcCode) {
+		List<String> resultList = new ArrayList<String>();
+		if(StringUtils.isNotEmpty(kcCode)){
+			String sql = "SELECT ndr.identifier FROM ndresource ndr INNER JOIN resource_categories rc";
+			sql += " ON ndr.identifier=rc.resource";
+			sql += " WHERE ndr.primary_category='knowledges' AND ndr.enable=1";
+			sql += " AND rc.primary_category='knowledges' AND rc.taxOnCode=:kccode";
+			
+			Query query = em.createNativeQuery(sql);
+			query.setParameter("kccode", kcCode);
+			List<String> list = query.getResultList();
+			
+			if(CollectionUtils.isNotEmpty(list)){
+				for (String o : list) {
+					resultList.add(o);
+				}
+			}
+		}
+		
+		return resultList;
+	}
+
+	@Override
+	public void batchCreateKnowledgeBase(List<KnowledgeBase> kbList) {
+		if(CollectionUtils.isNotEmpty(kbList)){
+			try {
+				knowledgeBaseRepository.batchAdd(kbList);
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/BATCH_CREATE_KNOWLEDGEBASE_ERROR", "批量创建知识库出错了");
+			}
+		}
+	}
+
+	@Override
+	public List<Map<String, Object>> queryInstructionalObjectiveByCond(
+			String kbid, String ocid) {
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+		String sql = "select nd.title,nd.create_time,nd.creator,nd.identifier,nd.description from ndresource nd,instructional_objectives io where nd.primary_category='instructionalobjectives' and nd.enable = 1 and nd.identifier = io.identifier and io.kb_id = :kbid and io.oc_id = :ocid";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kbid", kbid);
+		query.setParameter("ocid", ocid);
+		List<Object[]> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Object[] o : list) {
+				String title = (String)o[0];
+				BigInteger ct = (BigInteger)o[1];
+				String creator = (String)o[2];
+				String identifier = (String)o[3];
+				String description = (String)o[4];
+				Map<String,Object> m = new HashMap<String, Object>();
+				m.put("identifier", identifier);
+				m.put("create_time", new Date(ct.longValue()));
+				m.put("creator", creator);
+				m.put("title", title);
+				m.put("description", description);
+				resultList.add(m);
+			}
+		}
+		return resultList;
+	}
+	
+	public List<String> queryKpIdByKcId(String kcId){
+		List<String> returnList = new ArrayList<String>();
+		String sql = "select target from category_relations where source = :kcId";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kcId", kcId);
+		List<String> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (String s : list) {
+				returnList.add(s);
+			}
+		}
+		return returnList;
+	}
 }

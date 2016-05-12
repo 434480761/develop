@@ -71,20 +71,6 @@ public abstract class EspEntity implements Serializable, IndexMapper {
 	@JsonIgnore
 	protected int indexSubType = 1000;
 
-	// 记录状态
-	// 1、表示删除
-	// @Field("record_status")
-	//@Column(name = "record_status", columnDefinition = "int default 0")
-//	protected int recordStatus = 0;
-//
-//	public int getRecordStatus() {
-//		return recordStatus;
-//	}
-//
-//	public void setRecordStatus(int recordStatus) {
-//		this.recordStatus = recordStatus;
-//	}
-
 	public EspEntity() {
 		if(getIndexType() !=null){
 			this.indexType = getIndexType().getType();

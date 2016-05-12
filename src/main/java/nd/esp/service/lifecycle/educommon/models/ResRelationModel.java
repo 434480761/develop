@@ -8,6 +8,10 @@ import java.util.List;
  */
 public class ResRelationModel {
 	/**
+	 * 主键id
+	 */
+	private String identifier;
+	/**
 	 * 源资源的标识id
 	 */
 	private String source;
@@ -51,6 +55,14 @@ public class ResRelationModel {
 	 * 排序
 	 */
 	private Integer orderNum;
+
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
+	}
 
 	public String getSource() {
 		return source;

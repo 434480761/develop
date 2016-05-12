@@ -6,10 +6,32 @@ public class KnowledgeBaseViewModel {
 	public String identifier;
 	public String kpid;
 	public String knid;
+	public String kcid;
 	public String title;
 	public String description;
 	public String creator;
 	public Date createTime;
+	public String kcName;
+	public String kpName;
+	
+	public String getKcid() {
+		return kcid;
+	}
+	public void setKcid(String kcid) {
+		this.kcid = kcid;
+	}
+	public String getKcName() {
+		return kcName;
+	}
+	public void setKcName(String kcName) {
+		this.kcName = kcName;
+	}
+	public String getKpName() {
+		return kpName;
+	}
+	public void setKpName(String kpName) {
+		this.kpName = kpName;
+	}
 	public String getIdentifier() {
 		return identifier;
 	}
