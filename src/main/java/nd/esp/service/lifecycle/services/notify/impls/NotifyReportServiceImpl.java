@@ -335,6 +335,8 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 				rrr.setIdentifier(resourceRelation.getIdentifier());
 				rrr.setLastUpdate(new Timestamp(time));
 				rrr.setOperationFlag(DELETE);
+				rrr.setResType(resourceRelation.getResType());
+				rrr.setResourceTargetType(resourceRelation.getResourceTargetType());
 				rrrList.add(rrr);
 			}
 			if(rrrList.size() > 0){
