@@ -19,15 +19,17 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.deletebyquery.DeleteByQueryRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.QuerySourceBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.slf4j.Logger;
@@ -46,6 +48,7 @@ import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
  * @author linsm
  *
  */
+@SuppressWarnings("deprecation")
 @Repository
 public class EsResourceOperationImpl implements EsResourceOperation {
 
@@ -143,9 +146,13 @@ public class EsResourceOperationImpl implements EsResourceOperation {
 	@Deprecated
 	@Override
 	public void delete(String primaryCategory) {
-		DeleteRequest request = Requests.deleteRequest(Constant.ES_INDEX_NAME)
-				.type(primaryCategory);
-		client.delete(request).actionGet();
+		DeleteByQueryRequest request = Requests.deleteByQueryRequest(
+				Constant.ES_INDEX_NAME).types(primaryCategory);
+		QueryBuilder query = QueryBuilders.matchAllQuery();
+		QuerySourceBuilder querySourceBuilder = new QuerySourceBuilder();
+		querySourceBuilder.setQuery(query);
+		request.source(querySourceBuilder);
+		client.deleteByQuery(request).actionGet();
 	}
 
 	@Override
