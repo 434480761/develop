@@ -31,6 +31,7 @@ import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceRelationRepo
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -78,6 +79,9 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void addResourceCategory(ResourceModel rm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){
+			return;
+		}
 		if(CollectionUtils.isNotEmpty(rm.getCategoryList())){
 			List<ReportResourceCategory> rrcList = new ArrayList<ReportResourceCategory>();
 			for (ResClassificationModel rcm : rm.getCategoryList()) {
@@ -109,12 +113,14 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void updateResourceCategory(ResourceModel rm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		deleteResourceCategory(rm.getIdentifier());
 		addResourceCategory(rm);
 	}
 
 	@Override
 	public void deleteResourceCategory(String resource) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long lastUpdate = System.currentTimeMillis() - 10;
 		String sql = "update resource_categories set last_update = "+lastUpdate +",operation_flag = '"+DELETE+"' where resource = '"+resource+"'";
 		reportJdbcTemplate.execute(sql);
@@ -122,6 +128,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void addCategory(CategoryModel cm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long time = System.currentTimeMillis();
 		ReportCategory rc = new ReportCategory();
 		rc.setCreateTime(new Timestamp(time));
@@ -140,6 +147,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void updateCategory(CategoryModel cm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportCategory rc = null;
 		try {
 			rc = rcr.get(cm.getIdentifier());
@@ -166,6 +174,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteCategory(String identifier) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportCategory rc = null;
 		try {
 			rc = rcr.get(identifier);
@@ -188,6 +197,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void addCategoryData(CategoryDataModel cdm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long time = System.currentTimeMillis();
 		ReportCategoryData rcd = new ReportCategoryData();
 		if(cdm.getCategory() != null){
@@ -214,6 +224,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void updateCategoryData(CategoryDataModel cdm) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportCategoryData rcd = null;
 		try {
 			rcd = rcdr.get(cdm.getIdentifier());
@@ -248,6 +259,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteCategoryData(String identifier) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportCategoryData rcd = null;
 		try {
 			rcd = rcdr.get(identifier);
@@ -271,6 +283,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void addResourceRelation(List<ResourceRelation> relationList) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		if(CollectionUtils.isNotEmpty(relationList)){
 			long time = System.currentTimeMillis();
 			List<ReportResourceRelation> rrrList = new ArrayList<ReportResourceRelation>();
@@ -303,6 +316,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void updateResourceRelation(ResourceRelation relation) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportResourceRelation rrr = null;
 		try {
 			rrr = rrrr.get(relation.getIdentifier());
@@ -336,6 +350,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteResourceRelation(List<ResourceRelation> relationList) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		if(CollectionUtils.isNotEmpty(relationList)){
 			long time = System.currentTimeMillis();
 			List<ReportResourceRelation> rrrList = new ArrayList<ReportResourceRelation>();
@@ -369,6 +384,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	
 	@Override
 	public void deleteResourceRelationBySourceId(String resType,String sourceId){
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long lastUpdate = System.currentTimeMillis();
 		Timestamp ts = new Timestamp(lastUpdate);
 		String sql = "update resource_relations set last_update = '"
@@ -381,6 +397,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	
 	
 	public void notifyReport4AddCoverage(String resType,List<CoverageModel> cmList){
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long time = System.currentTimeMillis();
 		if(CollectionUtils.isNotEmpty(cmList)){
 			List<ReportResourceCategory> rcList = new ArrayList<ReportResourceCategory>();
@@ -471,6 +488,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	
 	@Override
 	public void notifyReport4Resource(String resourceType,ResourceModel rm,OperationType ot){
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		boolean isNd = false;
 		if(ot == OperationType.CREATE){
 			List<ResCoverageModel> covList = rm.getCoverages();
@@ -542,6 +560,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void addChapter(Chapter chapter) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportChapter rc = BeanMapperUtils.beanMapper(chapter, ReportChapter.class);
 		if(rc != null){
 			rc.setOperationFlag(INSERT);
@@ -556,6 +575,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteChapterByTmId(String tmId) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long lastUpdate = System.currentTimeMillis();
 		Timestamp ts = new Timestamp(lastUpdate);
 		String sql = "update resource_relations set operation_flag = '"+DELETE+"',last_update = '"
@@ -570,6 +590,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void deleteChapterById(String cid) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		long lastUpdate = System.currentTimeMillis();
 		Timestamp ts = new Timestamp(lastUpdate);
 		String sql = "update chapters set operation_flag = '"+DELETE+"',last_update = '"
@@ -579,6 +600,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 
 	@Override
 	public void updateChapter(Chapter chapter) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
 		ReportChapter rc = BeanMapperUtils.beanMapper(chapter, ReportChapter.class);
 		if(rc != null){
 			rc.setOperationFlag(UPDATE);
@@ -591,5 +613,4 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 		}
 		
 	}
-	
 }
