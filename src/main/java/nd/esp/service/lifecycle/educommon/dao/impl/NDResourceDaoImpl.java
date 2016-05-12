@@ -664,7 +664,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
 		List<String> resTypes = (List<String>)map.get("resTypes");
     	
         //最终sql
-        String sql = "SELECT rcgb.taxonCode AS taxonCode,COUNT(rcgb.taxonCode) AS counts FROM resource_categories rcgb "
+        String sql = "SELECT rcgb.taxonCode AS taxonCode,COUNT(DISTINCT rcgb.resource) AS counts FROM resource_categories rcgb "
         		+ " WHERE rcgb.primary_category='" + resType 
         		+ "' AND rcgb.resource IN (" + querySqls.get(0) + ")"
         		+ " AND rcgb.category_name=:cn"
