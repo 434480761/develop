@@ -550,7 +550,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	public void deleteChapterByTmId(String tmId) {
 		long lastUpdate = System.currentTimeMillis();
 		Timestamp ts = new Timestamp(lastUpdate);
-		String sql = "update resource_categories set operation_flag = '"+DELETE+"',last_update = '"
+		String sql = "update resource_relations set operation_flag = '"+DELETE+"',last_update = '"
 				+ DateUtils.format(ts, "yyyy-MM-dd HH:mm:ss") + "' where res_type = 'chapters' and source_uuid in (select identifier from chapters where teaching_material = '"+tmId+"')";
 		
 		String sql2 = "update chapters set operation_flag = '"+DELETE+"',last_update = '"

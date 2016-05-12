@@ -11,6 +11,12 @@ import java.util.UUID;
 
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
+import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -34,13 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
-import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
-import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 
 /**
  * 06章节的Service实现
@@ -330,8 +329,12 @@ public class ChapterServiceImpl implements ChapterService{
         }
         
         //同步推送给报表系统 add by xuzy 20110512
-        nrs.deleteChapterById(cid);
-        nrs.deleteResourceRelationBySourceId(resourceType, cid);
+        if(CollectionUtils.isNotEmpty(chapterIds)){
+        	for (String id : chapterIds) {
+                nrs.deleteChapterById(id);
+                nrs.deleteResourceRelationBySourceId(resourceType, id);
+			}
+        }
         
         return true;
     }
@@ -546,8 +549,13 @@ public class ChapterServiceImpl implements ChapterService{
         }
         
         //同步推送给报表系统 add by xuzy 20110512
-        nrs.deleteChapterById(cid);
-        nrs.deleteResourceRelationBySourceId(resourceType, cid);
+        if(CollectionUtils.isNotEmpty(chapterIds)){
+        	for (String id : chapterIds) {
+                nrs.deleteChapterById(id);
+                nrs.deleteResourceRelationBySourceId(resourceType, id);
+			}
+        }
+
 
         return true;
     }
