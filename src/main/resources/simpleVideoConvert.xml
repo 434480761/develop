@@ -16,7 +16,7 @@
 		</command>
 		<command name="ogg">
 			<os name="Default">
-				ffmpeg2theora "#src#" --audioquality 5 -o "#target#"
+				ffmpeg.exe -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#target#"
 			</os>
 		</command>
 	</rule>

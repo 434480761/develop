@@ -497,7 +497,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         if(!cmds.isEmpty() && StringUtils.isNotEmpty(cmds.get(0))) {
             for(ListIterator<String> iter = cmds.listIterator(); iter.hasNext(); ) {
                 String cmd=iter.next();
-                if(cmd.startsWith("ffmpeg2theora")) {
+                if(cmd.contains("oggenc2")) {
                     targetsMap.put("href-ogg", destDir+File.separator+NameWithoutEx+".ogg");
                     iter.set(cmd.replace("#target#", targetsMap.get("href-ogg")));
                 } else {
@@ -1158,7 +1158,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         String userDir = System.getProperty("user.dir");
         String path = TranscodeServiceImpl.class.getClassLoader().getResource("tools").getPath();
         
-        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp3\",\"coverNum\":\"16\",\"subtype\":\"audio\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg\",\"task_execute_env\":\"integration\",\"session\":\"9812e064-a0af-4493-89eb-0c15cb95d1a2\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg/1461833996426.wav\",\"cs_api_url\":\"http://betacs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -ab 128k -c:a libmp3lame -vn \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --audioquality 5 -o \\\"#target#\\\"\"],\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\"}";
+        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp3\",\"coverNum\":\"16\",\"subtype\":\"audio\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg\",\"task_execute_env\":\"integration\",\"session\":\"f4f55ec9-8973-4253-9cd2-6c66b32d7d76\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg/1461833996426.wav\",\"cs_api_url\":\"http://betacs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -ab 128k -c:a libmp3lame -vn \\\"#target#\\\"\",\"ffmpeg.exe -i \\\"#src#\\\" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o \\\"#target#\\\"\"],\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\"}";
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
