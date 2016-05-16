@@ -69,7 +69,6 @@ import com.nd.esp.task.worker.buss.media_transcode.support.LifeCircleException;
 import com.nd.esp.task.worker.buss.media_transcode.utils.ArrayUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.CollectionUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.HttpClientUtils;
-import com.nd.esp.task.worker.buss.media_transcode.utils.JDomUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.PackageUtil;
 import com.nd.esp.task.worker.buss.media_transcode.utils.SessionUtil;
 import com.nd.esp.task.worker.buss.media_transcode.utils.StringUtils;
@@ -92,13 +91,8 @@ public class TranscodeServiceImpl implements TranscodeService {
     private final static Logger LOG = LoggerFactory
             .getLogger(TranscodeServiceImpl.class);
 
-    @Autowired
-    private JDomUtils jDomUtils;
 
-
-    private final static String zipFileTempDir = FileUtils.getTempDirectoryPath().endsWith(File.separator)?
-            FileUtils.getTempDirectoryPath() + "lifecircle" + File.separator + "transcode_temp" :
-            FileUtils.getTempDirectoryPath() + File.separator + "lifecircle" + File.separator + "transcode_temp";
+    private static String zipFileTempDir = System.getProperty("java.io.tmpdir");
     
     public final static long chunkMax = 50L*1024*1024;//文件超过chunkMax(Byte)就要进行分块上传
     public final static long chunkNumMax = 20;//最多并行发送的分块数
@@ -112,6 +106,13 @@ public class TranscodeServiceImpl implements TranscodeService {
     public static final String TRANSCODE_SUBTYPE = "subtype";
     public static final String SUBTYPE_VIDEO = "video";
     public static final String SUBTYPE_AUDIO = "audio";
+    
+    static {
+        if(zipFileTempDir.endsWith(File.separator)) {
+            zipFileTempDir+=File.separator; 
+        }
+        zipFileTempDir = zipFileTempDir + "lifecircle" + File.separator + "transcode_temp" ;
+    }
 
     
     public TranscodeServiceImpl(){

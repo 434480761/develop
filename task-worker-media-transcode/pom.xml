@@ -44,11 +44,11 @@
 		<org.freemarker.version>2.3.22</org.freemarker.version>
 	</properties>
 	<dependencies>
-	 <dependency>
-    <groupId>com.nd.esp.task.worker</groupId>
-    <artifactId>container-debug</artifactId>
-    <version>0.0.6</version>
-</dependency> 
+		 <dependency>
+		    <groupId>cn.com.nd.esp.task</groupId>
+		    <artifactId>task-worker-container</artifactId>
+		    <version>1.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
