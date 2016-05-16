@@ -2,7 +2,9 @@ package nd.esp.service.lifecycle.vos.knowledgebase.v06;
 
 import java.util.Date;
 
-public class KnowledgeBaseViewModel {
+import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+
+public class KnowledgeBaseViewModel extends ResourceViewModel{
 	public String identifier;
 	public String kpid;
 	public String knid;

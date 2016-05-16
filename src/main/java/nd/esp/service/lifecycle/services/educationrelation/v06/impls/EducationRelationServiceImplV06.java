@@ -113,6 +113,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     @Override
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
                                                        boolean isCreateWithResource) {
+    	boolean notifyFlag = true;
         // 待添加的资源关系集合
         List<ResourceRelation> relations4Create = new ArrayList<ResourceRelation>();
         EspEntity resourceEntity = null;
@@ -170,11 +171,15 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
             if(StringUtils.isEmpty(erm.getLabel())){
                 erm.setLabel(null);
             }
+            if("knowledgebases".equals(erm.getResourceTargetType())){
+            	notifyFlag = false;
+            }
+            
+           
             // 判断源资源是否存在，不存在抛出not found异常
             resourceEntity = resourceExist(erm.getResType(), erm.getSource(), ResourceType.RESOURCE_SOURCE);
             if (!isCreateWithResource) {// 与资源同时创建时不需要一下操作
-                targetEntity = resourceExist(erm.getResourceTargetType(), erm.getTarget(), ResourceType.RESOURCE_TARGET);
-
+        		targetEntity = resourceExist(erm.getResourceTargetType(), erm.getTarget(), ResourceType.RESOURCE_TARGET);
                 EducationRelationModel model4Detail = relationExist(erm.getSource(),
                                                                     erm.getTarget(),
                                                                     erm.getRelationType(),
@@ -189,7 +194,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                     break;
                 }
             }
-
+            
+            
             // 生成SDK的入参对象
             relation.setTarget(erm.getTarget());
             relation.setLabel(erm.getLabel());
@@ -343,20 +349,21 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CreateEducationRelationFail);
         }
-        
-        //add by xiezy - 2016.04.15
-        //异步通知智能出题
-        if(!isCreateWithResource && !haveExist){
-        	if(CollectionUtils.isEmpty(resourceRelations)){
-        		for(ResourceRelation rr : resourceRelations){
-                    notifyService.asynNotify4Relation(rr.getResType(), rr.getSourceUuid(), rr.getResourceTargetType(), rr.getTarget());
-        		}
-        	}
+        if(notifyFlag){
+            //add by xiezy - 2016.04.15
+            //异步通知智能出题
+            if(!isCreateWithResource && !haveExist){
+            	if(CollectionUtils.isEmpty(resourceRelations)){
+            		for(ResourceRelation rr : resourceRelations){
+                        notifyService.asynNotify4Relation(rr.getResType(), rr.getSourceUuid(), rr.getResourceTargetType(), rr.getTarget());
+            		}
+            	}
+            }
+            
+            //通知报表系统 add by xuzy 20160511
+            nrs.addResourceRelation(resourceRelations);
         }
-        
-        //通知报表系统 add by xuzy 20160511
-        nrs.addResourceRelation(resourceRelations);
-        
+
 
         // 处理返回结果
         if (!isCreateWithResource) {

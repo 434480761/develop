@@ -30,6 +30,7 @@ import nd.esp.service.lifecycle.models.v06.CourseWareObjectTemplateModel;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
 import nd.esp.service.lifecycle.models.v06.HomeworkModel;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeBaseModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.LearningPlanModel;
 import nd.esp.service.lifecycle.models.v06.LessonModel;
@@ -49,6 +50,7 @@ import nd.esp.service.lifecycle.repository.model.CoursewareObjectTemplate;
 import nd.esp.service.lifecycle.repository.model.Ebook;
 import nd.esp.service.lifecycle.repository.model.HomeWork;
 import nd.esp.service.lifecycle.repository.model.InstructionalObjective;
+import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
 import nd.esp.service.lifecycle.repository.model.LearningPlan;
 import nd.esp.service.lifecycle.repository.model.Lesson;
 import nd.esp.service.lifecycle.repository.model.LessonPlan;
@@ -65,6 +67,7 @@ import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
 import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
 import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeBaseRepository;
 import nd.esp.service.lifecycle.repository.sdk.LearningPlansRepository;
 import nd.esp.service.lifecycle.repository.sdk.LessonPlansRepository;
 import nd.esp.service.lifecycle.repository.sdk.LessonRepository;
@@ -90,6 +93,7 @@ import nd.esp.service.lifecycle.vos.coursewares.v06.CoursewareViewModel;
 import nd.esp.service.lifecycle.vos.ebooks.v06.EbookViewModel;
 import nd.esp.service.lifecycle.vos.homeworks.v06.HomeworkViewModel;
 import nd.esp.service.lifecycle.vos.instructionalobjectives.v06.InstructionalObjectiveViewModel;
+import nd.esp.service.lifecycle.vos.knowledgebase.v06.KnowledgeBaseViewModel;
 import nd.esp.service.lifecycle.vos.knowledges.v06.KnowledgeViewModel4Out;
 import nd.esp.service.lifecycle.vos.learningplans.v06.LearningPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessonplans.v06.LessonPlanViewModel;
@@ -191,6 +195,9 @@ public class CommonServiceHelper {
     
     @Autowired
     ResourceCategory4QuestionDBRepository resourceCategory4QuestionDBRepository;
+    
+    @Autowired
+    KnowledgeBaseRepository knowledgeBaseRepository;
     
     @Autowired
     private NDResourceDao ndResourceDao;
@@ -315,6 +322,12 @@ public class CommonServiceHelper {
                 null,
                 false,
                 false));
+        
+        //knowledgebase
+        repositoryAndModelMap.put("knowledgebases", new RepositoryAndModelAndView(knowledgeBaseRepository,
+                KnowledgeBaseModel.class,
+                KnowledgeBaseViewModel.class,
+                KnowledgeBase.class,false,false));
     }
     
     /**
