@@ -55,7 +55,9 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String [] TECH_INFO_HREF_KEYS_ARR={"href","href-360p","href-480p","href-720p","href-360p-ogv","href-480p-ogv","href-720p-ogv","href-1080p-ogv"};
     private static final List<String> TECH_INFO_HREF_KEYS = Arrays.asList(TECH_INFO_HREF_KEYS_ARR);
     private static final String VIDEO_FORMAT_TARGET="mp4";
+    private static final String VIDEO_THEORA_FORMAT="ogv";
     private static final String AUDIO_FORMAT_TARGET="mp3";
+    private static final String AUDIO_THEORA_FORMAT="ogg";
     
     @Autowired
     private NDResourceService ndResourceService;
@@ -317,10 +319,19 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             newTechInfo.setSize(size);
             String transcodeTargetFmt = "";
             if(TransCodeUtil.SUBTYPE_VIDEO.equals(argument.getTranscodeType())) {
-            	transcodeTargetFmt = VIDEO_FORMAT_TARGET;
+                
+                if(!key.contains(VIDEO_THEORA_FORMAT)) {
+                    transcodeTargetFmt = VIDEO_FORMAT_TARGET;
+                } else {
+                    transcodeTargetFmt = VIDEO_THEORA_FORMAT;
+                }
             	newTechInfo.setFormat("video/"+transcodeTargetFmt);
             } else {
-            	transcodeTargetFmt = AUDIO_FORMAT_TARGET;
+                if(!key.contains(AUDIO_THEORA_FORMAT)) {
+                    transcodeTargetFmt = AUDIO_FORMAT_TARGET;
+                } else {
+                    transcodeTargetFmt = AUDIO_THEORA_FORMAT;
+                }
             	newTechInfo.setFormat("audio/"+transcodeTargetFmt);
             }
             if(metadataMap != null){
