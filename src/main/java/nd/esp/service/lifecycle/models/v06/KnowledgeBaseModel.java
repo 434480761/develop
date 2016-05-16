@@ -2,9 +2,11 @@ package nd.esp.service.lifecycle.models.v06;
 
 import java.util.Date;
 
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+
 import com.ibm.icu.math.BigDecimal;
 
-public class KnowledgeBaseModel {
+public class KnowledgeBaseModel extends ResourceModel{
 	public String identifier;
 	public String kpid;
 	public String knid;

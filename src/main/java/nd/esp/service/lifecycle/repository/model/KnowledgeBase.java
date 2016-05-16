@@ -1,13 +1,9 @@
 package nd.esp.service.lifecycle.repository.model;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import nd.esp.service.lifecycle.repository.Education;
-import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 
 /**
@@ -18,7 +14,7 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 
 @Entity
 @Table(name = "knowledge_base")
-public class KnowledgeBase extends EspEntity {
+public class KnowledgeBase extends Education {
 	private static final long serialVersionUID = 8683345223450774854L;
 	private String kpid;
 	private String knid;
