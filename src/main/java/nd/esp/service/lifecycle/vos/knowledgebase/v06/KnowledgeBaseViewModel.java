@@ -9,6 +9,7 @@ public class KnowledgeBaseViewModel extends ResourceViewModel{
 	public String kpid;
 	public String knid;
 	public String kcid;
+	public String kcCode;
 	public String title;
 	public String description;
 	public String creator;
@@ -16,6 +17,12 @@ public class KnowledgeBaseViewModel extends ResourceViewModel{
 	public String kcName;
 	public String kpName;
 	
+	public String getKcCode() {
+		return kcCode;
+	}
+	public void setKcCode(String kcCode) {
+		this.kcCode = kcCode;
+	}
 	public String getKcid() {
 		return kcid;
 	}
