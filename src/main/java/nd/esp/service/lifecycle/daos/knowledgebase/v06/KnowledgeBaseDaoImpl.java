@@ -35,6 +35,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	@Override
 	public KnowledgeBaseModel createKnowledgeBase(KnowledgeBaseModel kbm) {
 		KnowledgeBase kb = BeanMapperUtils.beanMapper(kbm, KnowledgeBase.class);
+		kb.setPrimaryCategory("knowledgebases");
 		try {
 			kb = knowledgeBaseRepository.add(kb);
 		} catch (EspStoreException e) {
