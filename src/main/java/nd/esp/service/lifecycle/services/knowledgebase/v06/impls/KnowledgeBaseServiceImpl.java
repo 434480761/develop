@@ -40,6 +40,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 			String kpid, String knTitle) {
 		return kbd.queryKnowledgeBaseListByCond(kcid, kpid, knTitle);
 	}
+	
+	@Override
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(String kcCode,String title){
+		return kbd.queryKnowledgeBaseListByKcCode(kcCode, title);
+	}
 
 	@Override
 	@Transactional

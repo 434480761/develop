@@ -41,4 +41,12 @@ public interface KnowledgeBaseService {
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
 	
 	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId);
+	
+	/**
+	 * 根据知识类型、知识点的title查找知识库
+	 * @param kcCode
+	 * @param title
+	 * @return
+	 */
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(String kcCode,String title);
 }

@@ -86,6 +86,23 @@ public class KnowledgeBaseControllerV06 {
 	}
 	
 	/**
+	 * 根据知识类型，知识点名称查询知识库列表
+	 */
+	@RequestMapping(value = "/queryByKcCode",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<KnowledgeBaseViewModel> queryKnowledgeBaseByKcCode(@RequestParam(required=true,value="kc_code") String kcCode,@RequestParam(required=false) String title){
+		List<KnowledgeBaseViewModel> returnList = new ArrayList<KnowledgeBaseViewModel>();
+		List<KnowledgeBaseModel> kbvmList = kbs.queryKnowledgeBaseListByKcCode(kcCode, title);
+		if(CollectionUtils.isNotEmpty(kbvmList)){
+			for (KnowledgeBaseModel knowledgeBaseModel : kbvmList) {
+				KnowledgeBaseViewModel kbvm = new KnowledgeBaseViewModel();
+				kbvm = BeanMapperUtils.beanMapper(knowledgeBaseModel, KnowledgeBaseViewModel.class);
+				returnList.add(kbvm);
+			}
+		}
+		return returnList;
+	}
+	
+	/**
 	 * 根据知识库id、教学目标套件查询教学目标
 	 */
 	@RequestMapping(value = "/queryInstructionObjective",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
