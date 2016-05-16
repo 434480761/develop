@@ -18,4 +18,6 @@ public interface KnowledgeBaseDao {
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
 	
 	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId);
+	
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(String kcCode,String title);
 }
