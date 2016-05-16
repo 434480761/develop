@@ -271,4 +271,19 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 		}
 		return returnList;
 	}
+
+	@Override
+	public List<String> queryKpIdByKcCode(String kcCode) {
+		List<String> returnList = new ArrayList<String>();
+		String sql = "select cr.target from category_relations cr,category_datas cd where source = cd.identifier and cd.nd_code = :kcCode";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kcCode", kcCode);
+		List<String> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (String s : list) {
+				returnList.add(s);
+			}
+		}
+		return returnList;
+	}
 }
