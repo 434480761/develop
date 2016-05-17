@@ -11,7 +11,6 @@ import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 @Entity
 @Table(name="categorys")
-//title
 public class ReportCategory extends EspEntity {
 	private static final long serialVersionUID = 1L;
 	
@@ -23,9 +22,6 @@ public class ReportCategory extends EspEntity {
 	
 	@Column(name = "create_time")
 	private Timestamp createTime;
-	
-	@Column(name="operation_flag")
-	private String operationFlag;
 	
 	public String getShortName() {
 		return shortName;
@@ -49,14 +45,6 @@ public class ReportCategory extends EspEntity {
 
 	public void setCreateTime(Timestamp createTime) {
 		this.createTime = createTime;
-	}
-
-	public String getOperationFlag() {
-		return operationFlag;
-	}
-
-	public void setOperationFlag(String operationFlag) {
-		this.operationFlag = operationFlag;
 	}
 
 	@Override

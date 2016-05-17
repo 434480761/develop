@@ -6,8 +6,7 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 /**
  * 通知报表中心系统
@@ -15,6 +14,10 @@ import nd.esp.service.lifecycle.support.enums.OperationType;
  *
  */
 public interface NotifyReportService {
+	public void addResource(String resType, ResourceModel rm);
+	public void updateResource(String resType, ResourceModel rm);
+	public void deleteResource(String resType,String uuid);
+	
 	public void addResourceCategory(ResourceModel rm);
 	public void updateResourceCategory(ResourceModel rm);
 	public void deleteResourceCategory(String resource);
@@ -27,17 +30,9 @@ public interface NotifyReportService {
 	public void updateCategoryData(CategoryDataModel cdm);
 	public void deleteCategoryData(String identifier);
 	
-	public void addResourceRelation(List<ResourceRelation> relationList);
-	public void updateResourceRelation(ResourceRelation resourceRelation);
-	public void deleteResourceRelation(List<ResourceRelation> relationList);
-	public void deleteResourceRelationBySourceId(String resType,String sourceId);
+	public void addResourceUsing(ReportResourceUsing rru);
 	
 	public void notifyReport4Resource(String resourceType,ResourceModel rm,OperationType ot);
 	
 	public void notifyReport4AddCoverage(String resType,List<CoverageModel> cmList);
-	
-	public void addChapter(Chapter chapter);
-	public void deleteChapterByTmId(String tmId);
-	public void deleteChapterById(String cid);
-	public void updateChapter(Chapter chapter);
 }
