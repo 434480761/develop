@@ -1,6 +1,10 @@
 package nd.esp.service.lifecycle.support;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +19,17 @@ import nd.esp.service.lifecycle.support.logs.DBLogUtil;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 import org.apache.log4j.MDC;
+import org.apache.poi.ss.formula.functions.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +63,10 @@ public class DeleteDirtyDataTask {
 	private JdbcTemplate questionJdbcTemplate;
 	
 	@Autowired
+	@Qualifier(value="reportJdbcTemplate")
+	private JdbcTemplate reportJdbcTemplate;
+	
+	@Autowired
 	private CommonServiceHelper commonServiceHelper;
 	
 	@Autowired
@@ -83,6 +97,7 @@ public class DeleteDirtyDataTask {
 				initDirtyData(resType);
 				int num = queryIds(createTime,resType);
 				if(num > 0){
+					syncReport(resType);
 					dealDirtyData(createTime,resType);
 					syncEs(resType);
 				}
@@ -92,6 +107,7 @@ public class DeleteDirtyDataTask {
 				return;
 			}
 		}
+		LOG.info("清理脏数据定时任务结束。。。");
 		commonServiceHelper.initSynVariable(SynVariable.deleteDirtyTask.getValue());
 	}
 		
@@ -187,6 +203,7 @@ public class DeleteDirtyDataTask {
 		int num = excuteSql(resType,sql);
 		return num;
 	}
+	
 	
 	/**
 	 * 查询删除的资源id
@@ -327,5 +344,30 @@ public class DeleteDirtyDataTask {
         MDC.put("remark", message);
         DBLogUtil.getDBlog().info("清除脏数据，资源类型："+resType);
         MDC.clear();
+	}
+	
+	private void syncReport(String resType){
+		//筛选出nd库的数据
+		String sql = "select dd.identifier from dirty_data dd,res_coverages rc where dd.primary_category = rc.res_type and rc.resource = dd.identifier and rc.target_type='Org' and rc.target = 'nd'";
+		List<Map<String,Object>> resultList = null;
+		if(!CommonServiceHelper.isQuestionDb(resType)){
+			resultList = jdbcTemplate.queryForList(sql);
+		}else{
+			resultList = questionJdbcTemplate.queryForList(sql);
+		}
+		
+		if(CollectionUtils.isNotEmpty(resultList)){
+			List<String> ids = new ArrayList<String>();
+			String deleteCategorySql = "delete from resource_categories where resource in (:ids)";
+			String deleteNdresourceSql = "delete from ndresource where identifier in (:ids)";
+			for (Map<String, Object> map : resultList) {
+				ids.add((String)map.get("identifier"));
+			}
+			NamedParameterJdbcTemplate npjt = new NamedParameterJdbcTemplate(reportJdbcTemplate);
+			Map<String,Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("ids", ids);
+			npjt.update(deleteCategorySql, paramMap);
+			npjt.update(deleteNdresourceSql, paramMap);
+		}
 	}
 }

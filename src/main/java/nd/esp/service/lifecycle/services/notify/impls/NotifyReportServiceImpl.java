@@ -114,7 +114,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	@Override
 	public void deleteResourceCategory(String resource) {
 		if(!StaticDatas.SYNC_REPORT_DATA){return;}
-		String sql = "delete resource_categories where resource = '"+resource+"'";
+		String sql = "delete from resource_categories where resource = '"+resource+"'";
 		reportJdbcTemplate.execute(sql);
 	}
 
@@ -377,7 +377,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 	@Override
 	public void deleteResource(String resType, String uuid) {
 		if(!StaticDatas.SYNC_REPORT_DATA){return;}
-		String sql = "udpate ndresource set enable = 0,last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"'";
+		String sql = "update ndresource set enable = 0,last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"'";
 		reportJdbcTemplate.execute(sql);
 	}
 
