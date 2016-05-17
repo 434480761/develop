@@ -1,8 +1,10 @@
 package nd.esp.service.lifecycle.educommon.controllers;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -31,9 +34,11 @@ import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
+import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
@@ -65,6 +70,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,8 +83,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nd.gaea.SR;
+import com.nd.gaea.WafException;
+import com.nd.gaea.client.WafResourceAccessException;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 import com.nd.gaea.rest.exceptions.extendExceptions.WafSimpleException;
+import com.nd.gaea.rest.security.authens.UserInfo;
+import com.nd.gaea.rest.security.authentication.WafAuthenticationException;
 
 
 /**
@@ -136,6 +150,9 @@ public class NDResourceController {
     @Autowired
     @Qualifier("knowledgeServiceV06")
     KnowledgeService KnowledgeServiceV06;
+    
+    @Autowired
+    NotifyReportService nrs;
 
     /**
      * 资源获取详细接口
@@ -1369,7 +1386,9 @@ public class NDResourceController {
 			@PathVariable String uuid,
 			@RequestParam(value = "uid", required = true) String uid,
 			@RequestParam(value = "key", required = false) String key,
-			@RequestParam(value = "coverage", required = false) String coverage) {
+			@RequestParam(value = "coverage", required = false) String coverage,
+			@AuthenticationPrincipal UserInfo userInfo,
+			HttpServletRequest request) {
 		//        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         commonServiceHelper.assertDownloadable(res_type);
         //下载接口适配智能出题
@@ -1378,7 +1397,31 @@ public class NDResourceController {
             accessModel.setAccessUrl(Constant.INTELLI_URI+Constant.INTELLI_DETAIL_URL);
             return accessModel;
         }
-        return ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
+        AccessModel am = ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
+        
+        //同步至报表系统  add by xuzy 20160517
+        if(userInfo != null && nrs.checkCoverageIsNd(res_type,uuid)){
+        	long time = System.currentTimeMillis();
+        	ReportResourceUsing rru = new ReportResourceUsing();
+        	rru.setResourceId(uuid);
+        	rru.setBizSys(request.getHeader("bsyskey"));
+        	rru.setIdentifier(UUID.randomUUID().toString());
+        	rru.setUserId(userInfo.getUserId());
+        	rru.setCreateTime(new Timestamp(time));
+        	rru.setLastUpdate(new BigDecimal(time));
+        	if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
+        		Map<String,Object> map = userInfo.getOrgExinfo();
+        		if(map.get("org_id") != null){
+        			rru.setOrgId(map.get("org_id").toString());
+        		}
+        		rru.setOrgName((String)map.get("org_name"));
+        		rru.setRealName((String)map.get("real_name"));
+        	}
+        	
+        	nrs.addResourceUsing(rru);
+        }
+        
+        return am;
     }
 
     /**

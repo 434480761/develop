@@ -32,6 +32,9 @@ public class TokenAuthenticationProcessFilter4LC extends
 		if(authorization != null && authorization.startsWith("NDR_MAC")){
 			SecurityContextHolder.getContext().setAuthentication(new LcAuthenticationToken());
 			chain.doFilter(request, response);
+		}else if("GET".equals(request.getMethod()) && (authorization == null || !request.getRequestURI().contains("downloadurl"))){
+			SecurityContextHolder.getContext().setAuthentication(new LcAuthenticationToken());
+			chain.doFilter(request, response);
 		}else{
 			super.doFilterInternal(request, response, chain);
 		}
