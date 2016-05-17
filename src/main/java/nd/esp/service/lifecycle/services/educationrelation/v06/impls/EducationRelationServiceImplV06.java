@@ -359,9 +359,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
             		}
             	}
             }
-            
-            //通知报表系统 add by xuzy 20160511
-            nrs.addResourceRelation(resourceRelations);
         }
 
 
@@ -522,9 +519,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                           LifeCircleErrorMessageMapper.UpdateEducationRelationFail);
         }
         
-        //通知报表系统 add by xuzy 20160511
-        nrs.updateResourceRelation(relation);
-
         // 处理返回结果
         EducationRelationModel model = new EducationRelationModel();
         model.setIdentifier(result.getIdentifier());
@@ -585,9 +579,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         List<ResourceRelation> notifyRelationList = new ArrayList<ResourceRelation>();
         notifyRelationList.add(rt);
         notifyService.asynNotify4RelationOnDelete(notifyRelationList);
-        
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(notifyRelationList);
 
         return true;
     }
@@ -695,9 +686,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         //异步通知智能出题
         notifyService.asynNotify4RelationOnDelete(relationsTotal);
         
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(relationsTotal);
-        
         return true;
     }
 
@@ -803,9 +791,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         //add by xiezy - 2016.04.15
         //异步通知智能出题
         notifyService.asynNotify4RelationOnDelete(relationsTotal);
-        
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(relationsTotal);
         
         return true;
     }

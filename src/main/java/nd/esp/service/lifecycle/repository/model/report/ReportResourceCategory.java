@@ -27,9 +27,6 @@ public class ReportResourceCategory extends EspEntity{
 	@Column(name = "create_time")
 	private Timestamp createTime;
 	
-	@Column(name="operation_flag")
-	private String operationFlag;
-	
 	public String getResource() {
 		return resource;
 	}
@@ -68,15 +65,6 @@ public class ReportResourceCategory extends EspEntity{
 
 	public void setCreateTime(Timestamp createTime) {
 		this.createTime = createTime;
-	}
-
-	public String getOperationFlag() {
-		return operationFlag;
-	}
-
-
-	public void setOperationFlag(String operationFlag) {
-		this.operationFlag = operationFlag;
 	}
 
 	@Override

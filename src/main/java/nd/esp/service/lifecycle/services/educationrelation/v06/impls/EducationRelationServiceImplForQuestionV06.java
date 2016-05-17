@@ -204,8 +204,6 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CreateEducationRelationFail);
         }
-        //通知报表系统 add by xuzy 20160511
-        nrs.addResourceRelation(resourceRelations);
 
         // 处理返回结果
         if (!isCreateWithResource) {
@@ -330,8 +328,6 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.UpdateEducationRelationFail);
         }
-        //通知报表系统 add by xuzy 20160511
-        nrs.updateResourceRelation(relation);
 
         // 处理返回结果
         EducationRelationModel model = new EducationRelationModel();
@@ -389,8 +385,6 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
         }
         List<ResourceRelation> notifyRelationList = new ArrayList<ResourceRelation>();
         notifyRelationList.add(rt);
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(notifyRelationList);
 
         return true;
     }
@@ -498,8 +492,6 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
                                           LifeCircleErrorMessageMapper.UpdateBatchRelationFail.getCode(),
                                           e.getMessage());
         }
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(relationsTotal);
         return true;
     }
 
@@ -606,8 +598,6 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
                                           LifeCircleErrorMessageMapper.UpdateBatchRelationFail.getCode(),
                                           e.getMessage());
         }
-        //通知报表系统 add by xuzy 20160511
-        nrs.deleteResourceRelation(relationsTotal);
         return true;
     }
 

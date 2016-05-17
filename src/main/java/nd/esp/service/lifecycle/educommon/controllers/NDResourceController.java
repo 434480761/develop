@@ -1365,10 +1365,12 @@ public class NDResourceController {
     }
     
     @RequestMapping(value = "/{uuid}/downloadurl", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public AccessModel requestDownloading(@PathVariable String res_type,
-            @PathVariable String uuid,
-            @RequestParam(value = "uid", required = true) String uid, @RequestParam(value = "key", required = false) String key,@RequestParam(value = "coverage", required = false) String coverage) {
-//        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
+	public AccessModel requestDownloading(@PathVariable String res_type,
+			@PathVariable String uuid,
+			@RequestParam(value = "uid", required = true) String uid,
+			@RequestParam(value = "key", required = false) String key,
+			@RequestParam(value = "coverage", required = false) String coverage) {
+		//        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         commonServiceHelper.assertDownloadable(res_type);
         //下载接口适配智能出题
         if (CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE.equals(coverage)) {

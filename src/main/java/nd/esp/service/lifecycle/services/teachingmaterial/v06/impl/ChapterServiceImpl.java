@@ -116,9 +116,6 @@ public class ChapterServiceImpl implements ChapterService{
         	LOG.info("教材章节V0.6添加章节成功，id:{}",chapter.getIdentifier());
         }
         
-        //同步推送给报表系统 add by xuzy 20110512
-        nrs.addChapter(chapter);
-        
         return changeChapterToChapterModel(chapter);
     }
     
@@ -234,9 +231,6 @@ public class ChapterServiceImpl implements ChapterService{
         	LOG.info("教材章节V0.6修改章节成功，id:{}",chapter.getIdentifier());
         }
         
-        //同步推送给报表系统 add by xuzy 20110512
-        nrs.updateChapter(chapter);
-        
         return changeChapterToChapterModel(chapter);
     }
 
@@ -326,14 +320,6 @@ public class ChapterServiceImpl implements ChapterService{
         treeService.removeSubTree(current);
         if(LOG.isInfoEnabled()){
         	LOG.info("教材章节V0.6批量删除章节成功,mid:{},cids:{}",mid,chapterIds);
-        }
-        
-        //同步推送给报表系统 add by xuzy 20110512
-        if(CollectionUtils.isNotEmpty(chapterIds)){
-        	for (String id : chapterIds) {
-                nrs.deleteChapterById(id);
-                nrs.deleteResourceRelationBySourceId(resourceType, id);
-			}
         }
         
         return true;
@@ -548,15 +534,6 @@ public class ChapterServiceImpl implements ChapterService{
             LOG.info("教材章节V0.6批量删除章节成功,mid:{},cids:{}", mid, chapterIds);
         }
         
-        //同步推送给报表系统 add by xuzy 20110512
-        if(CollectionUtils.isNotEmpty(chapterIds)){
-        	for (String id : chapterIds) {
-                nrs.deleteChapterById(id);
-                nrs.deleteResourceRelationBySourceId(resourceType, id);
-			}
-        }
-
-
         return true;
     }
     
