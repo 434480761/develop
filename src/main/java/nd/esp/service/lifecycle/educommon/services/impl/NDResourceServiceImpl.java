@@ -1149,6 +1149,10 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getMessage());
         }
+        
+        //同步推送至报表系统 add by xuzy 20160518
+        nds.deleteResourceCategory(uuid);
+        nds.deleteResource(resourceType, uuid);
     }
     
     /**
