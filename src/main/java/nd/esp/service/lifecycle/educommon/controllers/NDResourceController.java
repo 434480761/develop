@@ -1390,7 +1390,7 @@ public class NDResourceController {
 			@AuthenticationPrincipal UserInfo userInfo,
 			HttpServletRequest request) {
 		//        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
-        commonServiceHelper.assertDownloadable(res_type);
+    	commonServiceHelper.assertDownloadable(res_type);
         //下载接口适配智能出题
         if (CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE.equals(coverage)) {
             AccessModel accessModel = new AccessModel();
@@ -1400,24 +1400,27 @@ public class NDResourceController {
         AccessModel am = ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
         
         //同步至报表系统  add by xuzy 20160517
-        if(userInfo != null && nrs.checkCoverageIsNd(res_type,uuid)){
+        if(nrs.checkCoverageIsNd(res_type,uuid)){
         	long time = System.currentTimeMillis();
         	ReportResourceUsing rru = new ReportResourceUsing();
         	rru.setResourceId(uuid);
         	rru.setBizSys(request.getHeader("bsyskey"));
         	rru.setIdentifier(UUID.randomUUID().toString());
-        	rru.setUserId(userInfo.getUserId());
+        	
         	rru.setCreateTime(new Timestamp(time));
         	rru.setLastUpdate(new BigDecimal(time));
-        	if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
-        		Map<String,Object> map = userInfo.getOrgExinfo();
-        		if(map.get("org_id") != null){
-        			rru.setOrgId(map.get("org_id").toString());
-        		}
-        		rru.setOrgName((String)map.get("org_name"));
-        		rru.setRealName((String)map.get("real_name"));
-        	}
         	
+        	if(userInfo != null){
+            	rru.setUserId(userInfo.getUserId());
+            	if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
+            		Map<String,Object> map = userInfo.getOrgExinfo();
+            		if(map.get("org_id") != null){
+            			rru.setOrgId(map.get("org_id").toString());
+            		}
+            		rru.setOrgName((String)map.get("org_name"));
+            		rru.setRealName((String)map.get("real_name"));
+            	}
+        	}
         	nrs.addResourceUsing(rru);
         }
         
