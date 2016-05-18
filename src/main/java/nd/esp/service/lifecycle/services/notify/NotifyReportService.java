@@ -30,6 +30,8 @@ public interface NotifyReportService {
 	public void updateCategoryData(CategoryDataModel cdm);
 	public void deleteCategoryData(String identifier);
 	
+	public boolean checkCoverageIsNd(String resourceType,String identifier);
+	
 	public void addResourceUsing(ReportResourceUsing rru);
 	
 	public void notifyReport4Resource(String resourceType,ResourceModel rm,OperationType ot);
