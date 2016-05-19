@@ -276,7 +276,7 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 							rcList.add(rrc);
 						}
 					}
-					updateResourceLastTime(resType,resource);
+					updateResource4Coverage(resType,resource);
 				}
 			}
 			
@@ -409,9 +409,45 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 		return rnd;
 	}
 	
-	private void updateResourceLastTime(String resType,String uuid){
-		String sql = "update ndresource set last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"'";
-		reportJdbcTemplate.execute(sql);
+	private void updateResource4Coverage(String resType,String uuid){
+		try {
+			ReportNdResource rr = rnrr.get(uuid);
+			if(rr != null){
+				String sql = "update ndresource set last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"'";
+				reportJdbcTemplate.execute(sql);
+			}else{
+				String sql = "select identifier,title,description,estatus,enable,create_time from ndresource where primary_category='"+resType+"' and identifier='"+uuid+"'";
+				List<Map<String,Object>> resultList = null;
+				if(CommonServiceHelper.isQuestionDb(resType)){
+					resultList = questionJdbcTemplate.queryForList(sql);
+				}else{
+					resultList = defaultJdbcTemplate.queryForList(sql);
+				}
+				if(CollectionUtils.isNotEmpty(resultList)){
+					Map<String,Object> map = resultList.get(0);
+					String identifier = (String)map.get("identifier");
+					String title = (String)map.get("title");
+					String description = (String)map.get("description");
+					String estatus = (String)map.get("estatus");
+					Boolean enable = (Boolean)map.get("enable");
+					Long createTime = (Long)map.get("create_time");
+					rr = new ReportNdResource();
+					rr.setCreateTime(new Timestamp(createTime));
+					rr.setDescription(description);
+					rr.setEnable(enable);
+					rr.setIdentifier(identifier);
+					rr.setLastUpdate(new BigDecimal(System.currentTimeMillis()));
+					rr.setPrimaryCategory(resType);
+					rr.setStatus(estatus);
+					rr.setTitle(title);
+					rnrr.add(rr);
+				}
+			}
+		} catch (EspStoreException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getMessage());
+		}
+		
 	}
 
 }
