@@ -566,7 +566,9 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,String> locations = new HashMap<String,String>();
         for(String key : targetsMetadata.keySet()) {
             metaMap.put(key, ObjectUtils.toJson(targetsMetadata.get(key)));
-            locations.put(key,"${ref-path}"+param.getTarget_location()+"/transcode/audios/"+NameWithoutEx+"."+key);
+            String target = targetsMap.get(key);
+            String name =  target.substring(target.lastIndexOf(File.separator)+File.separator.length());
+            locations.put(key,"${ref-path}"+param.getTarget_location()+"/transcode/audios/"+name);
          }
         result.setLocations(locations);
         result.setMetadata(metaMap);
