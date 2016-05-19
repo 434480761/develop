@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <convert-rules>
-	<rule id="audioNotConvert">
+<!--  	<rule id="audioNotConvert">
 		<fileType>mp3</fileType>
 		<command name="main">
 			<os name="Default"/>
 		</command>
-	</rule>
+	</rule>-->
 
 	<rule id="audioConvert">
-		<fileType>wma, m4a, aac, wav, flac</fileType>
+		<fileType>wma, m4a, aac, wav, flac, mp3</fileType>
 		<command name="main">
 			<os name="Default">
 				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#target#"
