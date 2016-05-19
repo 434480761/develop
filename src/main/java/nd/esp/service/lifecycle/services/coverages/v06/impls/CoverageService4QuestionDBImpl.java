@@ -155,7 +155,7 @@ public class CoverageService4QuestionDBImpl implements CoverageService{
         }
         
         //同步推送至报表系统 add by xuzy 20160511
-        if(CollectionUtils.isNotEmpty(coverageModels)){
+        if(!isCreateWithResource && CollectionUtils.isNotEmpty(coverageModels)){
         	nrs.notifyReport4AddCoverage(coverageModels.get(0).getResType(), coverageModels);
         }
         return resultList;

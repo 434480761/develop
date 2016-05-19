@@ -1093,12 +1093,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         
         //同步推送至报表系统 add by xuzy 20160512
         nds.deleteResourceCategory(uuid);
-        nds.deleteResourceRelationBySourceId(resourceType,uuid);
-        if(IndexSourceType.TeachingMaterialType.getName().equals(resourceType) || 
-              IndexSourceType.GuidanceBooksType.getName().equals(resourceType)){
-        	nds.deleteChapterByTmId(uuid);
-        }
-        
+        nds.deleteResource(resourceType, uuid);
     }
     
     /**
@@ -1154,6 +1149,10 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getMessage());
         }
+        
+        //同步推送至报表系统 add by xuzy 20160518
+        nds.deleteResourceCategory(uuid);
+        nds.deleteResource(resourceType, uuid);
     }
     
     /**

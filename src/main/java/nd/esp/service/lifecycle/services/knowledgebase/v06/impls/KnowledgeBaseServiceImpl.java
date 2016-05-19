@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
 import nd.esp.service.lifecycle.services.knowledgebase.v06.KnowledgeBaseService;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByCond(String kcid,
 			String kpid, String knTitle) {
 		return kbd.queryKnowledgeBaseListByCond(kcid, kpid, knTitle);
+	}
+	
+	@Override
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(String kcCode,String title){
+		return kbd.queryKnowledgeBaseListByKcCode(kcCode, title);
 	}
 
 	@Override
@@ -80,7 +86,12 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 	public List<KnowledgeBaseModel> batchCreateKnowledgeBase(
 			KnowledgeBaseModel kbm) {
 		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
-		List<String> kpIds = kbd.queryKpIdByKcId(kbm.getKcid());
+		List<String> kpIds = null;
+		if(StringUtils.isNotEmpty(kbm.getKcCode())){
+			kpIds = kbd.queryKpIdByKcCode(kbm.getKcCode());
+		}else{
+			kpIds = kbd.queryKpIdByKcId(kbm.getKcid());
+		}
 		List<KnowledgeBase> kbList = new ArrayList<KnowledgeBase>();
 		if(CollectionUtils.isNotEmpty(kpIds)){
 			for (String string : kpIds) {

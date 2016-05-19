@@ -35,6 +35,7 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 	@Override
 	public KnowledgeBaseModel createKnowledgeBase(KnowledgeBaseModel kbm) {
 		KnowledgeBase kb = BeanMapperUtils.beanMapper(kbm, KnowledgeBase.class);
+		kb.setPrimaryCategory("knowledgebases");
 		try {
 			kb = knowledgeBaseRepository.add(kb);
 		} catch (EspStoreException e) {
@@ -230,5 +231,59 @@ public class KnowledgeBaseDaoImpl implements KnowledgeBaseDao {
 			}
 		}
 		return resultList;
+	}
+
+	@Override
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(
+			String kcCode, String title) {
+		List<KnowledgeBaseModel> returnList = new ArrayList<KnowledgeBaseModel>();
+		String sql = null;
+		if(StringUtils.isNotEmpty(title)){
+			title = "%"+title+"%";
+			sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname,cd1.identifier as kcid FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cd1.nd_code =:kcCode and cr.source=cd1.identifier and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier and (nd.title like :title or nd.description like :title)";
+		}else{
+			sql = "SELECT kb.identifier,kb.knid,kb.kpid,nd.title,nd.description,nd.creator,nd.create_time,cd1.title as kcname,cd2.title as kpname,cd1.identifier as kcid FROM knowledge_base kb,ndresource nd,category_relations cr,category_datas cd1,category_datas cd2 where cr.source=cd1.identifier and cr.target = cd2.identifier and cd1.nd_code =:kcCode and cr.source=cd1.identifier and kb.kpid = cr.target and nd.primary_category = 'knowledges' and nd.enable = 1 and kb.knid = nd.identifier";
+		}
+		
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kcCode", kcCode);
+		if(StringUtils.isNotEmpty(title)){
+			query.setParameter("title", title);
+		}
+		List<Object[]> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Object[] o : list) {
+				KnowledgeBaseModel kbm = new KnowledgeBaseModel();
+				kbm.setIdentifier((String)o[0]);
+				kbm.setKnid((String)o[1]);
+				kbm.setKpid((String)o[2]);
+				kbm.setTitle((String)o[3]);
+				kbm.setDescription((String)o[4]);
+				kbm.setCreator((String)o[5]);
+				if(o[6] != null){
+					kbm.setCreateTime(new Date(((BigInteger)o[6]).longValue()));
+				}
+				kbm.setKcName((String)o[7]);
+				kbm.setKpName((String)o[8]);
+				kbm.setKcid((String)o[9]);
+				returnList.add(kbm);
+			}
+		}
+		return returnList;
+	}
+
+	@Override
+	public List<String> queryKpIdByKcCode(String kcCode) {
+		List<String> returnList = new ArrayList<String>();
+		String sql = "select cr.target from category_relations cr,category_datas cd where source = cd.identifier and cd.nd_code = :kcCode";
+		Query query = em.createNativeQuery(sql);
+		query.setParameter("kcCode", kcCode);
+		List<String> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (String s : list) {
+				returnList.add(s);
+			}
+		}
+		return returnList;
 	}
 }

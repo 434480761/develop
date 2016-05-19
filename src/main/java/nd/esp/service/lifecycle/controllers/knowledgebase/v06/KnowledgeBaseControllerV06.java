@@ -63,6 +63,24 @@ public class KnowledgeBaseControllerV06 {
 	}
 	
 	/**
+	 * 批量创建知识库
+	 * @param kbvm
+	 * @return
+	 */
+	@RequestMapping(value="/batchAddForCode", method = { RequestMethod.POST }, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<KnowledgeBaseViewModel> batchCreateKnowledgeBaseForCode(@RequestBody KnowledgeBaseViewModel kbvm){
+		KnowledgeBaseModel kbm = BeanMapperUtils.beanMapper(kbvm, KnowledgeBaseModel.class);
+		List<KnowledgeBaseModel> list = kbs.batchCreateKnowledgeBase(kbm);
+		List<KnowledgeBaseViewModel> returnList = new ArrayList<KnowledgeBaseViewModel>();
+		if(CollectionUtils.isNotEmpty(list)){
+			for (KnowledgeBaseModel k : list) {
+				returnList.add(BeanMapperUtils.beanMapper(k, KnowledgeBaseViewModel.class));
+			}
+		}
+		return returnList;
+	}
+	
+	/**
 	 * 根据知识类型，知识子结构，知识点名称查询知识库列表
 	 */
 	@RequestMapping(value = "/query",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -75,6 +93,23 @@ public class KnowledgeBaseControllerV06 {
 			kbvmList = kbs.queryKnowledgeBaseListByKpid(kcid);
 		}
 		
+		if(CollectionUtils.isNotEmpty(kbvmList)){
+			for (KnowledgeBaseModel knowledgeBaseModel : kbvmList) {
+				KnowledgeBaseViewModel kbvm = new KnowledgeBaseViewModel();
+				kbvm = BeanMapperUtils.beanMapper(knowledgeBaseModel, KnowledgeBaseViewModel.class);
+				returnList.add(kbvm);
+			}
+		}
+		return returnList;
+	}
+	
+	/**
+	 * 根据知识类型，知识点名称查询知识库列表
+	 */
+	@RequestMapping(value = "/queryByKcCode",method = { RequestMethod.GET }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<KnowledgeBaseViewModel> queryKnowledgeBaseByKcCode(@RequestParam(required=true,value="kc_code") String kcCode,@RequestParam(required=false) String title){
+		List<KnowledgeBaseViewModel> returnList = new ArrayList<KnowledgeBaseViewModel>();
+		List<KnowledgeBaseModel> kbvmList = kbs.queryKnowledgeBaseListByKcCode(kcCode, title);
 		if(CollectionUtils.isNotEmpty(kbvmList)){
 			for (KnowledgeBaseModel knowledgeBaseModel : kbvmList) {
 				KnowledgeBaseViewModel kbvm = new KnowledgeBaseViewModel();

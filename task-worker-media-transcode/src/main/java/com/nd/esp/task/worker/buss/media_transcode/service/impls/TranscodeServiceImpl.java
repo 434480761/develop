@@ -69,7 +69,6 @@ import com.nd.esp.task.worker.buss.media_transcode.support.LifeCircleException;
 import com.nd.esp.task.worker.buss.media_transcode.utils.ArrayUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.CollectionUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.HttpClientUtils;
-import com.nd.esp.task.worker.buss.media_transcode.utils.JDomUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.PackageUtil;
 import com.nd.esp.task.worker.buss.media_transcode.utils.SessionUtil;
 import com.nd.esp.task.worker.buss.media_transcode.utils.StringUtils;
@@ -92,13 +91,8 @@ public class TranscodeServiceImpl implements TranscodeService {
     private final static Logger LOG = LoggerFactory
             .getLogger(TranscodeServiceImpl.class);
 
-    @Autowired
-    private JDomUtils jDomUtils;
 
-
-    private final static String zipFileTempDir = FileUtils.getTempDirectoryPath().endsWith(File.separator)?
-            FileUtils.getTempDirectoryPath() + "lifecircle" + File.separator + "transcode_temp" :
-            FileUtils.getTempDirectoryPath() + File.separator + "lifecircle" + File.separator + "transcode_temp";
+    private static String zipFileTempDir = System.getProperty("java.io.tmpdir");
     
     public final static long chunkMax = 50L*1024*1024;//文件超过chunkMax(Byte)就要进行分块上传
     public final static long chunkNumMax = 20;//最多并行发送的分块数
@@ -112,6 +106,13 @@ public class TranscodeServiceImpl implements TranscodeService {
     public static final String TRANSCODE_SUBTYPE = "subtype";
     public static final String SUBTYPE_VIDEO = "video";
     public static final String SUBTYPE_AUDIO = "audio";
+    
+    static {
+        if(zipFileTempDir.endsWith(File.separator)) {
+            zipFileTempDir+=File.separator; 
+        }
+        zipFileTempDir = zipFileTempDir + "lifecircle" + File.separator + "transcode_temp" ;
+    }
 
     
     public TranscodeServiceImpl(){
@@ -456,13 +457,13 @@ public class TranscodeServiceImpl implements TranscodeService {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "LC/MEDIA_TRANSCODE_FAIL","目标格式targetFmt为空");
         }
-        String targetFileName = NameWithoutEx+"."+extParam.get("targetFmt");
+//        String targetFileName = NameWithoutEx+"."+extParam.get("targetFmt");
         String srcDir = zipFileTempDir+File.separator+id+File.separator+"src";
         String destDir = zipFileTempDir+File.separator+id+File.separator+"targets";
         
         List<String> cmds = param.getCommands();
         extParam.put("src", srcDir+File.separator+srcFileName);
-        extParam.put("target", destDir+File.separator+targetFileName);
+//        extParam.put("target", destDir+File.separator+targetFileName);
         FileUtils.forceMkdir(new File(srcDir));
         FileUtils.forceMkdir(new File(destDir));
         
@@ -493,49 +494,65 @@ public class TranscodeServiceImpl implements TranscodeService {
         LOG.info("srcMetadata: "+ObjectUtils.toJson(srcMetadata));
         logMsg.append("  srcMetadata: "+ObjectUtils.toJson(srcMetadata)+System.getProperty("line.separator"));
         
+        Map<String,String> targetsMap = new HashMap<String,String>();
         if(!cmds.isEmpty() && StringUtils.isNotEmpty(cmds.get(0))) {
+            for(ListIterator<String> iter = cmds.listIterator(); iter.hasNext(); ) {
+                String cmd=iter.next();
+                if(cmd.contains("oggenc2")) {
+                    targetsMap.put("href-ogg", destDir+File.separator+NameWithoutEx+".ogg");
+                    iter.set(cmd.replace("#target#", targetsMap.get("href-ogg")));
+                } else {
+                    targetsMap.put("href", destDir+File.separator+NameWithoutEx+".mp3");
+                    iter.set(cmd.replace("#target#", targetsMap.get("href")));
+                }
+            }
             executeTranscodeCmds(cmds, extParam, path, logMsg);
         } else {
-            extParam.put("target", extParam.get("src"));
+            targetsMap.put("href", extParam.get("src"));
         }
         
         LOG.info("转码过程消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms");
         logMsg.append("转码过程消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms"+System.getProperty("line.separator"));
         timeStart = System.currentTimeMillis();
 
-        String localFilePath = extParam.get("target");
-        Map<String,String> targetMetadata = new HashMap<String,String>();
-        if(!extParam.get("src").equals(localFilePath)) {
-            long targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
-            LOG.info("  targetMetadata: "+ObjectUtils.toJson(targetMetadata));
-            logMsg.append("  targetMetadata: "+ObjectUtils.toJson(targetMetadata)+System.getProperty("line.separator"));
-            if(srcDuration>0 && targetDuration>0 && !logMsg.toString().contains("Run command:ffprobe") 
-                    && java.lang.Math.abs(targetDuration-srcDuration)>20.0) {
-                
-                LOG.warn("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");
-                logMsg.append("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");
-                result.setErrMsg("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");    
-            }
-            File targetFile = new File(localFilePath);
-            if(!targetFile.exists()){
-                String msg = "Upload File \""+localFilePath+"\" doesn't exist!";
-                LOG.error(msg);
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "LC/MEDIA_TRANSCODE_FAIL",msg);
-            }      
+        result.setHref("${ref-path}"+param.getTarget_location()+"/transcode/audios/"+NameWithoutEx+".mp3");
+        Map<String,Map<String,String>> targetsMetadata = new HashMap<String,Map<String,String>>();
+        for(String key : targetsMap.keySet()) {
+            String localFilePath = targetsMap.get(key);
+            String targetFileName = localFilePath.substring(localFilePath.lastIndexOf(File.separator)+File.separator.length());
             
-            logMsg.append("  Upload File: \""+localFilePath+System.getProperty("line.separator"));
-            LOG.info("Upload File: \""+localFilePath);
-            String rt = null;
-            if (targetFile.isFile()) {
-                rt = UploadFileToCS(targetFile, param.getTarget_location()+"/transcode/audios",
-                        targetFileName, param.getSession(),
-                        param.getCs_api_url(), logMsg);
+            if(!extParam.get("src").equals(localFilePath)) {
+                Map<String,String> targetMetadata = new HashMap<String,String>();
+                long targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
+                targetsMetadata.put(key, targetMetadata);
+                LOG.info("  targetMetadata: "+ObjectUtils.toJson(targetMetadata));
+                logMsg.append("  targetMetadata: "+ObjectUtils.toJson(targetMetadata)+System.getProperty("line.separator"));
+                if(srcDuration>0 && targetDuration>0 && !logMsg.toString().contains("Run command:ffprobe") 
+                        && java.lang.Math.abs(targetDuration-srcDuration)>20.0) {
+                    
+                    LOG.warn("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");
+                    logMsg.append("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");
+                    result.setErrMsg("转码目标文件与原文件时长不符: src="+srcDuration+"s; target="+targetDuration+"s");
+                }
+                File targetFile = new File(localFilePath);
+                if(!targetFile.exists()){
+                    String msg = "Upload File \""+localFilePath+"\" doesn't exist!";
+                    LOG.error(msg);
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "LC/MEDIA_TRANSCODE_FAIL",msg);
+                }      
+                
+                logMsg.append("  Upload File: \""+localFilePath+System.getProperty("line.separator"));
+                LOG.info("Upload File: \""+localFilePath);
+                if (targetFile.isFile()) {
+                    UploadFileToCS(targetFile, param.getTarget_location()+"/transcode/audios",
+                            targetFileName, param.getSession(),
+                            param.getCs_api_url(), logMsg);
+                }
+            } else {
+                targetsMetadata.put("href", srcMetadata);
+                result.setHref("${ref-path}"+param.getLocation().replaceAll(".*path=", ""));
             }
-            result.setHref("${ref-path}"+param.getTarget_location()+"/transcode/audios/"+targetFileName);
-        } else {
-            targetMetadata = srcMetadata;
-            result.setHref("${ref-path}"+param.getLocation().replaceAll(".*path=", ""));
         }
         
         FileUtils.deleteQuietly(new File(zipFileTempDir+File.separator+id));
@@ -546,9 +563,11 @@ public class TranscodeServiceImpl implements TranscodeService {
         
         Map<String,String> metaMap = new HashMap<String,String>();
         metaMap.put("source", ObjectUtils.toJson(srcMetadata));
-        metaMap.put(extParam.get("targetFmt"), ObjectUtils.toJson(targetMetadata));
         Map<String,String> locations = new HashMap<String,String>();
-        locations.put("href", result.getHref());
+        for(String key : targetsMetadata.keySet()) {
+            metaMap.put(key, ObjectUtils.toJson(targetsMetadata.get(key)));
+            locations.put(key,"${ref-path}"+param.getTarget_location()+"/transcode/audios/"+NameWithoutEx+"."+key);
+         }
         result.setLocations(locations);
         result.setMetadata(metaMap);
         result.setStatus(1);
@@ -569,7 +588,6 @@ public class TranscodeServiceImpl implements TranscodeService {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "LC/MEDIA_TRANSCODE_FAIL","目标格式targetFmt为空");
         }
-        String targetFileName = NameWithoutEx+"."+extParam.get("targetFmt");
         String srcDir = zipFileTempDir+File.separator+id+File.separator+"src";
         String destDir = zipFileTempDir+File.separator+id+File.separator+"targets";
         String previewDir = zipFileTempDir+File.separator+id+File.separator+"previews";
@@ -580,7 +598,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         
         List<String> cmds = param.getCommands();
         extParam.put("src", srcDir+File.separator+srcFileName);
-        extParam.put("target", destDir+File.separator+targetFileName);
+        extParam.put("target", destDir+File.separator+NameWithoutEx+"."+extParam.get("targetFmt"));
         extParam.put("targetPreview", previewDir);
         extParam.put("targetCover", coverDir);
         
@@ -623,7 +641,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         }
         
         Map<String,String> targetsMap = new HashMap<String,String>();
-        String defaultKey = filterMutiTargetCmds(cmds, srcMetadata, targetsMap, destDir, targetFileName);
+        String defaultKey = filterMutiTargetCmds(cmds, srcMetadata, targetsMap, destDir, NameWithoutEx);
         
         executeTranscodeCmds(cmds, extParam, path, logMsg);
         
@@ -633,6 +651,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,Map<String,String>> targetsMetadata = new HashMap<String,Map<String,String>>();
         for(String key : targetsMap.keySet()) {
             String localFilePath = targetsMap.get(key);
+            String targetFileName = localFilePath.substring(localFilePath.lastIndexOf(File.separator)+File.separator.length());
             Map<String,String> targetMetadata = new HashMap<String,String>();
             long targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
             targetsMetadata.put(key, targetMetadata);
@@ -666,11 +685,10 @@ public class TranscodeServiceImpl implements TranscodeService {
             }
         }
         
-        String rt = null;
         List<String> previewList = new ArrayList<String>();
         int previewCount = 1;
         for(File thumbnail:preview.listFiles()) {
-            rt = UploadFileToCS(thumbnail, param.getTarget_location()+"/transcode/previews", thumbnail.getName(), param.getSession(),
+            UploadFileToCS(thumbnail, param.getTarget_location()+"/transcode/previews", thumbnail.getName(), param.getSession(),
                     param.getCs_api_url(), logMsg);
             if(thumbnail.getName().contains("frame1")) {
                 previewList.add(param.getTarget_location()+"/transcode/previews/" + thumbnail.getName());
@@ -681,7 +699,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         }
         File coverImage = new File(coverDir+File.separator+"1.jpg");
         if(coverImage.exists()) {
-            rt = UploadFileToCS(coverImage, param.getTarget_location()+"/transcode/previews", "cover.jpg", param.getSession(),
+            UploadFileToCS(coverImage, param.getTarget_location()+"/transcode/previews", "cover.jpg", param.getSession(),
                     param.getCs_api_url(), logMsg);
             result.setCover(param.getTarget_location()+"/transcode/previews/cover.jpg");
         } else {
@@ -693,16 +711,22 @@ public class TranscodeServiceImpl implements TranscodeService {
         LOG.info("上传消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms");
         logMsg.append("上传消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms"+System.getProperty("line.separator"));
         
-        result.setHref("${ref-path}"+param.getTarget_location()+"/transcode/videos/"+defaultKey+"/"+targetFileName);
+        String defaultTarget = targetsMap.get(defaultKey);
+        String defaultName =  defaultTarget.substring(defaultTarget.lastIndexOf(File.separator)+File.separator.length());
+        result.setHref("${ref-path}"+param.getTarget_location()+"/transcode/videos/"+defaultKey+"/"+defaultName);
         result.setPreviews(previewList);
         Map<String,String> metaMap = new HashMap<String,String>();
         metaMap.put("source", ObjectUtils.toJson(srcMetadata));
-        metaMap.put(extParam.get("targetFmt"), ObjectUtils.toJson(targetsMetadata.get(defaultKey)));
         Map<String,String> locations = new HashMap<String,String>();
-        locations.put(defaultKey, result.getHref());
         for(String key : targetsMetadata.keySet()) {
-           metaMap.put(key, ObjectUtils.toJson(targetsMetadata.get(key)));
-           locations.put(key,"${ref-path}"+param.getTarget_location()+"/transcode/videos/"+key+"/"+targetFileName);
+            String finalKey = "href-"+key;
+            if(key.contains(defaultKey)) {
+                finalKey = finalKey.replace("-"+defaultKey, "");
+            } 
+            metaMap.put(finalKey, ObjectUtils.toJson(targetsMetadata.get(key)));
+            String target = targetsMap.get(key);
+            String name =  target.substring(target.lastIndexOf(File.separator)+File.separator.length());
+            locations.put(finalKey,"${ref-path}"+param.getTarget_location()+"/transcode/videos/"+key+"/"+name);
         }
         result.setLocations(locations);
         result.setMetadata(metaMap);
@@ -712,7 +736,7 @@ public class TranscodeServiceImpl implements TranscodeService {
     }
     
     private static String filterMutiTargetCmds(List<String> cmds, Map<String,String> metaMap,
-            Map<String,String> targetsMap, String destDir, String targetFileName) throws IOException {
+            Map<String,String> targetsMap, String destDir, String nameWithNoEx) throws IOException {
 
         int height = 0;
         int width = 0;
@@ -722,132 +746,77 @@ public class TranscodeServiceImpl implements TranscodeService {
             width = new BigDecimal(metaMap.get("Width")).intValue();
         }
         
-        int rotation = 0;
-//        if(StringUtils.isNotEmpty(metaMap.get("Rotation"))) {
-//            rotation = new BigDecimal(metaMap.get("Rotation")).intValue();
-//        }
+        if(height<360||width<640) {
+            height=360;
+            width=640;
+        }
+        
         
         int maxHeight = 0;
-        String origCmd = null;
         ListIterator<String> iter = cmds.listIterator();
         while(iter.hasNext()) {
             String command = iter.next();
             if(command.startsWith("ffmpeg")) {
-                String [] strArgs = command.split("\\s+");
-                for(int j=0; j<strArgs.length; ++j) {
-                    if("-s".equalsIgnoreCase(strArgs[j])) {
-                        if(null == origCmd) {
-                            List<String> listArgs = new LinkedList<String>(Arrays.asList(strArgs));
-                            listArgs.set(j+1, width+"x"+height);
-                            origCmd = StringUtils.join(listArgs, " ");
+                List<Integer> scale = new ArrayList<Integer>();
+                GetScaleParam(command, scale);
+                if(!scale.isEmpty()) {
+                    int argWidth = scale.get(0).intValue();
+                    int argHeight = scale.get(1).intValue();
+                    if(argWidth>width || argHeight>height) {
+                        iter.remove();
+                    } else {
+                        if(argHeight>maxHeight) {
+                            maxHeight=argHeight;
                         }
-                        String [] strScales = strArgs[j+1].toLowerCase().split("x");
-                        int argWidth = Integer.parseInt(strScales[0]);
-                        int argHeight = Integer.parseInt(strScales[1]);
-                        if(argWidth>width || argHeight>height) {
-                            iter.remove();
+                        String targetKey = argHeight + "p";
+                        String finalFilename = nameWithNoEx;
+                        if(command.startsWith("ffmpeg2theora")) {
+                            targetKey += "-ogv";
+                            finalFilename += ".ogv";
                         } else {
-                            if(argHeight>maxHeight) {
-                                maxHeight=argHeight;
-                            }
-                            String target = destDir+File.separator+argHeight+"p"+File.separator+targetFileName;
-                            iter.set(command.replace("#target#", target));
-                            targetsMap.put(argHeight+"p", target);
-                            FileUtils.forceMkdir(new File(destDir+File.separator+argHeight+"p"));
+                            finalFilename += ".mp4";
                         }
+                        String target = destDir+File.separator+targetKey+File.separator+finalFilename;
+                        iter.set(command.replace("#target#", target));
+                        targetsMap.put(targetKey, target);
+                        FileUtils.forceMkdir(new File(destDir+File.separator+targetKey));
                     }
                 }
-                
-//                if(rotation!=0) {
-//                    
-//                }
             }
-        }
-        
-        if( (height<360||width<640) && !cmds.get(0).startsWith("ffmpeg") ) {
-            String target = destDir+File.separator+"360p"+File.separator+targetFileName;
-            cmds.add(0, origCmd.replace("#target#", target));
-            targetsMap.put("360p", target);
-            FileUtils.forceMkdir(new File(destDir+File.separator+"360p"));
-            maxHeight=360;
         }
         
         return maxHeight+"p";
     }
     
-    static class MultiTargetThread implements Callable<MultiTargetThread> {
-        private String command; 
-        private Map<String,String> extParam;
-        private String toolPath;
-        private StringBuffer logMsg;
-        private StringBuffer output;
-        private int result;
-        
-        public StringBuffer getLogMsg() {
-            return logMsg;
-        }
-        
-        public StringBuffer getOutput() {
-            return output;
-        }
-        
-        public int getResult() {
-            return result;
-        }
-        
-        MultiTargetThread(String command, Map<String,String> extParam,
-                String toolPath) {
-            this.command = command;
-            this.extParam = extParam;
-            this.toolPath = toolPath;
-            this.logMsg = new StringBuffer();
-            this.output = new StringBuffer();
-        }
-        
-        public MultiTargetThread call() throws Exception{
-            command = parseParam(command, extParam);
-            result = RunCommand(command,output,toolPath,logMsg);
-            return this;
+    
+    private static void GetScaleParam(String cmd, List<Integer> scale) {
+        String [] strArgs = cmd.split("\\s+");
+        for(int j=0; j<strArgs.length; ++j) {
+            if("-s".equalsIgnoreCase(strArgs[j])) {
+                String [] strScales = strArgs[j+1].toLowerCase().split("x");
+                scale.add(0, Integer.valueOf(strScales[0]));
+                scale.add(1, Integer.valueOf(strScales[1]));
+            }
+            
+            if("--width".equalsIgnoreCase(strArgs[j])) {
+                scale.add(0, Integer.valueOf(strArgs[j+1]));
+            }
+            if("--height".equalsIgnoreCase(strArgs[j])) {
+                scale.add(1, Integer.valueOf(strArgs[j+1]));
+            }
         }
     }
+    
     
     private static void executeTranscodeCmds(List<String> cmds, Map<String,String> extParam,
             String path, StringBuffer logMsg) throws Exception{
         StringBuffer output = new StringBuffer();
-        List<Callable<MultiTargetThread>> tasks = new ArrayList<Callable<MultiTargetThread>>();
         List<String> otherCmds = new ArrayList<String>();
         for(int i=0; i<cmds.size(); ++i) {
             String [] strArgs = cmds.get(i).split("#");
             String finalCommand = parseParam(cmds.get(i), extParam);
-            
-//            if(finalCommand.startsWith("ffmpeg")) {
-//                tasks.add(new MultiTargetThread(finalCommand, extParam, path));
-//            } else {
-                otherCmds.add(finalCommand);
-//            }
+            otherCmds.add(finalCommand);
         }
-        
-//        List<Future<MultiTargetThread>> results = executorService.invokeAll(tasks);
-//        for(Future<MultiTargetThread> result : results) {
-//            try {
-//                MultiTargetThread rt = result.get();
-//                String out = rt.getOutput().toString();
-//                int rtValue = rt.getResult();
-//                if(rtValue!=0) {
-//                    int msgStartIndex=out.length()-100<0 ? 0 : out.length()-100;
-//                    if(out.lastIndexOf("Please")!=-1) {
-//                        msgStartIndex = out.lastIndexOf("Please");
-//                    }
-//                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-//                            "LC/MEDIA_TRANSCODE_FAIL","转码工具执行错误："+out.substring(msgStartIndex));
-//                }
-//            } catch (ExecutionException e1) {
-//                LOG.error("转码工具执行错误：",e1);
-//                if(e1.getCause()!=null) {
-//                    throw (Exception)e1.getCause();
-//                }
-//            }
-//        }
         
         for(String command : otherCmds) {
             int resultValue = RunCommand(command, output, path, logMsg);
@@ -1190,39 +1159,19 @@ public class TranscodeServiceImpl implements TranscodeService {
         String userDir = System.getProperty("user.dir");
         String path = TranscodeServiceImpl.class.getClassLoader().getResource("tools").getPath();
         
-        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp4\",\"coverNum\":\"16\",\"subtype\":\"video\"},\"target_location\":\"/edu/esp/assets/638b0286-18f5-45c3-bbea-b326241b50b5.pkg\",\"task_execute_env\":\"product\",\"session\":\"f3213692-aefa-4fcc-a14b-1268d5858a14\",\"location\":\"http://cs.101.com/v0.1/download?path=/edu/esp/assets/638b0286-18f5-45c3-bbea-b326241b50b5.pkg/1452252623030.mp4\",\"cs_api_url\":\"http://cs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"thumbnail -in \\\"#src#\\\" -picint #intervalTime# -s 160x120 -out \\\"#targetCover#\\\" -join 4x4\",\"ffmpeg -y -ss 5 -i \\\"#src#\\\" -frames 1 -f image2 #targetPreview#/frame1.jpg\"],\"callback_api\":\"http://esp-lifecycle.web.sdp.101.com/v0.6/assets/transcode/videoCallback\"}";
+        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp3\",\"coverNum\":\"16\",\"subtype\":\"audio\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg\",\"task_execute_env\":\"integration\",\"session\":\"f4f55ec9-8973-4253-9cd2-6c66b32d7d76\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg/1461833996426.wav\",\"cs_api_url\":\"http://betacs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -ab 128k -c:a libmp3lame -vn \\\"#target#\\\"\",\"ffmpeg.exe -i \\\"#src#\\\" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o \\\"#target#\\\"\"],\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\"}";
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
-        //param.setLocation("http://sdpcs.beta.web.sdp.101.com/v0.1/download?path=/dev_content_edu/test_media/wildlife.wmv");
-//        param.setCs_api_url("http://sdpcs.beta.web.sdp.101.com/v0.1");
-//        param.setSession("7d641af8-57ca-400b-a7a2-0fb8e8ddadd0");
-//        param.setTarget_location("/dev_content_edu/esp/assets/1117678e-e65a-4b3e-aede-d026d54ef222.pkg");
-//        param.setCallback_api("http://esp-lifecycle.dev.web.nd/v0.6/assets/transcode/videoCallback");
-//        List<String> cmds = new ArrayList<String>();
-//        cmds.add("ffmpeg -i #src# -y -ab 48k -s 480x270 -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v -map 0:a:0 -ac 2 #target#");
-//        cmds.add("thumbnail -in #target# -picint 6 -s 128x72 -out #targetPreview#");
-//        param.setCommands(cmds);
-//        Map<String,String> extParams = new HashMap<String,String>();
-//        extParams.put("targetFmt", "mp4");
-//        param.setExt_param(extParams);
 
         
         StringBuffer errMsg = new StringBuffer();
         try {
-            transcode("1000", param, errMsg);
+            transcodeAudio("1000", param, errMsg);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
-//        File targetFile = new File("C:\\Users\\Administrator\\AppData\\Local\\Temp\\lifecircle\\transcode_temp\\1000\\src\\397f0cd10ca1421aa36a764647aec6d1.mp4");
-//        StringBuffer logMsg = new StringBuffer();
-//        String rt = UploadFileToCS(targetFile, param.getTarget_location()+"/transcode/videos/test",
-//                targetFile.getName(), param.getSession(),
-//                param.getCs_api_url(), logMsg);
-        
-//        System.out.println(rt);
 
     }
 }

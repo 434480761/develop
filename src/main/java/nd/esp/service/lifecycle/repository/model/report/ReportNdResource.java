@@ -15,6 +15,9 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 public class ReportNdResource extends EspEntity{
 	private static final long serialVersionUID = 1L;
 	
+	@Column(name="estatus")
+	private String status;
+	
 	@Column(name = "last_update")
 	private BigDecimal lastUpdate;
 	
@@ -24,8 +27,8 @@ public class ReportNdResource extends EspEntity{
 	@Column(name="primary_category")
 	private String primaryCategory;
 	
-	@Column(name="operation_flag")
-	private String operationFlag;
+	@Column(name="enable")
+	private boolean enable;
 	
 	public BigDecimal getLastUpdate() {
 		return lastUpdate;
@@ -51,12 +54,20 @@ public class ReportNdResource extends EspEntity{
 		this.primaryCategory = primaryCategory;
 	}
 
-	public String getOperationFlag() {
-		return operationFlag;
+	public String getStatus() {
+		return status;
 	}
 
-	public void setOperationFlag(String operationFlag) {
-		this.operationFlag = operationFlag;
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public boolean isEnable() {
+		return enable;
+	}
+
+	public void setEnable(boolean enable) {
+		this.enable = enable;
 	}
 
 	@Override

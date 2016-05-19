@@ -2,11 +2,14 @@ package nd.esp.service.lifecycle.vos.knowledgebase.v06;
 
 import java.util.Date;
 
-public class KnowledgeBaseViewModel {
+import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+
+public class KnowledgeBaseViewModel extends ResourceViewModel{
 	public String identifier;
 	public String kpid;
 	public String knid;
 	public String kcid;
+	public String kcCode;
 	public String title;
 	public String description;
 	public String creator;
@@ -14,6 +17,12 @@ public class KnowledgeBaseViewModel {
 	public String kcName;
 	public String kpName;
 	
+	public String getKcCode() {
+		return kcCode;
+	}
+	public void setKcCode(String kcCode) {
+		this.kcCode = kcCode;
+	}
 	public String getKcid() {
 		return kcid;
 	}

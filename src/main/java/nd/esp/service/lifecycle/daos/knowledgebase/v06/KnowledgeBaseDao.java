@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
 public interface KnowledgeBaseDao {
 	public KnowledgeBaseModel createKnowledgeBase(KnowledgeBaseModel kb);
 	public List<String> queryKpIdByKcId(String kcId);
+	public List<String> queryKpIdByKcCode(String kcCode);
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKpid(String kpid);
 	public List<KnowledgeBaseModel> queryKnowledgeBaseListByCond(String kcid,String kpid, String knTitle);
 	
@@ -18,4 +19,6 @@ public interface KnowledgeBaseDao {
 	public List<Map<String,Object>> queryInstructionalObjectiveByCond(String kbid,String ocid);
 	
 	public List<Map<String,Object>> queryInstructionalObjectiveByKid(String kcCode,String kpId);
+	
+	public List<KnowledgeBaseModel> queryKnowledgeBaseListByKcCode(String kcCode,String title);
 }

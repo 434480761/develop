@@ -14,6 +14,11 @@
 				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#target#"
 			</os>
 		</command>
+		<command name="ogg">
+			<os name="Default">
+				ffmpeg.exe -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#target#"
+			</os>
+		</command>
 	</rule>
 
 	<rule id="ffmpegConvert" nextRuleRef="thumbnail">
@@ -36,6 +41,26 @@
 		<command name="360p">
 			<os name="Default">
 				ffmpeg -i "#src#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+			</os>
+		</command>
+		<command name="1080p-ogv">
+			<os name="Default">
+				ffmpeg2theora "#src#" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o "#target#"
+			</os>
+		</command>
+		<command name="720p-ogv">
+			<os name="Default">
+				ffmpeg2theora "#src#" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o "#target#"
+			</os>
+		</command>
+		<command name="480p-ogv">
+			<os name="Default">
+				ffmpeg2theora "#src#" --width 720 --height 480 --videoquality 7 --audioquality 5 -o "#target#"
+			</os>
+		</command>
+		<command name="360p-ogv">
+			<os name="Default">
+				ffmpeg2theora "#src#" --width 640 --height 360 --videoquality 7 --audioquality 5 -o "#target#"
 			</os>
 		</command>
 	</rule>

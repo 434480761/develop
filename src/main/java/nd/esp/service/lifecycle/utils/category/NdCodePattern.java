@@ -280,8 +280,13 @@ public enum NdCodePattern {
             map.put(2, 2);
             map.put(4, 2);
         }
+    },
+    PC("PC|PC[0-9]{2}|PC[0-9]{4}", 6, 2, "") {
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 2);
+            map.put(4, 2);
+        }
     };
-
     // 分类维度ndCode的长度(现在所有的分类维度编码长度都是2)
     public static final int CATEGORY_LENGTH = 2;
     // 辅助根据前缀分类维度code来获取到对应对象
