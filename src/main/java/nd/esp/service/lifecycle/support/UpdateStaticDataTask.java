@@ -88,6 +88,10 @@ public class UpdateStaticDataTask {
         }
     }
     
+    public void runTask4IvcToUser(){
+    	
+    }
+    
     /**
      * 维度模式任务
      */
