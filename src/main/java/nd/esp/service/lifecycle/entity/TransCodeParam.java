@@ -21,6 +21,8 @@ public class TransCodeParam {
     private String subType;
     
     private String statusBackup;
+    
+    private boolean bOnlyOgv;
 
     private TransCodeParam() {
     }
@@ -93,6 +95,14 @@ public class TransCodeParam {
 
     public void setStatusBackup(String statusBackup) {
         this.statusBackup = statusBackup;
+    }
+
+    public boolean isbOnlyOgv() {
+        return bOnlyOgv;
+    }
+
+    public void setbOnlyOgv(boolean bOnlyOgv) {
+        this.bOnlyOgv = bOnlyOgv;
     }
 
 }
