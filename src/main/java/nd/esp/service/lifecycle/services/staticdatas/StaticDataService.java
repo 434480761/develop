@@ -27,5 +27,7 @@ public interface StaticDataService {
 
 	public void flashIvcConfigMap(Map<String, IvcConfigModel> configMap);
 	
+	public void flashIvcUserMap(Map<String, String> ivcUserMap);
+	
 	public Map<String, CategoryPatternModel> getCategoryPatternMap();
 }

@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +35,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+
+import com.nd.gaea.rest.support.WafContext;
 
 
 @Aspect
@@ -92,14 +92,19 @@ public class ServiceAuthorAspect {
     	}
     	
     	String serviceKey= request.getHeader(SERVICE_KEY);
+    	if(!StringUtils.hasText(serviceKey)){
+    		String userId = WafContext.getCurrentUserInfo().getUserId();
+    		if(StringUtils.hasText(userId)){
+    			serviceKey = StaticDatas.IVC_USER_MAP.get(userId);
+    		}
+    	}
+    	
         String ipAddr = request.getRemoteAddr();
         String requestMethod = request.getMethod();
         String requestUrl = request.getRequestURL().toString();
         
-        if(DEFAULT_SERVICE_KEY.equals(serviceKey)) {
+        if(!StringUtils.hasText(serviceKey)) {
         	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_SERVICE_KEY", "业务系统访问受限,service key错误或不存在");
-        }else if(!StringUtils.hasText(serviceKey)) {
-        	serviceKey = DEFAULT_SERVICE_KEY;
         }
         
         IvcConfigModel configModel = StaticDatas.IVC_CONFIG_MAP.get(serviceKey);

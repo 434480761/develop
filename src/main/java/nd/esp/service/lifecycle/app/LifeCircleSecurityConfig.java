@@ -39,7 +39,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		//admin","role_biz_server"
 		http.authorizeRequests()
         //匹配get方法,无需要任何身份认证
-		 .antMatchers(HttpMethod.GET,"/**").permitAll()
+		 .antMatchers(HttpMethod.GET,"/**").authenticated()
         //匹配"/v*/**"的所有PUT操作，需要用户拥有角色"USER"
 		 .antMatchers(HttpMethod.PUT).authenticated()
          //匹配"/v*/**"的所有POST操作，需要用户拥有角色"USER"
