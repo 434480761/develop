@@ -31,6 +31,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -90,18 +91,23 @@ public class ServiceAuthorAspect {
     	if(!StaticDatas.IS_IVC_CONFIG_ENABLED) {
     		return;
     	}
+
+    	String ipAddr = request.getRemoteAddr();
+        String requestMethod = request.getMethod();
+        String requestUrl = request.getRequestURL().toString();
+        
+    	if(isSpecialUrl(requestUrl)){
+    		return;
+    	}
     	
     	String serviceKey= request.getHeader(SERVICE_KEY);
     	if(!StringUtils.hasText(serviceKey)){
-    		String userId = WafContext.getCurrentUserInfo().getUserId();
+			String userId = WafContext.getCurrentUserInfo().getUserId();
     		if(StringUtils.hasText(userId)){
     			serviceKey = StaticDatas.IVC_USER_MAP.get(userId);
     		}
+    		
     	}
-    	
-        String ipAddr = request.getRemoteAddr();
-        String requestMethod = request.getMethod();
-        String requestUrl = request.getRequestURL().toString();
         
         if(!StringUtils.hasText(serviceKey)) {
         	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_SERVICE_KEY", "业务系统访问受限,service key错误或不存在");
@@ -181,6 +187,14 @@ public class ServiceAuthorAspect {
 	        }
 		}
         
+    }
+    
+    private boolean isSpecialUrl(String url){
+		if (url.contains("/statisticals") || url.contains("/archive") || url.contains("/transcode/callback")
+				|| url.contains("/transcode/videoCallback") || url.contains("/packaging/callback")) {
+			return true;
+		} 
+		return false;
     }
     
     private boolean validLoad(Map<String,Integer> keyMap, String key, long maxRps) {
@@ -337,5 +351,4 @@ public class ServiceAuthorAspect {
     	
 		return rtExcludeCate;
     }
-
 }
