@@ -62,9 +62,11 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		//忽略的url地址
 		//web.ignoring().antMatchers("/**");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/*.html");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/*.favicon.ico");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/jsp/*.jsp");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/js/*.js");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/staticdatas/*");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/v0.6/3dbsys/*");
 		
 		web.ignoring() .antMatchers(HttpMethod.GET,"/v0.6/*/*/archiveinfo");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/*/statisticals");
