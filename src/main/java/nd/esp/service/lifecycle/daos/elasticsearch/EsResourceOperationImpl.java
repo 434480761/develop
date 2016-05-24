@@ -38,6 +38,7 @@ import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.nd.gaea.client.http.WafHttpClient;
+import com.nd.gaea.client.http.WafSecurityHttpClient;
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 
 /**
@@ -56,7 +57,7 @@ public class EsResourceOperationImpl implements EsResourceOperation {
 	private static final int WAF_CLIENT_CONNECT_TIMEOUT_VALUE = 100000;
 	private static final int WAF_CLIENT_SOCKET_TIMEOUT_VALUE = 100000;
 	// private static final int WAF_CLIENT_RETRY_COUNT = 3;
-	public static final WafHttpClient WAF_HTTP_CLIENT = new WafHttpClient(
+	public static final WafSecurityHttpClient WAF_HTTP_CLIENT = new WafSecurityHttpClient(
 			WAF_CLIENT_CONNECT_TIMEOUT_VALUE, WAF_CLIENT_SOCKET_TIMEOUT_VALUE);
 	// online
 	private final static String LC_API_URL_FOR_ES = Constant.LIFE_CYCLE_DOMAIN_URL
