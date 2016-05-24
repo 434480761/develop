@@ -116,9 +116,10 @@ table {
 var bearerToken = "DEBUG userid= 2000284696,realm=lc.service.esp.nd";
 
 $(function(){
-	//getToken();
+	getToken();
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey?limit=(0,1000)",
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:"",
 		async:true,
 		type:'GET',
@@ -152,7 +153,7 @@ $("#modify").click(function(){
 	var json = "{\"bsysname\":\"" + bsysname + "\",\"bsysadmin\":\"" + bsysadmin + "\",\"bsysivcconfig\":" + config + "}";
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey/"+getUrlParam("identifier"),
-		headers:{"Authorization":bearerToken},
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:json,
 		async:true,
 		type:'PUT',

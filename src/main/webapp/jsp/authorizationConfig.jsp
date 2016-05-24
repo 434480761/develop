@@ -150,7 +150,7 @@ $("#register").click(function(){
 	var json = "{\"bsysname\":\"" + bsysname + "\",\"bsysadmin\":\"" + bsysadmin + "\",\"bsysivcconfig\":{\"global_load\": {\"max_rps\": \"200\",\"max_dpr\": \"100000\"}}}"
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey/registry",
-		headers:{"Authorization":bearerToken},
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:json,
 		async:false,
 		type:'POST',
@@ -164,7 +164,7 @@ $("#register").click(function(){
 function delService(id){
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey/"+id,
-		headers:{"Authorization":bearerToken},
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:"",
 		async:false,
 		type:'DELETE',
