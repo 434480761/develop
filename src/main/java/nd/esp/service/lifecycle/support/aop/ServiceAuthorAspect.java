@@ -95,18 +95,28 @@ public class ServiceAuthorAspect {
     	String ipAddr = request.getRemoteAddr();
         String requestMethod = request.getMethod();
         String requestUrl = request.getRequestURL().toString();
+        String serviceKey= request.getHeader(SERVICE_KEY);
         
+        //特殊的url不需要bsyskey
     	if(isSpecialUrl(requestUrl)){
     		return;
     	}
     	
-    	String serviceKey= request.getHeader(SERVICE_KEY);
+    	//本地请求的不需要bsyskey,for 单元测试
+    	if(request.getLocalAddr().equals(request.getRemoteAddr())){
+    		return;
+    	}
+    	
+    	//Authorization=NAR_MAC的特殊处理
+    	if(request.getHeader("Authorization") != null && request.getHeader("Authorization").startsWith("NAR_MAC") && !StringUtils.hasText(serviceKey)){
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_SERVICE_KEY", "业务系统访问受限,service key未传");
+    	}
+    	
     	if(!StringUtils.hasText(serviceKey)){
 			String userId = WafContext.getCurrentToken().getUserId();
     		if(StringUtils.hasText(userId)){
     			serviceKey = StaticDatas.IVC_USER_MAP.get(userId);
     		}
-    		
     	}
         
         if(!StringUtils.hasText(serviceKey)) {
@@ -190,8 +200,13 @@ public class ServiceAuthorAspect {
     }
     
     private boolean isSpecialUrl(String url){
-		if (url.contains("/statisticals") || url.contains("/archive") || url.contains("/transcode/callback")
-				|| url.contains("/transcode/videoCallback") || url.contains("/packaging/callback")) {
+		if (url.contains("/statisticals") 
+				|| url.contains("/archive") 
+				|| url.contains("/transcode/callback")
+				|| url.contains("/transcode/videoCallback") 
+				|| url.contains("/packaging/callback")
+				|| url.contains("/3dbsys")
+				) {
 			return true;
 		} 
 		return false;
