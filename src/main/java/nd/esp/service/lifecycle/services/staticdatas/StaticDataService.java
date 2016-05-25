@@ -13,6 +13,8 @@ public interface StaticDataService {
 	
 	public void updateIvcMapNow();
 	
+	public void updateIvcUserMapNow();
+	
 	public void updateCPMapNow();
 
 	public List<Map<String, Integer>> queryNowStatus();

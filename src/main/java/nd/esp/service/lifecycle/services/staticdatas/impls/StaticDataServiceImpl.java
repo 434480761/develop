@@ -179,6 +179,14 @@ public class StaticDataServiceImpl implements StaticDataService {
 	}
 	
 	/**
+	 * 立即更新IVC_USER_MAP
+	 */
+	@Override
+	public void updateIvcUserMapNow() {
+		flashIvcUserMap(StaticDatas.IVC_USER_MAP);
+	}
+	
+	/**
      * 获取所有的IvcConfig数据
      */
 	@Override
