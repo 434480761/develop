@@ -102,7 +102,7 @@ public class ServiceAuthorAspect {
     	
     	String serviceKey= request.getHeader(SERVICE_KEY);
     	if(!StringUtils.hasText(serviceKey)){
-			String userId = WafContext.getCurrentUserInfo().getUserId();
+			String userId = WafContext.getCurrentToken().getUserId();
     		if(StringUtils.hasText(userId)){
     			serviceKey = StaticDatas.IVC_USER_MAP.get(userId);
     		}
