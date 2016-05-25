@@ -108,7 +108,7 @@ public class ServiceAuthorAspect {
     	}
     	
     	//Authorization=NAR_MAC的特殊处理
-    	if(request.getHeader("Authorization") != null && request.getHeader("Authorization").startsWith("NAR_MAC") && !StringUtils.hasText(serviceKey)){
+    	if(request.getHeader("Authorization") != null && request.getHeader("Authorization").startsWith("NDR_MAC") && !StringUtils.hasText(serviceKey)){
     		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_SERVICE_KEY", "业务系统访问受限,service key未传");
     	}
     	
