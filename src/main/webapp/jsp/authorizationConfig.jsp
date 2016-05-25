@@ -125,7 +125,7 @@ table {
 var bearerToken = "DEBUG userid= 2000284696,realm=lc.service.esp.nd";
 
 $(function(){
-	//getToken();
+	getToken();
 	reflashPage();
 })
 
@@ -198,9 +198,14 @@ function showResultList(data){
 }
 
 function getToken(){
+	if(location.href.match("esp-lifecycle.web.sdp.101.com")!=null) {
+		ucUrl = "https://aqapi.101.com/v0.93/bearer_tokens";
+	} else {
+		ucUrl = "https://ucbetapi.101.com/v0.93/bearer_tokens";
+	}
 	$.ajax({
-		url:"https://aqapi.101.com/v0.93/bearer_tokens",
-		data:"{\"login_name\":\"waf_loginer\",\"password\":\"80fba977d063a6f7262a8a9c95f61140\"}",
+		url:ucUrl,
+		data:"{\"login_name\":\"esp_lifecycle\",\"password\":\"d4876ded8c0df211825893ae8a3c6df9\"}",
 		async:false,
 		type:'POST',
 		contentType:"application/json",
