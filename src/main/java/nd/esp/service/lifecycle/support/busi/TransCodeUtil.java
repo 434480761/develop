@@ -882,7 +882,7 @@ public class TransCodeUtil {
 
             List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
             
-            if(codeParam.isbOnlyOgv()) {
+            if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
                 for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
                     String cmd = iter.next();
                     if(cmd.startsWith("ffmpeg -i")) {

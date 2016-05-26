@@ -132,7 +132,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                     contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
                     contributeModel.setLifecycleStatus(taskInfo.getDescription());
                     contributeModel.setProcess(100.0f);
-                    lifecycleService.addLifecycleStep(resType, id, contributeModel);
+                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
                     MDC.put("resource", id);
                     MDC.put("res_type", IndexSourceType.AssetType.getName());
                     MDC.put("operation_type", "转码完成");
