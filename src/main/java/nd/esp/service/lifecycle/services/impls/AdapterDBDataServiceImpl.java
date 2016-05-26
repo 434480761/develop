@@ -361,12 +361,12 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     }
 
     @Override
-    public Map<String, Integer> triggerVideoTranscode(int totCount, Set<String> statusSet) {
+    public Map<String, Integer> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv) {
         Map<String,Integer>result =new HashMap<>();
         
         try {
             List<String> listIds = this.getVideoListToTrans(statusSet);
-            result = triggerVideoTranscodeByIds(listIds);
+            result = triggerVideoTranscodeByIds(listIds, bOnlyOgv);
         } catch (Exception e) {
             LOG.error("执行转码调度失败了:" + e.getMessage(), e);
         }
@@ -375,7 +375,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     }
     
     @Override
-    public Map<String,Integer> triggerVideoTranscodeByIds(List<String> listIds) {
+    public Map<String,Integer> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv) {
         int successCount = 0;
         int failCount = 0;
        
@@ -404,7 +404,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
                         contributeModel.setLifecycleStatus(TransCodeUtil.getTransIngStatus(true));
                         contributeModel.setProcess(0.0f);
                         lifecycleService.addLifecycleStep(IndexSourceType.AssetType.getName(), cm.getIdentifier(), contributeModel, false);
-                        transCodeUtil.triggerTransCode(cm, IndexSourceType.AssetType.getName(), statusBackup);
+                        transCodeUtil.triggerTransCode(cm, IndexSourceType.AssetType.getName(), statusBackup, bOnlyOgv);
 
                         LOG.info("触发转码的UUID:{}",cm.getIdentifier());
                         successCount++;

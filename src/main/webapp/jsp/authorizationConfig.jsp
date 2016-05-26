@@ -150,7 +150,7 @@ $("#register").click(function(){
 	var json = "{\"bsysname\":\"" + bsysname + "\",\"bsysadmin\":\"" + bsysadmin + "\",\"bsysivcconfig\":{\"global_load\": {\"max_rps\": \"200\",\"max_dpr\": \"100000\"}}}"
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey/registry",
-		headers:{"Authorization":bearerToken},
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:json,
 		async:false,
 		type:'POST',
@@ -164,7 +164,7 @@ $("#register").click(function(){
 function delService(id){
 	$.ajax({
 		url:"../v0.6/3dbsys/servicekey/"+id,
-		headers:{"Authorization":bearerToken},
+		headers:{"Authorization":bearerToken,"bsyskey":"DEFAULT_SERVICE_KEY"},
 		data:"",
 		async:false,
 		type:'DELETE',
@@ -198,9 +198,14 @@ function showResultList(data){
 }
 
 function getToken(){
+	if(location.href.match("esp-lifecycle.web.sdp.101.com")!=null) {
+		ucUrl = "https://aqapi.101.com/v0.93/bearer_tokens";
+	} else {
+		ucUrl = "https://ucbetapi.101.com/v0.93/bearer_tokens";
+	}
 	$.ajax({
-		url:"https://aqapi.101.com/v0.93/bearer_tokens",
-		data:"{\"login_name\":\"waf_loginer\",\"password\":\"80fba977d063a6f7262a8a9c95f61140\"}",
+		url:ucUrl,
+		data:"{\"login_name\":\"esp_lifecycle\",\"password\":\"d4876ded8c0df211825893ae8a3c6df9\"}",
 		async:false,
 		type:'POST',
 		contentType:"application/json",

@@ -335,10 +335,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             	newTechInfo.setFormat("audio/"+transcodeTargetFmt);
             }
             if(metadataMap != null){
-                if(argument.getHref().equals(locations.get(key))
-                         && StringUtils.isNotEmpty(metadataMap.get(transcodeTargetFmt))) {
-                    addRequirement(newTechInfo,metadataMap.get(transcodeTargetFmt));
-                } else if(StringUtils.isNotEmpty(metadataMap.get(key))) {
+                if(StringUtils.isNotEmpty(metadataMap.get(key))) {
                     addRequirement(newTechInfo,metadataMap.get(key));
                 }
             }

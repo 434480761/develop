@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
-import com.nd.gaea.client.http.WafHttpClient;
+import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 /**
  * @author linsm
@@ -59,7 +59,7 @@ public class OfflineDaoImpl implements OfflineDao{
     
     
     
-    private final static WafHttpClient WAF_HTTP_CLIENT = new WafHttpClient();
+    private final static WafSecurityHttpClient WAF_HTTP_CLIENT = new WafSecurityHttpClient();
 
     /* (non-Javadoc)
      * @see nd.esp.service.lifecycle.services.offlinemetadata.dao.offlineDao#getCsInfo(java.lang.String, java.lang.String)

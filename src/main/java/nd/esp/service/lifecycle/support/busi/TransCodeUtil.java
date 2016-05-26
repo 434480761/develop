@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.support.busi;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -46,6 +47,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.mysema.commons.lang.URLEncoder;
+
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
@@ -532,9 +534,20 @@ public class TransCodeUtil {
     
     public void triggerTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
         if (isVideoTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup);
+            triggerVideoTransCode(resourceModel, resType, statusBackup, false);
         } else if(Constant.AUDIO_TRANSCODE && isAudioTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup);
+            triggerVideoTransCode(resourceModel, resType, statusBackup, false);
+        } else {
+            triggerWordOrPptTransCode(resourceModel, resType); 
+        }
+        
+    }
+    
+    public void triggerTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
+        if (isVideoTransCode(resourceModel, resType)) {
+            triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
+        } else if(Constant.AUDIO_TRANSCODE && isAudioTransCode(resourceModel, resType)) {
+            triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
         } else {
             triggerWordOrPptTransCode(resourceModel, resType); 
         }
@@ -548,7 +561,7 @@ public class TransCodeUtil {
      * @param resType
      * @since
      */
-    private void triggerVideoTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
+    private void triggerVideoTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
         List<ResTechInfoModel> techInfos = resourceModel.getTechInfoList();
         boolean isSourcePathExist = false;
         String sourceLocation = "";
@@ -630,6 +643,7 @@ public class TransCodeUtil {
             codeParam.buildSourceFileId(path);
             codeParam.buildReferer(getReferer());
             codeParam.buildStatusBackup(statusBackup);
+            codeParam.setbOnlyOgv(bOnlyOgv);
             if(isAudioTransCode(resourceModel, resType)) {
                 codeParam.setSubType(SUBTYPE_AUDIO);
             } else {
@@ -865,6 +879,15 @@ public class TransCodeUtil {
             LOG.info("视频格式:" + fileType);
 
             List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
+            
+            if(codeParam.isbOnlyOgv()) {
+                for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
+                    String cmd = iter.next();
+                    if(cmd.startsWith("ffmpeg -i")) {
+                        iter.remove();
+                    }
+                }
+            }
 
             LOG.info("视频转码脚本:" + scripts);
 

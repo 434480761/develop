@@ -8,7 +8,7 @@
 	</rule>-->
 
 	<rule id="audioConvert">
-		<fileType>wma, m4a, aac, wav, flac, mp3</fileType>
+		<fileType>wma, m4a, aac, wav, flac, mp3, ogg</fileType>
 		<command name="main">
 			<os name="Default">
 				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#target#"
@@ -16,13 +16,13 @@
 		</command>
 		<command name="ogg">
 			<os name="Default">
-				ffmpeg.exe -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#target#"
+				ffmpeg -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#target#"
 			</os>
 		</command>
 	</rule>
 
 	<rule id="ffmpegConvert" nextRuleRef="thumbnail">
-		<fileType>flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, 3gp, m4v, vob, ts</fileType>
+		<fileType>flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, 3gp, m4v, vob, ts, ogv</fileType>
 		<command name="1080p">
 			<os name="Default">
 				ffmpeg -i "#src#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"

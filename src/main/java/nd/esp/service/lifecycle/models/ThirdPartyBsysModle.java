@@ -18,6 +18,8 @@ public class ThirdPartyBsysModle {
     @Length(max=250,message="{thirdPartyBsysModle.bsysadmin.maxlength.validmsg}")
     private String bsysadmin;
     
+    private String userid;
+    
     private String bsyskey;
     
     private Map<String,Object> bsysivcconfig;
@@ -45,6 +47,14 @@ public class ThirdPartyBsysModle {
 
     public void setBsysadmin(String bsysadmin) {
         this.bsysadmin = bsysadmin;
+    }
+    
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid;
     }
 
     public String getBsyskey() {

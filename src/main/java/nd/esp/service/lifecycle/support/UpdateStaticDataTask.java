@@ -76,12 +76,14 @@ public class UpdateStaticDataTask {
         	lastUpdateTime4Ivc = staticDataService.queryLastUpdateTime(IVC_TASK_ID);
             LOG.info("lastUpdateTime4Ivc初始化");
             staticDataService.flashIvcConfigMap(StaticDatas.IVC_CONFIG_MAP);
+            staticDataService.flashIvcUserMap(StaticDatas.IVC_USER_MAP);
             LOG.info("iVC_CONFIG_MAP初始化");
         }else{
         	Long lastUpdateInDB = staticDataService.queryLastUpdateTime(IVC_TASK_ID);
             if(!lastUpdateInDB.equals(lastUpdateTime4Ivc)){
             	staticDataService.flashIvcConfigMap(StaticDatas.IVC_CONFIG_MAP);
-                
+            	staticDataService.flashIvcUserMap(StaticDatas.IVC_USER_MAP);
+            	
                 lastUpdateTime4Ivc = lastUpdateInDB;
                 LOG.info("访问控制更新--end!");
             }
