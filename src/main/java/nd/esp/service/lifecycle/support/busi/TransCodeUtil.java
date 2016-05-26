@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -69,6 +70,7 @@ public class TransCodeUtil {
     private NDResourceService ndResourceService;
     
     @Autowired
+    @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     
     @Autowired
@@ -880,7 +882,7 @@ public class TransCodeUtil {
 
             List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
             
-            if(codeParam.isbOnlyOgv()) {
+            if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
                 for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
                     String cmd = iter.next();
                     if(cmd.startsWith("ffmpeg -i")) {

@@ -83,6 +83,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     @Autowired
     private NDResourceService ndResourceService;
     @Autowired
+    @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     @Autowired
     private CommonServiceHelper commonServiceHelper;

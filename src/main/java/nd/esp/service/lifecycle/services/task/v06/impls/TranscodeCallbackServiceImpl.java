@@ -14,6 +14,7 @@ import org.apache.log4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,6 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
-
 import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
@@ -63,6 +63,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private NDResourceService ndResourceService;
     
     @Autowired
+    @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     
     @Autowired
@@ -131,7 +132,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                     contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
                     contributeModel.setLifecycleStatus(taskInfo.getDescription());
                     contributeModel.setProcess(100.0f);
-                    lifecycleService.addLifecycleStep(resType, id, contributeModel);
+                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
                     MDC.put("resource", id);
                     MDC.put("res_type", IndexSourceType.AssetType.getName());
                     MDC.put("operation_type", "转码完成");

@@ -11,6 +11,7 @@ import nd.esp.service.lifecycle.support.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,6 +34,7 @@ public class TransCodeTrigger {
     private TransCodeUtil transCodeUtil;
     
     @Autowired
+    @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     
     /**	
@@ -78,6 +80,10 @@ public class TransCodeTrigger {
                 
                 String domain=TransCodeUtil.getDomain(codeParam.getReferer());
                 int priority=TransCodeUtil.getTranscodePriority(domain);
+                
+                if(codeParam.isbOnlyOgv()) {
+                    priority = 0;
+                }
                 
                 transCodeUtil.triggerVideoTransCode(codeParam,session,priority);
                    

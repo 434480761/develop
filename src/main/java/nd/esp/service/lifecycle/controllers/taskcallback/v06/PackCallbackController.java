@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
 import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.PackCallbackService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -50,6 +51,9 @@ public class PackCallbackController {
     
     @Autowired
     private AsynEsResourceService esResourceOperation;
+    
+    @Autowired
+    private OfflineService offlineService;
     
     /**
      * 课件转码回调接口
@@ -105,6 +109,7 @@ public class PackCallbackController {
         
         //异步过程：同步元数据
         //bylsm 同步数据到elasticsearch (与祁凌确认，都是callbackParams中的res_type,identifier)
+        offlineService.writeToCsAsync(res_type, id);
         esResourceOperation.asynAdd(new Resource(res_type, id));
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
