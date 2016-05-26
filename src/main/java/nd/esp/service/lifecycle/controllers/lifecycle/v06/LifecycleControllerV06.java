@@ -16,7 +16,13 @@ import javax.validation.ValidatorFactory;
 
 import nd.esp.service.lifecycle.app.LifeCircleWebConfig;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
+import nd.esp.service.lifecycle.repository.ResourceRepository;
+import nd.esp.service.lifecycle.repository.model.Contribute;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -24,6 +30,7 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.lifecycle.v06.ResContributeViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.i18n.LocaleContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -43,9 +50,21 @@ import com.nd.gaea.WafException;
 @RestController
 @RequestMapping("/v0.6/{res_type}")
 public class LifecycleControllerV06 {
-    @Autowired
+    
+    @Autowired()
+    @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
+    
+    @Autowired()
+    @Qualifier("lifecycleService4QtiV06")
+    private LifecycleServiceV06 lifecycleService4Qti;
 
+    @Autowired
+    private OfflineService offlineService;
+    
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
+    
     /**
      * 增加生命周期阶段。 对于生命周期的某个环节，进行添加
      * @Method POST
@@ -61,7 +80,14 @@ public class LifecycleControllerV06 {
         //入参合法性校验
         ValidResultHelper.valid(validResult, LifeCircleErrorMessageMapper.CreateLifecycleFail.getCode(),
                 "LifecycleControllerV06","addLifecycleStep");
-        ResContributeViewModel contributeViewModel = lifecycleService.addLifecycleStep(res_type, uuid, contributeModel);
+        
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
+        ResContributeViewModel contributeViewModel = service.addLifecycleStep(res_type, uuid, contributeModel);
+        
+        offlineService.writeToCsAsync(res_type, uuid);
+        esResourceOperation.asynAdd(new Resource(res_type, uuid));
+        
         return contributeViewModel;
     }
 
@@ -80,8 +106,18 @@ public class LifecycleControllerV06 {
             @Valid @RequestBody ResContributeModel contributeModel, BindingResult validResult) {
         ValidResultHelper.valid(validResult, LifeCircleErrorMessageMapper.CreateBatchLifecycleFail.getCode(),
                 "LifecycleControllerV06","addLifecycleStepBulk");
+        
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
+        List<String> uuids = contributeModel.getResources();
         Map<String,ResContributeViewModel> contributeViewModels = 
-                lifecycleService.addLifecycleStepBulk(res_type, contributeModel.getResources(), contributeModel);
+                service.addLifecycleStepBulk(res_type, uuids, contributeModel);
+        
+        for(String uuid:uuids) {
+            offlineService.writeToCsAsync(res_type, uuid);
+            esResourceOperation.asynAdd(new Resource(res_type, uuid));
+        }
+        
         return contributeViewModels;
     }
 
@@ -96,7 +132,9 @@ public class LifecycleControllerV06 {
     @RequestMapping(value = "/{uuid}/lifecycle/steps", params = { "limit" }, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public @ResponseBody ListViewModel<ResContributeViewModel> getLifecycleSteps(@PathVariable String res_type,
             @PathVariable String uuid, @RequestParam String limit) {
-        ListViewModel<ResContributeViewModel> contributeViewModel = lifecycleService.getLifecycleSteps(res_type, uuid, limit);
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
+        ListViewModel<ResContributeViewModel> contributeViewModel = service.getLifecycleSteps(res_type, uuid, limit);
         return contributeViewModel;
     }
 
@@ -114,8 +152,11 @@ public class LifecycleControllerV06 {
              @PathVariable String step_id, @Valid @RequestBody ResContributeModel contributeModel, BindingResult validResult) {
         ValidResultHelper.valid(validResult, LifeCircleErrorMessageMapper.UpdateLifecycleFail.getCode(),
                 "LifecycleControllerV06","modifyLifecycleStep");
+        
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
         contributeModel.setIdentifier(step_id);
-        ResContributeViewModel contributeViewModel = lifecycleService.modifyLifecycleStep(res_type, uuid, contributeModel);
+        ResContributeViewModel contributeViewModel = service.modifyLifecycleStep(res_type, uuid, contributeModel);
         return contributeViewModel;
     }
     
@@ -156,8 +197,10 @@ public class LifecycleControllerV06 {
             throw new WafException(LifeCircleErrorMessageMapper.UpdateBatchLifecycleFail.getCode(),errors.toString());
         }
         
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
         Map<String,ResContributeViewModel> contributeViewModels = 
-                lifecycleService.modifyLifecycleStepBulk(res_type, Arrays.asList(contributeModels.keySet().toArray(new String[1])),
+                service.modifyLifecycleStepBulk(res_type, Arrays.asList(contributeModels.keySet().toArray(new String[1])),
                         Arrays.asList(contributeModels.values().toArray(new ResContributeModel[1])));
         return contributeViewModels;
     }
@@ -174,7 +217,9 @@ public class LifecycleControllerV06 {
     @RequestMapping(value = "/{uuid}/lifecycle/steps/{step_id}", method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
     public @ResponseBody Map<String, String> delLifecycleStep(@PathVariable String res_type,
             @PathVariable String uuid, @PathVariable String step_id) {
-        lifecycleService.delLifecycleStep(res_type, uuid, step_id);
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
+        service.delLifecycleStep(res_type, uuid, step_id);
         return MessageConvertUtil
                 .getMessageString(LifeCircleErrorMessageMapper.DeleteLifecycleSuccess);
     }
@@ -191,7 +236,9 @@ public class LifecycleControllerV06 {
     @RequestMapping(value = "/{uuid}/lifecycle/steps/bulk", method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
     public @ResponseBody Map<String, String> delLifecycleStepsBulk(@PathVariable String res_type,
             @PathVariable String uuid, @RequestParam Set<String> stepid) {
-        lifecycleService.delLifecycleStepsBulk(res_type, uuid, stepid);
+        LifecycleServiceV06 service = !CommonServiceHelper.isQuestionDb(res_type) ? lifecycleService : lifecycleService4Qti;
+        
+        service.delLifecycleStepsBulk(res_type, uuid, stepid);
         return MessageConvertUtil
                 .getMessageString(LifeCircleErrorMessageMapper.DeleteLifecycleSuccess);
     }

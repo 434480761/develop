@@ -7,6 +7,7 @@ import java.util.Map;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.QueryTaskService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.support.Constant;
@@ -31,6 +32,9 @@ public class QueryTaskServiceImpl implements QueryTaskService {
     
     @Autowired
     private TaskService taskService;
+    
+    @Autowired
+    private OfflineService offlineService;
     
     @Autowired
     private AsynEsResourceService esResourceOperation;
@@ -117,6 +121,7 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 										// 异步过程：同步元数据
 										// bylsm 同步数据到elasticsearch
 										// (与祁凌确认，都是callbackParams中的res_type,identifier)
+                                        offlineService.writeToCsAsync(resType, params.get("identifier"));
 										esResourceOperation
 												.asynAdd(new Resource(
 														resType,

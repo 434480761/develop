@@ -10,16 +10,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
-import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
-import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.index.OffsetPageRequest;
 import nd.esp.service.lifecycle.repository.model.Contribute;
 import nd.esp.service.lifecycle.repository.sdk.Contribute4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ContributeRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
@@ -48,17 +45,17 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  * @created 17-7月-2015 12:06:04
  */
-@Service("lifecycleServiceV06")
-@Transactional
-public class LifecycleServiceImplV06 implements LifecycleServiceV06{
-	private static final Logger LOG = LoggerFactory.getLogger(LifecycleServiceImplV06.class);
+@Service("lifecycleService4QtiV06")
+@Transactional(value="questionTransactionManager")
+public class LifecycleServiceImpl4QtiV06 implements LifecycleServiceV06{
+	private static final Logger LOG = LoggerFactory.getLogger(LifecycleServiceImpl4QtiV06.class);
     
     /**
      * SDK注入
      */
+    
     @Autowired
-    private ContributeRepository contributeRepository;
-
+    private Contribute4QuestionDBRepository contribute4QuestionRepository;
     
     //by lsm 用于更新离线元数据
     @Autowired
@@ -97,8 +94,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         
         Contribute rtContribute = null;
         try {
-            //调用SDK,添加
-            rtContribute = contributeRepository.add(contribute);
+            rtContribute = contribute4QuestionRepository.add(contribute);
         } catch (EspStoreException e) {
             LOG.error("添加生命周期阶段失败", e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -164,7 +160,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         
         try {
             //调用SDK,添加
-            rtContributes = contributeRepository.batchAdd(listContribute);
+            rtContributes = contribute4QuestionRepository.batchAdd(listContribute);
         } catch (EspStoreException e) {
             LOG.error("批量添加生命周期阶段失败", e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -220,7 +216,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         Pageable pageable = new OffsetPageRequest(result[0], result[1], Direction.DESC, "contributeTime");
         Page<Contribute> contributeResult = null;
         try {
-            contributeResult = contributeRepository.getPageByExample(contributeExample, pageable);
+            contributeResult = contribute4QuestionRepository.getPageByExample(contributeExample, pageable);
             if(contributeResult != null) {
                 list.setTotal(contributeResult.getTotalElements());
                 List<ResContributeViewModel> items = new ArrayList<ResContributeViewModel>();
@@ -255,7 +251,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         
         Contribute originContribute = null;
         try {
-            originContribute = contributeRepository.get(contributeModel.getIdentifier());
+            originContribute = contribute4QuestionRepository.get(contributeModel.getIdentifier());
         } catch (EspStoreException e1) {
             LOG.error("获取指定的生命周期阶段详细失败", e1);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -278,7 +274,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         Contribute rtContribute = null;
         try {
             //调用SDK,更新
-            rtContribute = contributeRepository.update(contribute);
+            rtContribute = contribute4QuestionRepository.update(contribute);
         } catch (EspStoreException e) {
             LOG.error("修改生命周期阶段失败", e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -321,7 +317,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         for(ResContributeModel contributeModel:contributeModels) {
             Contribute originContribute = null;
             try {
-                originContribute = contributeRepository.get(contributeModel.getIdentifier());
+                originContribute = contribute4QuestionRepository.get(contributeModel.getIdentifier());
             } catch (EspStoreException e1) {
                 LOG.error("获取指定的生命周期阶段详细失败", e1);
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -347,7 +343,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
             Contribute rtContribute = null;
             try {
                 //调用SDK,添加
-                rtContribute = contributeRepository.add(contribute);
+                rtContribute = contribute4QuestionRepository.add(contribute);
             } catch (EspStoreException e) {
                 LOG.error("批量添加生命周期阶段失败", e);
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -383,14 +379,14 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
     public boolean delLifecycleStep(String resType, String resId, String stepId) {
         
         try {
-            Contribute contribute = contributeRepository.get(stepId);
+            Contribute contribute = contribute4QuestionRepository.get(stepId);
             if(contribute == null || !contribute.getResType().equals(resType) 
                     || !contribute.getResource().equals(resId)) {
                 LOG.error("指定的生命周期阶段不存在");
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                         LifeCircleErrorMessageMapper.LifecycleNotFound);
             }
-            contributeRepository.del(stepId);
+            contribute4QuestionRepository.del(stepId);
         } catch (EspStoreException e) {
             LOG.error("删除生命周期阶段失败");
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -414,7 +410,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
         List<String> ids = new ArrayList<String>();
         for(String stepId:stepIds) {
             try {
-                Contribute contribute = contributeRepository.get(stepId);
+                Contribute contribute = contribute4QuestionRepository.get(stepId);
                 if(contribute == null || !contribute.getResType().equals(resType) 
                         || !contribute.getResource().equals(resId)) {
                     LOG.error("指定的生命周期阶段不存在");
@@ -429,7 +425,7 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
             }
         }
         try {
-            contributeRepository.batchDel(ids);
+            contribute4QuestionRepository.batchDel(ids);
         } catch (EspStoreException e) {
             LOG.error("删除生命周期阶段失败");
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,

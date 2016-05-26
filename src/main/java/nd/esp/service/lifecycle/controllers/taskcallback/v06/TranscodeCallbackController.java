@@ -7,6 +7,9 @@ import java.util.Map;
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.entity.TransCodeCallBackParam;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.services.task.v06.TranscodeCallbackService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -51,6 +54,12 @@ public class TranscodeCallbackController {
     @Autowired
     private TranscodeCallbackService transcodeCallbackService;
     
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
+    
+    @Autowired
+    private OfflineService offlineService;
+    
     /**
      * 课件转码回调接口
      * 
@@ -93,7 +102,8 @@ public class TranscodeCallbackController {
         taskService.FinishTask(taskId, callbackParams, "");
         
         //异步过程：同步元数据
-        
+        offlineService.writeToCsAsync(res_type, id);
+        esResourceOperation.asynAdd(new Resource(res_type, id));
         
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }
@@ -135,7 +145,8 @@ public class TranscodeCallbackController {
             taskService.FinishTask(taskId, new HashMap<String,String>(), argument);
             
             //异步过程：同步元数据
-            
+            offlineService.writeToCsAsync(res_type, id);
+            esResourceOperation.asynAdd(new Resource(res_type, id));
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
