@@ -39,7 +39,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		//admin","role_biz_server"
 		http.authorizeRequests()
         //匹配get方法,无需要任何身份认证
-		 .antMatchers(HttpMethod.GET,"/**").permitAll()
+		 .antMatchers(HttpMethod.GET,"/**").authenticated()
         //匹配"/v*/**"的所有PUT操作，需要用户拥有角色"USER"
 		 .antMatchers(HttpMethod.PUT).authenticated()
          //匹配"/v*/**"的所有POST操作，需要用户拥有角色"USER"
@@ -61,6 +61,14 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		//忽略的url地址
 		//web.ignoring().antMatchers("/**");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/*.html");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/*.favicon.ico");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/jsp/*.jsp");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/js/*.js");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/staticdatas/*");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/v0.6/3dbsys/*");
+		
+		web.ignoring() .antMatchers(HttpMethod.GET,"/v0.6/*/*/archiveinfo");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/*/statisticals");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/*/archive");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/*/archive_webp");

@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.models.ivc.v06.IvcConfigModel;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,6 +179,14 @@ public class StaticDataServiceImpl implements StaticDataService {
 	}
 	
 	/**
+	 * 立即更新IVC_USER_MAP
+	 */
+	@Override
+	public void updateIvcUserMapNow() {
+		flashIvcUserMap(StaticDatas.IVC_USER_MAP);
+	}
+	
+	/**
      * 获取所有的IvcConfig数据
      */
 	@Override
@@ -207,6 +216,37 @@ public class StaticDataServiceImpl implements StaticDataService {
     	}
     }
 	
+	/**
+	 * 获取所有bsyskey与userId的对应
+	 */
+	@Override
+	public void flashIvcUserMap(final Map<String, String> ivcUserMap) {
+		String sql = "SELECT bsyskey,user_id FROM third_party_bsys";
+    	final Set<String> keySet = new HashSet<String>();
+    	jdbcTemplate.query(sql, new RowMapper<IvcConfigModel>(){
+
+			@Override
+			public IvcConfigModel mapRow(ResultSet rs, int rowNum)
+					throws SQLException {
+				if(StringUtils.hasText(rs.getString("user_id"))){
+					ivcUserMap.put(rs.getString("user_id"), rs.getString("bsyskey"));
+					keySet.add(rs.getString("user_id"));
+				}
+				
+				return null;
+			}
+    		
+    	});
+    	
+    	if(keySet.size() != ivcUserMap.size()) {
+	    	for(String key:ivcUserMap.keySet()) {
+	    		if(!keySet.contains(key)) {
+	    			ivcUserMap.remove(key);
+	    		}
+	    	}
+    	}
+		
+	}
 	
 	/**
 	 * 获取所有的维度模式
