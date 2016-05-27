@@ -13,8 +13,6 @@ public interface StaticDataService {
 	
 	public void updateIvcMapNow();
 	
-	public void updateIvcUserMapNow();
-	
 	public void updateCPMapNow();
 
 	public List<Map<String, Integer>> queryNowStatus();
@@ -28,8 +26,6 @@ public interface StaticDataService {
 	public boolean getValues(String name);
 
 	public void flashIvcConfigMap(Map<String, IvcConfigModel> configMap);
-	
-	public void flashIvcUserMap(Map<String, String> ivcUserMap);
 	
 	public Map<String, CategoryPatternModel> getCategoryPatternMap();
 }

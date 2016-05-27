@@ -85,7 +85,6 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
         
         staticDataService.updateLastTime(UpdateStaticDataTask.IVC_TASK_ID);
         staticDataService.updateIvcMapNow();
-        staticDataService.updateIvcUserMapNow();
         
         //处理返回结果
         ThirdPartyBsysModle rtBsysModle = BeanMapperUtils.beanMapper(rtService, ThirdPartyBsysModle.class);
@@ -144,7 +143,6 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
         
         staticDataService.updateLastTime(UpdateStaticDataTask.IVC_TASK_ID);
         staticDataService.updateIvcMapNow();
-        staticDataService.updateIvcUserMapNow();
         
         return true;
     }
@@ -194,7 +192,6 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
         
         staticDataService.updateLastTime(UpdateStaticDataTask.IVC_TASK_ID);
         staticDataService.updateIvcMapNow();
-        staticDataService.updateIvcUserMapNow();
         
         //处理返回结果
         ThirdPartyBsysModle serviceModel = BeanMapperUtils.beanMapper(rtBsys, ThirdPartyBsysModle.class);

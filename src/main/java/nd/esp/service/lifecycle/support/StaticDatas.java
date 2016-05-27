@@ -24,7 +24,7 @@ public class StaticDatas {
     public static boolean suspendFlag = false;
     
     /*访问控制策略的开关*/
-    public static boolean IS_IVC_CONFIG_ENABLED = true;
+    public static boolean IS_IVC_CONFIG_ENABLED = false;
     
     /*通用查询是否优先使用ES查询的开关*/
     public static boolean QUERY_BY_ES_FIRST = true;
@@ -34,9 +34,6 @@ public class StaticDatas {
     
     /*访问控制策略的Map*/
     public static ConcurrentMap<String, IvcConfigModel> IVC_CONFIG_MAP = new ConcurrentHashMap<String, IvcConfigModel>();
-    
-    /*访问控制key与userid对应的Map*/
-    public static ConcurrentMap<String, String> IVC_USER_MAP = new ConcurrentHashMap<String, String>();
     
     /*维度模式Map*/
     public static Map<String, CategoryPatternModel> CATEGORY_PATTERN_MAP = new HashMap<String, CategoryPatternModel>();

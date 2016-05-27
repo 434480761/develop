@@ -121,7 +121,9 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 										// 异步过程：同步元数据
 										// bylsm 同步数据到elasticsearch
 										// (与祁凌确认，都是callbackParams中的res_type,identifier)
-                                        offlineService.writeToCsAsync(resType, params.get("identifier"));
+                                        if(callbackUrl.contains("/transcode")){
+                                            offlineService.writeToCsAsync(resType, params.get("identifier"));
+                                        }
 										esResourceOperation
 												.asynAdd(new Resource(
 														resType,
