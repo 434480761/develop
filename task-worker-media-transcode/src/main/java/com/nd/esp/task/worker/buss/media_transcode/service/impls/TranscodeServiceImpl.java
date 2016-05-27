@@ -1163,24 +1163,19 @@ public class TranscodeServiceImpl implements TranscodeService {
         String userDir = System.getProperty("user.dir");
         String path = TranscodeServiceImpl.class.getClassLoader().getResource("tools").getPath();
         
-        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp4\",\"coverNum\":\"16\",\"subtype\":\"video\"},\"target_location\":\"/edu_product/esp/assets/ec22b8ab-f28d-4c47-8351-c1f45a0ccc37.pkg\",\"task_execute_env\":\"product\",\"session\":\"87054055-0a36-4b92-883b-ce1dbf57b3bc\",\"location\":\"http://cs.101.com/v0.1/download?path=/edu_product/esp/assets/ec22b8ab-f28d-4c47-8351-c1f45a0ccc37.pkg/30b3d98dfbee4ea996a4fad5d5ace5f0.mp4\",\"cs_api_url\":\"http://cs.101.com/v0.1\",\"commands\":[\"ffmpeg2theora \\\"#src#\\\" --width 640 --height 360 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 720 --height 480 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"thumbnail -in \\\"#src#\\\" -picint #intervalTime# -s 160x120 -out \\\"#targetCover#\\\" -join 4x4\",\"ffmpeg -y -ss 5 -i \\\"#src#\\\" -frames 1 -f image2 #targetPreview#/frame1.jpg\"],\"callback_api\":\"http://esp-lifecycle.web.sdp.101.com/v0.6/assets/transcode/videoCallback\"}";
+        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp3\",\"coverNum\":\"16\",\"subtype\":\"audio\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg\",\"task_execute_env\":\"integration\",\"session\":\"f4f55ec9-8973-4253-9cd2-6c66b32d7d76\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/093b9bfd-c76a-4d8c-a1b5-48dec777c19b.pkg/1461833996426.wav\",\"cs_api_url\":\"http://betacs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -ab 128k -c:a libmp3lame -vn \\\"#target#\\\"\",\"ffmpeg.exe -i \\\"#src#\\\" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o \\\"#target#\\\"\"],\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\"}";
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
 
         
         StringBuffer errMsg = new StringBuffer();
-        TranscodeResult result = new TranscodeResult();
         try {
-            result = transcode("ec22b8ab-f28d-4c47-8351-c1f45a0ccc37", param, errMsg);
+            transcodeAudio("1000", param, errMsg);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
-        System.out.println("CallbackUrl: "+param.getCallback_api() + "?identifier=ec22b8ab-f28d-4c47-8351-c1f45a0ccc37" + "&status=1");
-        
-        System.out.println(ObjectUtils.toJson(result));
 
     }
 }

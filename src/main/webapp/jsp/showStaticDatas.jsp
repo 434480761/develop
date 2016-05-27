@@ -120,10 +120,6 @@ $(function(){
 		async:true,
 		type:'GET',
 		dataType:"json",
-		beforeSend:function(request){
-			request.setRequestHeader("bsyskey", "DEFAULT_SERVICE_KEY");
-			request.setRequestHeader("Authorization", "NDR_MAC");
-		},
 		success:function(data){
 			if(data != null){
 				showResultList(data);	

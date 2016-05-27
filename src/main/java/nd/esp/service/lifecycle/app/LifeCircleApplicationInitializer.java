@@ -79,7 +79,6 @@ public class LifeCircleApplicationInitializer extends
 		
 		WafJsonMapper.getMapper().setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
         servletContext.addListener(new RequestContextListener());
-        
         super.onStartup(servletContext);
 	}
 	
