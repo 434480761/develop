@@ -49,12 +49,10 @@ public class ConvertRuleSet {
      * @since
      */
     public static ConvertRuleSet getConvertRuleSet() {
-        if (convertRuleSet == null) {
-            synchronized (ConvertRuleSet.class) {
-                if (convertRuleSet == null) {
-                    convertRuleSet = new ConvertRuleSet();
-                    new ParseXmlToJava().parseXml(convertRuleSet, videoConvertStrategyXmlName);
-                }
+        synchronized (ConvertRuleSet.class) {
+            if (convertRuleSet == null) {
+                convertRuleSet = new ConvertRuleSet();
+                new ParseXmlToJava().parseXml(convertRuleSet, videoConvertStrategyXmlName);
             }
         }
         return convertRuleSet;
