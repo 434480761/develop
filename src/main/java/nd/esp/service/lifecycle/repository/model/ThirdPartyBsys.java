@@ -26,6 +26,9 @@ public class ThirdPartyBsys extends EspEntity {
     
     @Column(name = "bsysivcconfig")
     private String bsysivcconfig;
+
+    @Column(name = "user_id")
+    private String userid;
     
     @Column(name = "update_time")
     private Timestamp updateTime;
@@ -48,6 +51,14 @@ public class ThirdPartyBsys extends EspEntity {
 
     public void setBsysadmin(String bsysadmin) {
         this.bsysadmin = bsysadmin;
+    }
+    
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid;
     }
 
     public String getBsyskey() {
