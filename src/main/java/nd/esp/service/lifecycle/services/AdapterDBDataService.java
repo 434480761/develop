@@ -25,7 +25,7 @@ public interface AdapterDBDataService {
      * @date:2015年12月10日
      * @return
      */
-    public Map<String, Integer> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv);
+    public Map<String, String> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv);
     
     /**
      * 触发旧视频转码
@@ -35,7 +35,7 @@ public interface AdapterDBDataService {
      * @return
      * @throws Exception 
      */
-    public Map<String, Integer> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv);
+    public Map<String, String> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv);
     
     /**
      * 资源preview修复

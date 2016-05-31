@@ -23,7 +23,7 @@ public class Rule implements ProduceScripts{
     private Rule nextRuleRef;
     private Command commandRef;
     private Set<SupportVideoType> fileTypeSet;
-    private Set<Command> commandSet;
+    private List<Command> commandSet;
     
     public Rule(String id){
         this.id = id;
@@ -37,11 +37,11 @@ public class Rule implements ProduceScripts{
         this.fileTypeSet = fileTypeSet;
     }
 
-    public Set<Command> getCommandSet() {
+    public List<Command> getCommandSet() {
         return commandSet;
     }
 
-    public void setCommandSet(Set<Command> commandSet) {
+    public void setCommandSet(List<Command> commandSet) {
         this.commandSet = commandSet;
     }
 

@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -175,8 +176,8 @@ public class ParseXmlToJava {
      * @since
      */
     @SuppressWarnings("rawtypes")
-    private static Set<Command> dealWithCommands(List commands) {
-        Set<Command> commandSet = new HashSet<Command>();
+    private static List<Command> dealWithCommands(List commands) {
+        List<Command> commandSet = new ArrayList<Command>();
         for (Object commandObject : commands) {
             Element element = (Element) commandObject;
             String commandName = element.getAttributeValue("name");
