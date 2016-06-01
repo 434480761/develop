@@ -94,7 +94,7 @@ public class AdapterDBDataController {
     }
     
     @RequestMapping(value = "/videos/transcode",method=RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody Map<String,Integer> triggerVideoTranscode(@RequestParam int totCount, 
+    public @ResponseBody Map<String,String> triggerVideoTranscode(@RequestParam int totCount, 
             @RequestParam(value = "statusSet", required = false,defaultValue = "ONLINE,AUDIT_WAITING,AUDITING,AUDITED,TRANSCODED,TRANSCODE_ERROR") Set<String> statusSet,
             @RequestParam(value = "onlyOgv", required = false,defaultValue = "false") boolean onlyOgv) {
 
@@ -106,7 +106,7 @@ public class AdapterDBDataController {
     }
     
     @RequestMapping(value = "/videos/transcode/id",method=RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody Map<String,Integer> triggerVideoTranscodeById(@RequestBody List<String> listIds,
+    public @ResponseBody Map<String,String> triggerVideoTranscodeById(@RequestBody List<String> listIds,
             @RequestParam(value = "onlyOgv", required = false,defaultValue = "false") boolean onlyOgv){
 
 

@@ -566,6 +566,7 @@ public class TransCodeUtil {
     private void triggerVideoTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
         List<ResTechInfoModel> techInfos = resourceModel.getTechInfoList();
         boolean isSourcePathExist = false;
+        boolean isHrefExist = false;
         String sourceLocation = "";
         String hrefLocation = "";
         ResTechInfoModel hrefTechInfo = null;
@@ -573,11 +574,14 @@ public class TransCodeUtil {
             if (techInfo.getTitle().equals(TransCodeUtil.CONVERT_SOURCE_KEY)) {
                 sourceLocation = techInfo.getLocation();//${ref-path}/edu/esp/lessonplans/2558b42d-ae05-42fc-b62b-797fe554867d.pkg/xxx.ppt
                 isSourcePathExist = true;
-                break;
             }
             if(techInfo.getTitle().equals(TransCodeUtil.CONVERT_STOREINFO_KEY)) {
                 hrefLocation = techInfo.getLocation();
                 hrefTechInfo = techInfo;
+                isHrefExist = true;
+            }
+            if(isSourcePathExist && isHrefExist) {
+                break;
             }
         }
         
@@ -595,6 +599,10 @@ public class TransCodeUtil {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+        }
+        
+        if(bOnlyOgv && isVideoTransCode(resourceModel, resType) && isHrefExist) {
+            sourceLocation = hrefLocation;
         }
         
         ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();

@@ -362,8 +362,8 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     }
 
     @Override
-    public Map<String, Integer> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv) {
-        Map<String,Integer>result =new HashMap<>();
+    public Map<String, String> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv) {
+        Map<String,String>result =new HashMap<>();
         
         try {
             List<String> listIds = this.getVideoListToTrans(statusSet);
@@ -376,17 +376,19 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     }
     
     @Override
-    public Map<String,Integer> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv) {
+    public Map<String,String> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv) {
         int successCount = 0;
         int failCount = 0;
        
+        List<String> failIds = new ArrayList<String>();
         try {
             if (CollectionUtils.isNotEmpty(listIds)) {
                 for (String id : listIds) {
-                    ResourceModel cm = ndResourceService.getDetail(IndexSourceType.AssetType.getName(), 
-                        id, IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC
-                                +","+IncludesConstant.INCLUDE_CG));
                     try {
+                        ResourceModel cm = ndResourceService.getDetail(IndexSourceType.AssetType.getName(), 
+                            id, IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC
+                                +","+IncludesConstant.INCLUDE_CG));
+                    
                         MDC.put("resource", id);
                         MDC.put("res_type", IndexSourceType.AssetType.getName());
                         MDC.put("operation_type", "转码");
@@ -411,7 +413,8 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
                         successCount++;
                         
                     }catch (Exception e){
-                        LOG.info("无法触发转码的UUID:{}", cm.getIdentifier());
+                        LOG.info("无法触发转码的UUID:{}", id);
+                        failIds.add(id);
                         failCount++;
                     }
                     MDC.clear();
@@ -423,9 +426,10 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
             LOG.error("执行转码调度失败了:" + e.getMessage(), e);
         }
         
-        Map<String,Integer>result =new HashMap<>();
-        result.put("成功个数:",successCount);
-        result.put("失败个数:",failCount);
+        Map<String,String>result =new HashMap<>();
+        result.put("成功个数:",String.valueOf(successCount));
+        result.put("失败个数:",String.valueOf(failCount));
+        result.put("失败id:",ObjectUtils.toJson(failIds));
         return result;
     }
     
