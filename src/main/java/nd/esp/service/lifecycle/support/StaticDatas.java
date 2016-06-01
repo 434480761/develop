@@ -24,7 +24,7 @@ public class StaticDatas {
     public static boolean suspendFlag = false;
     
     /*访问控制策略的开关*/
-    public static boolean IS_IVC_CONFIG_ENABLED = true;
+    public static boolean IS_IVC_CONFIG_ENABLED = false;
     
     /*通用查询是否优先使用ES查询的开关*/
     public static boolean QUERY_BY_ES_FIRST = true;

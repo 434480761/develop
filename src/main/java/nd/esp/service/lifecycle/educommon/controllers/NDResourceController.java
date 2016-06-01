@@ -632,7 +632,8 @@ public class NDResourceController {
 		   StringUtils.isEmpty(words) && 
 		   (CollectionUtils.isEmpty(orderMap) ||
 				   (CollectionUtils.isNotEmpty(orderMap) && 
-						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") || orderMap.containsKey("sort_num"))))){
+						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") 
+								   || orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))))){
 			
 			return true;
 		}
