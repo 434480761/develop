@@ -31,7 +31,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -96,6 +95,11 @@ public class ServiceAuthorAspect {
         String requestMethod = request.getMethod();
         String requestUrl = request.getRequestURL().toString();
         String serviceKey= request.getHeader(SERVICE_KEY);
+        
+        //FIXME 临时策略
+        if(!StringUtils.hasText(serviceKey) && requestMethod.equals("GET")){
+        	serviceKey = DEFAULT_SERVICE_KEY;
+        }
         
         //特殊的url不需要bsyskey
     	if(isSpecialUrl(requestUrl)){
