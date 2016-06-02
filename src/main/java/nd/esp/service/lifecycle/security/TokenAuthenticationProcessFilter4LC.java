@@ -25,11 +25,12 @@ public class TokenAuthenticationProcessFilter4LC extends
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 			FilterChain chain) throws IOException, ServletException {
-//        HttpServletRequest request = (HttpServletRequest) req;
-//        HttpServletResponse response = (HttpServletResponse) resp;
 		String authorization = request.getHeader("Authorization");
 		//如果是NDR_MAC过来，则不走UC认证
 		if(authorization != null && authorization.startsWith("NDR_MAC")){
+			SecurityContextHolder.getContext().setAuthentication(new LcAuthenticationToken());
+			chain.doFilter(request, response);
+		}else if("GET".equals(request.getMethod()) && (authorization == null || !request.getRequestURI().contains("downloadurl"))){
 			SecurityContextHolder.getContext().setAuthentication(new LcAuthenticationToken());
 			chain.doFilter(request, response);
 		}else{

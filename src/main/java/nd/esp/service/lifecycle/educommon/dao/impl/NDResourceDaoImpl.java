@@ -213,6 +213,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean haveSizeSort = false;
         boolean haveSumSort = false;
         boolean haveSortNum = false;
+        boolean haveVipLevel = false;
         if(CollectionUtils.isNotEmpty(orderMap)){
             List<String> ordersql = new ArrayList<String>();
             
@@ -232,7 +233,10 @@ public class NDResourceDaoImpl implements NDResourceDao{
                         //FIXME 当根据sort_num排序的时候,对identifier做DISTINCT
                         sqlSelect = sqlSelect.replaceFirst("ndr.identifier AS identifier", "DISTINCT(ndr.identifier) AS identifier");
                 	}
-                }else{
+                }else if(key.equals("taxOnCode")){//资源等级排序
+                	haveVipLevel = true;
+                	ordersql.add("rco." + key + " " + orderMap.get(key));
+				}else{
                     ordersql.add("ndr." + key + " " + orderMap.get(key));
                 }
             }
@@ -253,22 +257,24 @@ public class NDResourceDaoImpl implements NDResourceDao{
         String sql = "";
         if(onlyOneType){//只查一种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + "ndresource ndr " 
+                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type= '" + resTypes.get(0) + "' AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type='" + resTypes.get(0) + "' AND rs.key_title='valuesum') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type='" + resTypes.get(0) + "' AND rer.source_uuid='" 
                     + relations.get(0).get("suuid") + "' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
+                    + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category='" + resTypes.get(0) + "' AND rco.taxOnCode LIKE 'RL%')" : "")
                     + "WHERE ndr.primary_category='" + resTypes.get(0) + "' "
                     + timeRangSql
                     + " AND " + (useIn ? "ndr.identifier IN" : "EXISTS") + " (" + querySqls.get(0) + ")"
                     + " " + sqlOrderBy + " " ;
         }else{//查询多种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + "ndresource ndr " 
+                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") + "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs.key_title='valuesum') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rer.source_uuid='"
                     + relations.get(0).get("suuid") +"' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
+                    + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category IN (" + StringUtils.join(resTypes, "','") + ") AND rco.taxOnCode LIKE 'RL%')" : "")
                     + "WHERE ndr.primary_category IN ('" + StringUtils.join(resTypes, "','") + "') "
                     + timeRangSql
                     + " AND " + (useIn ? "ndr.identifier IN" : "EXISTS") 
