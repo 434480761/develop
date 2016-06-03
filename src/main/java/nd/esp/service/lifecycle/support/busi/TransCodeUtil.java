@@ -890,7 +890,11 @@ public class TransCodeUtil {
 
             List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
             
+            // 暂时与source 放在同一个目录
+            String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
+            
             if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
+                targetPath = targetPath.substring(0, targetPath.lastIndexOf(".pkg")+4);
                 for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
                     String cmd = iter.next();
                     if(cmd.startsWith("ffmpeg -i")) {
@@ -902,9 +906,6 @@ public class TransCodeUtil {
             LOG.info("视频转码脚本:" + scripts);
 
             arg.put("commands", scripts);
-
-            // 暂时与source 放在同一个目录
-            String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
 
             LOG.info("视频转码后目标目录：" + targetPath);
 
