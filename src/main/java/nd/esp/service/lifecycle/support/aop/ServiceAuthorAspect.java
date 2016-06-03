@@ -31,7 +31,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -92,10 +91,15 @@ public class ServiceAuthorAspect {
     		return;
     	}
 
-    	String ipAddr = request.getRemoteAddr();
+    	String ipAddr = getIp(request);
         String requestMethod = request.getMethod();
         String requestUrl = request.getRequestURL().toString();
         String serviceKey= request.getHeader(SERVICE_KEY);
+        
+        //FIXME 临时策略
+        if(!StringUtils.hasText(serviceKey) && requestMethod.equals("GET")){
+        	serviceKey = DEFAULT_SERVICE_KEY;
+        }
         
         //特殊的url不需要bsyskey
     	if(isSpecialUrl(requestUrl)){
@@ -129,7 +133,7 @@ public class ServiceAuthorAspect {
         	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_SERVICE_KEY", "业务系统访问受限,service key错误或不存在");
         }
         
-        //ip限制
+        //ip限制;
         List<String> ipList = configModel.getGlobalIps();
         if(ipList!=null && !ipList.contains(ipAddr)) {
         	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/IVC_ERROR_IP", "业务系统访问受限,请求IP:"+ipAddr+"不在允许范围内.");
@@ -365,5 +369,28 @@ public class ServiceAuthorAspect {
     	}
     	
 		return rtExcludeCate;
+    }
+    
+    /**
+     * 获取IP地址方法
+     * @param request
+     * @return
+     */
+    public static String getIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if(StringUtils.isNotEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)){
+            //多次反向代理后会有多个ip值，第一个ip才是真实ip
+            int index = ip.indexOf(",");
+            if(index != -1){
+                return ip.substring(0,index);
+            }else{
+                return ip;
+            }
+        }
+        ip = request.getHeader("X-Real-IP");
+        if(StringUtils.isNotEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)){
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }
