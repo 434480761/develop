@@ -1357,6 +1357,7 @@ public class CommonHelper {
         chapterViewModel.setTeachingMaterial(chapter.getTeachingMaterial());
         chapterViewModel.setTitle(chapter.getTitle());
         chapterViewModel.setDbcreateTime(chapter.getDbcreateTime());
+        chapterViewModel.setTags(chapter.getTags());
         return chapterViewModel;
     }
 

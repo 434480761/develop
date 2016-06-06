@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.models.chapter.v06;
 
+import java.util.List;
+
 /**
  * 06章节Model
  * <p>Create Time: 2015年8月4日           </p>
@@ -34,6 +36,10 @@ public class ChapterModel {
      * 方向，默认值是next
      */
     private String direction;
+    /**
+     * 标签
+     */
+    private List<String> tags;    
     
     
     public String getIdentifier() {
@@ -78,4 +84,10 @@ public class ChapterModel {
     public void setDirection(String direction) {
         this.direction = direction;
     }
+	public List<String> getTags() {
+		return tags;
+	}
+	public void setTags(List<String> tags) {
+		this.tags = tags;
+	}
 }
