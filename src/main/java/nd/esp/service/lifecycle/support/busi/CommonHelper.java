@@ -80,7 +80,6 @@ import org.springframework.http.HttpStatus;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.gson.reflect.TypeToken;
-import com.nd.gaea.rest.exceptions.extendExceptions.WafSimpleException;
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 
 /**
@@ -796,7 +795,7 @@ public class CommonHelper {
 		//UUID校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(4) == '1')){
 			if(!checkUuidPattern(viewModel.getIdentifier())){
-				throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
 			}
 		}
 		
@@ -804,14 +803,14 @@ public class CommonHelper {
 		//keywords字符长度校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(3) == '1')){
 			if(!checkListLength(viewModel.getKeywords(),1000)){
-				throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getMessage());
+				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getMessage());
 			}
 		}
 		
 		//tags字符长度校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(2) == '1')){
 			if(!checkListLength(viewModel.getTags(), 1000)){
-				throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckTagsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckTagsLengthFail.getMessage());
+				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckTagsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckTagsLengthFail.getMessage());
 			}
 		}
 			
@@ -1349,7 +1348,8 @@ public class CommonHelper {
      * @return
      * @since
      */
-    public static ChapterViewModel changeChapterToChapterViewModel(Chapter chapter) {
+    @SuppressWarnings("unchecked")
+	public static ChapterViewModel changeChapterToChapterViewModel(Chapter chapter) {
         ChapterViewModel chapterViewModel = new ChapterViewModel();
         chapterViewModel.setIdentifier(chapter.getIdentifier());
         chapterViewModel.setDescription(chapter.getDescription());
@@ -1357,7 +1357,7 @@ public class CommonHelper {
         chapterViewModel.setTeachingMaterial(chapter.getTeachingMaterial());
         chapterViewModel.setTitle(chapter.getTitle());
         chapterViewModel.setDbcreateTime(chapter.getDbcreateTime());
-        chapterViewModel.setTags(chapter.getTags());
+        chapterViewModel.setTags(ObjectUtils.fromJson(chapter.getDbtags(), List.class));
         return chapterViewModel;
     }
 

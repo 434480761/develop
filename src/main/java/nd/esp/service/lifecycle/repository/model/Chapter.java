@@ -6,8 +6,6 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
-import org.apache.solr.client.solrj.beans.Field;
-
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 
