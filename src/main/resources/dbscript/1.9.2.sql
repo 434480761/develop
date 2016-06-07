@@ -1,1 +1,2 @@
-ALTER TABLE `tech_infos` ADD `printable` TINYINT(1) NULL DEFAULT '0' AFTER `resource`, ADD INDEX `idx_techInfo_printable` (`printable`) ;
+--创建资源标签统计表
+CREATE TABLE `resource_tags` ( `identifier` CHAR(36) NOT NULL , `title` VARCHAR(50) NULL , `description` VARCHAR(50) NULL , `resource` CHAR(36) NOT NULL , `tag` VARCHAR(100) NOT NULL , `count` INT(10) NOT NULL , `create_time` BIGINT(20) NOT NULL , `last_update` BIGINT(20) NOT NULL ) ENGINE = InnoDB COMMENT = '资源标签统计';

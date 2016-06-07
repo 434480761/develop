@@ -1,4 +1,4 @@
-﻿cNdCode,pNdCode,ndCode,title,shortName
+cNdCode,pNdCode,ndCode,title,shortName
 教案
 $R|$RT0200|$RT0206|教案|lessonplans
 $R|$RT0200|$RT0207|电子教材|ebooks
@@ -507,3 +507,5 @@ OT|OTS2900|OTS2905|拼音的占格位置|suite_phoneticize05
 PC|ROOT|PC0100|通用分类|common_phrase
 PC|PC0100|PC0101|成语|idiom
 PC|PC0100|PC0102|谚语|proverb
+
+PR|ROOT|PR01000000|通用分类|common_brand

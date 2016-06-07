@@ -286,6 +286,19 @@ public enum NdCodePattern {
             map.put(2, 2);
             map.put(4, 2);
         }
+    },
+    /**
+     * 提供商品牌的分类，由3部分，10位标识码组成。
+		(1)PR (2)00 (3)000000
+		第一层级：分类类别，用两位大写的英文字母标识，语的分类使用PR标识。
+		第二层级：一级类目代码，用2位阿拉伯数字标识。
+		第三层级：二级类目代码，用6位阿拉伯数字标识。
+     */
+    PR("PR|PR[0-9]{2}|PR[0-9]{8}", 10, 2, "") {
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 2);
+            map.put(4, 6);
+        }
     };
     // 分类维度ndCode的长度(现在所有的分类维度编码长度都是2)
     public static final int CATEGORY_LENGTH = 2;
@@ -314,9 +327,9 @@ public enum NdCodePattern {
     abstract void setUp(Map<Integer, Integer> map);
 
     /**
-     * @param pattern
-     * @param length
-     * @param minPrefixLength
+     * @param pattern  			正则表达式
+     * @param length			总长度
+     * @param minPrefixLength	第一层级的长度
      * @param message
      */
     private NdCodePattern(String pattern, int length, int minPrefixLength, String message) {

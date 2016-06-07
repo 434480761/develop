@@ -11,6 +11,7 @@ import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
+import nd.esp.service.lifecycle.services.tags.ResourceTagService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -23,6 +24,7 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterConstant;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel4Move;
+import nd.esp.service.lifecycle.vos.v06.ResourceTagViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -52,6 +54,8 @@ public class ChapterControllerV06 {
     @Autowired
     private NotifyInstructionalobjectivesService notifyService;
     
+    @Autowired
+    private ResourceTagService resourceTagService;
     /**
      * 创建章节 
      * <p>Create Time: 2015年8月3日   </p>
@@ -289,4 +293,23 @@ public class ChapterControllerV06 {
         
         return chapterService.countResourceByTeachingMaterials(mtidList, targetType);
     }
+    
+    /**
+     * 新增章节标签统计
+     * @return
+     */
+    @RequestMapping(value="/{cid}/tags",method=RequestMethod.POST,produces={MediaType.APPLICATION_JSON_VALUE},consumes={MediaType.APPLICATION_JSON_VALUE})
+    public Map<String,String> addChapterTags(@PathVariable String cid,@RequestBody Map<String,Integer> params){
+    	return resourceTagService.addResourceTags(cid, params);
+    }
+    
+    /**
+     * 章节标签统计查询
+     * @return
+     */
+    @RequestMapping(value="/{cid}/tags",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
+    public List<ResourceTagViewModel> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit){
+    	return resourceTagService.queryResourceTagsByCid(cid, limit);
+    }
+    
 }
