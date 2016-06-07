@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.RecursiveTask;
 
@@ -13,6 +12,10 @@ import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -26,11 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
-
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 
 /**
  * 06章节的Dao实现
