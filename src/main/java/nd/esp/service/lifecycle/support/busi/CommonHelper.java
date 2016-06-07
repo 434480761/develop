@@ -795,7 +795,7 @@ public class CommonHelper {
 		//UUID校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(4) == '1')){
 			if(!checkUuidPattern(viewModel.getIdentifier())){
-				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
 			}
 		}
 		
@@ -803,14 +803,14 @@ public class CommonHelper {
 		//keywords字符长度校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(3) == '1')){
 			if(!checkListLength(viewModel.getKeywords(),1000)){
-				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getMessage());
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckKeywordsLengthFail.getMessage());
 			}
 		}
 		
 		//tags字符长度校验
 		if(checkflag == null || (checkflag != null && checkflag.charAt(2) == '1')){
 			if(!checkListLength(viewModel.getTags(), 1000)){
-				throw new LifeCircleException(LifeCircleErrorMessageMapper.CheckTagsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckTagsLengthFail.getMessage());
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckTagsLengthFail.getCode(), LifeCircleErrorMessageMapper.CheckTagsLengthFail.getMessage());
 			}
 		}
 			
