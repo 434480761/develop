@@ -2,7 +2,6 @@ package nd.esp.service.lifecycle.educommon.vos;
 
 import java.util.List;
 
-import javax.persistence.Column;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 

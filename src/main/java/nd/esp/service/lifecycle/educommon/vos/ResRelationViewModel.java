@@ -2,7 +2,6 @@ package nd.esp.service.lifecycle.educommon.vos;
 
 import java.util.List;
 
-import nd.esp.service.lifecycle.vos.valid.InstructionalObjectiveDefault;
 import nd.esp.service.lifecycle.vos.valid.RelationsDefault;
 
 import org.hibernate.validator.constraints.Length;

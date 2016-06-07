@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.educommon.vos;
 
 import nd.esp.service.lifecycle.vos.valid.CoveragesDefault;
-import nd.esp.service.lifecycle.vos.valid.TechInfoDefault;
 
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
