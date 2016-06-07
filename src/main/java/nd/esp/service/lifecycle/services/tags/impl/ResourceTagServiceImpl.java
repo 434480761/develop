@@ -141,7 +141,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 		//1、校验limit的合法性
         Integer[] result = ParamCheckUtil.checkLimit(limit);
         
-        String sql = "select * from resource_tags where resource = :resource order by count desc limit :offset,:pagesize";
+        String sql = "select * from resource_tags where resource = :resource and count > 0 order by count desc limit :offset,:pagesize";
 		Query query = em.createNativeQuery(sql, ResourceTags.class);
 		query.setParameter("resource", cid);
 		query.setParameter("offset", result[0]);
