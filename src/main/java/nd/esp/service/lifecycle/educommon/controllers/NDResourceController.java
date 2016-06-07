@@ -81,7 +81,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
-import com.nd.gaea.rest.exceptions.extendExceptions.WafSimpleException;
 import com.nd.gaea.rest.security.authens.UserInfo;
 
 
@@ -164,7 +163,8 @@ public class NDResourceController {
 
         // UUID校验
         if (!CommonHelper.checkUuidPattern(uuid)) {
-            throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+            							 LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                                          LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
         }
         //check include;
@@ -193,7 +193,8 @@ public class NDResourceController {
         // UUID校验
         for (String uuid : uuidSet) {
             if (!CommonHelper.checkUuidPattern(uuid)) {
-                throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                							 LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                                              LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage()+"    invalid uuid: "+uuid);
             }
         }
@@ -227,7 +228,8 @@ public class NDResourceController {
     public @ResponseBody Map<String, String> delete(@PathVariable("res_type") String resourceType,@PathVariable("uuid") String uuid) {
         // UUID校验
         if (!CommonHelper.checkUuidPattern(uuid)) {
-            throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+            		 					 LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                                          LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
         }
         
@@ -1368,7 +1370,8 @@ public class NDResourceController {
         // ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         // UUID校验
         if (!Constant.DEFAULT_UPLOAD_URL_ID.equals(uuid) && !CommonHelper.checkUuidPattern(uuid)) {
-            throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+            							 LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                                          LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
         }
         commonServiceHelper.assertUploadable(res_type);
@@ -1460,7 +1463,8 @@ public class NDResourceController {
         commonServiceHelper.assertDownloadable(resType);
         
         if (!CommonHelper.checkUuidPattern(uuid)) {
-            throw new WafSimpleException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+            						     LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                                          LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
         }
         

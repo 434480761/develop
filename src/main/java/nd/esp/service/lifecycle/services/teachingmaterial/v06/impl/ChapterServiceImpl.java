@@ -560,6 +560,7 @@ public class ChapterServiceImpl implements ChapterService{
         chapterModel.setParent(chapter.getParent());
         chapterModel.setTeachingMaterial(chapter.getTeachingMaterial());
         chapterModel.setTitle(chapter.getTitle());
+        chapterModel.setTags(chapter.getTags());
         
         return chapterModel;
     }

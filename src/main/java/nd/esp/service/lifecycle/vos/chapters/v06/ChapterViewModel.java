@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.vos.chapters.v06;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.hibernate.validator.constraints.NotBlank;
 
@@ -45,6 +46,11 @@ public class ChapterViewModel {
      * 方向，默认值是next
      */
     private String direction;
+    
+    /**
+     * 标签
+     */
+    private List<String> tags;
     
     /**
      * 创建时间只用于查询
@@ -100,5 +106,10 @@ public class ChapterViewModel {
 	public void setDbcreateTime(BigDecimal dbcreateTime) {
 		this.dbcreateTime = dbcreateTime;
 	}
-    
+	public List<String> getTags() {
+		return tags;
+	}
+	public void setTags(List<String> tags) {
+		this.tags = tags;
+	}
 }
