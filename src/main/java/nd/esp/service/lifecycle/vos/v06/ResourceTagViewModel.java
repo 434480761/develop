@@ -5,15 +5,8 @@ package nd.esp.service.lifecycle.vos.v06;
  *
  */
 public class ResourceTagViewModel {
-	private String resource;
 	private String tag;
 	private int count;
-	public String getResource() {
-		return resource;
-	}
-	public void setResource(String resource) {
-		this.resource = resource;
-	}
 	public String getTag() {
 		return tag;
 	}

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
@@ -18,13 +19,13 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterConstant;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel4Move;
-import nd.esp.service.lifecycle.vos.v06.ResourceTagViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -299,8 +300,12 @@ public class ChapterControllerV06 {
      * @return
      */
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.POST,produces={MediaType.APPLICATION_JSON_VALUE},consumes={MediaType.APPLICATION_JSON_VALUE})
-    public Map<String,String> addChapterTags(@PathVariable String cid,@RequestBody Map<String,Integer> params){
-    	return resourceTagService.addResourceTags(cid, params);
+    public Map<String,String> addChapterTags(@PathVariable String cid,@RequestBody Map<String,Integer> params,HttpServletResponse response){
+    	Map<String,String> returnMap = resourceTagService.addResourceTags(cid, params);
+    	if(CollectionUtils.isNotEmpty(returnMap)){
+    		response.setStatus(500);
+    	}
+    	return returnMap;
     }
     
     /**
@@ -308,7 +313,7 @@ public class ChapterControllerV06 {
      * @return
      */
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
-    public List<ResourceTagViewModel> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit){
+    public Map<String,Object> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit){
     	return resourceTagService.queryResourceTagsByCid(cid, limit);
     }
     

@@ -90,8 +90,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 					int r = rt.getCount() + c.intValue();
 					if(r < 0){
 						returnMap.put(key, "参数有错误，目前tag的统计值为"+rt.getCount());
-						break;
-					}else{
+					}else if(CollectionUtils.isEmpty(returnMap)){
 						ResourceTags tmp = new ResourceTags();
 						tmp.setIdentifier(rt.getIdentifier());
 						tmp.setCount(r);
@@ -103,10 +102,10 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 					}
 				}
 			}
-			if(!flag && CollectionUtils.isEmpty(returnMap)){
+			if(!flag){
 				if(c.intValue() < 0){
 					returnMap.put(key, "不存在此tag，参数值不能为负整数");
-				}else{
+				}else if(CollectionUtils.isEmpty(returnMap)){
 					ResourceTags tmp = new ResourceTags();
 					tmp.setIdentifier(UUID.randomUUID().toString());
 					tmp.setCount(c.intValue());
@@ -135,28 +134,35 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	}
 
 	@Override
-	public List<ResourceTagViewModel> queryResourceTagsByCid(String cid,
+	public Map<String,Object> queryResourceTagsByCid(String cid,
 			String limit) {
-		List<ResourceTagViewModel> returnList = new ArrayList<ResourceTagViewModel>();
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		List<ResourceTagViewModel> list = new ArrayList<ResourceTagViewModel>();
 		//1、校验limit的合法性
         Integer[] result = ParamCheckUtil.checkLimit(limit);
-        
+        String countSql = "select count(identifier) from resource_tags where resource = ? and count > 0";
         String sql = "select * from resource_tags where resource = :resource and count > 0 order by count desc limit :offset,:pagesize";
-		Query query = em.createNativeQuery(sql, ResourceTags.class);
-		query.setParameter("resource", cid);
-		query.setParameter("offset", result[0]);
-		query.setParameter("pagesize", result[1]);
-		List<ResourceTags> queryResult = query.getResultList();
-		if(CollectionUtils.isNotEmpty(queryResult)){
-			for (ResourceTags resourceTag : queryResult) {
-				ResourceTagViewModel rtvm = new ResourceTagViewModel();
-				rtvm.setCount(resourceTag.getCount());
-				rtvm.setResource(resourceTag.getResource());
-				rtvm.setTag(resourceTag.getTag());
-				returnList.add(rtvm);
-			}
-		}
-		return returnList;
+        String[] args = {cid};
+        Integer total = jt.queryForObject(countSql,args,Integer.class);
+        
+        if(total != null && total.intValue() > 0){
+    		Query query = em.createNativeQuery(sql, ResourceTags.class);
+    		query.setParameter("resource", cid);
+    		query.setParameter("offset", result[0]);
+    		query.setParameter("pagesize", result[1]);
+    		List<ResourceTags> queryResult = query.getResultList();
+    		if(CollectionUtils.isNotEmpty(queryResult)){
+    			for (ResourceTags resourceTag : queryResult) {
+    				ResourceTagViewModel rtvm = new ResourceTagViewModel();
+    				rtvm.setCount(resourceTag.getCount());
+    				rtvm.setTag(resourceTag.getTag());
+    				list.add(rtvm);
+    			}
+    		}
+        }
+		returnMap.put("total", total);
+		returnMap.put("items", list);
+		return returnMap;
 	}
 
 }
