@@ -40,6 +40,7 @@ import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
+import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -145,6 +146,15 @@ public class NDResourceController {
     
     @Autowired
     NotifyReportService nrs;
+    
+    @Autowired
+    @Qualifier(value = "StatisticalServiceImpl")
+    private ResourceStatisticalService statisticalService;
+
+    @Autowired
+    @Qualifier(value = "StatisticalService4QuestionDBImpl")
+    private ResourceStatisticalService statisticalService4QuestionDB;
+
 
     /**
      * 资源获取详细接口
@@ -1366,7 +1376,8 @@ public class NDResourceController {
                                         @PathVariable String uuid,
                                         @RequestParam(value = "uid", required = true) String uid,
                                         @RequestParam(value = "renew", required = false, defaultValue = "false") Boolean renew,
-                                        @RequestParam(value = "coverage", required = false, defaultValue = "") String coverage) {
+                                        @RequestParam(value = "coverage", required = false, defaultValue = "") String coverage,
+                                        HttpServletRequest request) {
         // ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         // UUID校验
         if (!Constant.DEFAULT_UPLOAD_URL_ID.equals(uuid) && !CommonHelper.checkUuidPattern(uuid)) {
@@ -1395,6 +1406,10 @@ public class NDResourceController {
             return accessModel;
         }
         AccessModel am = ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
+        
+        //同步至统计表中  add by xuzy 20160615
+        String bsyskey = request.getHeader("bsyskey");
+        syncResourceStatis(bsyskey,res_type,uuid);
         
         //同步至报表系统  add by xuzy 20160517
         if(nrs.checkCoverageIsNd(res_type,uuid)){
@@ -1560,6 +1575,20 @@ public class NDResourceController {
         }
         
         return rt;
+    }
+    
+    /**
+     * 将下载信息统计至数据库中
+     * @param bsyskey
+     * @param res_type
+     * @param uuid
+     */
+    private void syncResourceStatis(String bsyskey,String resType,String uuid){
+    	if(commonServiceHelper.isQuestionDb(resType)){
+    		statisticalService4QuestionDB.addDownloadStatistical(bsyskey, resType, uuid);
+    	}else{
+    		statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
+    	}
     }
     
 }

@@ -9,6 +9,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.daos.statisticals.ResourceStatisticalsDao;
+import nd.esp.service.lifecycle.models.statisticals.v06.ResourceStatisticalModel;
+import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.EspEntity;
+import nd.esp.service.lifecycle.repository.EspRepository;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
+import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
+import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
+import nd.esp.service.lifecycle.services.coursewareobjects.v06.impls.CourseWareObjectServiceImplV06;
+import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.utils.BeanMapperUtils;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,25 +34,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import nd.esp.service.lifecycle.repository.Education;
-import nd.esp.service.lifecycle.repository.EspEntity;
-import nd.esp.service.lifecycle.repository.EspRepository;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
-import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
-import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
-
-import nd.esp.service.lifecycle.daos.statisticals.ResourceStatisticalsDao;
-import nd.esp.service.lifecycle.models.statisticals.v06.ResourceStatisticalModel;
-import nd.esp.service.lifecycle.services.coursewareobjects.v06.impls.CourseWareObjectServiceImplV06;
-import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
-import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
-import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
 @Service("StatisticalServiceImpl")
 @Transactional(value="transactionManager")
@@ -49,6 +47,8 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
     @Autowired
     @Qualifier(value = "ResourceStatisticalsDaoImpl")
     private ResourceStatisticalsDao resourceStatisticalsDao;
+    
+    
 
     /**
      * 增加资源评价统计指标数据
@@ -239,4 +239,62 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
         }
     }
 
+	@Override
+	public void addDownloadStatistical(String bsyskey, String resType, String id) {
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
+		List<ResourceStatistical> rsList = resourceStatisticalsDao.getAllRsByReousrceId(id);
+		boolean flag = false;
+		//1、判断业务方是否为101ppt
+		if(nd.esp.service.lifecycle.support.Constant.BSYSKEY_101PPT.equals(bsyskey)){
+			flag = true;
+		}
+		List<ResourceStatistical> datas = new ArrayList<ResourceStatistical>();
+		boolean totalFlag = false;
+		boolean pptFlag = false;
+		if(CollectionUtils.isNotEmpty(rsList)){
+			for (ResourceStatistical rs : rsList) {
+				if("TOTAL".equals(rs.getDataFrom())){
+					totalFlag = true;
+					rs.setKeyValue(rs.getKeyValue()+1);
+					datas.add(rs);
+				}else if(flag && "101PPT".equals(rs.getDataFrom())){
+					pptFlag = true;
+					rs.setKeyValue(rs.getKeyValue()+1);
+					datas.add(rs);
+				}
+			}
+		}
+		if(!totalFlag || CollectionUtils.isEmpty(rsList)){
+			ResourceStatistical dbStatistical = new ResourceStatistical();
+            dbStatistical.setIdentifier(UUID.randomUUID().toString());
+            dbStatistical.setResource(id);
+            dbStatistical.setKeyTitle("downloads");
+            dbStatistical.setUpdateTime(ts);
+            dbStatistical.setDataFrom("TOTAL");
+            dbStatistical.setResType(resType);
+            dbStatistical.setKeyValue(1.0);
+            datas.add(dbStatistical);
+		}
+		if(flag && (!pptFlag || CollectionUtils.isEmpty(rsList))){
+			ResourceStatistical tmp = new ResourceStatistical();
+			tmp.setIdentifier(UUID.randomUUID().toString());
+			tmp.setResource(id);
+			tmp.setKeyTitle("downloads");
+			tmp.setUpdateTime(ts);
+			tmp.setDataFrom("101PPT");
+			tmp.setResType(resType);
+			tmp.setKeyValue(1.0);
+            datas.add(tmp);
+		}
+		
+		if(CollectionUtils.isNotEmpty(datas)){
+			try {
+				statisticalRepository.batchAdd(datas);
+			} catch (EspStoreException e) {
+				 LOG.error("资源统计指标操作--批量保存资源失败");
+		         throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+		                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+			}
+		}
+	}
 }
