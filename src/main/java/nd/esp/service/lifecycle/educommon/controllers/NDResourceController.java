@@ -175,7 +175,6 @@ public class NDResourceController {
         return changeToView(modelResult, resourceType,includeList);
     }
     
-
     /**
      * 资源批量获取详细接口
      * 
@@ -301,12 +300,15 @@ public class NDResourceController {
             @RequestParam(required=false,value="relation") Set<String> relations,
             @RequestParam(required=false,value="coverage") Set<String> coverages,
             @RequestParam(required=false,value="prop") List<String> props,
+            @RequestParam(required=false,value="orderby") List<String> orderBy,
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="statistics_type") String statisticsType,
+            @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props,null, words, limit, true, true, reverse, printable, printableKey);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey);
     }
 	
 	/**
@@ -531,7 +533,7 @@ public class NDResourceController {
         //参数校验和处理
         Map<String, Object> paramMap = 
         		requestParamVerifyAndHandle(resType, resCodes, includes, categories, categoryExclude,
-        									relations, coverages, props, orderBy, limit, isByDB, reverse, printable, printableKey);
+        									relations, coverages, props, orderBy, limit, isByDB, reverse);
         
         // include
 		List<String> includesList = (List<String>)paramMap.get("include");
@@ -758,7 +760,7 @@ public class NDResourceController {
     	//参数校验和处理
     	Map<String, Object> paramMap = 
     			requestParamVerifyAndHandle(resType, null, null, categories, null, null, 
-    										coverages, props, null, "(0,1)", true, null, null, null);
+    										coverages, props, null, "(0,1)", true, null);
     	
     	//categories
         categories = (Set<String>)paramMap.get("category");
@@ -847,7 +849,7 @@ public class NDResourceController {
      */
     private Map<String, Object> requestParamVerifyAndHandle(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
-            List<String> orderBy, String limit, boolean isByDB, String reverse, Boolean printable, String printableKey){
+            List<String> orderBy, String limit, boolean isByDB, String reverse){
     	//reverse,默认为false
         boolean reverseBoolean = false;
         if(StringUtils.isNotEmpty(reverse) && reverse.equals("true")){

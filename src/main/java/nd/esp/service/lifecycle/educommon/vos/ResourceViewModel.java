@@ -84,6 +84,12 @@ public class ResourceViewModel {
 	private String ndresCode;
 	
 	/**
+	 * 统计数量
+	 */
+	@JsonInclude(Include.NON_NULL)
+	private Double statisticsNum;
+	
+	/**
 	 * 自定义扩展属性
 	 */
 	private Map<String,Object> customProperties;
@@ -262,5 +268,13 @@ public class ResourceViewModel {
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+
+	public Double getStatisticsNum() {
+		return statisticsNum;
+	}
+
+	public void setStatisticsNum(Double statisticsNum) {
+		this.statisticsNum = statisticsNum;
 	}
 }

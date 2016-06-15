@@ -118,7 +118,6 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         List<ResourceRelation> relations4Create = new ArrayList<ResourceRelation>();
         EspEntity resourceEntity = null;
         EspEntity targetEntity = null;
-        ResourceRelation relation = new ResourceRelation();
         // 返回的结果集
         List<EducationRelationModel> resultList = new ArrayList<EducationRelationModel>();
         boolean haveExist = false;
@@ -168,6 +167,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         }
         float newSortNum = SORT_NUM_INITIAL_VALUE;
         for (EducationRelationModel erm : educationRelationModels) {
+        	ResourceRelation relation = new ResourceRelation();
+        	
             if(StringUtils.isEmpty(erm.getLabel())){
                 erm.setLabel(null);
             }

@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -134,6 +135,51 @@ public class NDResourceDaoImpl implements NDResourceDao{
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>();
         
+        //获取querySqls和params,并把resTypes和onlyOneType返回
+        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
+        		printable, printableKey, querySqls, params);
+        @SuppressWarnings("unchecked")
+		List<String> resTypes = (List<String>)map.get("resTypes");
+        boolean onlyOneType = (boolean)map.get("onlyOneType");
+        
+        //判断是否是查询习题库
+        final DbName dbName = getDBName4CommonQuery(onlyOneType, resTypes);
+        
+        //sql的ORDER BY
+        String sqlOrderBy = "ORDER BY ndr.create_time DESC";//默认的排序方式
+        boolean haveSizeSort = false;
+        boolean haveSumSort = false;
+        boolean haveSortNum = false;
+        boolean haveVipLevel = false;
+        if(CollectionUtils.isNotEmpty(orderMap)){
+            List<String> ordersql = new ArrayList<String>();
+            
+            for(String key : orderMap.keySet()){
+                if(key.equals("size")){
+                    haveSizeSort = true;
+                    ordersql.add("ti." + key + " " + orderMap.get(key));
+                }else if(key.equals("key_value")){
+                    haveSumSort = true;
+                    ordersql.add("rs." + key + " " + orderMap.get(key));
+                }else if(key.equals("sort_num")){
+                	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
+                			&& dbName.equals(DbName.DEFAULT) && !reverse){
+                		haveSortNum = true;
+                        ordersql.add("rer." + key + " " + orderMap.get(key));
+                	}
+                }else if(key.equals("taxOnCode")){//资源等级排序
+                	haveVipLevel = true;
+                	ordersql.add("rco." + key + " " + orderMap.get(key));
+				}else{
+                    ordersql.add("ndr." + key + " " + orderMap.get(key));
+                }
+            }
+            
+            if(CollectionUtils.isNotEmpty(ordersql)){
+                sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
+            }
+        }
+        
         //*******各属性的select字段及别名,当不需要时用null代替的语句--Start*******//
         //通用属性
         String commonSelect = "";
@@ -141,7 +187,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean isNeedPreview = isNeedPreview(resType);
         commonSelect = "ndr.identifier AS identifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
-                + "ndr.code as code";
+                + "ndr.code as code," + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
         //LC
         String lifeCycleSelect = "ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate";
         String lifeCycleSelect4Null = "null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate";
@@ -198,52 +244,9 @@ public class NDResourceDaoImpl implements NDResourceDao{
         }
         //*******include- TI,CG,EDU,LC,CR--处理模块--End*******//
         
-        //获取querySqls和params,并把resTypes和onlyOneType返回
-        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey, querySqls, params);
-        @SuppressWarnings("unchecked")
-		List<String> resTypes = (List<String>)map.get("resTypes");
-        boolean onlyOneType = (boolean)map.get("onlyOneType");
-        
-        //判断是否是查询习题库
-        final DbName dbName = getDBName4CommonQuery(onlyOneType, resTypes);
-        
-        //sql的ORDER BY
-        String sqlOrderBy = "ORDER BY ndr.create_time DESC";//默认的排序方式
-        boolean haveSizeSort = false;
-        boolean haveSumSort = false;
-        boolean haveSortNum = false;
-        boolean haveVipLevel = false;
-        if(CollectionUtils.isNotEmpty(orderMap)){
-            List<String> ordersql = new ArrayList<String>();
-            
-            for(String key : orderMap.keySet()){
-                if(key.equals("size")){
-                    haveSizeSort = true;
-                    ordersql.add("ti." + key + " " + orderMap.get(key));
-                }else if(key.equals("key_value")){
-                    haveSumSort = true;
-                    ordersql.add("rs." + key + " " + orderMap.get(key));
-                }else if(key.equals("sort_num")){
-                	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
-                			&& dbName.equals(DbName.DEFAULT) && !reverse){
-                		haveSortNum = true;
-                        ordersql.add("rer." + key + " " + orderMap.get(key));
-                        
-                        //FIXME 当根据sort_num排序的时候,对identifier做DISTINCT
-                        sqlSelect = sqlSelect.replaceFirst("ndr.identifier AS identifier", "DISTINCT(ndr.identifier) AS identifier");
-                	}
-                }else if(key.equals("taxOnCode")){//资源等级排序
-                	haveVipLevel = true;
-                	ordersql.add("rco." + key + " " + orderMap.get(key));
-				}else{
-                    ordersql.add("ndr." + key + " " + orderMap.get(key));
-                }
-            }
-            
-            if(CollectionUtils.isNotEmpty(ordersql)){
-                sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
-            }
+        if(haveSortNum){
+        	//FIXME 当根据sort_num排序的时候,对identifier做DISTINCT
+            sqlSelect = sqlSelect.replaceFirst("ndr.identifier AS identifier", "DISTINCT(ndr.identifier) AS identifier");
         }
         
         //sql的LIMIT 
@@ -367,6 +370,11 @@ public class NDResourceDaoImpl implements NDResourceDao{
             }
             resourceModel.setCustomProperties(fullModel.getCustomProperties());
             resourceModel.setNdresCode(fullModel.getCode());
+            if(haveSumSort){
+            	resourceModel.setStatisticsNum(fullModel.getStatistics_num()==null ? 0D : fullModel.getStatistics_num());
+            }else{
+            	resourceModel.setStatisticsNum(null);
+            }
             
             //EDU,LC,CR
             for (String include : includes) {

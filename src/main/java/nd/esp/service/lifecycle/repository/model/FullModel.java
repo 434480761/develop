@@ -22,6 +22,7 @@ public class FullModel {
     private String keywords;
     private String customProperties;
     private String code;
+    private Double statistics_num;
     
     //**********************扩展属性**********************\\
 //    //习题
@@ -347,4 +348,10 @@ public class FullModel {
     public void setCopyRight_author(String copyRight_author) {
         this.copyRight_author = copyRight_author;
     }
+	public Double getStatistics_num() {
+		return statistics_num;
+	}
+	public void setStatistics_num(Double statistics_num) {
+		this.statistics_num = statistics_num;
+	}
 }

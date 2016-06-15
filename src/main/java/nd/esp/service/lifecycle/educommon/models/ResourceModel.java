@@ -47,6 +47,10 @@ public class ResourceModel {
 	 */
 	private String ndresCode;
 	
+	/**
+	 * 统计数量
+	 */
+	private Double statisticsNum;
 	
 	/**
 	 * 自定义扩展属性
@@ -214,6 +218,14 @@ public class ResourceModel {
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+
+	public Double getStatisticsNum() {
+		return statisticsNum;
+	}
+
+	public void setStatisticsNum(Double statisticsNum) {
+		this.statisticsNum = statisticsNum;
 	}
 
 
