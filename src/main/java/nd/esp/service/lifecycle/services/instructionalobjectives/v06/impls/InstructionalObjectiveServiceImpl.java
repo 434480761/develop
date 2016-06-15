@@ -93,7 +93,8 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			
 			String newId = UUID.randomUUID().toString();
 			instructionalObjectiveModel.setIdentifier(newId);
-			
+			instructionalObjectiveModel.setRelations(null);
+			instructionalObjectiveModel.setCoverages(null);
 			instructionalObjectiveModel = (InstructionalObjectiveModel) ndResourceService.create(ResourceNdCode.instructionalobjectives.toString(),
                      instructionalObjectiveModel);
 			instructionalObjectiveModel.setPreview(null);
@@ -118,6 +119,32 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			educationRelationModels.add(erm);
 			educationRelationService.createRelation(educationRelationModels, false);
 			
+			//将target为oldId所对应的关系复制一份到newId中
+			String relationSql = "select res_type,source_uuid from resource_relations where resource_target_type='instructionalobjectives' and target = '"+oldId+"'";
+			List<Map<String,Object>> l = jt.queryForList(relationSql);
+			if(CollectionUtils.isNotEmpty(l)){
+				for (Map<String, Object> map : l) {
+					List<EducationRelationModel> lt = new ArrayList<EducationRelationModel>();
+					String resType = (String)map.get("res_type");
+					String source = (String)map.get("source_uuid");
+					
+					EducationRelationModel tmp = new EducationRelationModel();
+					tmp.setIdentifier(UUID.randomUUID().toString());
+//					erm.setOrderNum(5000);
+					tmp.setResType(resType);
+					tmp.setResourceTargetType("instructionalobjectives");
+					tmp.setSource(source);
+					tmp.setTarget(newId);
+					tmp.setLabel("版本迭代");
+					tmp.setRelationType("ASSOCIATE");
+					EducationRelationLifeCycleModel tmpLc = new EducationRelationLifeCycleModel();
+					tmpLc.setEnable(true);
+					tmpLc.setStatus("CREATED");
+					tmp.setLifeCycle(tmpLc);
+					lt.add(tmp);
+					educationRelationService.createRelation(lt, false);
+				}
+			}
 			return instructionalObjectiveModel;
 			
 		}
