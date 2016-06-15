@@ -237,5 +237,64 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
                     LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
         }
     }
+    
+    @Override
+	public void addDownloadStatistical(String bsyskey, String resType, String id) {
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
+		List<ResourceStatistical> rsList = resourceStatisticalsDao.getAllRsByReousrceId(id);
+		boolean flag = false;
+		//1、判断业务方是否为101ppt
+		if(nd.esp.service.lifecycle.support.Constant.BSYSKEY_101PPT.equals(bsyskey)){
+			flag = true;
+		}
+		List<ResourceStatistical> datas = new ArrayList<ResourceStatistical>();
+		boolean totalFlag = false;
+		boolean pptFlag = false;
+		if(CollectionUtils.isNotEmpty(rsList)){
+			for (ResourceStatistical rs : rsList) {
+				if("TOTAL".equals(rs.getDataFrom())){
+					totalFlag = true;
+					rs.setKeyValue(rs.getKeyValue()+1);
+					datas.add(rs);
+				}else if(flag && "101PPT".equals(rs.getDataFrom())){
+					pptFlag = true;
+					rs.setKeyValue(rs.getKeyValue()+1);
+					datas.add(rs);
+				}
+			}
+		}
+		if(!totalFlag || CollectionUtils.isEmpty(rsList)){
+			ResourceStatistical dbStatistical = new ResourceStatistical();
+            dbStatistical.setIdentifier(UUID.randomUUID().toString());
+            dbStatistical.setResource(id);
+            dbStatistical.setKeyTitle("downloads");
+            dbStatistical.setUpdateTime(ts);
+            dbStatistical.setDataFrom("TOTAL");
+            dbStatistical.setResType(resType);
+            dbStatistical.setKeyValue(1.0);
+            datas.add(dbStatistical);
+		}
+		if(flag && (!pptFlag || CollectionUtils.isEmpty(rsList))){
+			ResourceStatistical tmp = new ResourceStatistical();
+			tmp.setIdentifier(UUID.randomUUID().toString());
+			tmp.setResource(id);
+			tmp.setKeyTitle("downloads");
+			tmp.setUpdateTime(ts);
+			tmp.setDataFrom("101PPT");
+			tmp.setResType(resType);
+			tmp.setKeyValue(1.0);
+            datas.add(tmp);
+		}
+		
+		if(CollectionUtils.isNotEmpty(datas)){
+			try {
+				statisticalRepository.batchAdd(datas);
+			} catch (EspStoreException e) {
+				 LOG.error("资源统计指标操作--批量保存资源失败");
+		         throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+		                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+			}
+		}
+	}
 
 }

@@ -56,6 +56,8 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 			Chapter c = chapterRepository.get(cid);
 			if(c == null){
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.ChapterNotFound);
+			}else if(c.getEnable() != null && !c.getEnable()){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.ChapterNotFound);
 			}
 		} catch (EspStoreException e) {
 			e.printStackTrace();

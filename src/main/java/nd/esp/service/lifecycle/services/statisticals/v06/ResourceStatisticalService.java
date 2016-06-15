@@ -12,4 +12,6 @@ public interface ResourceStatisticalService {
     public List<ResourceStatisticalModel> addStatistical(List<ResourceStatisticalModel> sms, String resType, String id);
 
     public Map<String, List<ResourceStatisticalModel>> getList(List<String> key, List<String> rid);
+    
+    public void addDownloadStatistical(String bsyskey,String resType,String id);
 }
