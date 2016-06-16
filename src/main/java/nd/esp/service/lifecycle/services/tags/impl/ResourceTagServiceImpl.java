@@ -32,7 +32,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-@Transactional
 @Service
 public class ResourceTagServiceImpl implements ResourceTagService {
 	@Autowired
@@ -49,6 +48,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	private EntityManager em;
 	
 	@Override
+	@Transactional
 	public Map<String, String> addResourceTags(String cid,
 			Map<String, Integer> params) {
 		long time = System.currentTimeMillis();
