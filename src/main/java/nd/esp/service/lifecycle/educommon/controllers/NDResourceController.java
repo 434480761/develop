@@ -318,7 +318,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform);
     }
 	
 	/**
@@ -371,7 +371,7 @@ public class NDResourceController {
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, null, coverages, props, orderBy, null, limit,
-				false, !isAll, "false", printable, printableKey);
+				false, !isAll, "false", printable, printableKey, null,null);
 	}
 	
 	/**
@@ -410,9 +410,11 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="statistics_type") String statisticsType,
+            @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform);
     }
     
     /**
@@ -453,9 +455,11 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="statistics_type") String statisticsType,
+            @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform);
     }
     
     /**
@@ -524,7 +528,7 @@ public class NDResourceController {
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
-            Boolean printable, String printableKey) {
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform) {
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1 
                 && coverages.iterator().next().equals(CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE)){
@@ -538,6 +542,16 @@ public class NDResourceController {
         	categoryExclude.addAll(excludeCategories4bsyskey);
         }else{
         	categoryExclude = excludeCategories4bsyskey;
+        }
+        
+        //statisticsType,statisticsPlatform 参数处理
+        if(!StringUtils.hasText(statisticsType)){
+        	statisticsType = "valuesum";
+        }
+        if("self".equals(statisticsPlatform) && StringUtils.hasText(bsyskey) && bsyskey.equals(Constant.BSYSKEY_101PPT)){
+        	statisticsPlatform = "101PPT";
+        }else{
+        	statisticsPlatform = "TOTAL";
         }
         
         //参数校验和处理
@@ -589,11 +603,11 @@ public class NDResourceController {
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
         			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
 					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey);
+	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform);
 				}
         	}else{
         		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey);
+                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform);
         	}
         }else{
             rListViewModel = 
@@ -1586,11 +1600,10 @@ public class NDResourceController {
      * @param uuid
      */
     private void syncResourceStatis(String bsyskey,String resType,String uuid){
-    	if(commonServiceHelper.isQuestionDb(resType)){
+    	if(CommonServiceHelper.isQuestionDb(resType)){
     		statisticalService4QuestionDB.addDownloadStatistical(bsyskey, resType, uuid);
     	}else{
     		statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
     	}
     }
-    
 }

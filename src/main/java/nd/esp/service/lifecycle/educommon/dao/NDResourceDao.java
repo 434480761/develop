@@ -31,7 +31,8 @@ public interface NDResourceDao {
     public List<ResourceModel> commomQueryByDB(final String resType, String resCodes, final List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
-            boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey);
+            boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
+            String statisticsType,String statisticsPlatform);
 
     /**
      * 查询总数

@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -130,14 +129,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
     public List<ResourceModel> commomQueryByDB(final String resType, String resCodes, final List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
-            boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey) {
+            boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
+            String statisticsType,String statisticsPlatform) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>();
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey, querySqls, params);
+        		printable, printableKey, orderMap,statisticsType, statisticsPlatform,querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -262,7 +262,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             sql = sqlSelect + " FROM " 
                     + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type= '" + resTypes.get(0) + "' AND ti.title='href') " : "")
-                    + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type='" + resTypes.get(0) + "' AND rs.key_title='valuesum') " : "")
+                    + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type='" + resTypes.get(0) + "' AND rs.key_title=:st AND rs.data_from=:sp) " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type='" + resTypes.get(0) + "' AND rer.source_uuid='" 
                     + relations.get(0).get("suuid") + "' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category='" + resTypes.get(0) + "' AND rco.taxOnCode LIKE 'RL%')" : "")
@@ -274,7 +274,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             sql = sqlSelect + " FROM " 
                     + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") + "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND ti.title='href') " : "")
-                    + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs.key_title='valuesum') " : "")
+                    + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs.key_title=:st AND rs.data_from=:sp) " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rer.source_uuid='"
                     + relations.get(0).get("suuid") +"' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category IN (" + StringUtils.join(resTypes, "','") + ") AND rco.taxOnCode LIKE 'RL%')" : "")
@@ -636,7 +636,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey, querySqls, params);
+        		printable, printableKey,null,null,null, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -673,7 +673,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
-        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null, querySqls, params);
+        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null,null, null,null, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
     	
@@ -847,7 +847,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, true,
-        		printable, printableKey, querySqls, params);
+        		printable, printableKey,null,null,null, querySqls, params);
         boolean onlyOneType = (boolean)map.get("onlyOneType");
         
         //最终sql
@@ -878,6 +878,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement,boolean reverse,boolean useIn, Boolean printable, String printableKey,
+            Map<String, String> orderMap, String statisticsType, String statisticsPlatform,
             List<String> querySqls,Map<String,Object> params){
         //判断是否需要交集
         Map<String,Object> dealCategoriesMap = dealAndCategories(categories);
@@ -910,7 +911,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
 
             // 参数处理
             Map<String, Object> subParams = sqlParamsDeal(isCount, type, resTypes, noAndcategories, andCategories, categoryExclude, relations,
-                    coverages, propsMap, words, isNotManagement, paramHead, onlyOneType, reverse, printable, printableKey);
+                    coverages, propsMap, words, isNotManagement, paramHead, onlyOneType, reverse, printable, printableKey,
+                    orderMap, statisticsType, statisticsPlatform);
             params.putAll(subParams);
             
             j++;
@@ -1935,7 +1937,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
             List<List<String>> andCategories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, String paramHead, boolean onlyOneType, boolean reverse,
-            Boolean printable, String printableKey) {
+            Boolean printable, String printableKey,Map<String, String> orderMap, 
+            String statisticsType, String statisticsPlatform) {
         
         Map<String,Object> params = new HashMap<String, Object>();
         //1.relation的参数处理
@@ -2078,6 +2081,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
         //6.printable & printableKey
         if(printable!=null && StringUtils.isNotEmpty(printableKey)){
         	params.put(paramHead + "filekey", printableKey);
+        }
+        
+        //7.Map<String, String> orderMap, String statisticsType, String statisticsPlatform
+        if(!isCount){
+        	if(CollectionUtils.isNotEmpty(orderMap) && orderMap.containsKey("key_value")){
+        		params.put("st", statisticsType);
+        		params.put("sp", statisticsPlatform);
+        	}
         }
         
         return params;
