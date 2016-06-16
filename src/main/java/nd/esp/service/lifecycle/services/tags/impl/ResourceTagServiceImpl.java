@@ -168,5 +168,19 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 		returnMap.put("items", list);
 		return returnMap;
 	}
+	
+	@Override
+	public int deleteResourceTagsByCid(String cid){
+		String sql = "delete from resource_tags where resource='"+cid+"'";
+		int num = jt.update(sql);
+		return num;
+	}
+	
+	@Override
+	public int deleteResourceTagsById(String id){
+		String sql = "delete from resource_tags where identifier='"+id+"'";
+		int num = jt.update(sql);
+		return num;
+	}
 
 }

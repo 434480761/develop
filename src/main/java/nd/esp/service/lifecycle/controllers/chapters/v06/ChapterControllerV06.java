@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.controllers.chapters.v06;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -315,6 +316,30 @@ public class ChapterControllerV06 {
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
     public Map<String,Object> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit){
     	return resourceTagService.queryResourceTagsByCid(cid, limit);
+    }
+    
+    /**
+     * 根据章节id删除标签接口
+     * @return
+     */
+    @RequestMapping(value="/{cid}/tags",method=RequestMethod.DELETE,produces={MediaType.APPLICATION_JSON_VALUE})
+    public Map<String,Object> deleteResourceTagsByCid(@PathVariable String cid){
+    	int num = resourceTagService.deleteResourceTagsByCid(cid);
+    	Map<String,Object> map = new HashMap<String, Object>();
+    	map.put("成功删除记录数", num);
+    	return map;
+    }
+    
+    /**
+     * 根据id删除标签接口
+     * @return
+     */
+    @RequestMapping(value="/tags/{id}",method=RequestMethod.DELETE,produces={MediaType.APPLICATION_JSON_VALUE})
+    public Map<String,Object> deleteResourceTagsById(@PathVariable String id){
+    	int num = resourceTagService.deleteResourceTagsById(id);
+    	Map<String,Object> map = new HashMap<String, Object>();
+    	map.put("成功删除记录数", num);
+    	return map;
     }
     
 }
