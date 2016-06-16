@@ -65,15 +65,13 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 		
 		//2、根据章节、标签获取统计数量
 		List<ResourceTags> queryResult = null;
-		synchronized ("sync") {
-			if(params != null){
-				Set<String> keys = params.keySet();
-				String sql = "select * from resource_tags where resource = :resource and tag in (:tags)";
-				Query query = em.createNativeQuery(sql, ResourceTags.class);
-				query.setParameter("resource", cid);
-				query.setParameter("tags", keys);
-				queryResult = query.getResultList();
-			}
+		if(params != null){
+			Set<String> keys = params.keySet();
+			String sql = "select * from resource_tags where resource = :resource and tag in (:tags) for update";
+			Query query = em.createNativeQuery(sql, ResourceTags.class);
+			query.setParameter("resource", cid);
+			query.setParameter("tags", keys);
+			queryResult = query.getResultList();
 		}
 		
 		//3、检验入参是否通过
