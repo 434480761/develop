@@ -5,14 +5,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
 import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.vos.coverage.v06.CoverageViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,6 +39,10 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
     @Autowired
     @Qualifier("educationRelationServiceV06")
     private EducationRelationServiceV06 educationRelationService;
+    
+    @Autowired
+    @Qualifier(value="coverageServiceImpl")
+    private CoverageService coverageService;
     
     @Autowired
     private JdbcTemplate jt;
@@ -94,7 +102,18 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			String newId = UUID.randomUUID().toString();
 			instructionalObjectiveModel.setIdentifier(newId);
 			instructionalObjectiveModel.setRelations(null);
-			instructionalObjectiveModel.setCoverages(null);
+			
+			//查找oldId的覆盖范围
+			List<CoverageViewModel> cvList = coverageService.getCoveragesByResource("instructionalobjectives",oldId,null,null,null);
+			if(CollectionUtils.isNotEmpty(cvList)){
+				List<ResCoverageModel> coverages = new ArrayList<ResCoverageModel>();
+				for (CoverageViewModel cvm : cvList) {
+					ResCoverageModel c = BeanMapperUtils.beanMapper(cvm, ResCoverageModel.class);
+					coverages.add(c);
+				}
+				instructionalObjectiveModel.setCoverages(coverages);;
+			}
+			
 			instructionalObjectiveModel = (InstructionalObjectiveModel) ndResourceService.create(ResourceNdCode.instructionalobjectives.toString(),
                      instructionalObjectiveModel);
 			instructionalObjectiveModel.setPreview(null);
@@ -117,17 +136,15 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			lc.setStatus("CREATED");
 			erm.setLifeCycle(lc);
 			educationRelationModels.add(erm);
-			educationRelationService.createRelation(educationRelationModels, false);
+			
 			
 			//将target为oldId所对应的关系复制一份到newId中
 			String relationSql = "select res_type,source_uuid from resource_relations where resource_target_type='instructionalobjectives' and target = '"+oldId+"'";
 			List<Map<String,Object>> l = jt.queryForList(relationSql);
 			if(CollectionUtils.isNotEmpty(l)){
 				for (Map<String, Object> map : l) {
-					List<EducationRelationModel> lt = new ArrayList<EducationRelationModel>();
 					String resType = (String)map.get("res_type");
 					String source = (String)map.get("source_uuid");
-					
 					EducationRelationModel tmp = new EducationRelationModel();
 					tmp.setIdentifier(UUID.randomUUID().toString());
 //					erm.setOrderNum(5000);
@@ -141,10 +158,10 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 					tmpLc.setEnable(true);
 					tmpLc.setStatus("CREATED");
 					tmp.setLifeCycle(tmpLc);
-					lt.add(tmp);
-					educationRelationService.createRelation(lt, false);
+					educationRelationModels.add(tmp);
 				}
 			}
+			educationRelationService.createRelation(educationRelationModels, false);
 			return instructionalObjectiveModel;
 			
 		}
