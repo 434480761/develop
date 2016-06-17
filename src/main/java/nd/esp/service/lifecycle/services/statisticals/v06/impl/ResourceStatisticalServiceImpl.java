@@ -225,7 +225,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
                 dbStatistical.setResource(resourceId);
                 dbStatistical.setKeyTitle(keyTitle);
                 dbStatistical.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                dbStatistical.setDataFrom("资源统计总数");
+                dbStatistical.setDataFrom("TOTAL");
                 dbStatistical.setResType(resType);
                 dbStatistical.setKeyValue(valuesum);
 
