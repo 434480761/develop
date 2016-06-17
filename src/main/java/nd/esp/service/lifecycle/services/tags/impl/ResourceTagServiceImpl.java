@@ -107,8 +107,10 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 				}
 			}
 			if(!flag){
+				
 				if(c.intValue() < 0){
-					returnMap.put(key, "不存在此tag，参数值不能为负整数");
+					//由于部分环境未初始化相关数据，暂时屏蔽
+					//returnMap.put(key, "不存在此tag，参数值不能为负整数");
 				}else if(CollectionUtils.isEmpty(returnMap)){
 					ResourceTags tmp = new ResourceTags();
 					tmp.setIdentifier(UUID.randomUUID().toString());
