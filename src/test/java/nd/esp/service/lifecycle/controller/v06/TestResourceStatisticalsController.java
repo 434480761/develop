@@ -6,22 +6,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.BaseControllerConfig;
+import nd.esp.service.lifecycle.impl.SimpleJunitTest4ResourceImpl;
+import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
+import nd.esp.service.lifecycle.vos.statistical.v06.ResourceStatisticalViewModel;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.PropertyNamingStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.nd.gaea.WafException;
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 import com.nd.gaea.rest.testconfig.MockUtil;
-
-import nd.esp.service.lifecycle.BaseControllerConfig;
-import nd.esp.service.lifecycle.impl.SimpleJunitTest4ResourceImpl;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
-import nd.esp.service.lifecycle.vos.CategoryPatternViewModel;
-import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.vos.statistical.v06.ResourceStatisticalViewModel;
 
 public class TestResourceStatisticalsController extends BaseControllerConfig {
 
@@ -38,7 +34,7 @@ public class TestResourceStatisticalsController extends BaseControllerConfig {
      * @throws Exception 
      * @throws UnsupportedEncodingException 
      * */
-//    @Test
+    @Test
     public void test() throws UnsupportedEncodingException, Exception {
         // 创建一个素材资源
         String uri = "/v0.6/assets/" + uuid;

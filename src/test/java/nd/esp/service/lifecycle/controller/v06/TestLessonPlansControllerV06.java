@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class TestLessonPlansControllerV06 extends SimpleJunitTest4ResourceImpl{
 	private final static String RES_TYPE = "lessonplans";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		//校验上传接口，返回uuid

@@ -18,7 +18,7 @@ import org.junit.Test;
 
 public class TestTeachingMaterialController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "teachingmaterials";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		

@@ -1,18 +1,18 @@
 package nd.esp.service.lifecycle.controller.v06;
 
+import nd.esp.service.lifecycle.BaseControllerConfig;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.nd.gaea.rest.testconfig.MockUtil;
-
-import nd.esp.service.lifecycle.BaseControllerConfig;
 /**
  * 应用服务器的运行状态单元测试
  * @author xuzy
  *
  */
 public class TestMonitorController extends BaseControllerConfig {
-//	@Test
+	@Test
 	public void testAll(){
 		String uri = "/v0.3/system/status";
 		String resStr = null;

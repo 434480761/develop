@@ -70,7 +70,7 @@ public class TestPackaging extends SimpleJunitTest4ResourceImpl {
     * 
     * @since
     */
-//   @Test
+   @Test
    public void testPackaging() {
        String resourceType = "";
 
@@ -113,7 +113,7 @@ public class TestPackaging extends SimpleJunitTest4ResourceImpl {
    /**
     * 测试下载功能，存在两种情况：有无key,(access_url 若无， 则是href ,若有，则从store_info中取），暂不验证这个，key 不赋值
     */
-//   @Test
+   @Test
    public void testPackagingWebp() {
        String resourceType = "";
 

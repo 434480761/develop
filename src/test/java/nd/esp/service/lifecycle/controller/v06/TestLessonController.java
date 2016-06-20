@@ -12,7 +12,7 @@ import org.junit.Test;
 
 public class TestLessonController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "lessons";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		

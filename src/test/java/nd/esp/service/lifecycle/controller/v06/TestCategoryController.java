@@ -76,7 +76,7 @@ public class TestCategoryController extends BaseControllerConfig {
     /**
      * 一、分类维度：增、改、查、删,新增： uuid取详情，nd_code 取详情，批量取详情
      * */
-//    @Test
+    @Test
     public void testCategory() {
         String json = "";
         String uri = "";
@@ -268,7 +268,7 @@ public class TestCategoryController extends BaseControllerConfig {
     /**
      * 二、维度数据:增、改、查、删,新增： uuid取详情，nd_code 取详情，批量取详情
      * */
-//    @Test
+    @Test
     public void testCategoryData() {
         String json = "";
         String uri = "";
@@ -446,7 +446,7 @@ public class TestCategoryController extends BaseControllerConfig {
     /**
      * 三、维度模式：增、改、查、删,新增： uuid取详情，pattern_name 取详情，批量取详情 ，模型：新增字段（patternPath)
      * */
-//    @Test
+    @Test
     public void testCategoryPattern() {
         String json = "";
         String uri = "";
@@ -594,7 +594,7 @@ public class TestCategoryController extends BaseControllerConfig {
     /**
      * 四、维度数据关系：增、查、删,新增： 批量创建，批量删除;
      * */
-//    @Test
+    @Test
     public void testCategoryRelations() {
         String json = "";
         String uri = "";
@@ -1118,7 +1118,7 @@ public class TestCategoryController extends BaseControllerConfig {
      * @throws Exception
      * @author linsm
      */
-//    @Test
+    @Test
     public void test() {
         String json = "";
         String uri = "";

@@ -15,7 +15,7 @@ public class TestResRepositoryController extends BaseControllerConfig{
     
     Logger logger = Logger.getLogger(this.getClass().getName());
     
-//    @Test
+    @Test
     @SuppressWarnings("unchecked")
     public void testController(){
         logger.info("公私有库-物理存储空间Controller层单元测试开始");

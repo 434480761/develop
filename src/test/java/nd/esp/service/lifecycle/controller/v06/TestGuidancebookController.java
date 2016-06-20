@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class TestGuidancebookController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "guidancebooks";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		

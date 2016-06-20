@@ -42,8 +42,8 @@ public class TestResourceAnnotationsController extends SimpleJunitTest4ResourceI
         // 删除教案
         testDelete("lessonplans", sourceUuid);
     }
-
-//    @Test
+    
+    @Test
     @Override
     public void doTest() {
         Map<String, Object> result = createLessonPlan();

@@ -15,7 +15,7 @@ public class TestToolController extends BaseControllerConfig{
 	/**
 	 * 测试章节复用关系接口
 	 */
-//	@Test
+	@Test
 	public void testDealData(){
 		//1、创建章节1
 		//2、创建素材1
@@ -29,7 +29,7 @@ public class TestToolController extends BaseControllerConfig{
 	/**
 	 * 解析日期
 	 */
-//	@Test
+	@Test
 	public void testParseDate(){
 		String uri = "/v0.6/resources/tools/parseDate?value=2016-01-01";
 		String uri2 = "/v0.6/resources/tools/parseDate?value=2016-01-01&format=yyyy-MM-dd";
@@ -48,7 +48,7 @@ public class TestToolController extends BaseControllerConfig{
 	/**
 	 * 格式化日期
 	 */
-//	@Test
+	@Test
 	public void testFormatDate(){
 		String uri = "/v0.6/resources/tools/formatDate?value=1454774400000";
 		String uri2 = "/v0.6/resources/tools/formatDate?value=1454774400000&format=yyyy-MM-dd";

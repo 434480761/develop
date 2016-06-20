@@ -14,20 +14,18 @@ import java.util.UUID;
 import nd.esp.service.lifecycle.BaseControllerConfig;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.impl.SimpleJunitTest4ResourceImpl;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterViewModel4Move;
 
 import org.junit.Assert;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 import com.nd.gaea.rest.testconfig.MockUtil;

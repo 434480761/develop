@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class TestToolsController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "tools";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		//校验上传接口，返回uuid

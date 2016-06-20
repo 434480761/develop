@@ -16,13 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import nd.esp.service.lifecycle.app.LifeCircleWebConfig;
 import nd.esp.service.lifecycle.impl.SimpleJunitTest4ResourceImpl;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
-import org.apache.commons.io.Charsets;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
@@ -36,14 +34,10 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.client.RestTemplate;
-
-
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
-import com.nd.gaea.rest.testconfig.AbstractSpringJunit4Config;
 import com.nd.gaea.rest.testconfig.MockUtil;
 
 /**
@@ -72,7 +66,7 @@ public class TestUploadAndDownload extends SimpleJunitTest4ResourceImpl {
      * 
      * @since
      */
-//    @Test
+    @Test
     public void testUpload() {
         String resourceType = "";
 
@@ -88,7 +82,7 @@ public class TestUploadAndDownload extends SimpleJunitTest4ResourceImpl {
     /**
      * 测试下载功能，存在两种情况：有无key,(access_url 若无， 则是href ,若有，则从store_info中取），暂不验证这个，key 不赋值
      */
-//    @Test
+    @Test
     public void testDownload() {
         String resourceType = "";
 

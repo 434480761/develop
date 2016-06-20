@@ -12,7 +12,7 @@ import org.junit.Test;
 
 public class TestInstructionalObjectiveController  extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "instructionalobjectives";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		

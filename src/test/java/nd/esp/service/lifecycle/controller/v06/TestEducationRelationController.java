@@ -130,7 +130,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         testDelete("teachingmaterials", tmId2);
     }
 
-//    @Test
+	@Test
     public void testAll() {
         /******************************************************************/
         /****************************创建资源关系测试 开始************************/
@@ -150,13 +150,13 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         Assert.assertNotNull("资源关系目标资源教学目标创建失败", objectiveId);
         
         //创建资源关系
-        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 3, true);
+        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 30, true);
         Assert.assertNotNull("创建课时和教学目标的资源关系失败", result);
         String relationId = (String) result.get("identifier");
         Assert.assertNotNull("创建课时和教学目标的资源关系失败", relationId);
         
         //重复创建直接返回
-        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 3, true);
+        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 30, true);
         Assert.assertNotNull("创建课时和教学目标的资源关系失败", result);
         Assert.assertNotNull("创建课时和教学目标的资源关系失败", result.get("identifier"));
         
@@ -166,28 +166,28 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         Assert.assertNotNull("创建课时和教学目标的资源关系失败", result.get("identifier"));
         
         //测试不存在的源资源类型
-        result = createRelation("wrongrestype", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 5, true);
+        result = createRelation("wrongrestype", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "instructionalobjectives", 50, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("资源类型不对", result.get("message"));
         
         // 测试不存在的目标资源类型
-        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "wrongtargettype", 5, true);
+        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "wrongtargettype", 50, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("资源类型不对", result.get("message"));
         
         //测试order_num重复
-        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 3, true);
+        result = createRelation("lessons", lessonId, objectiveId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 30, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("orderNum不允许重复", result.get("message"));
         
         //测试不存在的源资源
         String sourceUuid = UUID.randomUUID().toString();
-        result = createRelation("lessons", sourceUuid, objectiveId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 3, true);
+        result = createRelation("lessons", sourceUuid, objectiveId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 30, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("LC/SOURCE_RESOURCE_NOT_FOUND", result.get("code"));
         
         // 测试不存在的目标资源
-        result = createRelation("lessons", lessonId, UUID.randomUUID().toString(), DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 3, true);
+        result = createRelation("lessons", lessonId, UUID.randomUUID().toString(), DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test2", "instructionalobjectives", 30, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("LC/TARGET_RESOURCE_NOT_FOUND", result.get("code"));
         
@@ -216,7 +216,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         Assert.assertNotNull("资源关系目标资源习题创建失败", questionId);
         
         // 创建章节和习题的资源关系
-        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 3, true);
+        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 30, true);
         Assert.assertNotNull("创建章节和习题的资源关系失败", result);
         Assert.assertNotNull("创建教案和习题的资源关系失败", result.get("identifier"));
         
@@ -227,33 +227,33 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         /****************************************************************/
         
         //正常修改资源关系
-        result = updateRelation(relationId, "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", 6, true, true);
+        result = updateRelation(relationId, "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", 60, true, true);
         Assert.assertNotNull("修改课时和教学目标的资源关系失败", result);
         Assert.assertNotNull("修改课时和教学目标的资源关系失败", result.get("identifier"));
         Assert.assertEquals("lcms-special-label-dev-test3", result.get("label"));
         
         //测试order_num重复
-        result = updateRelation(relationId, "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 6, true, true);
+        result = updateRelation(relationId, "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 60, true, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("orderNum不允许重复", result.get("message"));
         
         // 测试不存在的源资源类型
-        result = updateRelation(relationId, "wrongrestype", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 6, true, true);
+        result = updateRelation(relationId, "wrongrestype", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 60, true, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("资源类型不对", result.get("message"));
             
         //测试不存在的源资源id
-        result = updateRelation(relationId, "lessons", UUID.randomUUID().toString(), DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 6, true, true);
+        result = updateRelation(relationId, "lessons", UUID.randomUUID().toString(), DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 60, true, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("LC/SOURCE_RESOURCE_NOT_FOUND", result.get("code"));
             
         // 测试不存在的资源关系id
-        result = updateRelation(UUID.randomUUID().toString(), "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 6, true, true);
+        result = updateRelation(UUID.randomUUID().toString(), "lessons", lessonId, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test5", 60, true, true);
         Assert.assertNotNull("异常信息返回为空", result);
         Assert.assertEquals("LC/RESOURCE_RELATION_NOT_EXIST", result.get("code"));
             
         // 测试不传某些属性
-        result = updateRelation(relationId, "lessons", lessonId, null, null, 7, false, false);
+        result = updateRelation(relationId, "lessons", lessonId, null, null, 70, false, false);
         Assert.assertNotNull("修改教案和课时的资源关系失败", result);
         Assert.assertNotNull("修改教案和课时的资源关系失败", result.get("identifier"));
         Assert.assertEquals("lcms-special-label-dev-test3", result.get("label"));
@@ -302,7 +302,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
                             (String) result.get("process_code"));
         
         // 创建章节和习题的资源关系
-        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 3, true);
+        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 30, true);
         Assert.assertNotNull("创建章节和习题的资源关系失败", result);
         Assert.assertNotNull("创建教案和习题的资源关系失败", result.get("identifier"));
         
@@ -328,17 +328,17 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         Assert.assertNotNull("资源关系源资源章节创建失败", subCid);
         
         // 创建章节和习题的资源关系
-        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 3, true);
+        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 30, true);
         Assert.assertNotNull("创建章节和习题的资源关系失败", result);
         Assert.assertNotNull("创建教案和习题的资源关系失败", result.get("identifier"));
         
         // 创建章节和习题的资源关系
-        result = createRelation("chapters", subCid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 3, true);
+        result = createRelation("chapters", subCid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 30, true);
         Assert.assertNotNull("创建章节和习题的资源关系失败", result);
         Assert.assertNotNull("创建教案和习题的资源关系失败", result.get("identifier"));
         
         // 创建章节和课时的资源关系
-        result = createRelation("chapters", cid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 7, true);
+        result = createRelation("chapters", cid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 70, true);
         Assert.assertNotNull("创建章节和课时的资源关系失败", result);
         Assert.assertNotNull("创建教案和课时的资源关系失败", result.get("identifier"));
         
@@ -454,7 +454,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         
         //target_type不传
         // 创建章节和习题的资源关系
-        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 3, true);
+        result = createRelation("chapters", cid, questionId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "questions", 30, true);
         Assert.assertNotNull("创建章节和习题的资源关系失败", result);
         Assert.assertNotNull("创建教案和习题的资源关系失败", result.get("identifier"));
         
@@ -571,7 +571,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
 
         // 创建课时和章节的资源关系
 //        result = createRelation("lessons", lessonId, subCid, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "chapters", 1, true);
-        result = createRelation("chapters", subCid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 1, true);
+        result = createRelation("chapters", subCid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 10, true);
         Assert.assertNotNull("创建课时和章节的资源关系失败", result);
         relationId = (String) result.get("identifier");
         Assert.assertNotNull("创建课时和章节的资源关系失败", relationId);
@@ -595,7 +595,7 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         Assert.assertNotNull("创建课时和课件颗粒的资源关系失败", relationId);
 
         // 创建章节和课时的资源关系
-        result = createRelation("chapters", subCid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 1, true);
+        result = createRelation("chapters", subCid, lessonId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "lessons", 10, true);
         Assert.assertNotNull("创建章节和课时的资源关系失败", result);
         relationId = (String) result.get("identifier");
         Assert.assertNotNull("创建章节和课时的资源关系失败", relationId);
@@ -752,19 +752,19 @@ public class TestEducationRelationController extends SimpleJunitTest4ResourceImp
         /****************************调整资源关系顺序测试开始*******************/
         /****************************************************************/
         // 创建章节和课时的资源关系
-        result = createRelation("chapters", chapterId1, lessonId1, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", "lessons", 1, true);
+        result = createRelation("chapters", chapterId1, lessonId1, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", "lessons", 10, true);
         Assert.assertNotNull("创建章节和课时的资源关系失败", result);
         String relationId1 = (String) result.get("identifier");
         Assert.assertNotNull("创建章节和课时的资源关系失败", relationId1);
         
         // 创建章节和课时的资源关系
-        result = createRelation("chapters", chapterId1, lessonId2, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", "lessons", 2, true);
+        result = createRelation("chapters", chapterId1, lessonId2, DEFAULT_RELATION_TYPE, "lcms-special-label-dev-test3", "lessons", 20, true);
         Assert.assertNotNull("创建章节和课时的资源关系失败", result);
         String relationId2 = (String) result.get("identifier");
         Assert.assertNotNull("创建章节和课时的资源关系失败", relationId2);
         
         // 创建章节和课件颗粒的资源关系
-        result = createRelation("chapters", chapterId1, cwoId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "coursewareobjects", 2, true);
+        result = createRelation("chapters", chapterId1, cwoId, DEFAULT_RELATION_TYPE, DEFAULT_LABEL, "coursewareobjects", 20, true);
         Assert.assertNotNull("创建章节和课件颗粒的资源关系失败", result);
         String relationId3 = (String) result.get("identifier");
         Assert.assertNotNull("创建章节和课件颗粒的资源关系失败", relationId3);

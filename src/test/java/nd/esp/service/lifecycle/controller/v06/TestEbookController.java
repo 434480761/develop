@@ -19,7 +19,7 @@ import org.junit.Test;
 
 public class TestEbookController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "ebooks";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		//校验上传接口，返回uuid

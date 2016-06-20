@@ -5,23 +5,18 @@ package nd.esp.service.lifecycle.controller.v06;
 import java.util.Map;
 import java.util.UUID;
 
-import nd.esp.service.lifecycle.BaseControllerConfig;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.impl.SimpleJunitTest4ResourceImpl;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
-import nd.esp.service.lifecycle.vos.coursewares.v06.CoursewareViewModel;
 
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.nd.gaea.rest.testconfig.MockUtil;
-
 public class TestTeachingactivitiesController extends SimpleJunitTest4ResourceImpl {
 	private final static String RES_TYPE = "teachingactivities";
-//	@Test
+	@Test
 	public void testAll(){
 		String uuid;
 		//校验上传接口，返回uuid

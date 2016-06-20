@@ -53,7 +53,7 @@ public class TestKnowledgeController extends SimpleJunitTest4ResourceImpl {
 
     }
 
-//    @Test
+	@Test
     @Override
     public void doTest() {
         /******************************************************************/
