@@ -115,6 +115,73 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     private JdbcTemplate jdbcTemplate;
     
     
+    public Map<String,Integer> adapterInstructionalobjectives(){
+        Map<String,Integer> returnMap = new HashMap<String,Integer>();
+        int seccess = 0;
+        
+        // 1. 获取单个汉字知识点
+        String querySql = "SELECT identifier,title FROM `ndresource` WHERE primary_category='knowledges' AND LENGTH(title)=3 AND title NOT REGEXP '[A-Za-z]'";
+        final List<Map<String,String>> knowledgeList = new ArrayList<Map<String,String>>();
+        jdbcTemplate.query(querySql, new RowMapper<String>() {
+
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Map<String,String> rowMap = new HashMap<String,String>();
+                rowMap.put("identifier", rs.getString("identifier"));
+                rowMap.put("title", rs.getString("title"));
+                knowledgeList.add(rowMap);
+                return null;
+            }
+
+        });
+        
+        for(Map<String,String> knowledge : knowledgeList) {
+            // 2.1 获取数据库中objective
+            final List<Map<String,String>> objectivesList = new ArrayList<Map<String,String>>();
+            querySql = "SELECT rr.source_uuid as 'kid', rr.identifier as 'rid', nd.identifier as 'oid', nd.title from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type='instructionalobjectives' and rr.target = nd.identifier and nd.primary_category='instructionalobjectives' and rr.source_uuid in (SELECT identifier from ndresource where title like '" + knowledge.get("title") + "（%')";
+            jdbcTemplate.query(querySql, new RowMapper<String>() {
+                @Override
+                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    Map<String,String> rowMap = new HashMap<String,String>();
+                    rowMap.put("kid", rs.getString("kid"));
+                    rowMap.put("rid", rs.getString("rid"));
+                    rowMap.put("oid", rs.getString("oid"));
+                    rowMap.put("title", rs.getString("title"));
+                    objectivesList.add(rowMap);
+                    return null;
+                }
+
+            });
+            
+            if(!objectivesList.isEmpty()) {
+                for(Map<String,String> object : objectivesList) {
+                    String fullTitle  = object.get("title");
+                    String sql4Update = "UPDATE ndresource SET title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "', description='"  + fullTitle.substring(fullTitle.indexOf("（")) + "' WHERE identifier='" + object.get("oid") + "'";
+                    int count = jdbcTemplate.update(sql4Update);
+                    LOG.info("更新了教学目标： "+object.get("oid"));
+                    sql4Update = "UPDATE resource_relations SET source_uuid='" + knowledge.get("identifier") + "' WHERE identifier='" + object.get("rid") + "'";
+                    count = jdbcTemplate.update(sql4Update);
+                    LOG.info("更新了知识点关系： "+object.get("rid"));
+                    sql4Update = "UPDATE resource_relations SET enable=0 WHERE target = ( SELECT identifier FROM ndresource WHERE primary_category='instructionalobjectives' AND title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "' AND identifier!='" + object.get("oid") + "')";
+                    count = jdbcTemplate.update(sql4Update);
+                    LOG.info("删除了知识点关系： title="+object.get("title"));
+                    sql4Update = "UPDATE ndresource  SET enable=0 WHERE primary_category='instructionalobjectives' AND title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "' AND identifier!='" + object.get("oid") + "'";
+                    count = jdbcTemplate.update(sql4Update);
+                    LOG.info("删除了教学目标： title="+object.get("title"));
+                    sql4Update = "UPDATE ndresource  SET enable=0 WHERE primary_category='knowledges' AND identifier='" + object.get("kid") + "'";
+                    count = jdbcTemplate.update(sql4Update);
+                    LOG.info("删除了知识点： id="+object.get("kid"));
+                }
+                ++seccess;
+            }
+            
+        }
+        
+        returnMap.put("seccess", seccess);
+        return returnMap;
+    }
+    
+    
     /**
      * 习题preview修复
      * 
@@ -1312,6 +1379,6 @@ class ConvertKnowledge implements Runnable {
 
             }
         }
-    }
+    } 
 
 }

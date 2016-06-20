@@ -74,5 +74,7 @@ public interface AdapterDBDataService {
      * @return
      */
     public Map<String,Integer> adapter3DResource();
+    
+    public Map<String,Integer> adapterInstructionalobjectives();
 
 }

@@ -44,6 +44,11 @@ public class AdapterDBDataController {
     @Autowired
     private StaticDataService staticDataService;
     
+    @RequestMapping(value = "/objective/fix_title", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public @ResponseBody Map<String,Integer> fixKnowledgeObjective() {
+        return adapterDBDataService.adapterInstructionalobjectives();
+    }
+    
     @RequestMapping(value = "/uploadfile",method=RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public @ResponseBody Map<String,Integer> uploadFileToCS(
             @RequestParam(value = "localFileDir", required = false,defaultValue = "D:\\UploadData") String localFileDir,

@@ -108,7 +108,7 @@ public class TranscodeServiceImpl implements TranscodeService {
     public static final String SUBTYPE_AUDIO = "audio";
     
     static {
-        if(zipFileTempDir.endsWith(File.separator)) {
+        if(!zipFileTempDir.endsWith(File.separator)) {
             zipFileTempDir+=File.separator; 
         }
         zipFileTempDir = zipFileTempDir + "lifecircle" + File.separator + "transcode_temp" ;
@@ -523,7 +523,12 @@ public class TranscodeServiceImpl implements TranscodeService {
             
             if(!extParam.get("src").equals(localFilePath)) {
                 Map<String,String> targetMetadata = new HashMap<String,String>();
-                long targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
+                long targetDuration = srcDuration;
+                try {
+                    targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
+                } catch (Exception e) {
+                    LOG.info("获取目标文件信息失败！");
+                }
                 targetsMetadata.put(key, targetMetadata);
                 LOG.info("  targetMetadata: "+ObjectUtils.toJson(targetMetadata));
                 logMsg.append("  targetMetadata: "+ObjectUtils.toJson(targetMetadata)+System.getProperty("line.separator"));
@@ -655,7 +660,12 @@ public class TranscodeServiceImpl implements TranscodeService {
             String localFilePath = targetsMap.get(key);
             String targetFileName = localFilePath.substring(localFilePath.lastIndexOf(File.separator)+File.separator.length());
             Map<String,String> targetMetadata = new HashMap<String,String>();
-            long targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
+            long targetDuration = srcDuration;
+            try {
+                targetDuration = getMediaMetadata(localFilePath, path, logMsg, targetMetadata);
+            } catch (Exception e) {
+                LOG.info("获取目标文件信息失败！");
+            }
             targetsMetadata.put(key, targetMetadata);
             LOG.info("  targetMetadata: "+ObjectUtils.toJson(targetMetadata));
             logMsg.append("  targetMetadata: "+ObjectUtils.toJson(targetMetadata)+System.getProperty("line.separator"));
@@ -826,6 +836,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         }
         
         for(String command : otherCmds) {
+            output.delete(0, output.length());
             int resultValue = RunCommand(command, output, path, logMsg);
             if(resultValue!=0) {
                 int msgStartIndex=output.length()-100<0 ? 0 : output.length()-100;
@@ -1160,13 +1171,12 @@ public class TranscodeServiceImpl implements TranscodeService {
 
     }
     
-    
     public static void main(String[] args) {
         
         String userDir = System.getProperty("user.dir");
         String path = TranscodeServiceImpl.class.getClassLoader().getResource("tools").getPath();
         
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\",\"session\":\"44b66812-f38f-4500-acc7-245792c7a83b\",\"task_execute_env\":\"integration\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu/esp/test/1463122597713.ogv\",\"ext_param\":{\"subtype\":\"video\",\"coverNum\":\"16\",\"targetFmt\":\"mp4\"},\"target_location\":\"/prepub_content_edu/esp/test\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 720 --height 480 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"ffmpeg2theora \\\"#src#\\\" --width 640 --height 360 --videoquality 7 --audioquality 5 -o \\\"#target#\\\"\",\"thumbnail -in \\\"#src#\\\" -picint #intervalTime# -s 160x120 -out \\\"#targetCover#\\\" -join 4x4\",\"ffmpeg -y -ss 5 -i \\\"#src#\\\" -frames 1 -f image2 #targetPreview#/frame1.jpg\"],\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"ext_param\":{\"targetFmt\":\"mp3\",\"coverNum\":\"16\",\"subtype\":\"audio\"},\"target_location\":\"/edu_product/esp/assets/7243c66c-059c-4074-bcd2-5d463118778b.pkg\",\"task_execute_env\":\"product\",\"session\":\"37034782-05d9-439d-b5fb-8e5241d0c736\",\"location\":\"http://cs.101.com/v0.1/download?path=/edu_product/esp/assets/7243c66c-059c-4074-bcd2-5d463118778b.pkg/a49e0b72468b830d33c5bab067cc8b78.wav\",\"cs_api_url\":\"http://cs.101.com/v0.1\",\"commands\":[\"ffmpeg -i \\\"#src#\\\" -y -ab 128k -c:a libmp3lame -vn \\\"#target#\\\"\",\"ffmpeg -i \\\"#src#\\\" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o \\\"#target#\\\"\"],\"callback_api\":\"http://esp-lifecycle.web.sdp.101.com/v0.6/assets/transcode/videoCallback\"}";
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
@@ -1175,13 +1185,13 @@ public class TranscodeServiceImpl implements TranscodeService {
         StringBuffer errMsg = new StringBuffer();
         TranscodeResult result = new TranscodeResult();
         try {
-            result = transcode("ec22b8ab-f28d-4c47-8351-c1f45a0ccc37", param, errMsg);
+            result = transcodeAudio("7243c66c-059c-4074-bcd2-5d463118778b", param, errMsg);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
-        System.out.println("CallbackUrl: "+param.getCallback_api() + "?identifier=ec22b8ab-f28d-4c47-8351-c1f45a0ccc37" + "&status=1");
+        System.out.println("CallbackUrl: "+param.getCallback_api() + "?identifier=7243c66c-059c-4074-bcd2-5d463118778b" + "&status=1");
         
         System.out.println(ObjectUtils.toJson(result));
 
