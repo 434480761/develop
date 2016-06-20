@@ -156,16 +156,18 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
             if(!objectivesList.isEmpty()) {
                 for(Map<String,String> object : objectivesList) {
                     String fullTitle  = object.get("title");
-                    String sql4Update = "UPDATE ndresource SET title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "', description='"  + fullTitle.substring(fullTitle.indexOf("（")) + "' WHERE identifier='" + object.get("oid") + "'";
+                    String word = fullTitle.substring(0, fullTitle.indexOf("（"));
+                    String pinyin = fullTitle.substring(fullTitle.indexOf("（")+1, fullTitle.length()-1);
+                    String sql4Update = "UPDATE ndresource SET title='" + word + "', description='"  + pinyin + "' WHERE identifier='" + object.get("oid") + "'";
                     int count = jdbcTemplate.update(sql4Update);
                     LOG.info("更新了教学目标： "+object.get("oid"));
                     sql4Update = "UPDATE resource_relations SET source_uuid='" + knowledge.get("identifier") + "' WHERE identifier='" + object.get("rid") + "'";
                     count = jdbcTemplate.update(sql4Update);
                     LOG.info("更新了知识点关系： "+object.get("rid"));
-                    sql4Update = "UPDATE resource_relations SET enable=0 WHERE target = ( SELECT identifier FROM ndresource WHERE primary_category='instructionalobjectives' AND title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "' AND identifier!='" + object.get("oid") + "')";
+                    sql4Update = "UPDATE resource_relations SET enable=0 WHERE target IN ( SELECT identifier FROM ndresource WHERE primary_category='instructionalobjectives' AND title='" + word + "' AND identifier!='" + object.get("oid") + "' AND description IN ('', '" + pinyin + "')  )";
                     count = jdbcTemplate.update(sql4Update);
                     LOG.info("删除了知识点关系： title="+object.get("title"));
-                    sql4Update = "UPDATE ndresource  SET enable=0 WHERE primary_category='instructionalobjectives' AND title='" + fullTitle.substring(0, fullTitle.indexOf("（")) + "' AND identifier!='" + object.get("oid") + "'";
+                    sql4Update = "UPDATE ndresource  SET enable=0 WHERE primary_category='instructionalobjectives' AND title='" + word + "' AND identifier!='" + object.get("oid") + "' AND description IN ('', '" + pinyin + "')";
                     count = jdbcTemplate.update(sql4Update);
                     LOG.info("删除了教学目标： title="+object.get("title"));
                     sql4Update = "UPDATE ndresource  SET enable=0 WHERE primary_category='knowledges' AND identifier='" + object.get("kid") + "'";
