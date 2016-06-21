@@ -115,7 +115,6 @@ public class KnowledgeControllerV06 {
         // 知识点没有techInfo属性
         viewModelOut.setTechInfo(null);
         viewModelOut.setEducationInfo(null);
-        viewModelOut.setPreview(null);
 
         return viewModelOut;
     }
@@ -154,7 +153,6 @@ public class KnowledgeControllerV06 {
         viewModelOut.setTechInfo(null);
         viewModelOut.setExtProperties(null);
         viewModelOut.setEducationInfo(null);
-        viewModelOut.setPreview(null);
 
         return viewModelOut;
     }
