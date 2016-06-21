@@ -317,7 +317,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <argLine>-XX:MaxPermSize=256m -Dfile.encoding=UTF-8</argLine>
                     <!--打包时是否略过测试 -->
                     <skip>false</skip>
                     <!--测试出现错误时是否忽略，如果为true，则会直接打包 -->
