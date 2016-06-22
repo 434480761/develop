@@ -49,7 +49,7 @@ public class ResourceViewModel {
 	 * 学习对象的标题名称
 	 */
     @NotBlank(message="{resourceViewModel.title.notBlank.validmsg}",groups={BasicInfoDefault.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class})
-    @Length(message="{resourceViewModel.title.maxlength.validmsg}",max=200,groups={BasicInfoDefault.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class})
+    @Length(message="{resourceViewModel.title.maxlength.validmsg}",max=200,groups={BasicInfoDefault.class})
 	private String title;
 	/**
 	 * 学习对象的文字描述，对于文字描述的长度约定为100个汉字
