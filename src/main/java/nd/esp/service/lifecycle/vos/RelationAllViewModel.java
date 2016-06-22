@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.vos;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,13 +37,15 @@ public class RelationAllViewModel{
 	 */
 	private String patternPath;
 	
+	private List<RelationAllViewModel> items = new ArrayList<RelationAllViewModel>();
+	
 	public String getIdentifier() {
 		return identifier;
 	}
 	public void setIdentifier(String identifier) {
 		this.identifier = identifier;
 	}
-	private List<RelationAllViewModel> items;
+	
 	public TargetViewModel getTarget() {
 		return target;
 	}

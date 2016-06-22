@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.vos;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class QueryRelationAllViewModel {
 	/**
 	 * 每一个维度中的维度数据（在关系中是顶层）
 	 */
-	private List<RelationAllViewModel> items;
+	private List<RelationAllViewModel> items = new ArrayList<RelationAllViewModel>();
 	
 	public List<RelationAllViewModel> getItems() {
 		return items;
