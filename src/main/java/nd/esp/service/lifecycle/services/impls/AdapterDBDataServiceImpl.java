@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import javax.persistence.Query;
 
+import nd.esp.service.lifecycle.controllers.AdapterDBDataController;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
@@ -56,7 +57,6 @@ import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.enums.AdapterTaskResultStatus;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
@@ -71,10 +71,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+
+import com.nd.gaea.client.http.BearerAuthorizationProvider;
+import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 @Service
 public class AdapterDBDataServiceImpl implements AdapterDBDataService {
@@ -986,6 +993,151 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     	
     	return returnMap;
     }
+
+	@Override
+	public void adapterDJGResource4Lc(){
+		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+			
+			@Override
+			public String getUserid() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public String getAuthorization() {
+				return "NDR_MAC";
+			}
+		});
+		
+//		String lcDomain = "http://esp-lifecycle.pre1.web.nd/v0.6";
+		String lcDomain = "http://esp-lifecycle.web.sdp.101.com/v0.6";
+		
+		//1.查询语句
+		String queryUrl = lcDomain + "/assets/management/actions/query?";
+		queryUrl += "words&coverage=Org/nd/&category=$RA0101,$RA0102,$RA0103,$RA0104";
+		queryUrl += "&prop=provider eq 中央电教馆&prop=provider eq 中央电化教育馆";
+		queryUrl += "&include=TI,CG,LC,EDU,CR";
+		queryUrl += "&prop=create_time lt 2016-01-01 00:00:00";
+		
+		//分页参数
+		int offset = 0;
+		int pageSize = 500;
+		// 计数
+		int count = 0;
+		while (AdapterDBDataController.REPAIR_SWITCH_1) {
+			queryUrl += "&limit=(" + offset + "," + pageSize + ")";
+			ListViewModel<Map<String, Object>> list = wafSecurityHttpClient.get(queryUrl, ListViewModel.class);
+			if (list != null && CollectionUtils.isNotEmpty(list.getItems())) {
+				System.out.println(count + ": limit=(" + offset + "," + pageSize + ")");
+
+				// 循环修改
+				List<Map<String, Object>> avmList = list.getItems();
+				for (Map<String, Object> avm : avmList) {
+					if(avm != null){
+						if(avm.containsKey("life_cycle")){
+							Map<String , Object> lc = (Map<String, Object>)avm.get("life_cycle");
+							if(CollectionUtils.isNotEmpty(lc)){
+								lc.put("creator", "20160617");
+							}
+						}
+						if(avm.containsKey("copyright")){
+							Map<String , Object> cr = (Map<String, Object>)avm.get("copyright");
+							if(CollectionUtils.isNotEmpty(cr)){
+								cr.put("author", "中央电教馆");
+							}
+						}
+						
+						String updateUrl = lcDomain + "/assets/" + avm.get("identifier");
+						HttpHeaders httpHeaders = new HttpHeaders();
+						httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+						HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(avm, httpHeaders);
+						wafSecurityHttpClient.executeForObject(updateUrl, HttpMethod.PUT, entity, Map.class);
+					}
+				}
+			} else {
+				break;
+			}
+
+			// 循环参数处理
+			count++;
+			queryUrl = queryUrl.substring(0, queryUrl.lastIndexOf("&limit"));
+			offset += pageSize;
+		}
+		
+		System.out.println("循环次数:" + count);
+	}
+
+
+	@Override
+	public void adapterDJGResource4Status() {
+		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+			
+			@Override
+			public String getUserid() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public String getAuthorization() {
+				return "NDR_MAC";
+			}
+		});
+		
+//		String lcDomain = "http://esp-lifecycle.pre1.web.nd/v0.6";
+		String lcDomain = "http://esp-lifecycle.web.sdp.101.com/v0.6";
+		
+		//1.查询语句
+		String queryUrl = lcDomain + "/assets/management/actions/query?";
+		queryUrl += "words&coverage=Org/nd/&category=$RA0101,$RA0102,$RA0103,$RA0104";
+		queryUrl += "&prop=provider eq 中央电教馆&prop=provider eq 中央电化教育馆";
+		queryUrl += "&include=TI,CG,LC,EDU,CR";
+		queryUrl += "&prop=status eq AUDITED";
+		queryUrl += "&prop=create_time ge 2016-01-01 00:00:00";
+		
+		//分页参数
+		int offset = 0;
+		int pageSize = 500;
+		// 计数
+		int count = 0;
+		while (AdapterDBDataController.REPAIR_SWITCH_2) {
+			queryUrl += "&limit=(" + offset + "," + pageSize + ")";
+			ListViewModel<Map<String, Object>> list = wafSecurityHttpClient.get(queryUrl, ListViewModel.class);
+			if (list != null && CollectionUtils.isNotEmpty(list.getItems())) {
+				System.out.println(count + ": limit=(" + offset + "," + pageSize + ")");
+
+				// 循环修改
+				List<Map<String, Object>> avmList = list.getItems();
+				for (Map<String, Object> avm : avmList) {
+					if(avm != null && avm.containsKey("life_cycle")){
+						Map<String , Object> lc = (Map<String, Object>)avm.get("life_cycle");
+						if(CollectionUtils.isNotEmpty(lc)){
+							lc.put("status", LifecycleStatus.ONLINE.getCode());
+
+							String updateUrl = lcDomain + "/assets/" + avm.get("identifier");
+							
+							HttpHeaders httpHeaders = new HttpHeaders();
+							httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+							HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(avm, httpHeaders);
+							wafSecurityHttpClient.executeForObject(updateUrl, HttpMethod.PUT, entity, Map.class);
+						}
+					}
+				}
+			} else {
+				break;
+			}
+
+			// 循环参数处理
+			count++;
+			queryUrl = queryUrl.substring(0, queryUrl.lastIndexOf("&limit"));
+			offset += pageSize;
+		}
+		
+		System.out.println("循环次数:" + count);
+	}
     
     
 //	@Override

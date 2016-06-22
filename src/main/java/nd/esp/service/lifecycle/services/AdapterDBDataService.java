@@ -75,6 +75,10 @@ public interface AdapterDBDataService {
      */
     public Map<String,Integer> adapter3DResource();
     
+    public void adapterDJGResource4Lc();
+    
+    public void adapterDJGResource4Status();
+    
     public Map<String,Integer> adapterInstructionalobjectives();
 
 }

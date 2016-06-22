@@ -277,6 +277,36 @@ public class AdapterDBDataController {
     	return adapterDBDataService.adapter3DResource();
     }
     
+    @RequestMapping(value = "/repairDJG/lc",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public void adapterDJGResource4Lc(){
+    	adapterDBDataService.adapterDJGResource4Lc();
+    }
+    
+    @RequestMapping(value = "/repairDJG/status",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public void adapterDJGResource4Status(){
+    	adapterDBDataService.adapterDJGResource4Status();
+    }
+    
+    public static boolean REPAIR_SWITCH_1 = true;
+    public static boolean REPAIR_SWITCH_2 = true;
+    
+    @RequestMapping(value="/repairDJG/switch",method=RequestMethod.GET)
+    public String changeRepairSwitch(@RequestParam boolean button,@RequestParam boolean isOne){
+    	if(isOne){
+    		if(AdapterDBDataController.REPAIR_SWITCH_1 != button){
+    			AdapterDBDataController.REPAIR_SWITCH_1 = button;
+        		return "开关1:"+ (button?"打开":"关闭");
+    		}
+    	}else{
+    		if(AdapterDBDataController.REPAIR_SWITCH_1 != button){
+    			AdapterDBDataController.REPAIR_SWITCH_2 = button;
+        		return "开关2:"+ (button?"打开":"关闭");
+    		}
+    	}
+    	
+    	return "";
+    }
+    
     /*******************************静态变量开关相关接口--start************************************/
     /**
      * 修改删除脏数据的控制开关
