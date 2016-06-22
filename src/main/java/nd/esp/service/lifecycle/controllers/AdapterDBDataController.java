@@ -277,12 +277,12 @@ public class AdapterDBDataController {
     	return adapterDBDataService.adapter3DResource();
     }
     
-    @RequestMapping(value = "/repairDJG/lc",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//    @RequestMapping(value = "/repairDJG/lc",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public void adapterDJGResource4Lc(){
     	adapterDBDataService.adapterDJGResource4Lc();
     }
     
-    @RequestMapping(value = "/repairDJG/status",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//    @RequestMapping(value = "/repairDJG/status",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public void adapterDJGResource4Status(){
     	adapterDBDataService.adapterDJGResource4Status();
     }
@@ -290,7 +290,7 @@ public class AdapterDBDataController {
     public static boolean REPAIR_SWITCH_1 = true;
     public static boolean REPAIR_SWITCH_2 = true;
     
-    @RequestMapping(value="/repairDJG/switch",method=RequestMethod.GET)
+//    @RequestMapping(value="/repairDJG/switch",method=RequestMethod.GET)
     public String changeRepairSwitch(@RequestParam boolean button,@RequestParam boolean isOne){
     	if(isOne){
     		if(AdapterDBDataController.REPAIR_SWITCH_1 != button){
