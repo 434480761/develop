@@ -9,10 +9,10 @@ import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
 import nd.esp.service.lifecycle.models.CategoryPatternModel;
 import nd.esp.service.lifecycle.models.CategoryRelationModel;
-import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.vos.QueryRelationViewModel;
-
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.vos.ListViewModel;
+import nd.esp.service.lifecycle.vos.QueryRelationAllViewModel;
+import nd.esp.service.lifecycle.vos.QueryRelationViewModel;
 
 /**
  * @author johnny
@@ -153,7 +153,7 @@ public interface CategoryService {
 	 */
 	public List<QueryRelationViewModel> queryCategoryRelation(String levelParent, boolean enable, String patternPath) throws EspStoreException;
 
-
+	public QueryRelationAllViewModel queryCategoryRelationAll(String levelParent, boolean enable, String patternPath) throws EspStoreException;
 	
 	/**
 	 * 通过id删除

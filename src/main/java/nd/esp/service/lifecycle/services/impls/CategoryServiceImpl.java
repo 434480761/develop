@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,36 +14,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.print.DocFlavor.STRING;
+
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
 import nd.esp.service.lifecycle.models.CategoryPatternModel;
 import nd.esp.service.lifecycle.models.CategoryRelationModel;
-import nd.esp.service.lifecycle.services.CategoryService;
-import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
-import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.ParamCheckUtil;
-import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.utils.category.NdCodePattern;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
-import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.vos.QueryRelationViewModel;
-import nd.esp.service.lifecycle.vos.RelationViewModel;
-import nd.esp.service.lifecycle.vos.TargetViewModel;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.google.gson.reflect.TypeToken;
 import nd.esp.service.lifecycle.repository.ds.ComparsionOperator;
 import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
@@ -59,6 +36,33 @@ import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryPatternRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryRepository;
+import nd.esp.service.lifecycle.services.CategoryService;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.utils.BeanMapperUtils;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.ParamCheckUtil;
+import nd.esp.service.lifecycle.utils.StringUtils;
+import nd.esp.service.lifecycle.utils.category.NdCodePattern;
+import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
+import nd.esp.service.lifecycle.vos.ListViewModel;
+import nd.esp.service.lifecycle.vos.QueryRelationAllViewModel;
+import nd.esp.service.lifecycle.vos.QueryRelationViewModel;
+import nd.esp.service.lifecycle.vos.RelationAllViewModel;
+import nd.esp.service.lifecycle.vos.RelationViewModel;
+import nd.esp.service.lifecycle.vos.TargetViewModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import com.google.gson.reflect.TypeToken;
 
 
 /**
@@ -70,6 +74,7 @@ import nd.esp.service.lifecycle.repository.sdk.CategoryRepository;
 public class CategoryServiceImpl implements CategoryService {
     
 	private static final Logger LOG = LoggerFactory.getLogger(CategoryServiceImpl.class);
+	private static final String NO_EXISTED_NDCODE = "$$$$$$";
 
 	@Autowired
 	CategoryRepository categoryRepository;
@@ -1802,6 +1807,16 @@ public class CategoryServiceImpl implements CategoryService {
         });
 		
 	}
+	
+	private void sortByOrderNumForAll(
+			List<RelationAllViewModel> categoryRelationQueryViewModels) {
+		Collections.sort(categoryRelationQueryViewModels, new Comparator<RelationAllViewModel>() {
+            public int compare(RelationAllViewModel arg0, RelationAllViewModel arg1) {
+                return Float.compare(arg0.getOrderNum(), arg1.getOrderNum());
+            }
+        });
+		
+	}
 
 
 
@@ -2378,5 +2393,215 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return "";
     }
+    
+    @Override
+	public QueryRelationAllViewModel queryCategoryRelationAll(
+			String levelParent, boolean enable, String patternPath)
+			throws EspStoreException {
+		QueryRelationAllViewModel result = new QueryRelationAllViewModel();
+		// patternPath 不可能为空，至少是patternName
+		if (StringUtils.isEmpty(patternPath)) {
+			return result;
+		}
+		// 没有限制
+		if ("ROOT".equals(levelParent)) {
+			levelParent = "";
+		}
+
+		if (patternPath.endsWith("/")) {
+			patternPath = patternPath.substring(0, patternPath.length() - 1);
+		}
+
+		LOG.debug("查询维度数据关系路径(patternPath):" + patternPath);
+
+		// 设置条件，即调用sdk 的参数
+		// CategoryRelation condition = new CategoryRelation();
+		// condition.setPatternPath(patternPath);
+		// condition.setEnable(enable);
+
+		List<Item<? extends Object>> items = new ArrayList<>();
+		Item<Boolean> enableItem = new Item<Boolean>();
+		enableItem.setKey("enable");
+		enableItem.setComparsionOperator(ComparsionOperator.EQ);
+		enableItem.setLogicalOperator(LogicalOperator.AND);
+		enableItem.setValue(ValueUtils.newValue(enable));
+		items.add(enableItem);
+
+		Item<String> patternPathItem = new Item<String>();
+		patternPathItem.setKey("patternPath");
+		patternPathItem.setComparsionOperator(ComparsionOperator.LIKE);
+		patternPathItem.setLogicalOperator(LogicalOperator.AND);
+		patternPathItem.setValue(ValueUtils.newValue(patternPath + "%"));
+		items.add(patternPathItem);
+
+		LOG.debug("调用sdk方法:findByItems");
+
+		List<CategoryRelation> relations = categoryRelationRepository
+				.findByItems(items);
+		if (relations == null || relations.isEmpty()) {
+			return result;
+		}
+
+		Set<String> categoryDataIdSet = new HashSet<String>();
+
+		Map<String, List<CategoryRelation>> groupByLevelFirstAndPatternPathMap = new HashMap<String, List<CategoryRelation>>();
+		for (CategoryRelation categoryRelation : relations) {
+			if (StringUtils.isNotEmpty(levelParent)) {
+				if (patternPath.equals(categoryRelation.getPatternPath())
+						&& !levelParent.equals(categoryRelation
+								.getLevelParent())) {
+					continue;
+				}
+			}
+			categoryDataIdSet.add(categoryRelation.getTarget());
+
+			if ("ROOT".equals(categoryRelation.getLevelParent())) {
+				putMap(groupByLevelFirstAndPatternPathMap,
+						categoryRelation.getPatternPath(), categoryRelation);
+			} else {
+				putMap(groupByLevelFirstAndPatternPathMap,
+						createKey(categoryRelation), categoryRelation);
+			}
+		}
+		LOG.debug("调用sdk方法:getAll");
+		if (categoryDataIdSet.isEmpty()) {
+			return result;
+		}
+		List<CategoryData> targetCategoryDatas = categoryDataRepository
+				.getAll(new ArrayList<String>(categoryDataIdSet));
+		if (targetCategoryDatas.isEmpty()) {
+			return result;
+		}
+		Map<String, CategoryData> targetCategoryDataIdMap = new HashMap<String, CategoryData>();
+		for (CategoryData categoryData : targetCategoryDatas) {
+			targetCategoryDataIdMap.put(categoryData.getIdentifier(),
+					categoryData);
+		}
+
+		String topLevelKey = "";
+		if (StringUtils.isEmpty(levelParent)) {
+			topLevelKey = patternPath;
+		} else {
+			topLevelKey = createKey(patternPath, levelParent);
+		}
+		if (!groupByLevelFirstAndPatternPathMap.containsKey(topLevelKey)) {
+			return result;
+		}
+		result.setItems(changeRelationToReltionViewModel(
+				groupByLevelFirstAndPatternPathMap.get(topLevelKey),
+				targetCategoryDataIdMap));
+		if (result.getItems().isEmpty()) {
+			return result;
+		}
+
+		for (RelationAllViewModel relationAllViewModel : result.getItems()) {
+			dealWithTree(relationAllViewModel,
+					groupByLevelFirstAndPatternPathMap, targetCategoryDataIdMap);
+		}
+
+		return result;
+	}
+
+	private void dealWithTree(
+			RelationAllViewModel relationAllViewModel,
+			Map<String, List<CategoryRelation>> groupByLevelFirstAndPatternPathMap,
+			Map<String, CategoryData> targetCategoryDataIdMap) {
+		if (groupByLevelFirstAndPatternPathMap
+				.containsKey(createKey(relationAllViewModel))) {
+			relationAllViewModel.setItems(changeRelationToReltionViewModel(
+					groupByLevelFirstAndPatternPathMap
+							.get(createKey(relationAllViewModel)),
+					targetCategoryDataIdMap));
+		} else if (groupByLevelFirstAndPatternPathMap
+				.containsKey(createPatternPathKey(relationAllViewModel))) {
+			relationAllViewModel.setItems(changeRelationToReltionViewModel(
+					groupByLevelFirstAndPatternPathMap
+							.get(createPatternPathKey(relationAllViewModel)),
+					targetCategoryDataIdMap));
+		} else {
+			return;
+		}
+		if (relationAllViewModel.getItems().isEmpty()) {
+			return;
+		}
+		for (RelationAllViewModel relationAllViewModelFor : relationAllViewModel
+				.getItems()) {
+			dealWithTree(relationAllViewModelFor,
+					groupByLevelFirstAndPatternPathMap, targetCategoryDataIdMap);
+		}
+	}
+	
+	private String createPatternPathKey(
+			RelationAllViewModel relationAllViewModel) {
+		if (relationAllViewModel.getTarget() == null) {
+			LOG.info("category relation id:{},target data not existed",
+					relationAllViewModel.getIdentifier());
+			return createPatternPathKey(relationAllViewModel.getPatternPath(),
+					NO_EXISTED_NDCODE);
+		}
+		return createPatternPathKey(relationAllViewModel.getPatternPath(),
+				relationAllViewModel.getTarget().getNdCode());
+	}
+
+	private String createPatternPathKey(String patternPath, String targetNdcoe) {
+		return patternPath + "/" + targetNdcoe;
+	}
+
+	private String createKey(String patternPath, String levelParent) {
+		return patternPath + "#" + levelParent;
+	}
+
+	private String createKey(CategoryRelation categoryRelation) {
+		return createKey(categoryRelation.getPatternPath(),
+				categoryRelation.getLevelParent());
+	}
+
+	private String createKey(RelationAllViewModel relationAllViewModel) {
+		if (relationAllViewModel.getTarget() == null) {
+			LOG.info("category relation id:{},target data not existed",
+					relationAllViewModel.getIdentifier());
+			return createKey(relationAllViewModel.getPatternPath(),
+					NO_EXISTED_NDCODE);
+		}
+		return createKey(relationAllViewModel.getPatternPath(),
+				relationAllViewModel.getTarget().getNdCode());
+	}
+
+	private List<RelationAllViewModel> changeRelationToReltionViewModel(
+			List<CategoryRelation> list,
+			Map<String, CategoryData> targetCategoryDataIdMap) {
+		List<RelationAllViewModel> result = new ArrayList<RelationAllViewModel>();
+		for (CategoryRelation categoryRelation : list) {
+			RelationAllViewModel oneItem = new RelationAllViewModel();
+			oneItem = BeanMapperUtils.beanMapper(categoryRelation,
+					RelationAllViewModel.class);
+			oneItem.setTarget(beanMapper(
+					targetCategoryDataIdMap.get(categoryRelation.getTarget()),
+					TargetViewModel.class));
+			result.add(oneItem);
+		}
+		sortByOrderNumForAll(result);
+		return result;
+	}
+	
+	
+	private static <T> T beanMapper(Object source,Class<T> target){
+		if(source ==null){
+			return null;
+		}
+		return BeanMapperUtils.beanMapper(source, target);
+	}
+	private void putMap(
+			Map<String, List<CategoryRelation>> groupByLevelFirstAndPatternPathMap,
+			String key, CategoryRelation value) {
+		List<CategoryRelation> values = groupByLevelFirstAndPatternPathMap
+				.get(key);
+		if (values == null) {
+			values = new ArrayList<CategoryRelation>();
+			groupByLevelFirstAndPatternPathMap.put(key, values);
+		}
+		values.add(value);
+
+	}
     
 }

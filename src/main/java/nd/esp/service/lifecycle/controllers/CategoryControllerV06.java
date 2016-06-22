@@ -11,11 +11,13 @@ package nd.esp.service.lifecycle.controllers;
 
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.CategoryService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.category.NdCodePattern;
 import nd.esp.service.lifecycle.vos.CategoryDataApplyForNdCodeViewModel;
+import nd.esp.service.lifecycle.vos.QueryRelationAllViewModel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -30,8 +32,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 
 /**
  * @author linsm
@@ -205,6 +205,29 @@ public class CategoryControllerV06 {
         viewModelResult.setCategory(categoryId);
         return viewModelResult;
     }
+    
+    
+    @RequestMapping(value = {"/categories/relations/all"}, method = RequestMethod.GET,produces = { MediaType.APPLICATION_JSON_VALUE })
+	public @ResponseBody QueryRelationAllViewModel requestQueryRelationData(
+			@RequestParam(value = "patternPath",required=true) String patternPath,
+			@RequestParam(value = "enable",required=false,defaultValue="true") boolean enable,
+			@RequestParam(value = "levelParent",required=false) String levelParent){
+		// 校验入参: patternName
+		// 调用service 接口
+		QueryRelationAllViewModel viewListResult = null;
+		try {
+			viewListResult = categoryService.queryCategoryRelationAll(levelParent,
+			 enable,  patternPath);
+		} catch (EspStoreException e) {
+			
+		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
+			
+		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                                          e.getMessage());
+		}
+		 return viewListResult;
+	}
 
     /**
      * 取得某一粒度的预留ndCode
