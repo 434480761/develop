@@ -299,6 +299,8 @@ public class NDResourceController {
 	 * @param reverse 判断关系查询是否反转
 	 * @param printable     资源是否可打印(针对TI中的printable)
 	 * @param printable_key 指定资源哪个文件可打印(针对TI中的title),只有当printable!=null的时候生效
+	 * @param statistics_type 仅当orderby=statisticals asc/desc时生效,表示统计的类型
+	 * @param statistics_platform 仅当orderby=statisticals asc/desc时生效,表示统计的平台或业务方
 	 */
 	@RequestMapping(value = "/actions/search", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "words","limit"})
 	public ListViewModel<ResourceViewModel> requestQueringBySolr(
@@ -394,6 +396,8 @@ public class NDResourceController {
      * @param reverse 判断关系查询是否反转
      * @param printable     资源是否可打印(针对TI中的printable)
 	 * @param printable_key 指定资源哪个文件可打印(针对TI中的title),只有当printable!=null的时候生效
+	 * @param statistics_type 仅当orderby=statisticals asc/desc时生效,表示统计的类型
+	 * @param statistics_platform 仅当orderby=statisticals asc/desc时生效,表示统计的平台或业务方
      * @return
      */
     @RequestMapping(value = "/management/actions/query", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "words","limit"})
@@ -439,6 +443,8 @@ public class NDResourceController {
      * @param reverse 判断关系查询是否反转
      * @param printable     资源是否可打印(针对TI中的printable)
 	 * @param printable_key 指定资源哪个文件可打印(针对TI中的title),只有当printable!=null的时候生效
+	 * @param statistics_type 仅当orderby=statisticals asc/desc时生效,表示统计的类型
+	 * @param statistics_platform 仅当orderby=statisticals asc/desc时生效,表示统计的平台或业务方
      * @return
      */
     @RequestMapping(value = "/actions/query", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "words","limit"})
@@ -510,18 +516,6 @@ public class NDResourceController {
      * 查询的通用方法
      * <p>Create Time: 2015年9月28日   </p>
      * <p>Create author: xiezy   </p>
-     * @param resType
-     * @param resCodes          支持多种资源查询,resType=eduresource时生效
-     * @param includes
-     * @param categories
-     * @param relations
-     * @param coverages
-     * @param props
-     * @param words
-     * @param limit
-     * @param isByDB 判断是否通过数据库查询
-     * @param isNotManagement 判断是否需要对ND库下的资源只允许查出ONLINE的限制
-     * @param reverse 判断关系查询是否反转
      * @return
      */
     @SuppressWarnings("unchecked")
@@ -939,7 +933,7 @@ public class NDResourceController {
         }else{
             for(String relation : relations){
                 Map<String,String> map = new HashMap<String, String>();
-                //对于入参的coverage每个在最后追加一个空格，以保证elemnt的size为3
+                //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
                 relation = relation + " ";
                 List<String> elements = Arrays.asList(relation.split("/"));
                 //格式错误判断
