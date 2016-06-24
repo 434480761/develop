@@ -21,7 +21,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 用于配置ndCode的规则
- * 
+ *
  * @author linsm
  * @since
  */
@@ -89,20 +89,20 @@ public enum NdCodePattern {
             map.put(10, 5);
         }
     }, //主题风格
-    
+
     WS("WS|WS[0-9]{2}|WS[0-9]{4}", 6, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 2);
             map.put(4, 2);
         }
     }, //词性
-    
+
     AL("AL|AL[0-9]{3}", 5, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 3);
         }
     }, //地区语种
-    
+
     ZQ("ZQ|ZQ[0-9]{2}|ZQ[0-9]{5}|ZQ[0-9]{8}", 10, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 2);
@@ -110,13 +110,13 @@ public enum NdCodePattern {
             map.put(7, 3);
         }
     }, //折纸课程分类
-    
+
     ZZ("ZZ|ZZ[0-9]{3}", 5, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 3);
         }
     }, //造字法分类维度
-    
+
     ZX("ZX|ZX[0-9]{3}", 5, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 3);
@@ -127,7 +127,7 @@ public enum NdCodePattern {
             map.put(2, 2);
         }
     }, //声调的分类维度
-    
+
     // 2016_02_03***************************************************************************
     TD("TD|TD[0-9]{2}|TD[0-9]{5}", 7, 2, "") {
         void setUp(Map<Integer, Integer> map) {
@@ -224,8 +224,8 @@ public enum NdCodePattern {
         }
     }, // 自然景观分类维度
     // ***************************************************************************2016_02_03
-    
-    
+
+
     UK("UK|UK[0-9]{3}|UK[0-9]{7}|UK[0-9]{11}|UK[0-9]{15}", 17, 2, "") {
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 3);
@@ -234,7 +234,7 @@ public enum NdCodePattern {
             map.put(13, 4);
         }
     }, //未知的分类维度
-    
+
     TC("TC|TC[0-9]{3}", 5, 2, ""){
         void setUp(Map<Integer, Integer> map) {
             map.put(2, 3);
@@ -337,7 +337,39 @@ public enum NdCodePattern {
             map.put(2,2);
             map.put(4,3);
         }
+    },
+
+    /**
+     * VR资源管理类型维度，由11部分，32位标识码组成。
+     (1)$V (2)000 (3)000 (4)000 (5)000 (6)000 (7)000 (8)000 (9)000 (10)000 (11)000
+     第一层级：分类类别，用两位大写的英文字母标识，语的分类使用$V标识。
+     第二层级：一级类目代码，用3位阿拉伯数字标识。
+     第三层级：二级类目代码，用3位阿拉伯数字标识。
+     第四层级：三级类目代码，用3位阿拉伯数字标识。
+     第五层级：四级类目代码，用3位阿拉伯数字标识。
+     第六层级：五级类目代码，用3位阿拉伯数字标识。
+     第七层级：六级类目代码，用3位阿拉伯数字标识。
+     第八层级：七级类目代码，用3位阿拉伯数字标识。
+     第九层级：八级类目代码，用3位阿拉伯数字标识。
+     第十层级：九级类目代码，用3位阿拉伯数字标识。
+     第十一层级：十级类目代码，用3位阿拉伯数字标识。
+     * */
+    $V("\\$V|\\$V[0-9]{3}|\\$V[0-9]{6}|\\$V[0-9]{9}|\\$V[0-9]{12}|\\$V[0-9]{15}|\\$V[0-9]{18}|\\$V[0-9]{21}|\\$V[0-9]{24}|\\$V[0-9]{27}|\\$V[0-9]{30}", 32,2 ,""){
+        @Override
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 3);
+            map.put(5, 3);
+            map.put(8, 3);
+            map.put(11,3);
+            map.put(14,3);
+            map.put(17,3);
+            map.put(20,3);
+            map.put(23,3);
+            map.put(26,3);
+            map.put(29,3);
+        }
     };
+
     // 分类维度ndCode的长度(现在所有的分类维度编码长度都是2)
     public static final int CATEGORY_LENGTH = 2;
     // 辅助根据前缀分类维度code来获取到对应对象
@@ -358,7 +390,7 @@ public enum NdCodePattern {
     private int minPrefixLength;
     // 带有语义异常
     private String message;
-    
+
     public static final String CATEGORYDATA_TOP_NODE_PARENT = "ROOT";
 
     // 配置各个分类维度各个粒度的扩展位数
@@ -380,7 +412,7 @@ public enum NdCodePattern {
 
     /**
      * 判断是否合乎（ndCode前缀，按层级来划分）(包含它本身，全长的ndCode)
-     * 
+     *
      * @param prefix
      * @return
      * @since
@@ -411,7 +443,7 @@ public enum NdCodePattern {
 
     /**
      * 若已能过模式匹配，可以保证不为空
-     * 
+     *
      * @param prefixLength
      * @return
      * @since
@@ -427,7 +459,7 @@ public enum NdCodePattern {
 
     /**
      * 通过名字来获取对应的对象
-     * 
+     *
      * @param name
      * @return
      * @since
@@ -435,7 +467,7 @@ public enum NdCodePattern {
     public static NdCodePattern fromString(String name) {
         return StringToType.get(name);
     }
-    
+
     /**
      * @param parentNdCode 父结点ndCode 或者是 相应分类维度ndCode  非ROOT
      * @return  某个层次（粒度）的前缀
@@ -469,7 +501,7 @@ public enum NdCodePattern {
         }
         return prefix;
     }
-    
+
     /**
      * @param parentNdCode 父结点ndCode  非ROOT
      * @param ndCode 当前结点ndCode
@@ -484,7 +516,7 @@ public enum NdCodePattern {
 
     /**
      * 校验ndCode的关系， （分类维度、父结点ndCode、当前结点ndCode）
-     * 
+     *
      * @param categoryNdCode
      * @param parentNdCode 可能是ROOT
      * @param currentNdCode
@@ -506,9 +538,9 @@ public enum NdCodePattern {
         }
         if (!pattern.isValidNdCodePrefix(currentNdCode) || currentNdCode.length() != pattern.getLength()
                 || !currentNdCode.substring(0, CATEGORY_LENGTH).equals(categoryNdCode)) {
-            
-            
-            
+
+
+
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CheckNdCodeRegex.getCode(),
                                           "nd_code="+currentNdCode+"编码不符合规范: " + pattern.getPattern());

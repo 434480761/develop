@@ -517,3 +517,6 @@ WT|WT01000|WT01002|大篆|bigseal_character
 PT|ROOT|PT01000|发布资源|publish_resource
 PT|PT01000|PT01001|替代资源|replace_resource
 PT|PT01000|PT01002|正式资源|formal_resource
+
+$V|ROOT|$V001000000000000000000000000000|角色编辑组件|vrm_roles
+$V|ROOT|$V002000000000000000000000000000|物件|vrm_objects
