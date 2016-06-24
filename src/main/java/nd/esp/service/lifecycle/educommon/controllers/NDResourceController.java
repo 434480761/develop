@@ -304,9 +304,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props,null, words, limit, true, true, reverse, printable, printableKey);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props,null, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
     }
 	
 	/**
@@ -355,11 +356,12 @@ public class NDResourceController {
 			@RequestParam(required = false, value = "isAll",defaultValue="false") Boolean isAll,
 			@RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
 			/* @RequestParam(required=false,value="reverse") String reverse, */
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, null, coverages, props, orderBy, null, limit,
-				false, !isAll, "false", printable, printableKey);
+				false, !isAll, "false", printable, printableKey,firstKnLevel);
 	}
 	
 	/**
@@ -398,9 +400,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     }
     
     /**
@@ -441,9 +444,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
     }
     
     /**
@@ -512,7 +516,7 @@ public class NDResourceController {
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
-            Boolean printable, String printableKey) {
+            Boolean printable, String printableKey,boolean firstKnLevel) {
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1 
                 && coverages.iterator().next().equals(CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE)){
@@ -577,11 +581,11 @@ public class NDResourceController {
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
         			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
 					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey);
+	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
 				}
         	}else{
         		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey);
+                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
         	}
         }else{
             rListViewModel = 
@@ -776,7 +780,7 @@ public class NDResourceController {
                     "groupby不能为空");
         }
         
-    	return ndResourceService.resourceStatistics(resType, categories, coveragesList, propsMap, groupBy, isNotManagement);
+    	return ndResourceService.resourceStatistics(resType, categories, coveragesList, propsMap, groupBy, isNotManagement,false);
     }
     
     /**

@@ -427,21 +427,21 @@ public class NDResourceServiceImpl implements NDResourceService{
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey) {
+            Boolean printable, String printableKey,boolean firstKnLevel) {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         rListViewModel.setLimit(limit);
         
         //判断使用IN还是EXISTS
-        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey);
+        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,firstKnLevel);
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,firstKnLevel);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,firstKnLevel);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,firstKnLevel);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -499,6 +499,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private boolean useIn;
         private Boolean printable;
         private String printableKey;
+        private boolean firstKnLevel;
         
         //返回值
         private Long total;
@@ -519,7 +520,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
-            Boolean printable, String printableKey){
+            Boolean printable, String printableKey,boolean firstKnLevel){
             this.isCount = isCount;
             this.resType = resType;
             this.resCodes = resCodes;
@@ -537,14 +538,15 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.useIn = useIn;
             this.printable = printable;
             this.printableKey = printableKey;
+            this.firstKnLevel = firstKnLevel;
         }
         
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
             }
             
             return this;
@@ -668,9 +670,9 @@ public class NDResourceServiceImpl implements NDResourceService{
 	public Map<String, Integer> resourceStatistics(String resType,
 			Set<String> categories, List<String> coverages,
 			Map<String, Set<String>> propsMap, String groupBy,
-			boolean isNotManagement) {
+			boolean isNotManagement,boolean firstKnLevel) {
 		
-		return ndResourceDao.resourceStatistics(resType, categories, coverages, propsMap, groupBy, isNotManagement);
+		return ndResourceDao.resourceStatistics(resType, categories, coverages, propsMap, groupBy, isNotManagement,firstKnLevel);
 	}
 
     /**	
@@ -2053,7 +2055,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
                 LOG.debug("调用sdk方法：add");
                 LOG.debug("创建资源类型:{},uuid:{}", resourceType, education.getIdentifier());
-
                 education = (Education) resourceRepository.add(education);
 
             } else if (operationType == OperationType.UPDATE) {

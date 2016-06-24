@@ -71,7 +71,7 @@ public interface NDResourceService {
             List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey);
+            Boolean printable, String printableKey,boolean firstKnLevel);
     
     /**
      * 获取智能出题
@@ -96,7 +96,7 @@ public interface NDResourceService {
      * @return
      */
     public Map<String, Integer> resourceStatistics(String resType, Set<String> categories, List<String> coverages,
-    		Map<String, Set<String>> propsMap, String groupBy, boolean isNotManagement);
+    		Map<String, Set<String>> propsMap, String groupBy, boolean isNotManagement,boolean firstKnLevel);
     
     /**
      * 获取资源详细
