@@ -330,6 +330,13 @@ public enum NdCodePattern {
             map.put(2,2);
             map.put(4,3);
         }
+    },
+    PT("PT|PT[0-9]{2}|PT[0-9]{5}", 7, 2 , ""){
+        @Override
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2,2);
+            map.put(4,3);
+        }
     };
     // 分类维度ndCode的长度(现在所有的分类维度编码长度都是2)
     public static final int CATEGORY_LENGTH = 2;
