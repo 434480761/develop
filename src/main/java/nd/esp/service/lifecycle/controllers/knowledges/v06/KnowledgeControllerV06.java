@@ -106,6 +106,7 @@ public class KnowledgeControllerV06 {
         extPropertiesModel.setDirection(viewModel.getPosition().getDirection());
         extPropertiesModel.setParent(viewModel.getPosition().getParent());
         extPropertiesModel.setTarget(viewModel.getPosition().getTarget());
+        extPropertiesModel.setChapterId(viewModel.getPosition().getChapterId());
         model.setExtProperties(extPropertiesModel);
 
         model = knowledgeService.createKnowledge(model);

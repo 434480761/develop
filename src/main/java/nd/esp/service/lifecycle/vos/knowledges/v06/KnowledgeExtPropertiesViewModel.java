@@ -22,6 +22,9 @@ public class KnowledgeExtPropertiesViewModel {
     @JsonInclude(Include.NON_NULL)
     private String direction;
     
+    //FIXME 目前暂用于自主学习
+    private String chapterId;
+    
     /**
      * 获取知识点的父级节点
      * 
@@ -75,5 +78,13 @@ public class KnowledgeExtPropertiesViewModel {
     public void setDirection(String direction){
         this.direction = direction;
     }
+
+	public String getChapterId() {
+		return chapterId;
+	}
+
+	public void setChapterId(String chapterId) {
+		this.chapterId = chapterId;
+	}
 
 }

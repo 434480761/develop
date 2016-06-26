@@ -17,6 +17,11 @@ public class KnowledgeExtPropertiesModel {
     // 目标参照物的方向，之前或者之后。如果此值不存在，默认是next。如果target不存在，传递了parent，此值的默认值为子节点的末尾
     private String direction;
     
+    //FIXME 目前暂用于自主学习
+    private Integer order_num;
+    
+    private String chapterId;
+    
     /**
      * 获取知识点的父级节点
      * 
@@ -77,4 +82,19 @@ public class KnowledgeExtPropertiesModel {
         this.direction = direction;
     }
 
+	public Integer getOrder_num() {
+		return order_num;
+	}
+
+	public void setOrder_num(Integer order_num) {
+		this.order_num = order_num;
+	}
+
+	public String getChapterId() {
+		return chapterId;
+	}
+
+	public void setChapterId(String chapterId) {
+		this.chapterId = chapterId;
+	}
 }

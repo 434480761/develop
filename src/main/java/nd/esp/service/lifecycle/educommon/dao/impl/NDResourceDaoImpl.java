@@ -42,17 +42,23 @@ import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialMode
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.Ebook;
 import nd.esp.service.lifecycle.repository.model.FullModel;
+import nd.esp.service.lifecycle.repository.model.Knowledge;
 import nd.esp.service.lifecycle.repository.model.Question;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
@@ -105,6 +111,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private TeachingMaterialRepository teachingMaterialRepository;
     @Autowired
     private EbookRepository ebookRepository;
+    @Autowired
+    private ChapterRepository chapterRepository;
     
     @Autowired
     private EduRedisTemplate<FullModel> ert;
@@ -353,6 +361,10 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     .equals(resType)) {
                 
                 resourceModel = new QuestionModel();
+            }else if (IndexSourceType.KnowledgeType.getName()
+                    .equals(resType)) {
+                
+                resourceModel = new KnowledgeModel();
             } else {
                 
                 resourceModel = new ResourceModel();
@@ -515,6 +527,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         if(resType.equals(IndexSourceType.QuestionType.getName()) ||
                 resType.equals(IndexSourceType.TeachingMaterialType.getName()) ||
                 resType.equals(IndexSourceType.EbookType.getName()) ||
+                resType.equals(IndexSourceType.KnowledgeType.getName()) ||
                 resType.equals(IndexSourceType.GuidanceBooksType.getName())){
             return true;
         }
@@ -1567,7 +1580,28 @@ public class NDResourceDaoImpl implements NDResourceDao{
                         }
                     }
                 }
-            }
+            }else if (IndexSourceType.KnowledgeType.getName().equals(resType)) {
+            	List<Chapter> list = 
+                        chapterRepository.getAll(new ArrayList<String>(resultMap.keySet()));
+            	
+            	if(CollectionUtils.isNotEmpty(list)){
+            		for(String identifier : resultMap.keySet()){
+            			for(Chapter k : list){
+                            if(k.getIdentifier().equals(identifier)){//同一个资源
+                            	KnowledgeModel km = (KnowledgeModel)resultMap.get(identifier);
+                            	KnowledgeExtPropertiesModel kExt = new KnowledgeExtPropertiesModel();
+                            	if(k.getParent().equals(k.getTeachingMaterial())){
+                            		kExt.setParent("0");
+                            	}else{
+                            		kExt.setParent(k.getParent());
+                            	}
+                            	kExt.setOrder_num(k.getLeft());
+                            	km.setExtProperties(kExt);
+                            }
+            			}
+            		}
+            	}
+			}
         } catch (EspStoreException e) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "LC/QUERY_EXT_FAIL",
