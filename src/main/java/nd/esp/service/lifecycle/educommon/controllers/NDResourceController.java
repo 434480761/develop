@@ -403,12 +403,18 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
-    	List<String> newProps = new ArrayList<String>();
-        for (String p : props) {
-			String s = URLDecoder.decode(p);
-			newProps.add(s);
-		}
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	if(CollectionUtils.isNotEmpty(props)){
+    		List<String> newProps = new ArrayList<String>();
+            for (String p : props) {
+    			String s = URLDecoder.decode(p);
+    			newProps.add(s);
+    		}
+            return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	}else{
+    		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	}
+
+        
     }
     
     /**
