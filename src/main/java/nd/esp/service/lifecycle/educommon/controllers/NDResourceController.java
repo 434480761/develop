@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -402,8 +403,12 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
-        
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	List<String> newProps = new ArrayList<String>();
+        for (String p : props) {
+			String s = URLDecoder.decode(p);
+			newProps.add(s);
+		}
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     }
     
     /**
