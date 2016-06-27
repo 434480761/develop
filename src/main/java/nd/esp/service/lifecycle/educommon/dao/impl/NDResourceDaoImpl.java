@@ -1590,8 +1590,9 @@ public class NDResourceDaoImpl implements NDResourceDao{
                             if(k.getIdentifier().equals(identifier)){//同一个资源
                             	KnowledgeModel km = (KnowledgeModel)resultMap.get(identifier);
                             	KnowledgeExtPropertiesModel kExt = new KnowledgeExtPropertiesModel();
-                            	if(k.getParent().equals(k.getTeachingMaterial())){
-                            		kExt.setParent("0");
+                            	if(k.getParent().equals(k.getTeachingMaterial())
+                            			&& !k.getParent().startsWith("$S")){
+                            		kExt.setParent("ROOT");
                             	}else{
                             		kExt.setParent(k.getParent());
                             	}
