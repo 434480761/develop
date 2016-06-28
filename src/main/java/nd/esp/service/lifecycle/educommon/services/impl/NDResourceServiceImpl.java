@@ -2045,8 +2045,8 @@ public class NDResourceServiceImpl implements NDResourceService{
                     //需要处理下树型结构
                     Chapter knowledge = (Chapter)education;
                     KnowledgeModel knowledgeModel = (KnowledgeModel) resourceModel;
-                    if(StringUtils.isNotBlank(knowledgeModel.getExtProperties().getChapterId())){
-                    	knowledge.setTeachingMaterial(knowledgeModel.getExtProperties().getChapterId());
+                    if(StringUtils.isNotBlank(knowledgeModel.getExtProperties().getRootNode())){
+                    	knowledge.setTeachingMaterial(knowledgeModel.getExtProperties().getRootNode());
                     }else{
                     	knowledge.setTeachingMaterial(getSubjectWithCheck(resourceModel));
                     }

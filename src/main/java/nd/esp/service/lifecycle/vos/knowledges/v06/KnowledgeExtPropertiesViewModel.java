@@ -2,8 +2,6 @@ package nd.esp.service.lifecycle.vos.knowledges.v06;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-
 /**
  * 知识点扩展属性(v06)
  * 
@@ -22,8 +20,8 @@ public class KnowledgeExtPropertiesViewModel {
     @JsonInclude(Include.NON_NULL)
     private String direction;
     
-    //FIXME 目前暂用于自主学习
-    private String chapterId;
+    //知识点的根节点,当rootNode为空时以学科的ndCode为根节点
+    private String rootNode;
     
     /**
      * 获取知识点的父级节点
@@ -79,12 +77,11 @@ public class KnowledgeExtPropertiesViewModel {
         this.direction = direction;
     }
 
-	public String getChapterId() {
-		return chapterId;
+	public String getRootNode() {
+		return rootNode;
 	}
 
-	public void setChapterId(String chapterId) {
-		this.chapterId = chapterId;
+	public void setRootNode(String rootNode) {
+		this.rootNode = rootNode;
 	}
-
 }

@@ -32,5 +32,4 @@ public class KnowledgeViewModel4In extends ResourceViewModel {
     public void setKnowledgeRelations(List<KnowledgeRelationsViewModel4Add> knowledgeRelations) {
         this.knowledgeRelations = knowledgeRelations;
     }
-
 }

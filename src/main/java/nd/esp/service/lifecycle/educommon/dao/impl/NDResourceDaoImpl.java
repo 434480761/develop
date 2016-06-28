@@ -1507,76 +1507,80 @@ public class NDResourceDaoImpl implements NDResourceDao{
             if (IndexSourceType.TeachingMaterialType.getName().equals(resType) || IndexSourceType.GuidanceBooksType.getName().equals(resType)) {
                 List<TeachingMaterial> list = 
                         teachingMaterialRepository.getAll(new ArrayList<String>(resultMap.keySet()));
-                
-                for(String identifier : resultMap.keySet()){
-                    for(TeachingMaterial tm : list){
-                        if(tm.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            TeachingMaterialModel tmm = (TeachingMaterialModel)resultMap.get(identifier);
-                            TmExtPropertiesModel tmExt = new TmExtPropertiesModel();
-                            tmExt.setIsbn(tm.getIsbn());
-                            tmExt.setAttachments(tm.getAttachments());
-                            tmExt.setCriterion(tm.getCriterion());
-                            
-                            tmm.setExtProperties(tmExt);
+                if(CollectionUtils.isNotEmpty(list)){
+                	for(String identifier : resultMap.keySet()){
+                        for(TeachingMaterial tm : list){
+                            if(tm.getIdentifier().equals(identifier)){//同一个资源
+                                //扩展属性赋值
+                                TeachingMaterialModel tmm = (TeachingMaterialModel)resultMap.get(identifier);
+                                TmExtPropertiesModel tmExt = new TmExtPropertiesModel();
+                                tmExt.setIsbn(tm.getIsbn());
+                                tmExt.setAttachments(tm.getAttachments());
+                                tmExt.setCriterion(tm.getCriterion());
+                                
+                                tmm.setExtProperties(tmExt);
+                            }
                         }
                     }
                 }
             }else if (IndexSourceType.EbookType.getName().equals(resType)) {
                 List<Ebook> list = 
                         ebookRepository.getAll(new ArrayList<String>(resultMap.keySet()));
-                
-                for(String identifier : resultMap.keySet()){
-                    for(Ebook eb : list){
-                        if(eb.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            EbookModel ebm = (EbookModel)resultMap.get(identifier);
-                            EbookExtPropertiesModel ebExt = new EbookExtPropertiesModel();
-                            ebExt.setIsbn(eb.getIsbn());
-                            ebExt.setAttachments(eb.getAttachments());
-                            ebExt.setCriterion(eb.getCriterion());
-                            
-                            ebm.setExtProperties(ebExt);
-                        }
-                    }
+                if(CollectionUtils.isNotEmpty(list)){
+                	 for(String identifier : resultMap.keySet()){
+                         for(Ebook eb : list){
+                             if(eb.getIdentifier().equals(identifier)){//同一个资源
+                                 //扩展属性赋值
+                                 EbookModel ebm = (EbookModel)resultMap.get(identifier);
+                                 EbookExtPropertiesModel ebExt = new EbookExtPropertiesModel();
+                                 ebExt.setIsbn(eb.getIsbn());
+                                 ebExt.setAttachments(eb.getAttachments());
+                                 ebExt.setCriterion(eb.getCriterion());
+                                 
+                                 ebm.setExtProperties(ebExt);
+                             }
+                         }
+                     }
                 }
             }else if (IndexSourceType.QuestionType.getName().equals(resType)) {
                 List<Question> list = 
                         questionRepository.getAll(new ArrayList<String>(resultMap.keySet()));
                 
-                for(String identifier : resultMap.keySet()){
-                    for(Question q : list){
-                        if(q.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            QuestionModel qm = (QuestionModel)resultMap.get(identifier);
-                            QuestionExtPropertyModel qExt = new QuestionExtPropertyModel();
-                            qExt.setDiscrimination(q.getDiscrimination() != null ? q.getDiscrimination() : 0f);
-                            qExt.setAnswer(q.getAnswer());
-                            qExt.setItemContent(q.getItemContent());
-                            qExt.setCriterion(q.getCriterion());
-                            qExt.setScore(q.getScore() != null ? q.getScore() : 0f);
-                            qExt.setSecrecy(q.getSecrecy() != null ? q.getSecrecy() : 0);
-                            qExt.setModifiedDifficulty(q.getModifiedDifficulty() != null ? q.getModifiedDifficulty() : 0f);
-                            qExt.setModifiedDiscrimination(q.getModifiedDiscrimination() != null ? q.getModifiedDiscrimination() : 0f);
-                            qExt.setUsedTime(q.getUsedTime() != null ? q.getUsedTime() : 0);
-                            
-                            String exposalDateStr = q.getExposalDate() != null ? q.getExposalDate().toString() : null;
-                            if(exposalDateStr == null){
-                                qExt.setExposalDate(null);
-                            }else{
-                                try {
-                                    qExt.setExposalDate(sdf.parse(exposalDateStr));
-                                } catch (ParseException e) {
-                                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                            LifeCircleErrorMessageMapper.CommonSearchFail.getCode(),
-                                            e.getLocalizedMessage());
+                if(CollectionUtils.isNotEmpty(list)){
+                	for(String identifier : resultMap.keySet()){
+                        for(Question q : list){
+                            if(q.getIdentifier().equals(identifier)){//同一个资源
+                                //扩展属性赋值
+                                QuestionModel qm = (QuestionModel)resultMap.get(identifier);
+                                QuestionExtPropertyModel qExt = new QuestionExtPropertyModel();
+                                qExt.setDiscrimination(q.getDiscrimination() != null ? q.getDiscrimination() : 0f);
+                                qExt.setAnswer(q.getAnswer());
+                                qExt.setItemContent(q.getItemContent());
+                                qExt.setCriterion(q.getCriterion());
+                                qExt.setScore(q.getScore() != null ? q.getScore() : 0f);
+                                qExt.setSecrecy(q.getSecrecy() != null ? q.getSecrecy() : 0);
+                                qExt.setModifiedDifficulty(q.getModifiedDifficulty() != null ? q.getModifiedDifficulty() : 0f);
+                                qExt.setModifiedDiscrimination(q.getModifiedDiscrimination() != null ? q.getModifiedDiscrimination() : 0f);
+                                qExt.setUsedTime(q.getUsedTime() != null ? q.getUsedTime() : 0);
+                                
+                                String exposalDateStr = q.getExposalDate() != null ? q.getExposalDate().toString() : null;
+                                if(exposalDateStr == null){
+                                    qExt.setExposalDate(null);
+                                }else{
+                                    try {
+                                        qExt.setExposalDate(sdf.parse(exposalDateStr));
+                                    } catch (ParseException e) {
+                                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                LifeCircleErrorMessageMapper.CommonSearchFail.getCode(),
+                                                e.getLocalizedMessage());
+                                    }
                                 }
+                                
+                                qExt.setAutoRemark(q.getAutoRemark() != null ? q.getAutoRemark() : false);
+                                qExt.setExtDifficulty(q.getExtDifficulty() != null ? q.getExtDifficulty() : 0f);
+                                
+                                qm.setExtProperties(qExt);
                             }
-                            
-                            qExt.setAutoRemark(q.getAutoRemark() != null ? q.getAutoRemark() : false);
-                            qExt.setExtDifficulty(q.getExtDifficulty() != null ? q.getExtDifficulty() : 0f);
-                            
-                            qm.setExtProperties(qExt);
                         }
                     }
                 }
