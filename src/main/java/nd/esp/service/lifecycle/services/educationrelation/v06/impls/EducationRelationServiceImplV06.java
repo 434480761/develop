@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,6 +110,9 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     
     @Autowired
     private NotifyReportService nrs;
+    
+    @Autowired
+    private JdbcTemplate jt;
     
     @Override
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
@@ -1429,4 +1433,56 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         return flag;
     }
 
+    /**
+     * DEMO先演示，逻辑暂时写在service里
+     * add by xuzy 20160629
+     */
+	@Override
+	public List<Map<String, Object>> queryKnowledgeTree(String uuid) {
+		List<Map<String, Object>> returnList = new ArrayList<Map<String,Object>>();
+		List<Map<String, Object>> parentList = new ArrayList<Map<String,Object>>();
+		//查找上级节点
+		recursiveKnowledge(parentList, uuid);
+		if(CollectionUtils.isNotEmpty(parentList)){
+			returnList.addAll(parentList);
+			for (Map<String, Object> map : parentList) {
+				if(uuid.equals((String)map.get("identifier"))){
+					//找出parent
+					String parentId = (String)map.get("parent");
+					if(!"ROOT".equals(parentId)){
+						String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.source_uuid='"+parentId+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier and rr.target != '"+uuid+"'";
+						List<Map<String,Object>> tl = jt.queryForList(sql);
+						if(CollectionUtils.isNotEmpty(tl)){
+							returnList.addAll(tl);
+						}
+					}
+				}
+			}
+		}
+		return returnList;
+	}
+	
+	private void recursiveKnowledge(List<Map<String, Object>> list,String cid){
+		List<Map<String,Object>> tmpList = queryParentKnByChildId(cid);
+		if(CollectionUtils.isNotEmpty(tmpList)){
+			for (Map<String, Object> map : tmpList) {
+				String parent = (String)map.get("parent");
+				list.add(map);
+				recursiveKnowledge(list,parent);
+			}
+		}else{
+			String sql = "SELECT 'ROOT' as parent,nd.title,nd.estatus as status,nd.identifier from ndresource nd where nd.primary_category='knowledges' and nd.identifier = '"+cid+"' and nd.enable = 1";
+			List<Map<String,Object>> tl = jt.queryForList(sql);
+			if(CollectionUtils.isNotEmpty(tl)){
+				list.addAll(tl);
+			}
+		}
+	}
+
+	private List<Map<String,Object>> queryParentKnByChildId(String cid){
+		String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.target='"+cid+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier";
+		return jt.queryForList(sql);
+	}
+	
+	
 }

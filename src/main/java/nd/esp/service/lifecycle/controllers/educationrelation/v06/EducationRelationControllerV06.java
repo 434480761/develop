@@ -512,4 +512,18 @@ public class EducationRelationControllerV06 {
 //        return educationRelationService.batchQueryResources(resType, sids, targetType, relationType, limit);
         return educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
     }
+    
+    /**
+     * 根据知识点id获取上级节点（直到一级知识点为止）
+     * 根据知识点id获取同级节点
+     * @param knowledgeId
+     * @return
+     */
+    @RequestMapping(value = "/tree/{uuid}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<Map<String,Object>> queryKnowledgeTree(@PathVariable(value="res_type") String resType,@PathVariable(value="uuid") String knowledgeId){
+    	if(IndexSourceType.KnowledgeType.getName().equals(resType)){
+    		return educationRelationService.queryKnowledgeTree(knowledgeId);
+    	}
+    	return null;
+    }
 }
