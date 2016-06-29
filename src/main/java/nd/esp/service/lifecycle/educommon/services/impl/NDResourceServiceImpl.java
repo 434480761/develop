@@ -2045,7 +2045,11 @@ public class NDResourceServiceImpl implements NDResourceService{
                     //需要处理下树型结构
                     Chapter knowledge = (Chapter)education;
                     KnowledgeModel knowledgeModel = (KnowledgeModel) resourceModel;
-                    knowledge.setTeachingMaterial(getSubjectWithCheck(resourceModel));
+                    if(StringUtils.isNotBlank(knowledgeModel.getExtProperties().getRootNode())){
+                    	knowledge.setTeachingMaterial(knowledgeModel.getExtProperties().getRootNode());
+                    }else{
+                    	knowledge.setTeachingMaterial(getSubjectWithCheck(resourceModel));
+                    }
                     TreeDirection treeDirection = TreeDirection.fromString(knowledgeModel.getExtProperties().getDirection());
                     TreeModel current = treeService.insertLeaf(getTreeTargetAndParent(knowledgeModel,knowledge), treeDirection);
 

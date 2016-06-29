@@ -42,17 +42,23 @@ import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialMode
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.Ebook;
 import nd.esp.service.lifecycle.repository.model.FullModel;
+import nd.esp.service.lifecycle.repository.model.Knowledge;
 import nd.esp.service.lifecycle.repository.model.Question;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
@@ -105,6 +111,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private TeachingMaterialRepository teachingMaterialRepository;
     @Autowired
     private EbookRepository ebookRepository;
+    @Autowired
+    private ChapterRepository chapterRepository;
     
     @Autowired
     private EduRedisTemplate<FullModel> ert;
@@ -353,6 +361,10 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     .equals(resType)) {
                 
                 resourceModel = new QuestionModel();
+            }else if (IndexSourceType.KnowledgeType.getName()
+                    .equals(resType)) {
+                
+                resourceModel = new KnowledgeModel();
             } else {
                 
                 resourceModel = new ResourceModel();
@@ -515,6 +527,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         if(resType.equals(IndexSourceType.QuestionType.getName()) ||
                 resType.equals(IndexSourceType.TeachingMaterialType.getName()) ||
                 resType.equals(IndexSourceType.EbookType.getName()) ||
+                resType.equals(IndexSourceType.KnowledgeType.getName()) ||
                 resType.equals(IndexSourceType.GuidanceBooksType.getName())){
             return true;
         }
@@ -1494,80 +1507,106 @@ public class NDResourceDaoImpl implements NDResourceDao{
             if (IndexSourceType.TeachingMaterialType.getName().equals(resType) || IndexSourceType.GuidanceBooksType.getName().equals(resType)) {
                 List<TeachingMaterial> list = 
                         teachingMaterialRepository.getAll(new ArrayList<String>(resultMap.keySet()));
-                
-                for(String identifier : resultMap.keySet()){
-                    for(TeachingMaterial tm : list){
-                        if(tm.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            TeachingMaterialModel tmm = (TeachingMaterialModel)resultMap.get(identifier);
-                            TmExtPropertiesModel tmExt = new TmExtPropertiesModel();
-                            tmExt.setIsbn(tm.getIsbn());
-                            tmExt.setAttachments(tm.getAttachments());
-                            tmExt.setCriterion(tm.getCriterion());
-                            
-                            tmm.setExtProperties(tmExt);
+                if(CollectionUtils.isNotEmpty(list)){
+                	for(String identifier : resultMap.keySet()){
+                        for(TeachingMaterial tm : list){
+                            if(tm.getIdentifier().equals(identifier)){//同一个资源
+                                //扩展属性赋值
+                                TeachingMaterialModel tmm = (TeachingMaterialModel)resultMap.get(identifier);
+                                TmExtPropertiesModel tmExt = new TmExtPropertiesModel();
+                                tmExt.setIsbn(tm.getIsbn());
+                                tmExt.setAttachments(tm.getAttachments());
+                                tmExt.setCriterion(tm.getCriterion());
+                                
+                                tmm.setExtProperties(tmExt);
+                            }
                         }
                     }
                 }
             }else if (IndexSourceType.EbookType.getName().equals(resType)) {
                 List<Ebook> list = 
                         ebookRepository.getAll(new ArrayList<String>(resultMap.keySet()));
-                
-                for(String identifier : resultMap.keySet()){
-                    for(Ebook eb : list){
-                        if(eb.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            EbookModel ebm = (EbookModel)resultMap.get(identifier);
-                            EbookExtPropertiesModel ebExt = new EbookExtPropertiesModel();
-                            ebExt.setIsbn(eb.getIsbn());
-                            ebExt.setAttachments(eb.getAttachments());
-                            ebExt.setCriterion(eb.getCriterion());
-                            
-                            ebm.setExtProperties(ebExt);
-                        }
-                    }
+                if(CollectionUtils.isNotEmpty(list)){
+                	 for(String identifier : resultMap.keySet()){
+                         for(Ebook eb : list){
+                             if(eb.getIdentifier().equals(identifier)){//同一个资源
+                                 //扩展属性赋值
+                                 EbookModel ebm = (EbookModel)resultMap.get(identifier);
+                                 EbookExtPropertiesModel ebExt = new EbookExtPropertiesModel();
+                                 ebExt.setIsbn(eb.getIsbn());
+                                 ebExt.setAttachments(eb.getAttachments());
+                                 ebExt.setCriterion(eb.getCriterion());
+                                 
+                                 ebm.setExtProperties(ebExt);
+                             }
+                         }
+                     }
                 }
             }else if (IndexSourceType.QuestionType.getName().equals(resType)) {
                 List<Question> list = 
                         questionRepository.getAll(new ArrayList<String>(resultMap.keySet()));
                 
-                for(String identifier : resultMap.keySet()){
-                    for(Question q : list){
-                        if(q.getIdentifier().equals(identifier)){//同一个资源
-                            //扩展属性赋值
-                            QuestionModel qm = (QuestionModel)resultMap.get(identifier);
-                            QuestionExtPropertyModel qExt = new QuestionExtPropertyModel();
-                            qExt.setDiscrimination(q.getDiscrimination() != null ? q.getDiscrimination() : 0f);
-                            qExt.setAnswer(q.getAnswer());
-                            qExt.setItemContent(q.getItemContent());
-                            qExt.setCriterion(q.getCriterion());
-                            qExt.setScore(q.getScore() != null ? q.getScore() : 0f);
-                            qExt.setSecrecy(q.getSecrecy() != null ? q.getSecrecy() : 0);
-                            qExt.setModifiedDifficulty(q.getModifiedDifficulty() != null ? q.getModifiedDifficulty() : 0f);
-                            qExt.setModifiedDiscrimination(q.getModifiedDiscrimination() != null ? q.getModifiedDiscrimination() : 0f);
-                            qExt.setUsedTime(q.getUsedTime() != null ? q.getUsedTime() : 0);
-                            
-                            String exposalDateStr = q.getExposalDate() != null ? q.getExposalDate().toString() : null;
-                            if(exposalDateStr == null){
-                                qExt.setExposalDate(null);
-                            }else{
-                                try {
-                                    qExt.setExposalDate(sdf.parse(exposalDateStr));
-                                } catch (ParseException e) {
-                                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                            LifeCircleErrorMessageMapper.CommonSearchFail.getCode(),
-                                            e.getLocalizedMessage());
+                if(CollectionUtils.isNotEmpty(list)){
+                	for(String identifier : resultMap.keySet()){
+                        for(Question q : list){
+                            if(q.getIdentifier().equals(identifier)){//同一个资源
+                                //扩展属性赋值
+                                QuestionModel qm = (QuestionModel)resultMap.get(identifier);
+                                QuestionExtPropertyModel qExt = new QuestionExtPropertyModel();
+                                qExt.setDiscrimination(q.getDiscrimination() != null ? q.getDiscrimination() : 0f);
+                                qExt.setAnswer(q.getAnswer());
+                                qExt.setItemContent(q.getItemContent());
+                                qExt.setCriterion(q.getCriterion());
+                                qExt.setScore(q.getScore() != null ? q.getScore() : 0f);
+                                qExt.setSecrecy(q.getSecrecy() != null ? q.getSecrecy() : 0);
+                                qExt.setModifiedDifficulty(q.getModifiedDifficulty() != null ? q.getModifiedDifficulty() : 0f);
+                                qExt.setModifiedDiscrimination(q.getModifiedDiscrimination() != null ? q.getModifiedDiscrimination() : 0f);
+                                qExt.setUsedTime(q.getUsedTime() != null ? q.getUsedTime() : 0);
+                                
+                                String exposalDateStr = q.getExposalDate() != null ? q.getExposalDate().toString() : null;
+                                if(exposalDateStr == null){
+                                    qExt.setExposalDate(null);
+                                }else{
+                                    try {
+                                        qExt.setExposalDate(sdf.parse(exposalDateStr));
+                                    } catch (ParseException e) {
+                                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                LifeCircleErrorMessageMapper.CommonSearchFail.getCode(),
+                                                e.getLocalizedMessage());
+                                    }
                                 }
+                                
+                                qExt.setAutoRemark(q.getAutoRemark() != null ? q.getAutoRemark() : false);
+                                qExt.setExtDifficulty(q.getExtDifficulty() != null ? q.getExtDifficulty() : 0f);
+                                
+                                qm.setExtProperties(qExt);
                             }
-                            
-                            qExt.setAutoRemark(q.getAutoRemark() != null ? q.getAutoRemark() : false);
-                            qExt.setExtDifficulty(q.getExtDifficulty() != null ? q.getExtDifficulty() : 0f);
-                            
-                            qm.setExtProperties(qExt);
                         }
                     }
                 }
-            }
+            }else if (IndexSourceType.KnowledgeType.getName().equals(resType)) {
+            	List<Chapter> list = 
+                        chapterRepository.getAll(new ArrayList<String>(resultMap.keySet()));
+            	
+            	if(CollectionUtils.isNotEmpty(list)){
+            		for(String identifier : resultMap.keySet()){
+            			for(Chapter k : list){
+                            if(k.getIdentifier().equals(identifier)){//同一个资源
+                            	KnowledgeModel km = (KnowledgeModel)resultMap.get(identifier);
+                            	KnowledgeExtPropertiesModel kExt = new KnowledgeExtPropertiesModel();
+                            	if(k.getParent().equals(k.getTeachingMaterial())
+                            			&& !k.getParent().startsWith("$S")){
+                            		kExt.setParent("ROOT");
+                            	}else{
+                            		kExt.setParent(k.getParent());
+                            	}
+                            	kExt.setOrder_num(k.getLeft());
+                            	km.setExtProperties(kExt);
+                            }
+            			}
+            		}
+            	}
+			}
         } catch (EspStoreException e) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "LC/QUERY_EXT_FAIL",

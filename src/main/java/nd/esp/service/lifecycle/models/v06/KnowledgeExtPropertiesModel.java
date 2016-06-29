@@ -17,6 +17,12 @@ public class KnowledgeExtPropertiesModel {
     // 目标参照物的方向，之前或者之后。如果此值不存在，默认是next。如果target不存在，传递了parent，此值的默认值为子节点的末尾
     private String direction;
     
+    //顺序,目的是为了标志同一级知识点的先后顺序(取的是chapters表中的tree_left字段)
+    private Integer order_num;
+    
+    //知识点的根节点,当rootNode为空时以学科的ndCode为根节点
+    private String rootNode;
+    
     /**
      * 获取知识点的父级节点
      * 
@@ -77,4 +83,19 @@ public class KnowledgeExtPropertiesModel {
         this.direction = direction;
     }
 
+	public Integer getOrder_num() {
+		return order_num;
+	}
+
+	public void setOrder_num(Integer order_num) {
+		this.order_num = order_num;
+	}
+
+	public String getRootNode() {
+		return rootNode;
+	}
+
+	public void setRootNode(String rootNode) {
+		this.rootNode = rootNode;
+	}
 }

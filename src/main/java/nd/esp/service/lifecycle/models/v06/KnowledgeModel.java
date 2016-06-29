@@ -31,5 +31,4 @@ public class KnowledgeModel extends ResourceModel {
     public void setKnowledgeRelations(List<KnowledgeRelationsModel> knowledgeRelations) {
         this.knowledgeRelations = knowledgeRelations;
     }
-
 }
