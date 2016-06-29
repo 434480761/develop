@@ -44,6 +44,10 @@ public interface NDResourceService {
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,
 	            Boolean printable, String printableKey);
     
+	 
+	 public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,List<String> includes,Set<String> categories,
+	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
+	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
     /**
      * 资源检索 -- 直接查询数据库,数据可以保证实时性
      * <p>Description:  资源检索升级目的主要是使得查询效率更高，准确度更高。

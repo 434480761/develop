@@ -7,17 +7,22 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
+import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
+import nd.esp.service.lifecycle.services.titan.TitanTreeMoveService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.titan.TitanTreeModel;
+import nd.esp.service.lifecycle.support.busi.titan.TitanTreeType;
+import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
@@ -26,6 +31,7 @@ import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.chapters.v06.ChapterConstant;
 import nd.esp.service.lifecycle.vos.knowledges.v06.ChapterKnowledgeViewModel;
+import nd.esp.service.lifecycle.vos.knowledges.v06.KnowledgeExtPropertiesViewModel;
 import nd.esp.service.lifecycle.vos.knowledges.v06.KnowledgeRelationsViewModel4Add;
 import nd.esp.service.lifecycle.vos.knowledges.v06.KnowledgeRelationsViewModel4Get;
 import nd.esp.service.lifecycle.vos.knowledges.v06.KnowledgeViewModel4In;
@@ -62,6 +68,9 @@ public class KnowledgeControllerV06 {
     @Autowired
     @Qualifier("knowledgeServiceV06")
     KnowledgeService knowledgeService;
+    
+    @Autowired
+    private TitanTreeMoveService titanTreeMoveService;
 
     /**
      * 创建知识点
@@ -110,6 +119,26 @@ public class KnowledgeControllerV06 {
         model.setExtProperties(extPropertiesModel);
 
         model = knowledgeService.createKnowledge(model);
+        
+     // TODO titan保存章节树
+        TitanTreeModel titanTreeModel = new TitanTreeModel();
+        KnowledgeExtPropertiesViewModel position =  viewModel.getPosition();
+
+        titanTreeModel.setTreeType(TitanTreeType.knowledges);
+        titanTreeModel.setTreeDirection(TreeDirection.fromString(position.getDirection()));
+        titanTreeModel.setTarget(position.getTarget());
+        titanTreeModel.setParent(position.getParent());
+
+        titanTreeModel.setSource(model.getIdentifier());
+
+        // FIXME 有多个学科的时候只取其中一个
+        List<ResClassificationModel> categories = model.getCategoryList();
+        for(ResClassificationModel category : categories){
+            if(category.getTaxoncode()!=null && category.getTaxoncode().contains("$S")){
+                titanTreeModel.setRoot(category.getTaxoncode());
+            }
+        }
+        titanTreeMoveService.addNode(titanTreeModel);
 
         KnowledgeViewModel4Out viewModelOut = CommonHelper.convertViewModelOut(model, KnowledgeViewModel4Out.class);
 
@@ -206,6 +235,17 @@ public class KnowledgeControllerV06 {
         extPropertiesModel.setTarget(knowledgeViewModel4Move.getTarget());
         knowledgeModel.setExtProperties(extPropertiesModel);
         knowledgeService.moveKnowledge(kid, knowledgeModel);
+        
+     // TODO titan保存章节树
+        TitanTreeModel titanTreeModel = new TitanTreeModel();
+
+        titanTreeModel.setTreeType(TitanTreeType.knowledges);
+        titanTreeModel.setTreeDirection(TreeDirection.fromString(knowledgeViewModel4Move.getDirection()));
+        titanTreeModel.setTarget(knowledgeViewModel4Move.getTarget());
+        titanTreeModel.setParent(knowledgeViewModel4Move.getParent());
+        titanTreeModel.setSource(kid);
+
+        titanTreeMoveService.moveNode(titanTreeModel);
     }
 
     /**

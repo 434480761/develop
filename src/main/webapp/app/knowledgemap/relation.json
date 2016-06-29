@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "identifier": "ef2f0812-ad92-40f1-a6df-0d91c2643ac3",
+      "title": "口语交际"
+    },
+    {
+      "identifier": "68526b3b-15cc-45bc-978b-846a45e101a2",
+      "title": "综合实践学习"
+    },
+    {
+      "identifier": "0ccfe8d3-9b22-4290-b0cc-14affd364623",
+      "title": "阅读"
+    },
+    {
+      "identifier": "ecd0aec2-d414-45d1-a4c1-21cc183c071d",
+      "title": "写作"
+    }
+  ],
+  "relations": [
+    {
+      "source": "ecd0aec2-d414-45d1-a4c1-21cc183c071d",
+      "target": "68526b3b-15cc-45bc-978b-846a45e101a2",
+      "knowledge_relation_type": "next"
+    },
+    {
+      "source": "0ccfe8d3-9b22-4290-b0cc-14affd364623",
+      "target": "ef2f0812-ad92-40f1-a6df-0d91c2643ac3",
+      "knowledge_relation_type": "next"
+    },
+    {
+      "source": "ef2f0812-ad92-40f1-a6df-0d91c2643ac3",
+      "target": "68526b3b-15cc-45bc-978b-846a45e101a2",
+      "knowledge_relation_type": "next"
+    },
+    {
+      "source": "0ccfe8d3-9b22-4290-b0cc-14affd364623",
+      "target": "ecd0aec2-d414-45d1-a4c1-21cc183c071d",
+      "knowledge_relation_type": "next"
+    }
+  ]
+}
