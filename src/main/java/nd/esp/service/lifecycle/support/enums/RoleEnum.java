@@ -12,9 +12,11 @@ package nd.esp.service.lifecycle.support.enums;
 public enum RoleEnum {
 
 	SUPERADMIN("SuperAdmin"),
-	COVERAGEADMIN("LibAdmin"),
+	COVERAGEADMIN("CoverageAdmin"),
 	RESCREATOR("ResCreator"),
-	CATEGORYDATAADMIN("CategoryDataAdmin")
+	CATEGORYDATAADMIN("CategoryDataAdmin"),
+	RESCONSUMER("ResConsumer"),
+	GUEST("Guest")
 	;
 
 	private String value;
