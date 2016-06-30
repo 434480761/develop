@@ -1,13 +1,9 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -19,10 +15,6 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  *
  */
 public class TitanUtils {
-	private static final Logger LOG = LoggerFactory.getLogger(TitanUtils.class);
-	private static final SimpleDateFormat queryDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm:ss");
-
 	// 生成脚本参数名字，避免多个值冲突
 	public static String generateKey(Map<String, Object> scriptParamMap,
 			String originKey) {
@@ -45,11 +37,7 @@ public class TitanUtils {
 			List<Object> values = new ArrayList<Object>();
 			if (CollectionUtils.isNotEmpty(valueList)) {
 				for (String value : valueList) {
-					try {
-						values.add(queryDateFormat.parse(value).getTime());
-					} catch (ParseException e) {
-						LOG.error(e.getLocalizedMessage());
-					}
+					values.add(Timestamp.valueOf(value).getTime());
 				}
 			}
 			return values;
