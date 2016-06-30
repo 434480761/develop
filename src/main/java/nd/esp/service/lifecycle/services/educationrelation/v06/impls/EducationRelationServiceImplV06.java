@@ -1467,6 +1467,9 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
 		if(CollectionUtils.isNotEmpty(tmpList)){
 			for (Map<String, Object> map : tmpList) {
 				String parent = (String)map.get("parent");
+				if(parent != null && parent.equals(cid)){
+					break;
+				}
 				list.add(map);
 				recursiveKnowledge(list,parent);
 			}
