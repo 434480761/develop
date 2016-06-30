@@ -318,14 +318,16 @@ public class UserPermissionManageController {
 		//当前用户角色id
 		String tmpRoleId = null;
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
-			//超级管理员
-			if(userCenterRoleDetails.getRoleId().equals(SUPERADMIN)){
-				tmpRoleId = SUPERADMIN;
-				break;
-			}
 			//库管理员
 			if(userCenterRoleDetails.getRoleId().equals(COVERAGEADMIN)){
 				tmpRoleId = COVERAGEADMIN;
+				break;
+			}
+		}
+		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
+			//超级管理员
+			if(userCenterRoleDetails.getRoleId().equals(SUPERADMIN)){
+				tmpRoleId = SUPERADMIN;
 				break;
 			}
 		}
