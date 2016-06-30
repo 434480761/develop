@@ -377,6 +377,15 @@ public enum NdCodePattern {
             map.put(6, 2);
             map.put(8, 2);
         }
+    },
+    VA("VA|VA[0-9]{3}|VA[0-9]{6}|VA[0-9]{9}|VA[0-9]{12}", 14,2 ,""){
+        @Override
+        void setUp(Map<Integer, Integer> map) {
+            map.put(2, 3);
+            map.put(5, 3);
+            map.put(8, 3);
+            map.put(11, 3);
+        }
     };
 
     // 分类维度ndCode的长度(现在所有的分类维度编码长度都是2)
