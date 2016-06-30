@@ -288,7 +288,7 @@ public class AdapterDBDataController {
     	adapterDBDataService.adapterDJGResource4Status();
     }
     
-    @RequestMapping(value = "/repair/provider",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//    @RequestMapping(value = "/repair/provider",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public void repairProvider(@RequestParam String type,@RequestParam String pre,@RequestParam String now){
     	adapterDBDataService.repairProvider(type,pre,now);
     }
@@ -296,7 +296,7 @@ public class AdapterDBDataController {
     public static boolean REPAIR_SWITCH_1 = true;
     public static boolean REPAIR_SWITCH_2 = true;
     
-    @RequestMapping(value="/repairDJG/switch",method=RequestMethod.GET)
+//    @RequestMapping(value="/repairDJG/switch",method=RequestMethod.GET)
     public String changeRepairSwitch(@RequestParam boolean button,@RequestParam boolean isOne){
     	if(isOne){
     		if(AdapterDBDataController.REPAIR_SWITCH_1 != button){
