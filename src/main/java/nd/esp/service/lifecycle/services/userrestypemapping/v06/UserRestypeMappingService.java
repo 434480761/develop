@@ -51,4 +51,19 @@ public interface UserRestypeMappingService {
 	 */
 	void deleteAllUserResTypeMappingsByUserId(String userId);
 
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 */
+	List<String> findUserRestypelList(String userId);
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 */
+	List<UserRestypeMappingModel> findUserRestypeMappingModelList(List<String> userIdList);
+
 }

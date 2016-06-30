@@ -54,9 +54,9 @@ public class UcClient {
             }
         });
     }
-    
+
     /**
-     * 从缓存获取组织ID	   
+     * 从缓存获取组织ID
      * @param orgName
      * @return
      */
@@ -65,13 +65,13 @@ public class UcClient {
         if(StringUtils.isBlank(orgName)){
             return "";
         }
-        try {  
+        try {
             // 如果有缓存则返回；否则运算、缓存、然后返回
             return orgCache.get(orgName);
         } catch (Exception e) {
             LOG.error("UcClient.getOrgIdByCache", ExceptionUtils.getMessage(e));
             return "";
-        }  
+        }
     }
     
     /**
@@ -88,23 +88,26 @@ public class UcClient {
         JSONObject resopnse = wafSecurityHttpClient.postForObject(this.ucUri + "/organizations/actions/query", requestBody, JSONObject.class);
         return resopnse.getString("org_id");
     }
-    
-    /**
-     * 从UC获取组织名称     
-     * @param orgId
+
+	/**
+     * 从UC获取用户名称
+     * @param userId
      * @return
-     * @author lianggz
+     * @author lanyl
      */
-    public String getOrgName(String orgId){
+    public String getUserName(String userId){
         // 调用UC接口
         WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-        JSONObject resopnse = wafSecurityHttpClient.getForObject(this.ucUri + "/organizations/"+orgId, JSONObject.class);
-        return resopnse.getString("org_name");
+        JSONObject resopnse = wafSecurityHttpClient.getForObject(this.ucUri + "/users/"+userId, JSONObject.class);
+        return resopnse.getString("user_name");
     }
 
 	/**
      * 新增领域角色
+     * @param remarks
+     * @param roleName
      * @return
+     * @author lanyl
      */
     public JSONObject addRole(String roleName,String remarks){
         // 定义请求参数
@@ -166,6 +169,7 @@ public class UcClient {
      * @param userId
      * @param roleId
      * @return
+     *
      */
     public JSONObject deleteUserRole(String userId, Integer roleId) {
         if (StringUtils.isNotBlank(userId)){
@@ -182,8 +186,8 @@ public class UcClient {
     /**
      * 获取用户角色
      * <p>Description:              </p>
-     * <p>Create Time: 2015年10月27日   </p>
-     * <p>Create author: Jawinton   </p>
+     * <p>Create Time: 2016年06月27日   </p>
+     * <p>Create author: lanyl   </p>
      * @param userId
      * @return
      */
@@ -194,6 +198,31 @@ public class UcClient {
             return wafSecurityHttpClient.getForObject(this.ucUri + "/users/" + userId + "/roles?realm=" + this.realm, JSONObject.class, params);
         }else {
             return null;
+        }
+    }
+
+
+	/**
+     * 获取用户角色列表
+     * @param roleId
+     * @param orgId
+     * @param limit
+     * @param offset
+     * @return
+     * @author lanyl
+     */
+    public UserItems listRoleUsers(String roleId, String orgId, Integer offset, Integer limit) {
+        if (StringUtils.isNotBlank(roleId)) {
+            Map<String, String> params = new HashMap<>();
+            WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+            UserItems allUserItems = new UserItems();
+            orgId = StringUtils.isNotBlank(orgId) ? orgId : "";
+            String url = this.ucUri + "/users/roles/" + roleId + "?$offset=" + offset + "&$limit=" + limit + "&org_id=" + orgId;
+            UserItems curUserItems = wafSecurityHttpClient.getForObject(url, UserItems.class, params);
+            allUserItems.addAll(curUserItems);
+            return allUserItems;
+        }else {
+            return new UserItems();
         }
     }
 }

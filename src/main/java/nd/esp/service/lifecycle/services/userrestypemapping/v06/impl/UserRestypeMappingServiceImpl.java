@@ -81,4 +81,22 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 		userRestypeMappingDao.delete(userId);
 	}
 
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 */
+	public List<UserRestypeMappingModel> findUserRestypeMappingModelList(List<String> userIdList){
+		return  userRestypeMappingDao.findUserRestypeMappingModelList(userIdList);
+	}
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 */
+	public List<String> findUserRestypelList(String userId){
+		return  userRestypeMappingDao.findUserRestypeList(userId);
+	}
+
 }

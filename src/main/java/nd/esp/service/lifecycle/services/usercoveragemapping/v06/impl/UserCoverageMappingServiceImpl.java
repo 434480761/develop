@@ -81,5 +81,24 @@ public class UserCoverageMappingServiceImpl implements UserCoverageMappingServic
 		userCoverageMappingDao.delete(userId);
 	}
 
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 * @author lanyl
+	 */
+	public List<UserCoverageMappingModel> findUserCoverageMappingModelList(List<String> userIdList){
+		return userCoverageMappingDao.findUserCoverageMappingModelList(userIdList);
+	}
+
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 * @author lanyl
+	 */
+	public List<String> findUserCoverageList(String userId){
+		return userCoverageMappingDao.findUserCoverageList(userId);
+	}
 
 }

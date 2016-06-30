@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.daos.usercoveragemapping.v06.impl;
 import nd.esp.service.lifecycle.daos.common.BaseDao;
 import nd.esp.service.lifecycle.daos.usercoveragemapping.v06.UserCoverageMappingDao;
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,5 +125,45 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 		String sql = " and  user_id= ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
+	}
+
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 * @author lanyl
+	 */
+	public List<UserCoverageMappingModel> findUserCoverageMappingModelList(List<String> userIdList) {
+		List<String> signList = new ArrayList<String>();
+		for (int i = 0, size=userIdList.size(); i < size; i++) {signList.add("?");}
+		String sign = StringUtils.join(signList,",");
+
+		List<Object> args = new ArrayList<Object>();
+		StringBuffer sql = new StringBuffer();
+		sql.append(" and  user_id IN("+sign+") ");
+		args.addAll(userIdList);
+		if(!userIdList.isEmpty()){
+			return baseDao.query(sql.toString(), args.toArray(), null, UserCoverageMappingModel.class, TABLE_POSTFIX);
+		}else{
+			return new ArrayList<UserCoverageMappingModel>();
+		}
+	}
+
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 * @author lanyl
+	 */
+	public List<String> findUserCoverageList(String userId) {
+		List<Object> args = new ArrayList<Object>();
+		StringBuffer sql = new StringBuffer();
+		sql.append(" SELECT coverage FROM " + TABLE_POSTFIX + " WHERE  user_id = ? ");
+		args.add(userId);
+		if(StringUtils.isNotBlank(userId)){
+			return this.jdbcTemplate.queryForList(sql.toString(), String.class, args.toArray());
+		}else{
+			return new ArrayList<String>();
+		}
 	}
 }

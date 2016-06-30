@@ -51,4 +51,20 @@ public interface UserCoverageMappingService {
 	 */
 	void deleteAllUserCoverageMappingsByUserId(String userId);
 
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 * @author lanyl
+	 */
+	List<UserCoverageMappingModel> findUserCoverageMappingModelList(List<String> userIdList);
+
+	/**
+	 * 查询用户覆盖类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 * @author lanyl
+	 */
+	List<String> findUserCoverageList(String userId);
+
 }

@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.daos.userrestypemapping.v06.impl;
 import nd.esp.service.lifecycle.daos.common.BaseDao;
 import nd.esp.service.lifecycle.daos.userrestypemapping.v06.UserRestypeMappingDao;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,5 +123,46 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 		String sql = " and  user_id= ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
+	}
+
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 * @author lanyl
+	 */
+	public List<UserRestypeMappingModel> findUserRestypeMappingModelList(List<String> userIdList) {
+		List<String> signList = new ArrayList<String>();
+		for (int i = 0, size=userIdList.size(); i < size; i++) {signList.add("?");}
+		String sign = StringUtils.join(signList,",");
+
+		List<Object> args = new ArrayList<Object>();
+		StringBuffer sql = new StringBuffer();
+		sql.append(" and user_id IN("+sign+") ");
+		args.addAll(userIdList);
+		if(!userIdList.isEmpty()){
+			return baseDao.query(sql.toString(), args.toArray(), null, UserRestypeMappingModel.class, TABLE_POSTFIX);
+		}else{
+			return new ArrayList<UserRestypeMappingModel>();
+		}
+	}
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 * @author lanyl
+	 */
+	public List<String> findUserRestypeList(String userId) {
+		List<Object> args = new ArrayList<Object>();
+		StringBuffer sql = new StringBuffer();
+		sql.append(" SELECT res_type FROM " + TABLE_POSTFIX + " WHERE  user_id = ? ");
+		args.add(userId);
+		if(StringUtils.isNotBlank(userId)){
+			return this.jdbcTemplate.queryForList(sql.toString(), String.class, args.toArray());
+		}else{
+			return new ArrayList<String>();
+		}
 	}
 }

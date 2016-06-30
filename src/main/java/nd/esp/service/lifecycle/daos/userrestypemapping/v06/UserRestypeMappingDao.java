@@ -54,4 +54,21 @@ public interface UserRestypeMappingDao {
 	 * @author lanyl
 	 */
 	void delete(String userId);
+
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userIdList
+	 * @return
+	 * @author lanyl
+	 */
+	List<UserRestypeMappingModel> findUserRestypeMappingModelList(List<String> userIdList);
+
+	/**
+	 * 查询用户请求类型映射关系信息列表
+	 * @param userId
+	 * @return
+	 * @author lanyl
+	 */
+	List<String> findUserRestypeList(String userId);
 }
