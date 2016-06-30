@@ -4,10 +4,14 @@ import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 /**
  * Created by liuran on 2016/6/28.
  */
+@Entity
+@Table(name = "assets")
 public class TitanSync extends EspEntity {
     @Column(name ="level" )
     private Integer level;
