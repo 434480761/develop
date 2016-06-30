@@ -41,9 +41,19 @@ public enum Titan_OP {
             return TitanKeyWords.lte.toString();
         }
     },
+    le {
+        public String opToTitanString() {
+            return TitanKeyWords.le.toString();
+        }
+    },
     gt {
         public String opToTitanString() {
             return TitanKeyWords.gt.toString();
+        }
+    },
+    ge {
+        public String opToTitanString() {
+            return TitanKeyWords.ge.toString();
         }
     },
     gte {

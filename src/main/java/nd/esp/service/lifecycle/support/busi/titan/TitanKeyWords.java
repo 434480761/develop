@@ -6,7 +6,7 @@ package nd.esp.service.lifecycle.support.busi.titan;
  * @author linsm
  */
 public enum TitanKeyWords {
-    g, V, hasLabel, has, or, and, as, select, inE, outE, outV, inV, within, without,
+    g, V, hasLabel, has, or, and, as, select, inE, outE, outV, inV, within, without,ge,le,
     order, by, incr, decr, limit, range,
     lt, lte, gt, gte, textRegex,textContains,
     RESULT,TOTALCOUNT,
