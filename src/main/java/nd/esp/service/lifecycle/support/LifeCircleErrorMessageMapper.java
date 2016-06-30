@@ -468,8 +468,10 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	accessDenied("LC/ACCESS_DENIED",getPropertyValue("access.denied")),
 	UserCoverageMappingNotFound("LC/UserCoverageMapping_NOT_FOUND",getPropertyValue("userCoverageMappingController.query.operation.fail")),
 	//copy
-	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail");
+	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
+    //
+    Forbidden("LC/FORBIDDEN","forbidden");
 
 
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);

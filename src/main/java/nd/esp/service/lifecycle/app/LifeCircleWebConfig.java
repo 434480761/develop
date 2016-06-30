@@ -4,14 +4,16 @@ package nd.esp.service.lifecycle.app;
 import com.nd.gaea.client.http.BearerAuthorizationProvider;
 import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
 import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
+
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
-import nd.esp.service.lifecycle.repository.Interceptor.AllInterceptor;
 import nd.esp.service.lifecycle.repository.config.ApplicationConfig;
+import nd.esp.service.lifecycle.repository.interceptors.AllInterceptor;
 import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthResolver;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
 import nd.esp.service.lifecycle.utils.JDomUtils;
+
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
