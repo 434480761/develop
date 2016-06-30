@@ -285,7 +285,7 @@ public class UserPermissionManageController {
 		//根据用户id 获取用户覆盖映射关系列表
 		userRoleViewModel.setCoverages(this.userCoverageMappingService.findUserCoverageList(userId));
 		//根据用户id 获取用户请求映射关系列表
-		userRoleViewModel.setResTypes(this.userRestypeMappingService.findUserRestypelList(userId));
+		userRoleViewModel.setResTypes(this.userRestypeMappingService.findUserRestypeList(userId));
 
 		return userRoleViewModel;
 	}

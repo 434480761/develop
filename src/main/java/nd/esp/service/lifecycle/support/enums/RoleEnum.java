@@ -9,10 +9,12 @@ package nd.esp.service.lifecycle.support.enums;
  *
  * @author lanyl
  */
-public enum  RolesEnum {
+public enum RoleEnum {
 
-	SUPERADMIN("136817"),
-	COVERAGEADMIN("136817")
+	SUPERADMIN("SuperAdmin"),
+	COVERAGEADMIN("LibAdmin"),
+	RESCREATOR("ResCreator"),
+	CATEGORYDATAADMIN("CategoryDataAdmin")
 	;
 
 	private String value;
@@ -21,7 +23,7 @@ public enum  RolesEnum {
 		return value;
 	}
 
-	private RolesEnum(String value) {
+	private RoleEnum(String value) {
 		this.value = value;
 	}
 }

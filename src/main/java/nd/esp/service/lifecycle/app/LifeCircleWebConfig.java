@@ -4,16 +4,14 @@ package nd.esp.service.lifecycle.app;
 import com.nd.gaea.client.http.BearerAuthorizationProvider;
 import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
 import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
-
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.config.ApplicationConfig;
-import nd.esp.service.lifecycle.repository.interceptors.AllInterceptor;
+import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthResolver;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
 import nd.esp.service.lifecycle.utils.JDomUtils;
-
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +51,7 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 	 private Environment env;
 
 	@Autowired
-	private AllInterceptor allInterceptor;
+	private RoleResInterceptor roleResInterceptor;
 	/**
 	 * 加载配置属性文件
 	 * @return
@@ -210,7 +208,7 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(allInterceptor);
+		registry.addInterceptor(roleResInterceptor);
 		super.addInterceptors(registry);
 		//registry.addWebRequestInterceptor()
 	}

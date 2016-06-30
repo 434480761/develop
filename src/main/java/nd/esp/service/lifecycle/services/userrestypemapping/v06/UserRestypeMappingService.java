@@ -57,7 +57,7 @@ public interface UserRestypeMappingService {
 	 * @param userId
 	 * @return
 	 */
-	List<String> findUserRestypelList(String userId);
+	List<String> findUserRestypeList(String userId);
 
 	/**
 	 * 查询用户请求类型映射关系信息列表

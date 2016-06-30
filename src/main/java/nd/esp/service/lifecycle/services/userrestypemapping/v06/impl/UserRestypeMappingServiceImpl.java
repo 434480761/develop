@@ -95,7 +95,7 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 	 * @param userId
 	 * @return
 	 */
-	public List<String> findUserRestypelList(String userId){
+	public List<String> findUserRestypeList(String userId){
 		return  userRestypeMappingDao.findUserRestypeList(userId);
 	}
 

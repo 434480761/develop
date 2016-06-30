@@ -111,7 +111,7 @@ public class RoleResFilterUrlMap {
     //---------------------------------------------------------------------
     
     /**
-     * 维度管理者角色过滤的URL
+     * 资源消费者角色过滤的URL
      * @return
      */
     public static final Map<String,String> getResConsumerMap(){
