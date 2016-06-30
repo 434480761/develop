@@ -36,14 +36,9 @@ public enum Titan_OP {
             return TitanKeyWords.lt.toString();
         }
     },
-    lte {
-        public String opToTitanString() {
-            return TitanKeyWords.lte.toString();
-        }
-    },
     le {
         public String opToTitanString() {
-            return TitanKeyWords.le.toString();
+            return TitanKeyWords.lte.toString();
         }
     },
     gt {
@@ -52,11 +47,6 @@ public enum Titan_OP {
         }
     },
     ge {
-        public String opToTitanString() {
-            return TitanKeyWords.ge.toString();
-        }
-    },
-    gte {
         public String opToTitanString() {
             return TitanKeyWords.gte.toString();
         }
@@ -150,7 +140,7 @@ public enum Titan_OP {
     }
 
     private boolean isltOrLteOrGtOrGteOperation() {
-        return this.equals(lt) || this.equals(lte) || this.equals(gt) || this.equals(gte);
+        return this.equals(lt) || this.equals(le) || this.equals(gt) || this.equals(ge);
     }
 
     private StringBuilder ltOrLteOrGtOrGteOperation(String field, Map<String, Object> scriptParamMap,
@@ -193,7 +183,7 @@ public enum Titan_OP {
 
     /******************************* TEST ***************************/
     public static void main(String[] args) {
-        Titan_OP op = Titan_OP.lte;
+        Titan_OP op = Titan_OP.le;
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         List<Object> values = new ArrayList<Object>();
         values.add("1111");
