@@ -146,6 +146,9 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			titanCommonRepository.executeScript(script.toString(), graphParams);
 		}
 
+		titanCommonRepository.addSetProperty(resourceCategory.getResource(),
+				resourceCategory.getPrimaryCategory(),"search_code",resourceCategory.getCategoryCode());
+
 		return resourceCategory;
 	}
 
@@ -183,6 +186,8 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			addScriptParams.put("sourcePathId",sourcePathId);
 			titanCommonRepository.executeScript(addPathScript.toString(), addScriptParams);
 		}
+
+		titanCommonRepository.addSetProperty(resource, resourcePrimaryCategory, "search_path",path);
 
 		return path;
 	}
