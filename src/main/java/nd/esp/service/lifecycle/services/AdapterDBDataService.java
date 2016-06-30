@@ -79,6 +79,8 @@ public interface AdapterDBDataService {
     
     public void adapterDJGResource4Status();
     
+    public void repairProvider(String type,String pre,String now);
+    
     public Map<String,Integer> adapterInstructionalobjectives();
 
 }

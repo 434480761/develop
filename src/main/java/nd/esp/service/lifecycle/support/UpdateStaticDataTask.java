@@ -1,8 +1,10 @@
 package nd.esp.service.lifecycle.support;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nd.esp.service.lifecycle.services.AdapterDBDataService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
@@ -23,6 +25,9 @@ public class UpdateStaticDataTask {
     
     @Autowired
     private StaticDataService staticDataService;
+    
+    @Autowired
+    private AdapterDBDataService adapterDBDataService;
     
     private static Long lastUpdateTime = 0L;
     private static Long lastUpdateTime4Ivc = 0L;
@@ -111,4 +116,26 @@ public class UpdateStaticDataTask {
             }
         }
     }
+    
+//    @Scheduled(cron="0 01 23 * * ?")
+//    public void runTask4Provider(){
+//        Map<String, String> map = new HashMap<String, String>();
+////        map.put("资源中心自生产", "华渔5");
+////        map.put("网络采集", "华渔4");
+//        map.put("智能出题", "华渔2");
+//        map.put("结构化生产", "华渔3");
+////        map.put("自动化生产", "华渔3");
+//        map.put("ND外包制作-自有版权", "华渔1");
+//        map.put("倍速", "倍速学习法");
+////        map.put("志鸿", "志鸿优化设计");
+//        
+//        if(CollectionUtils.isNotEmpty(map)){
+//        	for(String pre : map.keySet()){
+//        		adapterDBDataService.repairProvider("coursewareobjects", pre, map.get(pre));
+//        		System.out.println("coursewareobjects --over");
+//        		adapterDBDataService.repairProvider("questions", pre, map.get(pre));
+//        		System.out.println("questions --over");
+//        	}
+//        }
+//    }
 }

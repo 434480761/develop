@@ -1138,7 +1138,81 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 		
 		System.out.println("循环次数:" + count);
 	}
-    
+
+
+	@Override
+	public void repairProvider(String type,String pre,String now) {
+		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
+		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+			
+			@Override
+			public String getUserid() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public String getAuthorization() {
+				return "NDR_MAC";
+			}
+		});
+		
+//		String lcDomain = "http://esp-lifecycle.pre1.web.nd/v0.6";
+		String lcDomain = "http://esp-lifecycle.web.sdp.101.com/v0.6";
+		
+		//1.查询语句
+		String queryUrl = lcDomain + "/" + type + "/management/actions/query?";
+		queryUrl += "words&coverage=Org/nd/";
+		queryUrl += "&prop=provider eq " + pre;
+		queryUrl += "&include=TI,CG,LC,EDU,CR";
+		queryUrl += "&limit=(0,500)";
+//		queryUrl += "&prop=identifier eq a0584ed1-5f15-42ea-ac14-cc3a411f4666";
+		if(type.equals("coursewareobjects")){
+			queryUrl += "&category=$RE04*";
+		}
+		
+		// 计数
+		int count = 0;
+		while (AdapterDBDataController.REPAIR_SWITCH_2) {
+			ListViewModel<Map<String, Object>> list = wafSecurityHttpClient.get(queryUrl, ListViewModel.class);
+			if (list != null && CollectionUtils.isNotEmpty(list.getItems())) {
+				// 循环修改
+				List<Map<String, Object>> avmList = list.getItems();
+				for (Map<String, Object> avm : avmList) {
+					if(avm != null && avm.containsKey("life_cycle")){
+						if(((String)avm.get("title")).length() >200){
+							avm.put("title", ((String)avm.get("title")).substring(0, 200));
+						}
+						
+						Map<String , Object> lc = (Map<String, Object>)avm.get("life_cycle");
+						if(CollectionUtils.isNotEmpty(lc)){
+							lc.put("provider", now);
+
+							String updateUrl = lcDomain + "/" + type + "/" + avm.get("identifier");
+							
+							HttpHeaders httpHeaders = new HttpHeaders();
+							httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+							HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(avm, httpHeaders);
+							try {
+								wafSecurityHttpClient.executeForObject(updateUrl, HttpMethod.PUT, entity, Map.class);
+							} catch (Exception e) {
+								LOG.error(type + "--" + avm.get("identifier") + "--更新出错", e.getMessage());
+								LOG.error("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+								continue;
+							}
+						}
+					}
+				}
+			} else {
+				break;
+			}
+
+			// 循环参数处理
+			count++;
+		}
+		
+		System.out.println("循环次数:" + count);
+	}
     
 //	@Override
 //	public void update3DResource(String session,long endTime) {
