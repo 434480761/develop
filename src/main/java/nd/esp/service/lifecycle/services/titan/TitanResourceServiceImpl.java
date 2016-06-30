@@ -105,11 +105,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return abstractPageQuery.doing(primaryCategory);
 	}
 
-	@Override
-	public long importRelation(String primaryCategory) {
-		AbstractPageQuery abstractPageQuery = new ImportRelationPageQuery();
-		return abstractPageQuery.doing(primaryCategory);
-	}
 
 	@Override
 	public long updateData(String primaryCategory){
@@ -196,10 +191,10 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					.queryCategoriesUseHql(resourceTypes, uuids));
 
 
-			//FIXME
-//			List<ResourceRelation> resourceRelations =  getResourceRelation(
-//					educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
-//			titanRelationRepository.batchAdd(resourceRelations);
+			//FIXME 习题库的查询存在问
+			List<ResourceRelation> resourceRelations =  getResourceRelation(
+					educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
+			titanRelationRepository.batchAdd(resourceRelations);
 
 			List<String> primaryCategorys = new ArrayList<>();
 			primaryCategorys.add(primaryCategory);
@@ -502,7 +497,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		titanCategoryRepository.batchAdd(ndResourceDao
 				.queryCategoriesUseHql(resourceTypes, uuids));
 
-		//FIXME
+		//关系单独进行导入
 //		List<ResourceRelation> resourceRelations =  getResourceRelation(
 //				educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
 //		titanRelationRepository.batchAdd(resourceRelations);
@@ -514,24 +509,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return resources.size();
 	}
 
-	/**
-	 * 导入关系
-	 * */
-	class ImportRelationPageQuery extends AbstractPageQuery{
-		@Override
-		long operate(List<Education> educations, String primaryCategory) {
-			Set<String> uuids = new HashSet<String>();
-			for (Education education : educations) {
-				uuids.add(education.getIdentifier());
-			}
-
-			//FIXME
-//			List<ResourceRelation> resourceRelations =  getResourceRelation(
-//					educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
-//			titanRelationRepository.batchAdd(resourceRelations);
-			return 0;
-		}
-	}
 
 	/**
 	 * 创建章节关系
