@@ -5,7 +5,7 @@ Ndresource(Vertex)
 primaryCategory（资源类型）	    T.label
 identifier	                    identifier	                String
 description	                    description	                String
-title	                        title	String
+title	                        title	                    String
 dbcreateTime	                lc_create_time	            Long
 dblastUpdate	                lc_last_update	            Long
 dbpreview	                    preview	                    String
@@ -57,7 +57,7 @@ modifiedDifficulty              ext_modified_difficulty     Float
 extDifficulty                   ext_ext_difficulty          Float
 modifiedDiscrimination          ext_modified_discrimination Float
 usedTime                        ext_used_time               Integer
-exposalDate                     ext_exposal_date            Date
+exposalDate                     ext_exposal_date            Long
 autoRemark                      ext_auto_remark             Boolean
 
 
