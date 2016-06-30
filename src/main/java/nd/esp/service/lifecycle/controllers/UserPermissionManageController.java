@@ -197,7 +197,7 @@ public class UserPermissionManageController {
 	 * @author lanyl
 	 */
 	@RequestMapping(value = "/roles/{roleId}/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public @ResponseBody Map<String, Object> getUserRoleList(@PathVariable String roleId , @RequestParam(value ="limit",required =true) String limit) {
+	public @ResponseBody Map<String, Object> getUserRoleList(@PathVariable String roleId , @RequestParam(value ="limit",required =true) String limit,@RequestParam(value ="org_id", required = false) String orgId) {
 		//参数roleId效验
 		AssertUtils.isEmpty(roleId, "role_id");
 		AssertUtils.isInteger(roleId, "role_id");
@@ -213,7 +213,7 @@ public class UserPermissionManageController {
 		String roleName = this.getRoleName(roleId);
 
 		//通过uc接口获取roleid下的用户 with limit and offset
-		UserItems userItems = this.ucClient.listRoleUsers(roleId,null,limitResult[0],limitResult[1]);
+		UserItems userItems = this.ucClient.listRoleUsers(roleId,orgId,limitResult[0],limitResult[1]);
 		List<String> userIdList = new ArrayList<String>(userItems.size());
 
 		ArrayList<UserRoleViewModel> userRoleViewModelArrayList = new ArrayList<UserRoleViewModel>();
@@ -289,144 +289,6 @@ public class UserPermissionManageController {
 
 		return userRoleViewModel;
 	}
-
-//	/**
-//	 * 绑定用户角色
-//	 * @param userId
-//	 * @param jsonObject
-//	 * @return
-//	 * @author lanyl
-//	 */
-//	@RequestMapping(value="/{userId}/roles",method = RequestMethod.POST)
-//	public Map<String, Object> addUserRole(@PathVariable String userId, @RequestBody JSONObject jsonObject, @AuthenticationPrincipal UserInfo userInfo){
-//
-//		String roleId = jsonObject.getString("role_id");
-//		JSONArray coverageArray = jsonObject.getJSONArray("coverages");
-//		JSONArray resTypeArray = jsonObject.getJSONArray("res_types");
-//
-//		//参数效验
-//		AssertUtils.isEmpty(roleId, "role_id");
-//		AssertUtils.isEmpty(userId, "user_id");
-//		AssertUtils.rangeLength(userId, 0, 36, "user_id");
-//		AssertUtils.isInteger(roleId, "role_id");
-//		this.isValidRoleId(roleId, "role_id");
-//
-//		// 覆盖范围List
-//		List<String> coverageList = new ArrayList<String>();
-//		// 请求类型List
-//		List<String> resTypeList = new ArrayList<String>();
-//
-//		//判断当前用户角色是否有绑定用户权限，没有则报错，有则继续下一步操作
-//		this.validHasPermission(userInfo, roleId);
-//
-//		//用户权限角色不存在，进行新增绑定, 存在则不再进行绑定
-//		if(!this.hasRoleIdByUserId(userId, roleId)){
-//			//添加用户角色
-//			this.ucClient.addUserRole(userId,Integer.valueOf(roleId));
-//		}
-//
-//		//coverage跟库管理员，资源创建者角色，资源消费者角色有关
-//		if(COVERAGEADMIN.equals(roleId) || RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//			//获取覆盖范围
-//			coverageList = this.jsonArrayChangeToList(coverageArray);
-//			if(coverageList != null && coverageList.size() >0){
-//				this.userCoverageMappingService.addUserCoverageMappings(coverageList, userId);
-//			}
-//		}
-//		//resType跟资源创建者角色，资源消费者角色有关
-//		if(RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//			//获取请求类型
-//			resTypeList = this.jsonArrayChangeToList(resTypeArray);
-//			//效验请求类型参数
-//			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
-//			if(resTypeList != null && resTypeList.size() > 0){
-//				this.userRestypeMappingService.addUserRestypeMappings(resTypeList, userId);
-//			}
-//		}
-//		Map<String, Object> params = new HashMap<String, Object>();
-//		params.put("user_id", userId);
-//		params.put("role_id", roleId);
-//		params.put("coverages", coverageList.toArray());
-//		params.put("res_types", resTypeList.toArray());
-//		return 	params;
-//	}
-
-
-//	/**
-//	 * 解除绑定用户角色
-//	 * @param userId
-//	 * @param jsonObject
-//	 * @return
-//	 * @author lanyl
-//	 */
-//	@RequestMapping(value="/{userId}/roles",method = RequestMethod.DELETE)
-//	public Map<String, Object> deleteUserRole(@PathVariable String userId, @RequestBody JSONObject jsonObject, @AuthenticationPrincipal UserInfo userInfo){
-//		String roleId = jsonObject.getString("role_id");
-//		JSONArray coverageArray = jsonObject.getJSONArray("coverages");
-//		JSONArray resTypeArray = jsonObject.getJSONArray("res_types");
-//
-//		//参数效验
-//		AssertUtils.isEmpty(roleId, "role_id");
-//		AssertUtils.isEmpty(userId, "user_id");
-//		AssertUtils.rangeLength(userId, 0, 36, "user_id");
-//		AssertUtils.isInteger(roleId, "role_id");
-//		this.isValidRoleId(roleId, "role_id");
-//		// 覆盖范围List
-//		List<String> coverageList = new ArrayList<String>();
-//		// 请求类型List
-//		List<String> resTypeList = new ArrayList<String>();
-//		//返回内容
-//		Map<String, Object> params = new HashMap<String, Object>();
-//
-//		//判断当前用户角色是否有解除绑定用户权限，没有则报错，有则继续下一步操作
-//		this.validHasPermission(userInfo, roleId);
-//
-//		// 存在则进行解绑
-//		if( this.hasRoleIdByUserId(userId, roleId) ){
-//			//当coverages跟res_types为空时，进行uc角色解绑
-//			if(coverageArray == null && resTypeArray ==null ){
-//				//解除用户角色绑定
-//				this.ucClient.deleteUserRole(userId,Integer.valueOf(roleId));
-//				if(COVERAGEADMIN.equals(roleId) || RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//					this.userCoverageMappingService.deleteAllUserCoverageMappingsByUserId(userId);
-//				}
-//				if(RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//					this.userRestypeMappingService.deleteAllUserResTypeMappingsByUserId(userId);
-//				}
-//			}else{
-//				//获取覆盖范围,删除对应数据
-//				coverageList = this.jsonArrayChangeToList(coverageArray);
-//				//获取请求类型
-//				resTypeList = this.jsonArrayChangeToList(resTypeArray);
-//				//效验请求类型参数
-//				AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
-//				//coverage跟库管理员，资源创建者角色，资源消费者角色有关
-//				if(COVERAGEADMIN.equals(roleId) || RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//					//删除覆盖关系
-//					if(coverageList != null && coverageList.size() >0){
-//						this.userCoverageMappingService.deleteUserCoverageMappings(coverageList, userId);
-//					}
-//				}
-//				//resType跟资源创建者角色，资源消费者角色有关
-//				if(RESCREATOR.equals(roleId) || RESCONSUMER.equals(roleId)){
-//					//删除请求关系
-//					if(resTypeList != null && resTypeList.size() > 0){
-//						this.userRestypeMappingService.deleteUserRestypeMappings(resTypeList, userId);
-//					}
-//				}
-//
-//			}
-//			params.put("user_id", userId);
-//			params.put("role_id", roleId);
-//			params.put("coverages", coverageList.toArray());
-//			params.put("res_types", resTypeList.toArray());
-//		}else {
-//			throw new LifeCircleException(HttpStatus.NOT_FOUND, LifeCircleErrorMessageMapper.userRoleNotFound.getCode()
-//					, userId + LifeCircleErrorMessageMapper.userRoleNotFound.getMessage());
-//		}
-//		return params;
-//
-//	}
 
 	/**
 	 * json数组转list
@@ -602,42 +464,4 @@ public class UserPermissionManageController {
 		}
 		return resTypeList;
 	}
-
-//	/**
-//	 * 查询用户是否存在权限角色
-//	 * @param userId
-//	 * @return
-//	 * @author lanyl
-//	 */
-//	private String getRoleIdByUserId(String userId){
-//		JSONObject jsonObject = this.ucClient.listUserRoles(userId);
-//		if(jsonObject != null){
-//			JSONArray jsonArray = jsonObject.getJSONArray("items");
-//			if(jsonArray != null && jsonArray.size() > 0){
-//				Integer size = jsonArray.size();
-//				for(int i = 0; i < size; i++){
-//					String roleId = jsonArray.getJSONObject(i).getString("role_id");
-//					if(SUPERADMIN.equals(roleId)){
-//						return SUPERADMIN;
-//					}
-//					if(COVERAGEADMIN.equals(roleId)){
-//						return COVERAGEADMIN;
-//					}
-//					if(RESCREATOR.equals(roleId)){
-//						return RESCREATOR;
-//					}
-//					if(CATEGORYDATAADMIN.equals(roleId)){
-//						return CATEGORYDATAADMIN;
-//					}
-//					if(RESCONSUMER.equals(roleId)){
-//						return RESCONSUMER;
-//					}
-//					if(GUEST.equals(roleId)){
-//						return GUEST;
-//					}
-//				}
-//			}
-//		}
-//		return null;
-//	}
 }
