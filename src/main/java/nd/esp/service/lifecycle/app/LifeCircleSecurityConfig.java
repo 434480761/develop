@@ -35,6 +35,9 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	//waf.security.disabled=false为生效
 	@Override
 	protected void onConfigure(HttpSecurity http) throws Exception {
+
+		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/test/**").permitAll();
+		http.authorizeRequests().antMatchers("/v*/test/**").hasAnyAuthority("SuperAdmin","LibAdmin");
 		// TODO Auto-generated method stub
 		//admin","role_biz_server"
 		http.authorizeRequests()
@@ -48,6 +51,8 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		 .antMatchers(HttpMethod.DELETE).authenticated()
 				//匹配"/students/**"的所有（其他）操作，需要用户拥有角色"ADMIN"
 		  .antMatchers("/**").authenticated();
+
+
 
 		//若其他的Url地址均需要加身份认证，则请添加.anyRequest().authenticated()
 
