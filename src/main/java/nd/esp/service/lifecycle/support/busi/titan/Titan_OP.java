@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,7 +149,7 @@ public enum Titan_OP {
         StringBuilder scriptBuffer = new StringBuilder().append(opToTitanString()).append("(");
         String valueKey = TitanUtils.generateKey(scriptParamMap, field);
         scriptBuffer.append(valueKey).append(",");
-        scriptParamMap.put(valueKey, Long.valueOf(values.get(0).toString()));
+        scriptParamMap.put(valueKey, produceOneValidTime(values));
         // remove the last ","
         scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
 
@@ -156,7 +157,31 @@ public enum Titan_OP {
         return scriptBuffer;
     }
 
-    private StringBuilder likeOperation(String field, List<Object> values, Map<String, Object> scriptParamMap) {
+	/**
+	 * 相同字段，相同操作符，or
+	 * 
+	 * @param values
+	 * @return
+	 */
+	private Long produceOneValidTime(List<Object> values) {
+		List<Long> times = new ArrayList<Long>();
+		for (Object value : values) {
+			times.add(Long.valueOf(value.toString()));
+		}
+
+		switch (this) {
+		case gt:
+		case ge:
+			return Collections.min(times);
+		case lt:
+		case le:
+			return Collections.max(times);
+		default:
+			return 0L;
+		}
+	}
+
+	private StringBuilder likeOperation(String field, List<Object> values, Map<String, Object> scriptParamMap) {
 
         StringBuilder scriptBuffer = new StringBuilder().append(opToTitanString()).append("(");
         String valueKey = TitanUtils.generateKey(scriptParamMap, field);
