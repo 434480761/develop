@@ -26,13 +26,13 @@ public class UcClient {
     private final static Logger LOG= LoggerFactory.getLogger(UcClient.class);
 
     /** uc地址*/
-    private static String ucUri = LifeCircleApplicationInitializer.properties.getProperty("waf.uc.uri");
+    private static String ucUri = LifeCircleApplicationInitializer.properties.getProperty("esp_uc_api_domain");
 
     /** 领域 */
-    private static String realm = LifeCircleApplicationInitializer.properties.getProperty("waf.uc.realm");
-    
+    private static String realm = "lc.service.esp.nd";
 
-	/**
+
+    /**
      * 从UC获取用户名称
      * @param userId
      * @return
