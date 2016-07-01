@@ -290,6 +290,21 @@ public class UserPermissionManageController {
 		return userRoleViewModel;
 	}
 
+
+	/**
+	 * 创建角色权限
+	 * @param jsonObject
+	 * @return
+	 */
+	@RequestMapping(value="/role",method = RequestMethod.POST)
+	public JSONObject addRole(@RequestBody JSONObject jsonObject){
+		String roleName = jsonObject.getString("role_name");
+		String remarks = jsonObject.getString("remarks");
+		AssertUtils.isEmpty(remarks, "remarks");
+		AssertUtils.isEmpty(roleName, "role_name");
+		return this.ucClient.addRole(roleName, remarks);
+	}
+
 	/**
 	 * json数组转list
 	 * @param jsonArray
