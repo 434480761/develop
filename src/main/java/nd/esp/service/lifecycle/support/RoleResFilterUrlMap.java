@@ -42,36 +42,36 @@ public class RoleResFilterUrlMap {
 		Map<String,String> m = new LinkedHashMap<String,String>();
 		
 		// /v0.3/{res_type} POST
-		m.put("/(\\w+)" + "/POST", "");              
+		m.put("/(\\w+)" + "/POST", "");
 		//m.put("/(\\w+)/(\\w+)" + "/POST", "");
 		
-		// /v0.3/{res_type} PUT
-		m.put("/(\\w+)" + "/PUT", "");    
+		// /v0.3/{res_type}/* PUT
+		m.put("/(\\w+)/([a-zA-Z0-9-]+)" + "/PUT", "");
 		//m.put("/(\\w+)/(\\w+)/actions/move" + "/PUT", "");   
 		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)" + "/PUT", ""); 
 		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)/actions/move" + "/PUT", ""); 
 		
-		// /v0.3/{res_type} GET
-		m.put("/(\\w+)" + "/GET", "");   
+//		 /v0.3/{res_type} GET
+		m.put("/(\\w+)" + "/GET", "");
 		// /v0.3/{res_type}/list GET
-        m.put("/(\\w+)/list" + "/GET", "");   
+        m.put("/(\\w+)/list" + "/GET", "");
         // /v0.3/{res_type}/*/archive POST
-       	m.put("/(\\w+)/(\\w+)/archive" + "/POST", ""); 
+       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/archive" + "/POST", "");
        	// /v0.3/{res_type}/*/archiveinfo GET
-       	m.put("/(\\w+)/(\\w+)/archiveinfo" + "/GET", ""); 
+       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
        	// /v0.3/{res_type}/*/uploadurl GET
-       	m.put("/(\\w+)/(\\w+)/uploadurl" + "/GET", ""); 
+       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/uploadurl" + "/GET", "");
        	// /v0.3/{res_type}/*/downloadurl GET
-       	m.put("/(\\w+)/(\\w+)/downloadurl" + "/GET", "");
+       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
        	// /v0.3/{res_type}/*/relations POST
-		m.put("/(\\w+)/(\\w+)/relations" + "/POST", ""); 
+		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations" + "/POST", "");
 		// /v0.3/{res_type}/*/relations/* PUT
-		m.put("/(\\w+)/(\\w+)/relations/(\\w+)" + "/PUT", ""); 
+		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations/(\\w+)" + "/PUT", "");
 		// /v0.3/{res_type}/*/relations DELETE
-		m.put("/(\\w+)/(\\w+)/relations" + "/DELETE", "");
+		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations" + "/DELETE", "");
 		// /v0.3/{res_type}/*/relations GET
 		// /v0.3/{res_type}/*/targets GET
-		m.put("/(\\w+)/(\\w+)/targets" + "/GET", "");
+		m.put("/(\\w+)/([a-zA-Z0-9-]+)/targets" + "/GET", "");
 		// /v0.3/{res_type}/*/targets/* GET
 		return m;
 	}
@@ -88,18 +88,18 @@ public class RoleResFilterUrlMap {
         Map<String,String> m = new LinkedHashMap<String,String>();
         // /v0.3/categories/*
         //m.put("/categories" + "/POST", "");              
-        m.put("/categories/(\\w+)" + "/PUT", "");
-        m.put("/categories/(\\w+)" + "/DELETE", "");   
+        m.put("/categories/([a-zA-Z0-9-]+)" + "/PUT", "");
+        m.put("/categories/([a-zA-Z0-9-]+)" + "/DELETE", "");
         m.put("/categories/list" + "/GET", "");              
         //m.put("/categories" + "/GET", "");  
         
         // /v0.3/categorypatterns/*
         //m.put("/categorypatterns" + "/POST", "");
-        m.put("/categorypatterns/(\\w+)" + "/PUT", "");
-        m.put("/categorypatterns/(\\w+)" + "/DELETE", "");
+        m.put("/categorypatterns/([a-zA-Z0-9-]+)" + "/PUT", "");
+        m.put("/categorypatterns/([a-zA-Z0-9-]+)" + "/DELETE", "");
         //m.put("/categorypatterns" + "/GET", "");
         m.put("/categorypatterns/list" + "/GET", "");
-        m.put("/categorypatterns/(\\w+)" + "/GET", "");
+        m.put("/categorypatterns/([a-zA-Z0-9-]+)" + "/GET", "");
         
         // /v0.3/categories/ralations
         
@@ -119,13 +119,13 @@ public class RoleResFilterUrlMap {
         // /v0.3/{res_type}/list
         m.put("/(\\w+)/list" + "/GET", "");   
         // /v0.3/{res_type}/*/archive POST
-        m.put("/(\\w+)/(\\w+)/archive" + "/POST", "");  
+        m.put("/(\\w+)/([a-zA-Z0-9-]+)/archive" + "/POST", "");
         // /v0.3/{res_type}/*/archiveinfo GET
-        m.put("/(\\w+)/(\\w+)/archiveinfo" + "/GET", ""); 
+        m.put("/(\\w+)/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
         // /v0.3/{res_type}/*/downloadurl GET
-        m.put("/(\\w+)/(\\w+)/downloadurl" + "/GET", "");
+        m.put("/(\\w+)/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
         // /v0.3/{res_type}/*/targets GET
-        m.put("/(\\w+)/(\\w+)/targets" + "/GET", ""); 
+        m.put("/(\\w+)/([a-zA-Z0-9-]+)/targets" + "/GET", "");
         return m;
     }   
 }

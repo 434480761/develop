@@ -18,7 +18,16 @@ public class TokenAuthenticationProcessFilter4LC extends
 			PreAuthenticatedAuthenticationExtractorManager extractorManager) {
 		super(authenticationManager, extractorManager);
 	}
-	
+
+	/**
+	 *
+	 * @param request
+	 * @param response
+	 * @param chain
+	 * @throws IOException
+	 * @throws ServletException
+	 * @history lanyl 注释代码（已确认可以注释）
+	 */
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 			FilterChain chain) throws IOException, ServletException {

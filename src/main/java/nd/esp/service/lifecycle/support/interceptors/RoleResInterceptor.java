@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.support.interceptors;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableList;
 import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
@@ -202,21 +203,25 @@ public class RoleResInterceptor implements HandlerInterceptor {
                 RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) request);
                 String body = requestWrapper.getBody();
                 JSONObject json = JSONObject.parseObject(body);
-                JSONObject categories = json.getJSONObject("categories");
-                // 如果coverage不空的情况下，进行判断
-                if(categories != null && categories.size() > 0){
-                    // 获取target_type
-                    String targetType = categories.getString("target_type");
-                    // 获取target
-                    String target = categories.getString("target");
-                    // 获取coverage
-                    String coverage  = targetType + "/" + target;
-                    if(StringUtils.isNotBlank(coverage)){
-                        // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
-                        List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
-                        if(!userCoverageList.contains(coverage)){
-                            throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                                    LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+                JSONArray coverages = json.getJSONArray("coverages");
+                // 如果coverages不空的情况下，进行判断
+                if(coverages != null && coverages.size() > 0){
+                    List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
+                    Integer num = coverages.size();
+                    for(int i=0; i< num; i++){
+                        JSONObject coverage = coverages.getJSONObject(i);
+                        if(coverage != null && coverage.size() >0){
+                            // 获取target_type
+                            String targetType = coverage.getString("target_type");
+                            // 获取target
+                            String target = coverage.getString("target");
+                            // 获取coverageStr
+                            String coverageStr  = targetType + "/" + target;
+                            // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
+                            if(!userCoverageList.contains(coverageStr)){
+                                throw new LifeCircleException(HttpStatus.FORBIDDEN,
+                                        LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+                            }
                         }
                     }
                 }
