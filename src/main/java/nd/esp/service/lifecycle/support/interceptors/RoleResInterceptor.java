@@ -141,7 +141,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
             // 进行coverage权限验证
             this.isCoverageMatch(matcher, method, userId, request);
             // 进行resType权限验证
-//            this.isResTypeMatch(matcher, userId);
+            this.isResTypeMatch(matcher, userId);
         }
     }
 
