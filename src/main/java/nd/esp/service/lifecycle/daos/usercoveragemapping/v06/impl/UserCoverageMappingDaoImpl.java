@@ -1,26 +1,25 @@
 package nd.esp.service.lifecycle.daos.usercoveragemapping.v06.impl;
 
-import nd.esp.service.lifecycle.daos.common.BaseDao;
-import nd.esp.service.lifecycle.daos.usercoveragemapping.v06.UserCoverageMappingDao;
-import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import nd.esp.service.lifecycle.daos.common.BaseDao;
+import nd.esp.service.lifecycle.daos.usercoveragemapping.v06.UserCoverageMappingDao;
+import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserCoverageMappingDaoImpl</p>
+ * <p>Description: UserCoverageMappingDaoImpl</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -29,7 +28,8 @@ import java.util.List;
  */
 @Service
 public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
-	private static final Logger LOG = LoggerFactory.getLogger(UserCoverageMappingDaoImpl.class);
+	
+    //private static final Logger LOG = LoggerFactory.getLogger(UserCoverageMappingDaoImpl.class);
 
 	@Autowired
 	private BaseDao<UserCoverageMappingModel> baseDao;
@@ -67,7 +67,7 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void batchSave(final  List<String> coverageList, final  String userId){
+	public void batchSave(final List<String> coverageList, final String userId){
 		if(coverageList != null && coverageList.size() > 0){
 			String sql = "insert into " + TABLE_POSTFIX + "(user_id, coverage,create_time) values (?,?,?) "
 					+ "on duplicate key update create_time = ?";
@@ -120,9 +120,9 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void delete( String userId){
+	public void delete(String userId){
 		List<Object> args = new ArrayList<Object>();
-		String sql = " and  user_id= ?";
+		String sql = " and user_id = ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
 	}

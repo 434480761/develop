@@ -1,19 +1,17 @@
 package nd.esp.service.lifecycle.services.userrestypemapping.v06.impl;
 
+import java.util.List;
+
 import nd.esp.service.lifecycle.daos.userrestypemapping.v06.UserRestypeMappingDao;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
-import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
-import nd.esp.service.lifecycle.support.LifeCircleException;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRestypeMappingServiceImpl</p>
+ * <p>Description: UserRestypeMappingServiceImpl</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -34,22 +32,6 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 	 */
 	public int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel){
 		return  userRestypeMappingDao.insert(userRestypeMappingModel);
-	}
-
-
-
-	/**
-	 * 查询UserRestypeMappingModel
-	 * @param id
-	 * @return
-	 * @author lanyl
-	 */
-	public UserRestypeMappingModel checkUserRestypeMappingInfo(Integer id){
-		UserRestypeMappingModel userRestypeMappingModel = this.userRestypeMappingDao.query(id);
-		if(userRestypeMappingModel == null){
-			throw new LifeCircleException(HttpStatus.NOT_FOUND, LifeCircleErrorMessageMapper.UserRestypeMappingNotFound);
-		}
-		return userRestypeMappingModel;
 	}
 
 	/**
@@ -98,5 +80,4 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 	public List<String> findUserRestypeList(String userId){
 		return  userRestypeMappingDao.findUserRestypeList(userId);
 	}
-
 }

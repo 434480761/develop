@@ -5,8 +5,8 @@ import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import java.util.List;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserCoverageMappingDao</p>
+ * <p>Description: UserCoverageMappingDao</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>

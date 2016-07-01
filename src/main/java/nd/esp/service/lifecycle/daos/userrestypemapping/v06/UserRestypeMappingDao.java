@@ -5,8 +5,8 @@ import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
 import java.util.List;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRestypeMappingDao</p>
+ * <p>Description: UserRestypeMappingDao</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -23,7 +23,6 @@ public interface UserRestypeMappingDao {
 	 */
 	int insert(UserRestypeMappingModel userRestypeMappingModel);
 
-
 	/**
 	 * 查询用户请求类型映射关系
 	 * @param id
@@ -38,7 +37,7 @@ public interface UserRestypeMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void batchSave(final List<String> resTypeList, final  String userId);
+	void batchSave(final List<String> resTypeList, final String userId);
 
 	/**
 	 * 批量删除用户请求类型映射关系
@@ -46,7 +45,7 @@ public interface UserRestypeMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void batchDelete(final List<String> resTypeList, final  String userId);
+	void batchDelete(final List<String> resTypeList, final String userId);
 
 	/**
 	 * 删除用户请求类型映射关系
@@ -54,7 +53,6 @@ public interface UserRestypeMappingDao {
 	 * @author lanyl
 	 */
 	void delete(String userId);
-
 
 	/**
 	 * 查询用户请求类型映射关系信息列表
