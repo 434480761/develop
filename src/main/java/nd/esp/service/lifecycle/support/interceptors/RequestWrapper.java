@@ -6,13 +6,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.*;
 
 /**
- * MyRequestWrapper.
- * 
- * @author havery
- */
-
-/**
- * 
  * <p>Title: RequestWrapper </p>
  * <p>Description: RequestWrapper </p>
  * <p>Copyright: Copyright (c) 2016     </p>
