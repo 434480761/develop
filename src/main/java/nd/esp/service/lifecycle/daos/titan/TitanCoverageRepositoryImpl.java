@@ -62,10 +62,10 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 		titanCommonRepository.executeScript(script , graphParams);
 
-		String setValue = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy();
-		titanCommonRepository.addSetProperty(resCoverage.getResource() , resCoverage.getResType() ,"search_coverage",setValue);
-		setValue = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/";
-		titanCommonRepository.addSetProperty(resCoverage.getResource() , resCoverage.getResType() ,"search_coverage",setValue);
+		String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy();
+		String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/";
+		titanCommonRepository.addSetProperty(resCoverage.getResource() ,
+				resCoverage.getResType() ,"search_coverage",setValue2,setValue3);
 
 		return resCoverage;
 	}

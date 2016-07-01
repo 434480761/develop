@@ -147,7 +147,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		}
 
 		titanCommonRepository.addSetProperty(resourceCategory.getResource(),
-				resourceCategory.getPrimaryCategory(),"search_code",resourceCategory.getCategoryCode());
+				resourceCategory.getPrimaryCategory(),"search_code",resourceCategory.getTaxoncode());
 
 		return resourceCategory;
 	}
