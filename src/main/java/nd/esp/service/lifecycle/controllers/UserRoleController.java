@@ -1,10 +1,10 @@
 package nd.esp.service.lifecycle.controllers;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
-import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
@@ -13,40 +13,45 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.ResTypeEunm;
 import nd.esp.service.lifecycle.support.uc.UcClient;
+import nd.esp.service.lifecycle.support.uc.UcRoleClient;
 import nd.esp.service.lifecycle.support.uc.UserBaseInfo;
 import nd.esp.service.lifecycle.support.uc.UserItems;
 import nd.esp.service.lifecycle.utils.AssertUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.vos.UserRoleViewModel;
+
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRoleController</p>
+ * <p>Description: UserRoleController</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
- *
  * @author lanyl
  */
 @RestController
 @RequestMapping({"/v0.6/users"})
-public class UserPermissionManageController {
+public class UserRoleController {
 
-	private final Logger LOG = LoggerFactory.getLogger(UserPermissionManageController.class);
+	//private final Logger LOG = LoggerFactory.getLogger(UserRoleController.class);
 
 	@Autowired
 	@Qualifier("UserRestypeMappingServiceImpl")
@@ -59,24 +64,15 @@ public class UserPermissionManageController {
 	@Autowired
 	private UcClient ucClient;
 
-	/** 超级管理员*/
-	private static String SUPERADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_super_admin");
-	/** 库管理员*/
-	private static String COVERAGEADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_coverage_admin");
-	/** 资源创建者角色*/
-	private static String RESCREATOR = LifeCircleApplicationInitializer.properties.getProperty("esp_res_creator");
-	/** 维度管理者角色*/
-	private static String CATEGORYDATAADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_category_data_admin");
-	/** 资源消费者角色*/
-	private static String RESCONSUMER = LifeCircleApplicationInitializer.properties.getProperty("esp_res_consumer");
-	/** 游客角色*/
-	private static String GUEST = LifeCircleApplicationInitializer.properties.getProperty("esp_guest");
+	@Autowired
+	private UcRoleClient ucRoleClient;
 
 
 	/**
 	 * 绑定用户角色
 	 * @param userId
 	 * @param jsonObject
+	 * @param userInfo
 	 * @return
 	 * @author lanyl
 	 */
@@ -94,14 +90,14 @@ public class UserPermissionManageController {
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
-
-
+		// 校验覆盖范围
 		if(StringUtils.isNotBlank(coverages)){
 			//参数效验
 			AssertUtils.isJsonArray(coverages,"coverages");
 			//获取覆盖范围
 			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
 		}
+		// 校验请求类型参数
 		if(StringUtils.isNotBlank(resTypes)){
 			//参数效验
 			AssertUtils.isJsonArray(resTypes, "res_types");
@@ -113,8 +109,7 @@ public class UserPermissionManageController {
 
 		//roleid不为空 绑定uc角色
 		if(StringUtils.isNotBlank(roleId)){
-			AssertUtils.isInteger(roleId, "role_id");
-			this.isValidRoleId(roleId, "role_id");
+			ucRoleClient.checkValidRoleId(roleId, "role_id");
 			//判断当前用户角色是否有绑定用户权限，没有则报错，有则继续下一步操作
 			this.validHasPermission(userInfo, roleId);
 
@@ -144,6 +139,7 @@ public class UserPermissionManageController {
 	 * 解除绑定用户角色
 	 * @param userId
 	 * @param jsonObject
+	 * @param userInfo
 	 * @return
 	 * @author lanyl
 	 */
@@ -161,12 +157,14 @@ public class UserPermissionManageController {
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
+		// 校验覆盖范围
 		if(StringUtils.isNotBlank(coverages)){
 			//参数效验
 			AssertUtils.isJsonArray(coverages,"coverages");
 			//获取覆盖范围
 			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
 		}
+		// 校验请求类型参数
 		if(StringUtils.isNotBlank(resTypes)){
 			//参数效验
 			AssertUtils.isJsonArray(resTypes, "res_types");
@@ -180,8 +178,7 @@ public class UserPermissionManageController {
 
 		//roleId不为空，进行解除绑定用户角色操作
 		if(StringUtils.isNotBlank(roleId)){
-			AssertUtils.isInteger(roleId, "role_id");
-			this.isValidRoleId(roleId, "role_id");
+			ucRoleClient.checkValidRoleId(roleId, "role_id");
 			//判断当前用户角色是否有解除绑定用户权限，没有则报错，有则继续下一步操作
 			this.validHasPermission(userInfo, roleId);
 			// 存在则进行解绑
@@ -194,7 +191,6 @@ public class UserPermissionManageController {
 		if(coverageList != null && coverageList.size() >0){
 			this.userCoverageMappingService.deleteUserCoverageMappings(coverageList, userId);
 		}
-
 		//resType不为空，删除请求关系
 		if(resTypeList != null && resTypeList.size() > 0){
 			this.userRestypeMappingService.deleteUserRestypeMappings(resTypeList, userId);
@@ -210,22 +206,21 @@ public class UserPermissionManageController {
 	 * 查询角色用户列表
 	 * @param roleId
 	 * @param limit
+	 * @param orgId
 	 * @return
 	 * @author lanyl
 	 */
 	@RequestMapping(value = "/roles/{roleId:\\d+}/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public @ResponseBody Map<String, Object> getUserRoleList(@PathVariable String roleId , @RequestParam(value ="limit",required =true) String limit,@RequestParam(value ="org_id", required = false) String orgId) {
+	public @ResponseBody Map<String, Object> getUserRoleList(@PathVariable String roleId, 
+	        @RequestParam(value = "limit", required = true) String limit,
+	        @RequestParam(value = "org_id", required = false) String orgId) {
 		//参数roleId效验
 		AssertUtils.isEmpty(roleId, "role_id");
-		AssertUtils.isInteger(roleId, "role_id");
-		AssertUtils.rangeLength(roleId, 0, 36, "role_id");
-		this.isValidRoleId(roleId, "role_id");
+		ucRoleClient.checkValidRoleId(roleId, "role_id");
 		// 检查limit参数
 		ParamCheckUtil.checkLimit(limit);// 有抛出异常
 		// 分解数据 获取limit跟offset
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);
-
-
 		//根据角色id获取角色名
 		String roleName = this.getRoleName(roleId);
 
@@ -251,7 +246,7 @@ public class UserPermissionManageController {
 		List<UserRestypeMappingModel> userRestypeMappingModelList = this.userRestypeMappingService.findUserRestypeMappingModelList(userIdList);
 
 		//循环封装返回数据结构
-		for(int i=0; i <userRoleViewModelArrayList.size(); i++){
+		for(int i=0; i < userRoleViewModelArrayList.size(); i++){
 			String userId = userRoleViewModelArrayList.get(i).getUserId();
 			//设置coverages
 			userRoleViewModelArrayList.get(i).setCoverages(this.getCoverageList(userId, userCoverageMappingModelList));
@@ -260,9 +255,8 @@ public class UserPermissionManageController {
 		}
 		//返回内容
 		Map<String, Object> result = new HashMap<String, Object>();
-
 		result.put("limit", limit);
-		result.put("items",userRoleViewModelArrayList.toArray());
+		result.put("items", userRoleViewModelArrayList.toArray());
 		return result;
 	}
 
@@ -270,25 +264,25 @@ public class UserPermissionManageController {
 	 * 查询角色用户
 	 * @param roleId
 	 * @param userId
+	 * @param userInfo
 	 * @return
 	 * @author lanyl
 	 */
 	@RequestMapping(value = "/{userId:\\d+}/roles/{roleId:\\d+}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public UserRoleViewModel getUserRole(@PathVariable String userId ,@PathVariable String roleId ,@AuthenticationPrincipal UserInfo UserInfo) {
+	public UserRoleViewModel getUserRole(@PathVariable String userId ,@PathVariable String roleId ,@AuthenticationPrincipal UserInfo userInfo) {
 		//参数userId效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.isLong(userId, "user_id");
 		//参数roleId效验
 		AssertUtils.isEmpty(roleId, "role_id");
-		AssertUtils.isInteger(roleId, "role_id");
-		AssertUtils.rangeLength(roleId, 0, 36, "role_id");
 		//角色id参数只能为6种权限角色中的一种
-		this.isValidRoleId(roleId, "role_id");
+		ucRoleClient.checkValidRoleId(roleId, "role_id");
+		
 		//用户角色返回数据model
 		UserRoleViewModel userRoleViewModel = new UserRoleViewModel();
 
 		//根据角色id获取角色名
-		String roleName = this.getRoleNameByUserId(userId,roleId);
+		String roleName = this.getRoleNameByUserId(userId, roleId);
 		if(StringUtils.isNotBlank(roleName)){
 			userRoleViewModel.setRoleId(roleId);
 			userRoleViewModel.setRoleName(roleName);
@@ -351,15 +345,15 @@ public class UserPermissionManageController {
 		String tmpRoleId = null;
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
 			//库管理员
-			if(userCenterRoleDetails.getRoleId().equals(COVERAGEADMIN)){
-				tmpRoleId = COVERAGEADMIN;
+			if(userCenterRoleDetails.getRoleId().equals(UcRoleClient.COVERAGEADMIN)){
+				tmpRoleId = UcRoleClient.COVERAGEADMIN;
 				break;
 			}
 		}
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
 			//超级管理员
-			if(userCenterRoleDetails.getRoleId().equals(SUPERADMIN)){
-				tmpRoleId = SUPERADMIN;
+			if(userCenterRoleDetails.getRoleId().equals(UcRoleClient.SUPERADMIN)){
+				tmpRoleId = UcRoleClient.SUPERADMIN;
 				break;
 			}
 		}
@@ -368,8 +362,8 @@ public class UserPermissionManageController {
 			//抛错
 			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.accessDenied.getCode()
 					, LifeCircleErrorMessageMapper.accessDenied.getMessage());
-		}else if(tmpRoleId.equals(COVERAGEADMIN)
-				&& (COVERAGEADMIN.equals(roleId) || SUPERADMIN.equals(roleId))){
+		}else if(tmpRoleId.equals(UcRoleClient.COVERAGEADMIN)
+				&& (UcRoleClient.COVERAGEADMIN.equals(roleId) || UcRoleClient.SUPERADMIN.equals(roleId))){
 			//如果当前用户的roleid属于库管理员  则没有绑定/解除超级管理员和库管理员的权限、抛错
 			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.libAdminDenied.getCode()
 					, LifeCircleErrorMessageMapper.libAdminDenied.getMessage());
@@ -377,19 +371,7 @@ public class UserPermissionManageController {
 	}
 
 
-	/**
-	 * 效验roleid参数是否合法
-	 * @param roleId
-	 * @param message
-	 */
-	private void isValidRoleId(String roleId, String message){
-		if(SUPERADMIN.equals(roleId) || COVERAGEADMIN.equals(roleId) ||RESCREATOR.equals(roleId) || CATEGORYDATAADMIN.equals(roleId) || RESCONSUMER.equals(roleId) || GUEST.equals(roleId)){
-
-		}else {
-			throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
-					, message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
-		}
-	}
+	
 
 
 	/**
