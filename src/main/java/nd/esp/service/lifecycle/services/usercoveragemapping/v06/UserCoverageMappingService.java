@@ -5,8 +5,8 @@ import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import java.util.List;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserCoverageMappingService</p>
+ * <p>Description: UserCoverageMappingService</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -14,19 +14,13 @@ import java.util.List;
  * @author lanyl
  */
 public interface UserCoverageMappingService {
+    
     /**
      * 添加UserCoverageMappingModel
      * @param userCoverageMappingModel
      * @return
      */
     int addUserCoverageMapping(UserCoverageMappingModel userCoverageMappingModel);
-
-	/**
-     * 查询UserCoverageMappingModel
-     * @param id
-     * @return
-     */
-    UserCoverageMappingModel checkUserCoverageMappingInfo(Integer id);
 
 	/**
 	 * 批量插入用户覆盖类型映射关系
@@ -66,5 +60,4 @@ public interface UserCoverageMappingService {
 	 * @author lanyl
 	 */
 	List<String> findUserCoverageList(String userId);
-
 }

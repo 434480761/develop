@@ -1,26 +1,25 @@
 package nd.esp.service.lifecycle.daos.userrestypemapping.v06.impl;
 
-import nd.esp.service.lifecycle.daos.common.BaseDao;
-import nd.esp.service.lifecycle.daos.userrestypemapping.v06.UserRestypeMappingDao;
-import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import nd.esp.service.lifecycle.daos.common.BaseDao;
+import nd.esp.service.lifecycle.daos.userrestypemapping.v06.UserRestypeMappingDao;
+import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRestypeMappingDaoImpl</p>
+ * <p>Description: UserRestypeMappingDaoImpl</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -29,7 +28,8 @@ import java.util.List;
  */
 @Service
 public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
-	private static final Logger LOG = LoggerFactory.getLogger(UserRestypeMappingDaoImpl.class);
+	
+    //private static final Logger LOG = LoggerFactory.getLogger(UserRestypeMappingDaoImpl.class);
 
 	@Autowired
 	private BaseDao<UserRestypeMappingModel> baseDao;
@@ -38,7 +38,7 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	@Qualifier("defaultJdbcTemplate")
 	private JdbcTemplate jdbcTemplate;
 
-	private static String  TABLE_POSTFIX = "user_restype_mapping";
+	private static String TABLE_POSTFIX = "user_restype_mapping";
 
 	/**
 	 * 新增用户请求类型映射关系
@@ -49,7 +49,6 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	public int insert(UserRestypeMappingModel userRestypeMappingModel){
 		return this.baseDao.insert(userRestypeMappingModel, TABLE_POSTFIX);
 	}
-
 
 	/**
 	 * 查询用户请求类型映射关系
@@ -84,7 +83,6 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 				public int getBatchSize() {
 					return resTypeList.size();
 				}
-
 			});
 		}
 	}
@@ -120,11 +118,10 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	 */
 	public void delete(String userId){
 		List<Object> args = new ArrayList<Object>();
-		String sql = " and  user_id= ?";
+		String sql = " and  user_id = ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
 	}
-
 
 	/**
 	 * 查询用户请求类型映射关系信息列表

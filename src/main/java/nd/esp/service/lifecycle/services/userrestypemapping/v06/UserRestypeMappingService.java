@@ -5,8 +5,8 @@ import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
 import java.util.List;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRestypeMappingService</p>
+ * <p>Description: UserRestypeMappingService</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
@@ -20,13 +20,6 @@ public interface UserRestypeMappingService {
      * @return
      */
     int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel);
-
-	/**
-     * 查询
-     * @param id
-     * @return
-     */
-    UserRestypeMappingModel checkUserRestypeMappingInfo(Integer id);
 
 	/**
 	 * 批量插入用户请求类型映射关系
@@ -51,7 +44,6 @@ public interface UserRestypeMappingService {
 	 */
 	void deleteAllUserResTypeMappingsByUserId(String userId);
 
-
 	/**
 	 * 查询用户请求类型映射关系信息列表
 	 * @param userId
@@ -65,5 +57,4 @@ public interface UserRestypeMappingService {
 	 * @return
 	 */
 	List<UserRestypeMappingModel> findUserRestypeMappingModelList(List<String> userIdList);
-
 }
