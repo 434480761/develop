@@ -32,7 +32,7 @@ public interface NDResourceDao {
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
             boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
-            String statisticsType,String statisticsPlatform);
+            String statisticsType,String statisticsPlatform,boolean forceStatus);
 
     /**
      * 查询总数
@@ -53,7 +53,7 @@ public interface NDResourceDao {
     public long commomQueryCount(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, String limit, boolean isNotManagement, boolean reverse, boolean useIn,
-            Boolean printable, String printableKey);
+            Boolean printable, String printableKey,boolean forceStatus);
     
     /**
      * 资源统计
@@ -78,7 +78,7 @@ public interface NDResourceDao {
      */
     public boolean judgeUseInOrExists(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
-            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey);
+            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,boolean forceStatus);
     
     /**
      * 判断是否使用Redis.
