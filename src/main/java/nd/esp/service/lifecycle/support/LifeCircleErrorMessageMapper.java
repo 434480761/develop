@@ -471,7 +471,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
     //
-    Forbidden("LC/FORBIDDEN","forbidden");
+    Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
 
 
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);

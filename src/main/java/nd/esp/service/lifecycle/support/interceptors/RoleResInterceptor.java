@@ -121,8 +121,11 @@ public class RoleResInterceptor implements HandlerInterceptor {
             Pattern pattern = Pattern.compile(entry.getKey(), Pattern.CASE_INSENSITIVE);
             String method = request.getMethod();
             Matcher matcher = pattern.matcher(request.getRequestURI() + "/" + method);
-            // 进行coverage权限验证
-            this.isCoverageMatch(matcher, method, userId, request);
+            if(matcher.find()){
+                // 进行coverage权限验证
+                this.isCoverageMatch(method, userId, request);
+                break;
+            }
         }
 	}
 
@@ -138,10 +141,13 @@ public class RoleResInterceptor implements HandlerInterceptor {
             Pattern pattern = Pattern.compile(entry.getKey(), Pattern.CASE_INSENSITIVE);
             String method = request.getMethod();
             Matcher matcher = pattern.matcher(request.getRequestURI() + "/" + method);
-            // 进行coverage权限验证
-            this.isCoverageMatch(matcher, method, userId, request);
-            // 进行resType权限验证
-            this.isResTypeMatch(matcher, userId);
+            if(matcher.find()){
+                // 进行resType权限验证
+                this.isResTypeMatch(matcher.group(1), userId);
+                // 进行coverage权限验证
+                this.isCoverageMatch(method, userId, request);
+                break;
+            }
         }
     }
 
@@ -157,86 +163,81 @@ public class RoleResInterceptor implements HandlerInterceptor {
             Pattern pattern = Pattern.compile(entry.getKey(), Pattern.CASE_INSENSITIVE);
             String method = request.getMethod();
             Matcher matcher = pattern.matcher(request.getRequestURI() + "/" + method);
-            // 进行coverage权限验证
-            this.isCoverageMatch(matcher, method, userId, request);
-            // 进行resType权限验证
-            this.isResTypeMatch(matcher, userId);
+            if(matcher.find()){
+                // 进行resType权限验证
+                this.isResTypeMatch(matcher.group(1), userId);
+                // 进行coverage权限验证
+                this.isCoverageMatch(method, userId, request);
+                break;
+            }
         }
     }
 
-
     /**
      * 判断url请求的ResType是否存在
-     * @param matcher
-     * @param userId
+     * @param resType
      * @throws IOException
      * @author lanyl
      */
-    private void isResTypeMatch(Matcher matcher, String userId){
-        if (matcher.find()) {
-            String resType = matcher.group(1);
-            if(StringUtils.isNotBlank(resType)){
-                // 获取当前用户允许访问的resType列表
-                List<String> userRestypelList = this.userRestypeMappingService.findUserRestypeList(userId);
-                // resType如果不存在列表中，表示没有权限访问。 报错
-                if( !userRestypelList.contains(resType) ){
-                    throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                            LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-                }
+    private void isResTypeMatch(String resType, String userId){
+        if(StringUtils.isNotBlank(resType)){
+            // 获取当前用户允许访问的resType列表
+            List<String> userRestypelList = this.userRestypeMappingService.findUserRestypeList(userId);
+            // resType如果不存在列表中，表示没有权限访问。 报错
+            if( !userRestypelList.contains(resType) ){
+                throw new LifeCircleException(HttpStatus.FORBIDDEN,
+                        LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
             }
         }
     }
 
 	/**
      * 判断url请求的coverage是否存在
-     * @param matcher
      * @param method
      * @param userId
      * @param request
      * @throws IOException
      * @author lianggz
      */
-	private void isCoverageMatch(Matcher matcher, String method, String userId, HttpServletRequest request) throws IOException{
-        if (matcher.find()) {
-            //post,put,delete请求，获取categories.target_type和categories.target值
-            if(ImmutableList.<String>of("POST","PUT","DELETE").contains(method)){
-                RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) request);
-                String body = requestWrapper.getBody();
-                JSONObject json = JSONObject.parseObject(body);
-                JSONArray coverages = json.getJSONArray("coverages");
-                // 如果coverages不空的情况下，进行判断
-                if(coverages != null && coverages.size() > 0){
-                    List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
-                    Integer num = coverages.size();
-                    for(int i=0; i< num; i++){
-                        JSONObject coverage = coverages.getJSONObject(i);
-                        if(coverage != null && coverage.size() >0){
-                            // 获取target_type
-                            String targetType = coverage.getString("target_type");
-                            // 获取target
-                            String target = coverage.getString("target");
-                            // 获取coverageStr
-                            String coverageStr  = targetType + "/" + target;
-                            // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
-                            if(!userCoverageList.contains(coverageStr)){
-                                throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                                        LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-                            }
+	private void isCoverageMatch(String method, String userId, HttpServletRequest request) throws IOException{
+        //post,put,delete请求，coverages[i].coverages[i].target值
+        if(ImmutableList.<String>of("POST","PUT","DELETE").contains(method)){
+            RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) request);
+            String body = requestWrapper.getBody();
+            JSONObject json = JSONObject.parseObject(body);
+            JSONArray coverages = json.getJSONArray("coverages");
+            // 如果coverages不空的情况下，进行判断
+            if(coverages != null && coverages.size() > 0){
+                List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
+                Integer num = coverages.size();
+                for(int i=0; i< num; i++){
+                    JSONObject coverage = coverages.getJSONObject(i);
+                    if(coverage != null && coverage.size() >0){
+                        // 获取target_type
+                        String targetType = coverage.getString("target_type");
+                        // 获取target
+                        String target = coverage.getString("target");
+                        // 获取coverageStr
+                        String coverageStr  = targetType + "/" + target;
+                        // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
+                        if(!userCoverageList.contains(coverageStr)){
+                            throw new LifeCircleException(HttpStatus.FORBIDDEN,
+                                    LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
                         }
                     }
                 }
             }
-            //get请求 获取coverage参数值
-            else if(ImmutableList.<String>of("GET").contains(method)){
-                String coverage = request.getParameter("coverage");
-                // 如果coverage不空的情况下，进行判断
-                if(StringUtils.isNotBlank(coverage)){
-                    // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
-                    List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
-                    if(!userCoverageList.contains(coverage)){
-                        throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                                LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-                    }
+        }
+        //get请求 获取coverage参数值
+        else if(ImmutableList.<String>of("GET").contains(method)){
+            String coverage = request.getParameter("coverage");
+            // 如果coverage不空的情况下，进行判断
+            if(StringUtils.isNotBlank(coverage)){
+                // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
+                List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
+                if(!userCoverageList.contains(coverage)){
+                    throw new LifeCircleException(HttpStatus.FORBIDDEN,
+                            LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
                 }
             }
         }
