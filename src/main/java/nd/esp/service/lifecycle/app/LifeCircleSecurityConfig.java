@@ -37,6 +37,9 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	@Override
 	protected void onConfigure(HttpSecurity http) throws Exception {
 
+	    // 说明：新增资源管理平台权限控制 @lanyl 2016-06-30
+	    // ===START===
+	    
 		// 权限角色配置接口 【超级管理员（SuperAdmin）跟库管理员（CoverageAdmin）】
 		http.authorizeRequests().antMatchers("/v*/users/**").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 
@@ -86,7 +89,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
         http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/uploadurl").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 
-
+        // ===END=== 
 
 		// TODO Auto-generated method stub
 		//admin","role_biz_server"

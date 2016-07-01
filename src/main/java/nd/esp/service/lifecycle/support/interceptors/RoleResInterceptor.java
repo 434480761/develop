@@ -1,17 +1,21 @@
 package nd.esp.service.lifecycle.support.interceptors;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.ImmutableList;
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
-import com.nd.gaea.rest.security.services.WafUserDetailsService;
-import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.RoleResFilterUrlMap;
+import nd.esp.service.lifecycle.support.uc.UcRoleClient;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,13 +25,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableList;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
+import com.nd.gaea.rest.security.services.WafUserDetailsService;
 
 /**
  * <p>Title: RoleResInterceptor         </p>
@@ -49,21 +52,10 @@ public class RoleResInterceptor implements HandlerInterceptor {
 
     @Autowired
     private UserRestypeMappingService userRestypeMappingService;
+    
+    @Autowired
+    private UcRoleClient ucRoleClient;
 
-    
-    /** 超级管理员*/
-    private static String SUPERADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_super_admin");
-    /** 库管理员*/
-    private static String COVERAGEADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_coverage_admin");
-    /** 资源创建者角色*/
-    private static String RESCREATOR = LifeCircleApplicationInitializer.properties.getProperty("esp_res_creator");
-    /** 维度管理者角色*/
-    private static String CATEGORYDATAADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_category_data_admin");
-    /** 资源消费者角色*/
-    private static String RESCONSUMER = LifeCircleApplicationInitializer.properties.getProperty("esp_res_consumer");
-    /** 游客角色*/
-    private static String GUEST = LifeCircleApplicationInitializer.properties.getProperty("esp_guest");
-    
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 			HttpServletResponse response, Object handler) throws Exception {
@@ -72,20 +64,20 @@ public class RoleResInterceptor implements HandlerInterceptor {
         if(authentication != null && !"anonymousUser".equals(authentication.getPrincipal().toString())){
             UserInfo userInfo = (UserInfo)authentication.getPrincipal();
             if(userInfo != null ){
-                UserCenterRoleDetails userCenterRoleDetails = this.getMaxRole(userInfo);
+                UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
 
                 // 库管理员
-                if( COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+                if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
                     // 过滤访问的URL
                     isCoverageadminMatcher(request, userInfo.getUserId());
                 }
                 // 资源创建者角色
-                else if( RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
+                else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
                     // 过滤访问的URL
                     isRescreatorMatcher(request, userInfo.getUserId());
                 }
                 // 资源消费者角色
-                else if( RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
+                else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
                     // 过滤访问的URL
                     isResconsumerMatcher(request, userInfo.getUserId());
                 }
@@ -243,52 +235,4 @@ public class RoleResInterceptor implements HandlerInterceptor {
         }
     }
 
-
-	/**
-     * 获取最大角色       
-     * @param userInfo
-     * @return
-     * @author lianggz
-     */
-	private UserCenterRoleDetails getMaxRole(UserInfo userInfo) {
-	    List<UserCenterRoleDetails> userCenterRoleDetailList = userInfo.getUserRoles();
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 超级管理员
-            if(userCenterRoleDetail.getRoleId().equals(SUPERADMIN)){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 库管理员
-            if(userCenterRoleDetail.getRoleId().equals(COVERAGEADMIN)){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 资源创建者角色
-            if(userCenterRoleDetail.getRoleId().equals(RESCREATOR)){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 维度管理者角色
-            if(userCenterRoleDetail.getRoleId().equals(CATEGORYDATAADMIN)){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 资源消费者角色
-            if(userCenterRoleDetail.getRoleId().equals(RESCONSUMER)){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 游客角色
-            if(userCenterRoleDetail.getRoleId().equals(GUEST)){
-                return userCenterRoleDetail;
-            }
-        }
-        throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-    }
 }
