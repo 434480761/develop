@@ -1,10 +1,9 @@
 package nd.esp.service.lifecycle.controllers;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
@@ -19,25 +18,18 @@ import nd.esp.service.lifecycle.support.uc.UserItems;
 import nd.esp.service.lifecycle.utils.AssertUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.vos.UserRoleViewModel;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Title: UserRoleController</p>
@@ -114,7 +106,7 @@ public class UserRoleController {
 			this.validHasPermission(userInfo, roleId);
 
 			//用户权限角色不存在，进行新增绑定, 存在则不再进行绑定
-			if(!this.hasRoleIdByUserId(userId, roleId)){
+			if(!ucClient.hasRoleIdByUserId(userId, roleId)){
 				//添加用户角色
 				this.ucClient.addUserRole(userId,Integer.valueOf(roleId));
 			}
@@ -182,7 +174,7 @@ public class UserRoleController {
 			//判断当前用户角色是否有解除绑定用户权限，没有则报错，有则继续下一步操作
 			this.validHasPermission(userInfo, roleId);
 			// 存在则进行解绑
-			if( this.hasRoleIdByUserId(userId, roleId) ){
+			if( ucClient.hasRoleIdByUserId(userId, roleId) ){
 				//解除用户角色绑定
 				this.ucClient.deleteUserRole(userId,Integer.valueOf(roleId));
 			}
@@ -222,7 +214,7 @@ public class UserRoleController {
 		// 分解数据 获取limit跟offset
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);
 		//根据角色id获取角色名
-		String roleName = this.getRoleName(roleId);
+		String roleName = ucClient.getRoleName(roleId);
 
 		//通过uc接口获取roleid下的用户 with limit and offset
 		UserItems userItems = this.ucClient.listRoleUsers(roleId,orgId,limitResult[0],limitResult[1]);
@@ -282,7 +274,7 @@ public class UserRoleController {
 		UserRoleViewModel userRoleViewModel = new UserRoleViewModel();
 
 		//根据角色id获取角色名
-		String roleName = this.getRoleNameByUserId(userId, roleId);
+		String roleName = ucClient.getRoleNameByUserId(userId, roleId);
 		if(StringUtils.isNotBlank(roleName)){
 			userRoleViewModel.setRoleId(roleId);
 			userRoleViewModel.setRoleName(roleName);
@@ -299,21 +291,6 @@ public class UserRoleController {
 		userRoleViewModel.setResTypes(this.userRestypeMappingService.findUserRestypeList(userId));
 
 		return userRoleViewModel;
-	}
-
-
-	/**
-	 * 创建角色权限
-	 * @param jsonObject
-	 * @return
-	 */
-	@RequestMapping(value="/role",method = RequestMethod.POST)
-	public JSONObject addRole(@RequestBody JSONObject jsonObject){
-		String roleName = jsonObject.getString("role_name");
-		String remarks = jsonObject.getString("remarks");
-		AssertUtils.isEmpty(remarks, "remarks");
-		AssertUtils.isEmpty(roleName, "role_name");
-		return this.ucClient.addRole(roleName, remarks);
 	}
 
 	/**
@@ -368,79 +345,6 @@ public class UserRoleController {
 			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.libAdminDenied.getCode()
 					, LifeCircleErrorMessageMapper.libAdminDenied.getMessage());
 		}
-	}
-
-
-	
-
-
-	/**
-	 * 判断用户是否存在该角色
-	 * @param userId
-	 * @param roleId
-	 * @return
-	 */
-	private boolean hasRoleIdByUserId(String userId, String roleId){
-		boolean flag = false;
-		JSONObject jsonObject = this.ucClient.listUserRoles(userId);
-		if(jsonObject != null && StringUtils.isNotBlank(roleId)){
-			JSONArray jsonArray = jsonObject.getJSONArray("items");
-			if(jsonArray != null && jsonArray.size() > 0){
-				Integer size = jsonArray.size();
-				for(int i = 0; i < size; i++){
-					if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
-						flag = true;
-						break;
-					}
-				}
-			}
-		}
-		return flag;
-	}
-
-
-	/**
-	 * 通过用户id跟roleid 查询角色名称
-	 * @param userId
-	 * @param roleId
-	 * @return
-	 */
-	private String getRoleNameByUserId(String userId, String roleId){
-		JSONObject jsonObject = this.ucClient.listUserRoles(userId);
-		if(jsonObject != null && StringUtils.isNotBlank(roleId)){
-			JSONArray jsonArray = jsonObject.getJSONArray("items");
-			if(jsonArray != null && jsonArray.size() > 0){
-				Integer size = jsonArray.size();
-				for(int i = 0; i < size; i++){
-					if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
-						return jsonArray.getJSONObject(i).getString("role_name");
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 *　根据角色id获取角色名
-	 * @param roleId
-	 * @return
-	 * @author lanyl
-	 */
-	private String getRoleName(String roleId){
-		JSONObject jsonObject = this.ucClient.listRealmRoles();
-		if(jsonObject != null && StringUtils.isNotBlank(roleId)){
-			JSONArray jsonArray = jsonObject.getJSONArray("items");
-			if(jsonArray != null && jsonArray.size() > 0){
-				Integer size = jsonArray.size();
-				for(int i = 0; i < size; i++){
-					if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
-						return jsonArray.getJSONObject(i).getString("role_name");
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 	/**

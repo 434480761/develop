@@ -1,21 +1,16 @@
 package nd.esp.service.lifecycle.support.uc;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 
@@ -30,64 +25,12 @@ import java.util.concurrent.TimeUnit;
 public class UcClient {
     private final static Logger LOG= LoggerFactory.getLogger(UcClient.class);
 
+    /** uc地址*/
+    private static String ucUri = LifeCircleApplicationInitializer.properties.getProperty("waf.uc.uri");
 
-    private static String ucUri = LifeCircleApplicationInitializer.properties.getProperty("esp_uc_api_domain");
-
-    private static String realm = LifeCircleApplicationInitializer.properties.getProperty("esp_uc_api_realm");
+    /** 领域 */
+    private static String realm = LifeCircleApplicationInitializer.properties.getProperty("waf.uc.realm");
     
-    private static Long CACHE_EXPIRE = 1L;
-    private static Long CACHE_MAX_SIZE = 2000L;
-    
-    private static LoadingCache<String, String> orgCache;
-    
-    @PostConstruct
-    private void init() {
-        CacheBuilder<Object, Object> builder = CacheBuilder
-                .newBuilder()
-                .maximumSize(CACHE_MAX_SIZE)
-                .expireAfterWrite(CACHE_EXPIRE, TimeUnit.DAYS);
-        
-        orgCache = builder.build(new CacheLoader<String, String>() {
-            @Override
-            public String load(String key) throws Exception {
-                return getOrgId(key);
-            }
-        });
-    }
-
-    /**
-     * 从缓存获取组织ID
-     * @param orgName
-     * @return
-     */
-    public String getOrgIdByCache(String orgName) {
-        // 如果组织名称为空，返回空字符串
-        if(StringUtils.isBlank(orgName)){
-            return "";
-        }
-        try {
-            // 如果有缓存则返回；否则运算、缓存、然后返回
-            return orgCache.get(orgName);
-        } catch (Exception e) {
-            LOG.error("UcClient.getOrgIdByCache", ExceptionUtils.getMessage(e));
-            return "";
-        }
-    }
-    
-    /**
-     * 从UC获取组织ID     
-     * @param orgName
-     * @return
-     */
-    public String getOrgId(String orgName){
-        // 定义请求参数
-        Map<String, Object> requestBody = new HashMap<String, Object>();
-        requestBody.put("org_name", orgName);
-        // 调用UC接口
-        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-        JSONObject resopnse = wafSecurityHttpClient.postForObject(this.ucUri + "/organizations/actions/query", requestBody, JSONObject.class);
-        return resopnse.getString("org_id");
-    }
 
 	/**
      * 从UC获取用户名称
@@ -224,5 +167,74 @@ public class UcClient {
         }else {
             return new UserItems();
         }
+    }
+
+    /**
+     * 通过用户id跟roleid 查询角色名称
+     * @param userId
+     * @param roleId
+     * @return
+     * @author lanyl
+     */
+    public String getRoleNameByUserId(String userId, String roleId){
+        JSONObject jsonObject = this.listUserRoles(userId);
+        if(jsonObject != null && StringUtils.isNotBlank(roleId)){
+            JSONArray jsonArray = jsonObject.getJSONArray("items");
+            if(jsonArray != null && jsonArray.size() > 0){
+                Integer size = jsonArray.size();
+                for(int i = 0; i < size; i++){
+                    if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
+                        return jsonArray.getJSONObject(i).getString("role_name");
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     *　根据角色id获取角色名
+     * @param roleId
+     * @return
+     * @author lanyl
+     */
+    public String getRoleName(String roleId){
+        JSONObject jsonObject = this.listRealmRoles();
+        if(jsonObject != null && StringUtils.isNotBlank(roleId)){
+            JSONArray jsonArray = jsonObject.getJSONArray("items");
+            if(jsonArray != null && jsonArray.size() > 0){
+                Integer size = jsonArray.size();
+                for(int i = 0; i < size; i++){
+                    if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
+                        return jsonArray.getJSONObject(i).getString("role_name");
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 判断用户是否存在该角色
+     * @param userId
+     * @param roleId
+     * @return
+     */
+    public boolean hasRoleIdByUserId(String userId, String roleId){
+        boolean flag = false;
+        JSONObject jsonObject = this.listUserRoles(userId);
+        if(jsonObject != null && StringUtils.isNotBlank(roleId)){
+            JSONArray jsonArray = jsonObject.getJSONArray("items");
+            if(jsonArray != null && jsonArray.size() > 0){
+                Integer size = jsonArray.size();
+                for(int i = 0; i < size; i++){
+                    if(roleId.equals(jsonArray.getJSONObject(i).getString("role_id"))){
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return flag;
     }
 }

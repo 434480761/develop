@@ -1,21 +1,17 @@
 package nd.esp.service.lifecycle.support.interceptors;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableList;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
+import com.nd.gaea.rest.security.services.WafUserDetailsService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.RoleResFilterUrlMap;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,12 +21,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.ImmutableList;
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
-import com.nd.gaea.rest.security.services.WafUserDetailsService;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Title: RoleResInterceptor         </p>
