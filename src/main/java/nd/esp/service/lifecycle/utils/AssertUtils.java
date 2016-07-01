@@ -1,6 +1,7 @@
 
 package nd.esp.service.lifecycle.utils;
 
+import com.alibaba.fastjson.JSONArray;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +35,29 @@ public abstract class AssertUtils {
                     ,message + LifeCircleErrorMessageMapper.checkParamEmpty.getMessage());
 		}
 	}
-    
+
+
+    /**
+     * 断言 Json字符串数组
+     * @param json
+     * @param message
+     * @author lianggz
+     */
+    public static void isJsonArray(String json, String message) {
+        boolean state = false;
+        try {
+            JSONArray.parse(json);
+            state = true;
+        } catch (Exception e) {
+            state = false;
+        }
+        if (!state){
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
+                    ,message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
+        }
+    }
+
+
     /**
      * 断言  字符串长度范围
      * @param value

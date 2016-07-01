@@ -80,27 +80,36 @@ public class UserPermissionManageController {
 	 * @return
 	 * @author lanyl
 	 */
-	@RequestMapping(value="/{userId}/roles",method = RequestMethod.POST)
+	@RequestMapping(value="/{userId:\\d+}/roles",method = RequestMethod.POST)
 	public Map<String, Object> addUserRole(@PathVariable String userId, @RequestBody JSONObject jsonObject, @AuthenticationPrincipal UserInfo userInfo){
-
+		// 覆盖范围List
+		List<String> coverageList = new ArrayList<String>();
+		// 请求类型List
+		List<String> resTypeList = new ArrayList<String>();
+		// 获取参数
 		String roleId = jsonObject.getString("role_id");
-		JSONArray coverageArray = jsonObject.getJSONArray("coverages");
-		JSONArray resTypeArray = jsonObject.getJSONArray("res_types");
+		String coverages = jsonObject.getString("coverages");
+		String resTypes = jsonObject.getString("res_types");
 
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
 
-		// 覆盖范围List
-		List<String> coverageList = new ArrayList<String>();
-		// 请求类型List
-		List<String> resTypeList = new ArrayList<String>();
-		//获取覆盖范围
-		coverageList = this.jsonArrayChangeToList(coverageArray);
-		//获取请求类型
-		resTypeList = this.jsonArrayChangeToList(resTypeArray);
-		//效验请求类型参数
-		AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+
+		if(StringUtils.isNotBlank(coverages)){
+			//参数效验
+			AssertUtils.isJsonArray(coverages,"coverages");
+			//获取覆盖范围
+			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
+		}
+		if(StringUtils.isNotBlank(resTypes)){
+			//参数效验
+			AssertUtils.isJsonArray(resTypes, "res_types");
+			//获取请求类型
+			resTypeList = this.jsonArrayChangeToList(JSONArray.parseArray(resTypes));
+			//效验请求类型参数
+			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+		}
 
 		//roleid不为空 绑定uc角色
 		if(StringUtils.isNotBlank(roleId)){
@@ -138,26 +147,34 @@ public class UserPermissionManageController {
 	 * @return
 	 * @author lanyl
 	 */
-	@RequestMapping(value="/{userId}/roles",method = RequestMethod.DELETE)
+	@RequestMapping(value="/{userId:\\d+}/roles",method = RequestMethod.DELETE)
 	public Map<String, Object> deleteUserRole(@PathVariable String userId, @RequestBody JSONObject jsonObject, @AuthenticationPrincipal UserInfo userInfo){
-		//获取参数
-		String roleId = jsonObject.getString("role_id");
-		JSONArray coverageArray = jsonObject.getJSONArray("coverages");
-		JSONArray resTypeArray = jsonObject.getJSONArray("res_types");
-
-		//参数效验
-		AssertUtils.isEmpty(userId, "user_id");
-		AssertUtils.rangeLength(userId, 0, 36, "user_id");
 		// 覆盖范围List
 		List<String> coverageList = new ArrayList<String>();
 		// 请求类型List
 		List<String> resTypeList = new ArrayList<String>();
-		//获取覆盖范围,删除对应数据
-		coverageList = this.jsonArrayChangeToList(coverageArray);
-		//获取请求类型
-		resTypeList = this.jsonArrayChangeToList(resTypeArray);
-		//效验请求类型参数
-		AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+		//获取参数
+		String roleId = jsonObject.getString("role_id");
+		String coverages = jsonObject.getString("coverages");
+		String resTypes = jsonObject.getString("res_types");
+
+		//参数效验
+		AssertUtils.isEmpty(userId, "user_id");
+		AssertUtils.rangeLength(userId, 0, 36, "user_id");
+		if(StringUtils.isNotBlank(coverages)){
+			//参数效验
+			AssertUtils.isJsonArray(coverages,"coverages");
+			//获取覆盖范围
+			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
+		}
+		if(StringUtils.isNotBlank(resTypes)){
+			//参数效验
+			AssertUtils.isJsonArray(resTypes, "res_types");
+			//获取请求类型
+			resTypeList = this.jsonArrayChangeToList(JSONArray.parseArray(resTypes));
+			//效验请求类型参数
+			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+		}
 		//返回内容
 		Map<String, Object> params = new HashMap<String, Object>();
 
@@ -196,7 +213,7 @@ public class UserPermissionManageController {
 	 * @return
 	 * @author lanyl
 	 */
-	@RequestMapping(value = "/roles/{roleId}/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = "/roles/{roleId:\\d+}/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody Map<String, Object> getUserRoleList(@PathVariable String roleId , @RequestParam(value ="limit",required =true) String limit,@RequestParam(value ="org_id", required = false) String orgId) {
 		//参数roleId效验
 		AssertUtils.isEmpty(roleId, "role_id");
@@ -256,7 +273,7 @@ public class UserPermissionManageController {
 	 * @return
 	 * @author lanyl
 	 */
-	@RequestMapping(value = "/{userId}/roles/{roleId}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = "/{userId:\\d+}/roles/{roleId:\\d+}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public UserRoleViewModel getUserRole(@PathVariable String userId ,@PathVariable String roleId ,@AuthenticationPrincipal UserInfo UserInfo) {
 		//参数userId效验
 		AssertUtils.isEmpty(userId, "user_id");
