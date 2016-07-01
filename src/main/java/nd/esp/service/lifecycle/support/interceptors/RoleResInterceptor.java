@@ -67,29 +67,30 @@ public class RoleResInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request,
 			HttpServletResponse response, Object handler) throws Exception {
 	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // 无鉴权处理
-        UserInfo userInfo = (UserInfo)authentication.getPrincipal();
-        if(userInfo != null ){
-            UserCenterRoleDetails userCenterRoleDetails = this.getMaxRole(userInfo);
+        // 过滤无鉴权处理
+        if(authentication != null && !"anonymousUser".equals(authentication.getPrincipal().toString())){
+            UserInfo userInfo = (UserInfo)authentication.getPrincipal();
+            if(userInfo != null ){
+                UserCenterRoleDetails userCenterRoleDetails = this.getMaxRole(userInfo);
 
-            // 库管理员
-            if( COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-                // 过滤访问的URL
-                isCoverageadminMatcher(request, userInfo.getUserId());
+                // 库管理员
+                if( COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+                    // 过滤访问的URL
+                    isCoverageadminMatcher(request, userInfo.getUserId());
+                }
+                // 资源创建者角色
+                else if( RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
+                    // 过滤访问的URL
+                    isRescreatorMatcher(request, userInfo.getUserId());
+                }
+                // 资源消费者角色
+                else if( RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
+                    // 过滤访问的URL
+                    isResconsumerMatcher(request, userInfo.getUserId());
+                }
+                return true;
             }
-            // 资源创建者角色
-            else if( RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
-                // 过滤访问的URL
-                isRescreatorMatcher(request, userInfo.getUserId());
-            }
-            // 资源消费者角色
-            else if( RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
-                // 过滤访问的URL
-                isResconsumerMatcher(request, userInfo.getUserId());
-            }
-            return true;
         }
-
         return true;
 
 	}
