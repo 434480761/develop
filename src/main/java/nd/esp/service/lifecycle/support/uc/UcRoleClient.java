@@ -1,16 +1,14 @@
 package nd.esp.service.lifecycle.support.uc;
 
-import java.util.List;
-
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
+import java.util.List;
 
 /**
  * <p>Title: UcRoleClient  </p>
