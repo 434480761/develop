@@ -51,8 +51,8 @@ public class RoleResFilterUrlMap {
 		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)" + "/PUT", ""); 
 		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)/actions/move" + "/PUT", ""); 
 		
-//		 /v0.3/{res_type} GET
-		m.put("/(\\w+)" + "/GET", "");
+		// /v0.3/{res_type}/* GET
+		//m.put("/(\\w+)/([a-zA-Z0-9-]+)" + "/GET", "");
 		// /v0.3/{res_type}/list GET
         m.put("/(\\w+)/list" + "/GET", "");
         // /v0.3/{res_type}/*/archive POST
@@ -69,6 +69,8 @@ public class RoleResFilterUrlMap {
 		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations/(\\w+)" + "/PUT", "");
 		// /v0.3/{res_type}/*/relations DELETE
 		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations" + "/DELETE", "");
+		// /v0.3/{res_type}/*/relations/* DELETE
+        m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations/([a-zA-Z0-9-]+)" + "/DELETE", "");
 		// /v0.3/{res_type}/*/relations GET
 		// /v0.3/{res_type}/*/targets GET
 		m.put("/(\\w+)/([a-zA-Z0-9-]+)/targets" + "/GET", "");
