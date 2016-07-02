@@ -62,21 +62,22 @@ public class RoleResInterceptor implements HandlerInterceptor {
             UserInfo userInfo = (UserInfo)authentication.getPrincipal();
             if(userInfo != null ){
                 UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
-
-                // 库管理员
-                if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-                    // 过滤访问的URL
-                    isCoverageadminMatcher(request, userInfo.getUserId());
-                }
-                // 资源创建者角色
-                else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
-                    // 过滤访问的URL
-                    isRescreatorMatcher(request, userInfo.getUserId());
-                }
-                // 资源消费者角色
-                else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
-                    // 过滤访问的URL
-                    isResconsumerMatcher(request, userInfo.getUserId());
+                if(userCenterRoleDetails != null){
+                    // 库管理员
+                    if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+                        // 过滤访问的URL
+                        isCoverageadminMatcher(request, userInfo.getUserId());
+                    }
+                    // 资源创建者角色
+                    else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
+                        // 过滤访问的URL
+                        isRescreatorMatcher(request, userInfo.getUserId());
+                    }
+                    // 资源消费者角色
+                    else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
+                        // 过滤访问的URL
+                        isResconsumerMatcher(request, userInfo.getUserId());
+                    }
                 }
                 return true;
             }

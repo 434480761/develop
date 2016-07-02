@@ -96,7 +96,6 @@ public class UcRoleClient {
                 return userCenterRoleDetail;
             }
         }
-        throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+        return null;
     }
 }
