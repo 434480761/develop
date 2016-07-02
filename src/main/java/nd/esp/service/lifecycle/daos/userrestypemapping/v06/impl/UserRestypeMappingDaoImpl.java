@@ -95,7 +95,7 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	 */
 	public void batchDelete(final List<String> resTypeList, final  String userId){
 		if(resTypeList != null && resTypeList.size() > 0){
-			String sql = "DELETE FROM " + TABLE_POSTFIX + "WHERE  user_id = ? AND res_type = ? ";
+			String sql = "DELETE FROM " + TABLE_POSTFIX + " WHERE  user_id = ? AND res_type = ? ";
 			jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 				@Override
 				public void setValues(PreparedStatement ps, int i) throws SQLException {

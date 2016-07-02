@@ -98,7 +98,7 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 */
 	public void batchDelete(final List<String> coverageList, final String userId){
 		if(coverageList != null && coverageList.size() > 0){
-			String sql = "DELETE FROM " + TABLE_POSTFIX + " WHERE user_id = ? AND  coverage = ?";
+			String sql = "DELETE FROM " + TABLE_POSTFIX + " WHERE user_id = ? AND coverage = ?";
 			jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 				@Override
 				public void setValues(PreparedStatement ps, int i) throws SQLException {
