@@ -5,8 +5,8 @@ import nd.esp.service.lifecycle.annotations.Column;
 import java.sql.Timestamp;
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
+ * <p>Title: UserRestypeMappingModel</p>
+ * <p>Description: UserRestypeMappingModel</p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
  * <p>Create Time: 2016/6/28 </p>
