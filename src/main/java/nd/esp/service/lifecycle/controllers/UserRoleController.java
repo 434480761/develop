@@ -76,25 +76,21 @@ public class UserRoleController {
 		List<String> resTypeList = new ArrayList<String>();
 		// 获取参数
 		String roleId = jsonObject.getString("role_id");
-		String coverages = jsonObject.getString("coverages");
-		String resTypes = jsonObject.getString("res_types");
+		JSONArray coverages = AssertUtils.checkJsonArray(jsonObject,"coverages");
+		JSONArray resTypes = AssertUtils.checkJsonArray(jsonObject,"res_types");
 
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
 		// 校验覆盖范围
-		if(StringUtils.isNotBlank(coverages)){
-			//参数效验
-			AssertUtils.isJsonArray(coverages,"coverages");
+		if(coverages != null){
 			//获取覆盖范围
-			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
+			coverageList = this.jsonArrayChangeToList(coverages);
 		}
 		// 校验请求类型参数
-		if(StringUtils.isNotBlank(resTypes)){
-			//参数效验
-			AssertUtils.isJsonArray(resTypes, "res_types");
+		if(resTypes != null){
 			//获取请求类型
-			resTypeList = this.jsonArrayChangeToList(JSONArray.parseArray(resTypes));
+			resTypeList = this.jsonArrayChangeToList(resTypes);
 			//效验请求类型参数
 			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
 		}
@@ -143,25 +139,22 @@ public class UserRoleController {
 		List<String> resTypeList = new ArrayList<String>();
 		//获取参数
 		String roleId = jsonObject.getString("role_id");
-		String coverages = jsonObject.getString("coverages");
-		String resTypes = jsonObject.getString("res_types");
+		JSONArray coverages = AssertUtils.checkJsonArray(jsonObject,"coverages");
+		JSONArray resTypes = AssertUtils.checkJsonArray(jsonObject,"res_types");
 
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
+
 		// 校验覆盖范围
-		if(StringUtils.isNotBlank(coverages)){
-			//参数效验
-			AssertUtils.isJsonArray(coverages,"coverages");
+		if(coverages != null){
 			//获取覆盖范围
-			coverageList = this.jsonArrayChangeToList(JSONArray.parseArray(coverages));
+			coverageList = this.jsonArrayChangeToList(coverages);
 		}
 		// 校验请求类型参数
-		if(StringUtils.isNotBlank(resTypes)){
-			//参数效验
-			AssertUtils.isJsonArray(resTypes, "res_types");
+		if(resTypes != null){
 			//获取请求类型
-			resTypeList = this.jsonArrayChangeToList(JSONArray.parseArray(resTypes));
+			resTypeList = this.jsonArrayChangeToList(resTypes);
 			//效验请求类型参数
 			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
 		}

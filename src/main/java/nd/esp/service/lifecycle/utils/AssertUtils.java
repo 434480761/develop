@@ -2,6 +2,7 @@
 package nd.esp.service.lifecycle.utils;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +56,23 @@ public abstract class AssertUtils {
             throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
                     ,message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
         }
+    }
+
+    /**
+     * 断言 Json字符串数组
+     * @param json
+     * @param parmValue
+     * @author lianggz
+     */
+    public static JSONArray checkJsonArray(JSONObject json, String parmValue) {
+        JSONArray jsonArray = null;
+        try {
+            jsonArray = json.getJSONArray(parmValue);
+        } catch (Exception e) {
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
+                    ,parmValue + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
+        }
+        return jsonArray;
     }
 
 
