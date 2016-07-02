@@ -56,9 +56,9 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	public UserRestypeMappingModel query(Integer id){
+	/*public UserRestypeMappingModel query(Integer id){
 		return this.baseDao.queryOne(" and id = ?", new Object[]{id}, null, UserRestypeMappingModel.class, TABLE_POSTFIX);
-	}
+	}*/
 
 	/**
 	 * 批量插入用户请求类型映射关系

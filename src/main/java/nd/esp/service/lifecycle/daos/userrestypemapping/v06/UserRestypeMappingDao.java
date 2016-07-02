@@ -29,7 +29,7 @@ public interface UserRestypeMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	UserRestypeMappingModel query(Integer id);
+	/*UserRestypeMappingModel query(Integer id);*/
 
 	/**
 	 * 批量插入用户请求类型映射关系

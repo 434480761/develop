@@ -57,9 +57,9 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	public UserCoverageMappingModel query(Integer id){
+	/*public UserCoverageMappingModel query(Integer id){
 		return this.baseDao.queryOne(" and id = ?", new Object[]{id}, null, UserCoverageMappingModel.class, TABLE_POSTFIX);
-	}
+	}*/
 
 	/**
 	 * 批量插入用户覆盖类型映射关系

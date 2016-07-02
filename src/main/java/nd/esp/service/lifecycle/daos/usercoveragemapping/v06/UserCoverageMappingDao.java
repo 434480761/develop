@@ -30,7 +30,7 @@ public interface UserCoverageMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	UserCoverageMappingModel query(Integer id);
+	/*UserCoverageMappingModel query(Integer id);*/
 
 	/**
 	 * 批量插入用户请求类型映射关系
