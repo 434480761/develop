@@ -21,7 +21,7 @@ public interface UserRestypeMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	int insert(UserRestypeMappingModel userRestypeMappingModel);
+	/*int insert(UserRestypeMappingModel userRestypeMappingModel);*/
 
 	/**
 	 * 查询用户请求类型映射关系
@@ -52,7 +52,7 @@ public interface UserRestypeMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void delete(String userId);
+	/*void delete(String userId);*/
 
 	/**
 	 * 查询用户请求类型映射关系信息列表

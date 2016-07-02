@@ -46,9 +46,9 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	public int insert(UserRestypeMappingModel userRestypeMappingModel){
+	/*public int insert(UserRestypeMappingModel userRestypeMappingModel){
 		return this.baseDao.insert(userRestypeMappingModel, TABLE_POSTFIX);
-	}
+	}*/
 
 	/**
 	 * 查询用户请求类型映射关系
@@ -116,12 +116,12 @@ public class UserRestypeMappingDaoImpl implements UserRestypeMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void delete(String userId){
+	/*public void delete(String userId){
 		List<Object> args = new ArrayList<Object>();
 		String sql = " and  user_id = ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
-	}
+	}*/
 
 	/**
 	 * 查询用户请求类型映射关系信息列表

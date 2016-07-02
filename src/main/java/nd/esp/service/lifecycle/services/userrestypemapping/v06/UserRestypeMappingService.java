@@ -19,7 +19,7 @@ public interface UserRestypeMappingService {
      * @param userRestypeMappingModel
      * @return
      */
-    int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel);
+    /*int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel);*/
 
 	/**
 	 * 批量插入用户请求类型映射关系
@@ -42,7 +42,7 @@ public interface UserRestypeMappingService {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void deleteAllUserResTypeMappingsByUserId(String userId);
+	/*void deleteAllUserResTypeMappingsByUserId(String userId);*/
 
 	/**
 	 * 查询用户请求类型映射关系信息列表

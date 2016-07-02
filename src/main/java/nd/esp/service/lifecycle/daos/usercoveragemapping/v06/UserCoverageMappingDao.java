@@ -21,7 +21,7 @@ public interface UserCoverageMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	int insert(UserCoverageMappingModel userCoverageMappingModel);
+	/*int insert(UserCoverageMappingModel userCoverageMappingModel);*/
 
 
 	/**
@@ -53,7 +53,7 @@ public interface UserCoverageMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void delete(String userId);
+	/*void delete(String userId);*/
 
 	/**
 	 * 查询用户覆盖类型映射关系信息列表

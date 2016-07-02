@@ -20,7 +20,7 @@ public interface UserCoverageMappingService {
      * @param userCoverageMappingModel
      * @return
      */
-    int addUserCoverageMapping(UserCoverageMappingModel userCoverageMappingModel);
+    /*int addUserCoverageMapping(UserCoverageMappingModel userCoverageMappingModel);*/
 
 	/**
 	 * 批量插入用户覆盖类型映射关系
@@ -43,7 +43,7 @@ public interface UserCoverageMappingService {
 	 * @param userId
 	 * @author lanyl
 	 */
-	void deleteAllUserCoverageMappingsByUserId(String userId);
+	/*void deleteAllUserCoverageMappingsByUserId(String userId);*/
 
 	/**
 	 * 查询用户覆盖类型映射关系信息列表

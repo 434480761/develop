@@ -46,9 +46,9 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 * @return
 	 * @author lanyl
 	 */
-	public int insert(UserCoverageMappingModel userCoverageMappingModel){
+	/*public int insert(UserCoverageMappingModel userCoverageMappingModel){
 		return this.baseDao.insert(userCoverageMappingModel, TABLE_POSTFIX);
-	}
+	}*/
 
 
 	/**
@@ -120,12 +120,12 @@ public class UserCoverageMappingDaoImpl implements UserCoverageMappingDao {
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void delete(String userId){
+	/*public void delete(String userId){
 		List<Object> args = new ArrayList<Object>();
 		String sql = " and user_id = ?";
 		args.add(userId);
 		this.baseDao.delete(sql, args.toArray(), TABLE_POSTFIX);
-	}
+	}*/
 
 	/**
 	 * 查询用户覆盖类型映射关系信息列表

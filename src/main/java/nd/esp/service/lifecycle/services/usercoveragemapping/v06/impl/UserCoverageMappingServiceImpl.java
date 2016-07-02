@@ -30,9 +30,9 @@ public class UserCoverageMappingServiceImpl implements UserCoverageMappingServic
 	 * @return
 	 * @author lanyl
 	 */
-	public int addUserCoverageMapping(UserCoverageMappingModel userCoverageMappingModel){
+	/*public int addUserCoverageMapping(UserCoverageMappingModel userCoverageMappingModel){
 		return  userCoverageMappingDao.insert(userCoverageMappingModel);
-	}
+	}*/
 
 	/**
 	 * 批量插入用户覆盖类型映射关系
@@ -59,9 +59,9 @@ public class UserCoverageMappingServiceImpl implements UserCoverageMappingServic
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void deleteAllUserCoverageMappingsByUserId(String userId){
+	/*public void deleteAllUserCoverageMappingsByUserId(String userId){
 		userCoverageMappingDao.delete(userId);
-	}
+	}*/
 
 	/**
 	 * 查询用户覆盖类型映射关系信息列表

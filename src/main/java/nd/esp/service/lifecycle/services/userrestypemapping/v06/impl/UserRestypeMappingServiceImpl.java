@@ -30,9 +30,9 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 	 * @return
 	 * @author lanyl
 	 */
-	public int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel){
+	/*public int addUserRestypeMapping(UserRestypeMappingModel userRestypeMappingModel){
 		return  userRestypeMappingDao.insert(userRestypeMappingModel);
-	}
+	}*/
 
 	/**
 	 * 批量插入用户请求类型映射关系
@@ -59,9 +59,9 @@ public class UserRestypeMappingServiceImpl implements UserRestypeMappingService 
 	 * @param userId
 	 * @author lanyl
 	 */
-	public void deleteAllUserResTypeMappingsByUserId(String userId){
+	/*public void deleteAllUserResTypeMappingsByUserId(String userId){
 		userRestypeMappingDao.delete(userId);
-	}
+	}*/
 
 	/**
 	 * 查询用户请求类型映射关系信息列表
