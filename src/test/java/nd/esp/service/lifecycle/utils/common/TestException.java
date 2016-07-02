@@ -8,6 +8,7 @@ package nd.esp.service.lifecycle.utils.common;
  * <p>Create Time: 2016年7月1日           </p>
  * @author lianggz
  */
+@SuppressWarnings("serial")
 public class TestException extends Exception {
     public TestException() {}
 }
