@@ -38,8 +38,9 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	protected void onConfigure(HttpSecurity http) throws Exception {
 
 	    // 说明：新增资源管理平台权限控制 @lanyl 2016-06-30
+		// ps:多条匹配规则中若有交集，请一定要注意先后顺序
+		// 参考waf安全访问控制wiki：http://doc.sdp.nd/index.php?title=WAF_rest_api%E4%B8%AD%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%AE%89%E5%85%A8%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6
 	    // ===START===
-	    
 		// 权限角色配置接口 【超级管理员（SuperAdmin）跟库管理员（CoverageAdmin）】
 		http.authorizeRequests().antMatchers("/v*/users/**").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 
@@ -52,12 +53,6 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 //		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*").permitAll();
 
 		// 资源消费者角色--[ResConsumer]
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets/*").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/ralations").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/*").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/archive").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/archiveinfo").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/downloadurl").hasAnyAuthority(RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
@@ -70,24 +65,14 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		http.authorizeRequests().antMatchers("/v*/categorypatterns").hasAnyAuthority(RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 		http.authorizeRequests().antMatchers("/v*/categorypatterns/*").hasAnyAuthority(RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 
-
-//
-//
 		// 资源创建者角色(ResCreator)
-//		http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/archive").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/*/*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/relations/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-//		http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/uploadurl").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
+		http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/uploadurl").hasAnyAuthority(RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 
         // ===END=== 
 
