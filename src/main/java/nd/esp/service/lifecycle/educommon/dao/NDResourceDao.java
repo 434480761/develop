@@ -29,7 +29,7 @@ public interface NDResourceDao {
      * @return
      */
     public List<ResourceModel> commomQueryByDB(final String resType, String resCodes, final List<String> includes,
-            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<Map<String, String>> relationsExclude, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
             boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,boolean firstKnLevel);
 
@@ -50,7 +50,7 @@ public interface NDResourceDao {
      * @return
      */
     public long commomQueryCount(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
-            List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
+            List<Map<String, String>> relations,List<Map<String, String>> relationsExclude, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, String limit, boolean isNotManagement, boolean reverse, boolean useIn,
             Boolean printable, String printableKey,boolean firstKnLevel);
     

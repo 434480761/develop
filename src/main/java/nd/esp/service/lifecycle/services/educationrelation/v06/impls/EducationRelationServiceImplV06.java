@@ -1441,8 +1441,12 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
 	public List<Map<String, Object>> queryKnowledgeTree(String uuid) {
 		List<Map<String, Object>> returnList = new ArrayList<Map<String,Object>>();
 		List<Map<String, Object>> parentList = new ArrayList<Map<String,Object>>();
+		List<Map<String, Object>> childList = new ArrayList<Map<String,Object>>();
+		int upNum = 0;
+		int downNum = 0;
 		//查找上级节点
-		recursiveKnowledge(parentList, uuid);
+		recursiveKnowledge(parentList, uuid,"up",upNum);
+		
 		if(CollectionUtils.isNotEmpty(parentList)){
 			returnList.addAll(parentList);
 			for (Map<String, Object> map : parentList) {
@@ -1459,25 +1463,56 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
 				}
 			}
 		}
+		
+		//查找下级节点
+		recursiveKnowledge(childList, uuid,"down",downNum);
+		System.out.println("down=========="+downNum);
+		if(CollectionUtils.isNotEmpty(childList)){
+			returnList.addAll(childList);
+		}
 		return returnList;
 	}
 	
-	private void recursiveKnowledge(List<Map<String, Object>> list,String cid){
-		List<Map<String,Object>> tmpList = queryParentKnByChildId(cid);
-		if(CollectionUtils.isNotEmpty(tmpList)){
-			for (Map<String, Object> map : tmpList) {
-				String parent = (String)map.get("parent");
-				if(parent != null && parent.equals(cid)){
-					break;
+	/**
+	 * 递归查找知识点
+	 * @param list
+	 * @param cid
+	 * @param type 用来区分是向上递归还是向下递归
+	 * @param num  递归的层数，主要是避免死循环
+	 */
+	private void recursiveKnowledge(List<Map<String, Object>> list,String cid,String type,int num){
+		if(num > 10){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                     "LC/RECURSE_OUT",
+                     "递归层数过多，已超过10层");
+		}
+		num++;
+		if("up".equals(type)){
+			List<Map<String,Object>> tmpList = queryParentKnByChildId(cid);
+			if(CollectionUtils.isNotEmpty(tmpList)){
+				for (Map<String, Object> map : tmpList) {
+					String parent = (String)map.get("parent");
+					if(parent != null && parent.equals(cid)){
+						break;
+					}
+					list.add(map);
+					recursiveKnowledge(list,parent,type,num);
 				}
-				list.add(map);
-				recursiveKnowledge(list,parent);
+			}else{
+				String sql = "SELECT 'ROOT' as parent,nd.title,nd.estatus as status,nd.identifier from ndresource nd where nd.primary_category='knowledges' and nd.identifier = '"+cid+"' and nd.enable = 1";
+				List<Map<String,Object>> tl = jt.queryForList(sql);
+				if(CollectionUtils.isNotEmpty(tl)){
+					list.addAll(tl);
+				}
 			}
-		}else{
-			String sql = "SELECT 'ROOT' as parent,nd.title,nd.estatus as status,nd.identifier from ndresource nd where nd.primary_category='knowledges' and nd.identifier = '"+cid+"' and nd.enable = 1";
-			List<Map<String,Object>> tl = jt.queryForList(sql);
-			if(CollectionUtils.isNotEmpty(tl)){
-				list.addAll(tl);
+		}else if("down".equals(type)){
+			List<Map<String,Object>> tmpList = queryChildKnByParentId(cid);
+			if(CollectionUtils.isNotEmpty(tmpList)){
+				for (Map<String, Object> map : tmpList) {
+					String childId = (String)map.get("identifier");
+					list.add(map);
+					recursiveKnowledge(list,childId,type,num);
+				}
 			}
 		}
 	}
@@ -1487,5 +1522,9 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
 		return jt.queryForList(sql);
 	}
 	
+	private List<Map<String,Object>> queryChildKnByParentId(String pid){
+		String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.source_uuid='"+pid+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier";
+		return jt.queryForList(sql);
+	}
 	
 }

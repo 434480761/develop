@@ -425,7 +425,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Override
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
-            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,List<Map<String, String>> relationsExclude, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
             Boolean printable, String printableKey,boolean firstKnLevel) {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
@@ -436,12 +436,12 @@ public class NDResourceServiceImpl implements NDResourceService{
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,firstKnLevel);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,firstKnLevel);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,firstKnLevel);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,firstKnLevel);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,firstKnLevel);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,firstKnLevel);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -489,6 +489,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private Set<String> categories;
         private Set<String> categoryExclude;
         private List<Map<String, String>> relations;
+        private List<Map<String, String>> relationsExclude;
         private List<String> coverages;
         private Map<String, Set<String>> propsMap;
         private Map<String, String>orderMap;
@@ -518,7 +519,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
 
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
-            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,List<Map<String, String>> relationsExclude, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
             Boolean printable, String printableKey,boolean firstKnLevel){
             this.isCount = isCount;
@@ -528,6 +529,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.categories = categories;
             this.categoryExclude = categoryExclude;
             this.relations = relations;
+            this.relationsExclude = relationsExclude;
             this.coverages = coverages;
             this.propsMap = propsMap;
             this.orderMap = orderMap;
@@ -544,9 +546,9 @@ public class NDResourceServiceImpl implements NDResourceService{
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel);
             }
             
             return this;

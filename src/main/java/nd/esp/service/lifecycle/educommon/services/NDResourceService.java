@@ -68,7 +68,7 @@ public interface NDResourceService {
     public ListViewModel<ResourceModel> resourceQueryByDB(
             String resType,String resCodes,List<String> includes,
             Set<String> categories,Set<String> categoryExclude,
-            List<Map<String,String>> relations,List<String> coverages,
+            List<Map<String,String>> relations,List<Map<String,String>> relationsExclude,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
             Boolean printable, String printableKey,boolean firstKnLevel);

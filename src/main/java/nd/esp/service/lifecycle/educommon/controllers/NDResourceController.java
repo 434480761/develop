@@ -308,7 +308,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props,null, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,null, coverages, props,null, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
     }
 	
 	/**
@@ -361,7 +361,7 @@ public class NDResourceController {
 			/* @RequestParam(required=false,value="reverse") String reverse, */
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
-				categoryExclude, null, coverages, props, orderBy, null, limit,
+				categoryExclude, null,null, coverages, props, orderBy, null, limit,
 				false, !isAll, "false", printable, printableKey,firstKnLevel);
 	}
 	
@@ -395,6 +395,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="category") Set<String> categories,
             @RequestParam(required=false,value="category_exclude") Set<String> categoryExclude,
             @RequestParam(required=false,value="relation") Set<String> relations,
+            @RequestParam(required=false,value="relation_exclude") Set<String> relationsExclude,
             @RequestParam(required=false,value="coverage") Set<String> coverages,
             @RequestParam(required=false,value="prop") List<String> props,
             @RequestParam(required=false,value="orderby") List<String> orderBy,
@@ -409,9 +410,9 @@ public class NDResourceController {
     			String s = URLDecoder.decode(p);
     			newProps.add(s);
     		}
-            return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+            return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     	}else{
-    		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     	}
 
         
@@ -458,7 +459,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,null, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
     }
     
     /**
@@ -525,7 +526,7 @@ public class NDResourceController {
      */
     @SuppressWarnings("unchecked")
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
-            Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
+            Set<String> categories, Set<String> categoryExclude, Set<String> relations,Set<String> relationsExclude, Set<String> coverages, List<String> props,
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
             Boolean printable, String printableKey,boolean firstKnLevel) {
         //智能出题对接外部接口--入口
@@ -546,7 +547,7 @@ public class NDResourceController {
         //参数校验和处理
         Map<String, Object> paramMap = 
         		requestParamVerifyAndHandle(resType, resCodes, includes, categories, categoryExclude,
-        									relations, coverages, props, orderBy, limit, isByDB, reverse, printable, printableKey);
+        									relations,relationsExclude, coverages, props, orderBy, limit, isByDB, reverse, printable, printableKey);
         
         // include
 		List<String> includesList = (List<String>)paramMap.get("include");
@@ -559,6 +560,8 @@ public class NDResourceController {
         
         // relations,格式:stype/suuid/r_type
 		List<Map<String,String>> relationsMap = (List<Map<String,String>>)paramMap.get("relation"); 
+		
+		List<Map<String,String>> relationsExcludeMap = (List<Map<String,String>>)paramMap.get("relationExclude"); 
         
         // coverages,格式:Org/uuid/SHAREING
 		List<String> coveragesList = (List<String>)paramMap.get("coverage");
@@ -592,11 +595,11 @@ public class NDResourceController {
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
         			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
 					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
+	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap,relationsExcludeMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
 				}
         	}else{
         		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
+                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap,relationsExcludeMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey,firstKnLevel);
         	}
         }else{
             rListViewModel = 
@@ -772,7 +775,7 @@ public class NDResourceController {
     							    List<String> props, boolean isNotManagement, String groupBy){
     	//参数校验和处理
     	Map<String, Object> paramMap = 
-    			requestParamVerifyAndHandle(resType, null, null, categories, null, null, 
+    			requestParamVerifyAndHandle(resType, null, null, categories, null, null, null,
     										coverages, props, null, "(0,1)", true, null, null, null);
     	
     	//categories
@@ -861,7 +864,7 @@ public class NDResourceController {
      * <p>Create author: xiezy   </p>
      */
     private Map<String, Object> requestParamVerifyAndHandle(String resType, String resCodes, String includes,
-            Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
+            Set<String> categories, Set<String> categoryExclude, Set<String> relations,Set<String> relationsExclude, Set<String> coverages, List<String> props,
             List<String> orderBy, String limit, boolean isByDB, String reverse, Boolean printable, String printableKey){
     	//reverse,默认为false
         boolean reverseBoolean = false;
@@ -955,6 +958,41 @@ public class NDResourceController {
                 relationsMap.add(map);
             }
         }
+        
+        List<Map<String,String>> relationsExcludeMap = new ArrayList<Map<String,String>>(); 
+        if(CollectionUtils.isEmpty(relationsExclude)){
+        	relationsExcludeMap = null;
+        }else{
+            for(String relation : relationsExclude){
+                Map<String,String> map = new HashMap<String, String>();
+                //对于入参的coverage每个在最后追加一个空格，以保证elemnt的size为3
+                relation = relation + " ";
+                List<String> elements = Arrays.asList(relation.split("/"));
+                //格式错误判断
+                if(elements.size() != 3){
+                   
+                    LOG.error(relation + "--relation格式错误");
+                    
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                            relation + "--relation格式错误");
+                }
+                //判断源资源是否存在,stype + suuid
+                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
+                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
+                }
+                //r_type的特殊处理
+                if(StringUtils.isEmpty(elements.get(2).trim())){
+                    elements.set(2, null);
+                }
+                map.put("stype", elements.get(0).trim());
+                map.put("suuid", elements.get(1).trim());
+                map.put("rtype", elements.get(2));
+                
+                relationsExcludeMap.add(map);
+            }
+        }
+        
         
         // 4.coverages,格式:Org/uuid/SHAREING
         List<String> coveragesList = new ArrayList<String>();
@@ -1193,6 +1231,7 @@ public class NDResourceController {
         paramMap.put("category", categories);
         paramMap.put("categoryExclude", categoryExclude);
         paramMap.put("relation", relationsMap);
+        paramMap.put("relationExclude", relationsExcludeMap);
         paramMap.put("coverage", coveragesList);
         paramMap.put("prop", propsMap);
         paramMap.put("orderby", orderMap);
