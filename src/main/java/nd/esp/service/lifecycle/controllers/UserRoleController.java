@@ -126,37 +126,27 @@ public class UserRoleController {
 	/**
 	 * 解除绑定用户角色
 	 * @param userId
-	 * @param jsonObject
+	 * @param roleId
+	 * @param coverages
+	 * @param resTypes
 	 * @param userInfo
 	 * @return
 	 * @author lanyl
 	 */
 	@RequestMapping(value="/{userId:\\d+}/roles",method = RequestMethod.DELETE)
-	public Map<String, Object> deleteUserRole(@PathVariable String userId, @RequestBody JSONObject jsonObject, @AuthenticationPrincipal UserInfo userInfo){
-		// 覆盖范围List
-		List<String> coverageList = new ArrayList<String>();
-		// 请求类型List
-		List<String> resTypeList = new ArrayList<String>();
-		//获取参数
-		String roleId = jsonObject.getString("role_id");
-		JSONArray coverages = AssertUtils.checkJsonArray(jsonObject,"coverages");
-		JSONArray resTypes = AssertUtils.checkJsonArray(jsonObject,"res_types");
-
+	public Map<String, Object> deleteUserRole(@PathVariable String userId,
+											  @RequestParam(required=false,value="role_id") String roleId,
+											  @RequestParam(required=false,value="coverages") List<String> coverages,
+											  @RequestParam(required=false,value="res_types") List<String> resTypes,
+											  @AuthenticationPrincipal UserInfo userInfo){
 		//参数效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.rangeLength(userId, 0, 36, "user_id");
 
-		// 校验覆盖范围
-		if(coverages != null){
-			//获取覆盖范围
-			coverageList = this.jsonArrayChangeToList(coverages);
-		}
 		// 校验请求类型参数
-		if(resTypes != null){
-			//获取请求类型
-			resTypeList = this.jsonArrayChangeToList(resTypes);
+		if(resTypes != null && resTypes.size() > 0){
 			//效验请求类型参数
-			AssertUtils.isMatches(resTypeList, ResTypeEnum.getRegex(), "res_types");
+			AssertUtils.isMatches(resTypes, ResTypeEnum.getRegex(), "res_types");
 		}
 		//返回内容
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -173,17 +163,17 @@ public class UserRoleController {
 			}
 		}
 		//coverage不为空, 删除覆盖关系
-		if(coverageList != null && coverageList.size() >0){
-			this.userCoverageMappingService.deleteUserCoverageMappings(coverageList, userId);
+		if(coverages != null && coverages.size() >0){
+			this.userCoverageMappingService.deleteUserCoverageMappings(coverages, userId);
 		}
 		//resType不为空，删除请求关系
-		if(resTypeList != null && resTypeList.size() > 0){
-			this.userRestypeMappingService.deleteUserRestypeMappings(resTypeList, userId);
+		if(resTypes != null && resTypes.size() > 0){
+			this.userRestypeMappingService.deleteUserRestypeMappings(resTypes, userId);
 		}
 		params.put("user_id", userId);
 		params.put("role_id", roleId);
-		params.put("coverages", coverageList.toArray());
-		params.put("res_types", resTypeList.toArray());
+		params.put("coverages", coverages);
+		params.put("res_types", resTypes);
 		return params;
 
 	}

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -55,38 +56,67 @@ public class RoleResInterceptor implements HandlerInterceptor {
     
     @Autowired
     private UcRoleClient ucRoleClient;
+    
+    /** 权限启用开关*/
+    public static String AUTHORITY_ENABLE = LifeCircleApplicationInitializer.properties.getProperty("esp_authority_enable");
 
 	@Override
 	public boolean preHandle(HttpServletRequest request,
 			HttpServletResponse response, Object handler) throws Exception {
-	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // 过滤无鉴权处理
-        if(authentication != null && !"anonymousUser".equals(authentication.getPrincipal().toString())){
-            UserInfo userInfo = (UserInfo)authentication.getPrincipal();
-            if(userInfo != null){
-                UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
-                if(userCenterRoleDetails != null){
-                    // 库管理员
-                    if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-                        // 过滤访问的URL
-                        isCoverageadminMatcher(request, userInfo.getUserId());
-                    }
-                    // 资源创建者角色
-                    else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
-                        // 过滤访问的URL
-                        isRescreatorMatcher(request, userInfo.getUserId());
-                    }
-                    // 资源消费者角色
-                    else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
-                        // 过滤访问的URL
-                        isResconsumerMatcher(request, userInfo.getUserId());
-                    }
-                }
-                return true;
-            }
-        }
-        return true;
-
+	    
+	    // 根据开关判断是否执行权限机制
+	    if(Boolean.valueOf(AUTHORITY_ENABLE)){
+	        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+	        // 过滤无鉴权处理
+	        if(authentication != null && !"anonymousUser".equals(authentication.getPrincipal().toString())){
+	            UserInfo userInfo = (UserInfo)authentication.getPrincipal();
+	            if(userInfo != null){
+	                UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
+	                if(userCenterRoleDetails != null){
+	                    // 超级管理员
+	                    if( UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+	                        
+	                    }
+	                    // 库管理员
+	                    else if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+	                        // 过滤访问的URL
+	                        isCoverageadminMatcher(request, userInfo.getUserId());
+	                    }
+	                    // 资源创建者角色
+	                    else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
+	                        // 过滤访问的URL
+	                        isRescreatorMatcher(request, userInfo.getUserId());
+	                    }
+	                    // 维度管理者角色
+	                    else if( UcRoleClient.CATEGORYDATAADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+	                        
+	                    }
+	                    // 资源消费者角色
+	                    else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
+	                        // 过滤访问的URL
+	                        isResconsumerMatcher(request, userInfo.getUserId());
+	                    }
+	                    // 游客角色
+	                    else if( UcRoleClient.GUEST.equals(userCenterRoleDetails.getRoleId()) ){
+	                        
+	                    }
+	                    // 其他情况，视为异常
+	                    else{
+	                        return false;
+	                    }
+	                    return true;
+	                }
+	                else{
+	                    return false;
+	                }
+	            }k
+	        }
+	        return true;
+	    }
+	    // 不走权限拦截机制
+	    else{
+	        return true;
+	    }
 	}
 
 	@Override
@@ -234,5 +264,4 @@ public class RoleResInterceptor implements HandlerInterceptor {
             }
         }
     }
-
 }
