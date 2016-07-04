@@ -459,20 +459,21 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	InvokingCSFail("CS/INVOKING_CS_FAIL",getPropertyValue("invoking.cs.fail")),
 	InvokingUCFail("UC/INVOKING_UC_FAIL",getPropertyValue("invoking.uc.fail")),
 
-
-	UserRestypeMappingNotFound("LC/UserRestypeMapping_NOT_FOUND",getPropertyValue("userRestypeMappingController.query.operation.fail")),
-	checkParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
-	hasRoleExists("LC/HAS_ROLE_EXISTS",getPropertyValue("has.role.exists")),
-	userRoleNotFound("LC/ROLE_NOT_FOUND",getPropertyValue("role.not.found")),
-	libAdminDenied("LC/ACCESS_DENIED",getPropertyValue("lib.admin.denied")),
-	accessDenied("LC/ACCESS_DENIED",getPropertyValue("access.denied")),
-	UserCoverageMappingNotFound("LC/UserCoverageMapping_NOT_FOUND",getPropertyValue("userCoverageMappingController.query.operation.fail")),
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
-    //
-    Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
-
+	//说明 add by @author lanyl
+	//角色权限控制相关错误配置
+	//====Start=====
+	UserRestypeMappingNotFound("LC/UserRestypeMapping_NOT_FOUND",getPropertyValue("userRestypeMappingController.query.operation.fail")),
+	CheckParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
+	HasRoleExists("LC/HAS_ROLE_EXISTS",getPropertyValue("has.role.exists")),
+	UserRoleNotFound("LC/ROLE_NOT_FOUND",getPropertyValue("role.not.found")),
+	LibAdminDenied("LC/ACCESS_DENIED",getPropertyValue("lib.admin.denied")),
+	AccessDenied("LC/ACCESS_DENIED",getPropertyValue("access.denied")),
+	UserCoverageMappingNotFound("LC/UserCoverageMapping_NOT_FOUND",getPropertyValue("userCoverageMappingController.query.operation.fail")),
+	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
+	//====End=====
 
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);
 

@@ -32,8 +32,8 @@ public abstract class AssertUtils {
 	 */
 	public static void isEmpty(String str, String message) {
 	    if(StringUtils.isBlank(str)){
-            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.checkParamEmpty.getCode()
-                    ,message + LifeCircleErrorMessageMapper.checkParamEmpty.getMessage());
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.CheckParamEmpty.getCode()
+                    ,message + LifeCircleErrorMessageMapper.CheckParamEmpty.getMessage());
 		}
 	}
 
