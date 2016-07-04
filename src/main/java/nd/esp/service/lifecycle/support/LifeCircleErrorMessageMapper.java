@@ -465,13 +465,9 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	//说明 add by @author lanyl
 	//角色权限控制相关错误配置
 	//====Start=====
-	UserRestypeMappingNotFound("LC/UserRestypeMapping_NOT_FOUND",getPropertyValue("userRestypeMappingController.query.operation.fail")),
 	CheckParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
-	HasRoleExists("LC/HAS_ROLE_EXISTS",getPropertyValue("has.role.exists")),
-	UserRoleNotFound("LC/ROLE_NOT_FOUND",getPropertyValue("role.not.found")),
 	LibAdminDenied("LC/ACCESS_DENIED",getPropertyValue("lib.admin.denied")),
 	AccessDenied("LC/ACCESS_DENIED",getPropertyValue("access.denied")),
-	UserCoverageMappingNotFound("LC/UserCoverageMapping_NOT_FOUND",getPropertyValue("userCoverageMappingController.query.operation.fail")),
 	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
 	//====End=====
 
