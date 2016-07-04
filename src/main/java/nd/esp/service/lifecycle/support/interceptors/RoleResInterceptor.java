@@ -100,7 +100,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 	                    else if( UcRoleClient.GUEST.equals(userCenterRoleDetails.getRoleId()) ){
 	                        
 	                    }
-	                    // 其他情况，视为异常
+	                    // 其他情况，视为异常。这个分支是不会进入的，如果进入即存在异常。
 	                    else{
 	                        return false;
 	                    }
