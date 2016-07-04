@@ -466,8 +466,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	//角色权限控制相关错误配置
 	//====Start=====
 	CheckParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
-	LibAdminDenied("LC/ACCESS_DENIED",getPropertyValue("lib.admin.denied")),
-	AccessDenied("LC/ACCESS_DENIED",getPropertyValue("access.denied")),
+	CoverageAdminDenied("LC/COVERAGE_ADMIN_DENIED",getPropertyValue("coverage.admin.denied")),
 	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
 	//====End=====
 

@@ -320,13 +320,13 @@ public class UserRoleController {
 		//如果当前用户角色id不属于超级管理员和库管理员 则没有绑定/解除用户的权限
 		if(tmpRoleId == null){
 			//抛错
-			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.AccessDenied.getCode()
-					, LifeCircleErrorMessageMapper.AccessDenied.getMessage());
+			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.Forbidden.getCode()
+					, LifeCircleErrorMessageMapper.Forbidden.getMessage());
 		}else if(tmpRoleId.equals(UcRoleClient.COVERAGEADMIN)
 				&& (UcRoleClient.COVERAGEADMIN.equals(roleId) || UcRoleClient.SUPERADMIN.equals(roleId))){
 			//如果当前用户的roleid属于库管理员  则没有绑定/解除超级管理员和库管理员的权限、抛错
-			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.LibAdminDenied.getCode()
-					, LifeCircleErrorMessageMapper.LibAdminDenied.getMessage());
+			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.CoverageAdminDenied.getCode()
+					, LifeCircleErrorMessageMapper.CoverageAdminDenied.getMessage());
 		}
 	}
 
