@@ -109,7 +109,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 	                else{
 	                    return false;
 	                }
-	            }k
+	            }
 	        }
 	        return true;
 	    }
