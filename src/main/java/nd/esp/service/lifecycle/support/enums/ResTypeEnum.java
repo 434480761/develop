@@ -20,7 +20,7 @@ import java.util.List;
  * @author lanyl
  * @since
  */
-public enum ResTypeEunm {
+public enum ResTypeEnum {
 
     assets("assets"), // 素材
 
@@ -62,7 +62,7 @@ public enum ResTypeEunm {
         return value;
     }
 
-    private ResTypeEunm(String value) {
+    private ResTypeEnum(String value) {
         this.value = value;
     }
 
@@ -72,7 +72,7 @@ public enum ResTypeEunm {
      */
     public static String getRegex(){
         List<String> list = new ArrayList<String>();
-        for (ResTypeEunm e : ResTypeEunm.values()){
+        for (ResTypeEnum e : ResTypeEnum.values()){
             list.add(e.getValue());
         }
         return StringUtils.join(list, "|");

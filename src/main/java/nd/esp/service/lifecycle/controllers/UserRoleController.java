@@ -10,7 +10,7 @@ import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMap
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.enums.ResTypeEunm;
+import nd.esp.service.lifecycle.support.enums.ResTypeEnum;
 import nd.esp.service.lifecycle.support.uc.UcClient;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
 import nd.esp.service.lifecycle.support.uc.UserBaseInfo;
@@ -92,7 +92,7 @@ public class UserRoleController {
 			//获取请求类型
 			resTypeList = this.jsonArrayChangeToList(resTypes);
 			//效验请求类型参数
-			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+			AssertUtils.isMatches(resTypeList, ResTypeEnum.getRegex(), "res_types");
 		}
 
 		//roleid不为空 绑定uc角色
@@ -156,7 +156,7 @@ public class UserRoleController {
 			//获取请求类型
 			resTypeList = this.jsonArrayChangeToList(resTypes);
 			//效验请求类型参数
-			AssertUtils.isMatches(resTypeList, ResTypeEunm.getRegex(), "res_types");
+			AssertUtils.isMatches(resTypeList, ResTypeEnum.getRegex(), "res_types");
 		}
 		//返回内容
 		Map<String, Object> params = new HashMap<String, Object>();
