@@ -305,14 +305,14 @@ public class UserRoleController {
 		String tmpRoleId = null;
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
 			//库管理员
-			if(userCenterRoleDetails.getRoleId().equals(UcRoleClient.COVERAGEADMIN)){
+			if(UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId())){
 				tmpRoleId = UcRoleClient.COVERAGEADMIN;
 				break;
 			}
 		}
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
 			//超级管理员
-			if(userCenterRoleDetails.getRoleId().equals(UcRoleClient.SUPERADMIN)){
+			if(UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId())){
 				tmpRoleId = UcRoleClient.SUPERADMIN;
 				break;
 			}
