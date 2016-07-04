@@ -62,37 +62,37 @@ public class UcRoleClient {
         List<UserCenterRoleDetails> userCenterRoleDetailList = userInfo.getUserRoles();
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 超级管理员
-            if(userCenterRoleDetail.getRoleId().equals(SUPERADMIN)){
+            if(SUPERADMIN.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 库管理员
-            if(userCenterRoleDetail.getRoleId().equals(COVERAGEADMIN)){
+            if(COVERAGEADMIN.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 资源创建者角色
-            if(userCenterRoleDetail.getRoleId().equals(RESCREATOR)){
+            if(RESCREATOR.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 维度管理者角色
-            if(userCenterRoleDetail.getRoleId().equals(CATEGORYDATAADMIN)){
+            if(CATEGORYDATAADMIN.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 资源消费者角色
-            if(userCenterRoleDetail.getRoleId().equals(RESCONSUMER)){
+            if(RESCONSUMER.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 游客角色
-            if(userCenterRoleDetail.getRoleId().equals(GUEST)){
+            if(GUEST.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }
