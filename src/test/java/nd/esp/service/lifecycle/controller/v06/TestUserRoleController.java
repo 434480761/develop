@@ -268,61 +268,40 @@ public class TestUserRoleController extends CusBaseControllerConfig {
 		logger.info("=== start ===");
 
 		//例1：userId 为非法字符 ,其他参数正常【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE + "x/roles";
-		JSONObject param = new JSONObject();
-		param.put("role_id", UcRoleClient.COVERAGEADMIN);
-		param.put("res_types", new String[]{"assets","knowledges"});
-		param.put("coverages", new String[]{"org/nd","org/481036342254"});
-		String json = param.toJSONString();
-		String result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE + "x/roles?role_id="+ UcRoleClient.COVERAGEADMIN +"&coverages=org/nd&coverages=org/481036342254&res_types=assets&res_types=knowledges";
+		String result = MockUtil.mockDelete(mockMvc, url, null);
 		if(StringUtils.isNotEmpty(result)) {
 			throw new TestException();
 		}
 		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
 		//例2：userId 为-1,其他参数正常 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE +"-1/roles";
-		param.clear();
-		param.put("role_id", UcRoleClient.COVERAGEADMIN);
-		param.put("res_types", new String[]{"assets","knowledges"});
-		param.put("coverages", new String[]{"org/nd","org/481036342254"});
-		json = param.toJSONString();
-		result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE +"-1/roles?role_id="+ UcRoleClient.COVERAGEADMIN +"&coverages=org/nd&coverages=org/481036342254&res_types=assets&res_types=knowledges";
+		result = MockUtil.mockDelete(mockMvc, url, null);
 		if(StringUtils.isNotEmpty(result)){
 			throw new TestException();
 		}
 		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
 		//例3：userId 有效的用户, role_id 为非法参数 其余参数正常【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE +this.userId + "/roles";
-		param.clear();
-		param = new JSONObject();
-		param.put("role_id", "xxx");
-		json = param.toJSONString();
-		result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE +this.userId + "/roles?role_id=xxx";
+		result = MockUtil.mockDelete(mockMvc, url, null);
 		if(!"LC/INVALIDARGUMENTS_ERROR".equals(JSON.parseObject(result).getString("code"))) {
 			throw new TestException();
 		}
 		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
 		//例4：userId 有效的用户, role_id 无效的角色id 其余参数正常【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE +this.userId + "/roles";
-		param.clear();
-		param.put("role_id", "00000");
-		json = param.toJSONString();
-		result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE +this.userId + "/roles?role_id=00000";
+		result = MockUtil.mockDelete(mockMvc, url, null);
 		if(!"LC/INVALIDARGUMENTS_ERROR".equals(JSON.parseObject(result).getString("code"))) {
 			throw new TestException();
 		}
 		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
 		//例5：userId 有效的用户, role_id 有效的角色id res_type 无效的请求参数 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE  +this.userId + "/roles";
-		param.clear();
-		param.put("role_id", UcRoleClient.COVERAGEADMIN);
-		param.put("res_types", new String[]{"assets","xxxxx"});
-		json = param.toJSONString();
-		result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE  +this.userId + "/roles?role_id="+ UcRoleClient.COVERAGEADMIN +"&res_types=assets&res_types=xxxxxx";
+		result = MockUtil.mockDelete(mockMvc, url, null);
 		if("LC/INVALIDARGUMENTS_ERROR".equals(JSON.parseObject(result).getString("code"))){
 			logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 		}else {
@@ -330,18 +309,14 @@ public class TestUserRoleController extends CusBaseControllerConfig {
 		}
 
 		//例6：userId 有效的用户, role_id 有效的角色id  res_type 有效的请求参数 ，其余参数正常 【期望结果：pass】
-		url = TEST_BASE_URL_USER_ROLE  +this.userId + "/roles";
-		param.clear();
-		param.put("role_id", UcRoleClient.COVERAGEADMIN);
-		param.put("res_types", new String[]{"assets","knowledges"});
-		param.put("coverages", new String[]{"org/nd","org/481036342254"});
-		json = param.toJSONString();
-		result = MockUtil.mockDelete(mockMvc, url, json);
+		url = TEST_BASE_URL_USER_ROLE  +this.userId + "/roles?role_id="+ UcRoleClient.COVERAGEADMIN +"&res_types=assets&res_types=knowledges&coverages=org/nd&coverages=org/481036342254";
+		result = MockUtil.mockDelete(mockMvc, url, null);
 		if(UcRoleClient.COVERAGEADMIN.equals(JSON.parseObject(result).getString("role_id"))){
 			logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "pass", result, "{}"});
 		}else {
 			throw new TestException();
 		}
+		System.out.println(result);
 		logger.info("=== END ===");
 	}
 
