@@ -51,14 +51,12 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.Ebook;
 import nd.esp.service.lifecycle.repository.model.FullModel;
-import nd.esp.service.lifecycle.repository.model.Knowledge;
 import nd.esp.service.lifecycle.repository.model.Question;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
-import nd.esp.service.lifecycle.repository.sdk.KnowledgeRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
@@ -1090,7 +1088,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             	int i = 1;
                 for(Map<String, String> relation : relations){
                 	if(!reverse && !CommonServiceHelper.isQuestionDb(relation.get("stype"))){//查默认库,跨库
-                		List<String> questionIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), resType, DbName.DEFAULT);
+                		List<String> questionIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), relation.get("rtype"), resType, DbName.DEFAULT);
                         String relationInWhereSql = "a.identifier IN ('" + (StringUtils.join(questionIds, "','")) + "')";
                         relationInWhereSqls.add(relationInWhereSql);
                 	}else{
@@ -1114,7 +1112,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             	int i = 1;
                 for(Map<String, String> relation : relations){
                     if(!reverse && CommonServiceHelper.isQuestionDb(relation.get("stype"))){//查习题库，跨库
-                        List<String> resourceIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), resType, DbName.QUESTION);
+                        List<String> resourceIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), relation.get("rtype"), resType, DbName.QUESTION);
                         String relationInWhereSql = "a.identifier IN ('" + (StringUtils.join(resourceIds, "','")) + "')";
                         relationInWhereSqls.add(relationInWhereSql);
                     }else{
@@ -1293,17 +1291,20 @@ public class NDResourceDaoImpl implements NDResourceDao{
      * @param isQuestionDB
      * @return
      */
-    private List<String> getTargetByRelation(String sourceType,String sourceId,String targetType,DbName dbName){
+    @SuppressWarnings("unchecked")
+	private List<String> getTargetByRelation(String sourceType,String sourceId,String relationType,String targetType,DbName dbName){
         String sql = "";
         if(sourceId.endsWith("$")){
             List<String> nodes = getTreeChildrenIds4Relation(sourceType, sourceId.substring(0, sourceId.lastIndexOf("$")));
             sql = "SELECT rr.target AS target FROM resource_relations rr WHERE rr.enable=1 AND rr.res_type='" + sourceType + "' "
                     + "AND rr.source_uuid IN ('" + StringUtils.join(nodes, "','") + "') AND "
-                    + "rr.resource_target_type='" + targetType + "'";
+                    + "rr.resource_target_type='" + targetType + "' "
+                    + "AND rr.relation_type='" + relationType + "'";
         }else{
             sql = "SELECT rr.target AS target FROM resource_relations rr WHERE rr.enable=1 AND rr.res_type='" + sourceType + "' "
                     + "AND rr.source_uuid='" + sourceId + "' AND "
-                    + "rr.resource_target_type='" + targetType + "'";
+                    + "rr.resource_target_type='" + targetType + "' "
+                    + "AND rr.relation_type='" + relationType + "'";
         }
         
 //        LOG.info("跨库查询-getTargetByRelation:" + sql);
@@ -1629,15 +1630,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         if(reverse){
             if(relation.get("suuid").endsWith("$")){
-                result += " (" + alias + ".res_type='" + resType + "' AND " + alias + ".target IN (:" + paramHead + "rsidlist) AND " + alias + ".resource_target_type=:" + paramHead + "rstype AND " + alias + ".relation_type='ASSOCIATE')";
+                result += " (" + alias + ".res_type='" + resType + "' AND " + alias + ".target IN (:" + paramHead + "rsidlist) AND " + alias + ".resource_target_type=:" + paramHead + "rstype AND " + alias + ".relation_type='" + relation.get("rtype") + "')";
             }else{
-                result += " (" + alias + ".res_type='" + resType + "' AND " + alias + ".target=:" + paramHead + "rsid AND " + alias + ".resource_target_type=:" + paramHead + "rstype AND " + alias + ".relation_type='ASSOCIATE')";
+                result += " (" + alias + ".res_type='" + resType + "' AND " + alias + ".target=:" + paramHead + "rsid AND " + alias + ".resource_target_type=:" + paramHead + "rstype AND " + alias + ".relation_type='" + relation.get("rtype") + "')";
             }
         }else{
             if(relation.get("suuid").endsWith("$")){
-                result += " (" + alias + ".resource_target_type='" + resType + "' AND " + alias + ".source_uuid IN (:" + paramHead + "rsidlist) AND " + alias + ".res_type=:" + paramHead + "rstype AND " + alias + ".relation_type='ASSOCIATE')";
+                result += " (" + alias + ".resource_target_type='" + resType + "' AND " + alias + ".source_uuid IN (:" + paramHead + "rsidlist) AND " + alias + ".res_type=:" + paramHead + "rstype AND " + alias + ".relation_type='" + relation.get("rtype") + "')";
             }else{
-                result += " (" + alias + ".resource_target_type='" + resType + "' AND " + alias + ".source_uuid=:" + paramHead + "rsid AND " + alias + ".res_type=:" + paramHead + "rstype AND " + alias + ".relation_type='ASSOCIATE')";
+                result += " (" + alias + ".resource_target_type='" + resType + "' AND " + alias + ".source_uuid=:" + paramHead + "rsid AND " + alias + ".res_type=:" + paramHead + "rstype AND " + alias + ".relation_type='" + relation.get("rtype") + "')";
             }
         }   
         
