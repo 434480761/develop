@@ -35,6 +35,7 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -58,7 +59,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                List<String> includes,
                                                Map<String, Map<String, List<String>>> params,
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-        //System.out.println("params:" + params);
+        System.out.println("params:" + params);
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -99,8 +100,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:"+(System.currentTimeMillis()-generateScriptBegin));
 
-        // System.out.println(scriptForResultAndCount);
-        // System.out.println(scriptParamMap);
+         System.out.println(scriptForResultAndCount);
+         System.out.println(scriptParamMap);
         long searchBegin = System.currentTimeMillis();
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+(System.currentTimeMillis()-searchBegin));
@@ -146,8 +147,225 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return viewModels;
 
     }
+    
+    
+	@Override
+	public ListViewModel<ResourceModel> searchWithAdditionProperties(
+			String resType, List<String> includes,
+			Map<String, Map<String, List<String>>> params,
+			Map<String, String> orderMap, int from, int size, boolean reverse,
+			String words) {
+		// System.out.println("params:" + params);
+		long generateScriptBegin = System.currentTimeMillis();
+		TitanExpression titanExpression = new TitanExpression();
 
-    /**
+		Map<String, Object> scriptParamMap = new HashMap<String, Object>();
+
+		dealWithOrderAndRange(titanExpression, orderMap, from, size);
+		dealWithRelation(titanExpression, params.get("relation"), reverse);
+		params.remove("relation");
+
+		TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+
+		Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
+		resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
+		// for now only deal with code
+		dealWithSearchCode(resourceVertexPropertyMap,
+				params.get(ES_SearchField.cg_taxoncode.toString()));
+		params.remove(ES_SearchField.cg_taxoncode.toString());
+
+		dealWithSearchPath(resourceVertexPropertyMap,
+				params.get(ES_SearchField.cg_taxonpath.toString()));
+		params.remove(ES_SearchField.cg_taxonpath.toString());
+
+		dealWithSearchCoverage(resourceVertexPropertyMap,
+				params.get(ES_SearchField.coverages.toString()));
+		params.remove(ES_SearchField.coverages.toString());
+
+		resourceQueryVertex.setWords(words);
+		// FIXME
+		// resourceQueryVertex.setVertexLabel(resType);
+
+		resourceVertexPropertyMap.put("primary_category",
+				generateFieldCondtion("primary_category", resType));
+		resourceVertexPropertyMap
+				.put(ES_SearchField.lc_enable.toString(),
+						generateFieldCondtion(
+								ES_SearchField.lc_enable.toString(), true));
+		dealWithResource(resourceQueryVertex, params);
+		titanExpression.addCondition(resourceQueryVertex);
+
+		ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
+		List<ResourceModel> items = new ArrayList<ResourceModel>();
+
+		// for count and result
+		String scriptForResultAndCount = titanExpression
+				.generateScriptForResultAndCount(scriptParamMap);
+		LOG.info("titan generate script consume times:"
+				+ (System.currentTimeMillis() - generateScriptBegin));
+
+		System.out.println(scriptForResultAndCount);
+		System.out.println(scriptParamMap);
+		long searchBegin = System.currentTimeMillis();
+		ResultSet resultSet = titanResourceRepository.search(
+				scriptForResultAndCount, scriptParamMap);
+		LOG.info("titan search consume times:"
+				+ (System.currentTimeMillis() - searchBegin));
+
+		List<String> resultStr = new ArrayList<>();
+		long getResultBegin = System.currentTimeMillis();
+		Iterator<Result> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			resultStr.add(iterator.next().getString());
+		}
+		System.out.println(resultStr);
+		LOG.info("get resultset consume times:"
+				+ (System.currentTimeMillis() - getResultBegin));
+
+		long parseBegin = System.currentTimeMillis();
+		List<String> otherLines = new ArrayList<>();
+		String taxOnPath = null;
+		String mainResult = null;
+		int count = 0;
+		for (String line : resultStr) {
+			if (count > 0
+					&& (line.contains(ES_SearchField.lc_create_time.toString()) || line
+							.startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
+				items.add(getItem(resType, mainResult, otherLines, taxOnPath));
+				otherLines.clear();
+				taxOnPath = null;
+			}
+
+			if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
+				viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+			} else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
+				line = line.split("=")[1];
+				int length = line.length();
+				if (length > 2) {
+					taxOnPath = line.substring(1, length - 2);
+				}
+			} else if (line.contains(ES_SearchField.lc_create_time.toString())) {
+				mainResult = line;
+			} else {
+				otherLines.add(line);
+			}
+			count++;
+		}
+		LOG.info("parse consume times:"
+				+ (System.currentTimeMillis() - parseBegin));
+
+		viewModels.setItems(items);
+		return viewModels;
+
+	}
+
+	private void dealWithSearchCoverage(
+			Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
+			Map<String, List<String>> coverageConditions) {
+		if (coverageConditions != null) {
+			Map<Titan_OP, List<Object>> searchCoverageConditionMap = new HashedMap<Titan_OP, List<Object>>();
+			for (Map.Entry<String, List<String>> entry : coverageConditions
+					.entrySet()) {
+				// for now only deal with in
+				if (ES_OP.in.toString().equals(entry.getKey())) {
+					// not deal with status
+					List<String> coverages = entry.getValue();
+					if (CollectionUtils.isEmpty(coverages)) {
+						continue;
+					}
+
+					List<Object> coverageValues = new ArrayList<Object>();
+					for (String coverage : coverages) {
+						String[] chunks = coverage.split("/");
+						if (chunks == null
+								|| (chunks.length != 3 && chunks.length != 4)) {
+							continue;
+						}
+						// FIXME status
+						coverageValues.add(coverage.replace("*", ""));
+					}
+					searchCoverageConditionMap.put(Titan_OP.in, coverageValues);
+				}
+			}
+			vertexPropertiesMap.put("search_coverage", searchCoverageConditionMap);
+		}
+
+	}
+
+	private void dealWithSearchPath(
+			Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
+			Map<String, List<String>> taxonpathConditions) {
+		if (CollectionUtils.isEmpty(taxonpathConditions)) {
+			return;
+		}
+		Map<Titan_OP, List<Object>> searchPathConditionMap = new HashedMap<Titan_OP, List<Object>>();
+
+		List<Object> inSearchPath = new ArrayList<Object>();
+
+		// FIXME * like
+		// deal with path eq (can contain * like)
+		List<String> eqTaxonpathConditions = taxonpathConditions.get(ES_OP.eq
+				.toString());
+
+		if (CollectionUtils.isNotEmpty(eqTaxonpathConditions)) {
+			for (String value : eqTaxonpathConditions) {
+				if (value == null) {
+					continue;
+				}
+				inSearchPath.add(value);
+				// if (value.contains("*")) {
+				// likeValueList.add(value);
+				// } else {
+				// eqValueList.add(value);
+				// }
+			}
+
+		}
+
+		if (CollectionUtils.isNotEmpty(inSearchPath)) {
+			searchPathConditionMap.put(Titan_OP.in, inSearchPath);
+		}
+
+		if (CollectionUtils.isNotEmpty(searchPathConditionMap)) {
+			vertexPropertiesMap.put("search_path", searchPathConditionMap);
+		}
+
+	}
+
+	private void dealWithSearchCode(
+			Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
+			Map<String, List<String>> categoryConditions) {
+		if (CollectionUtils.isEmpty(categoryConditions)) {
+			return;
+		}
+		List<String> eqCategoryConditions = categoryConditions.get(ES_OP.eq
+				.toString());
+
+		if (CollectionUtils.isEmpty(eqCategoryConditions)) {
+			return;
+		}
+
+		Map<Titan_OP, List<Object>> searchCodeConditionMap = new HashedMap<Titan_OP, List<Object>>();
+
+		List<Object> inSearchCode = new ArrayList<Object>();
+
+		for (String eqCategoryCondition : eqCategoryConditions) {
+			// FIXME * like , and
+			inSearchCode.add(eqCategoryCondition);
+		}
+
+		if (CollectionUtils.isNotEmpty(inSearchCode)) {
+			searchCodeConditionMap.put(Titan_OP.in, inSearchCode);
+		}
+
+		if (CollectionUtils.isNotEmpty(searchCodeConditionMap)) {
+			vertexPropertiesMap.put("search_code", searchCodeConditionMap);
+		}
+
+	}
+
+
+	/**
      * @param resType
      * @param mainResult
      * @param otherLines
