@@ -17,6 +17,12 @@ public class ResourceModel {
 	 * 对象的主键，主键类型采用UUID的形式进行存储
 	 */
 	private String identifier;
+	
+	/**
+	 * 元元资源id
+	 */
+	private String mIdentifier;
+	
 	/**
 	 * 学习对象的标题名称
 	 */
@@ -90,6 +96,14 @@ public class ResourceModel {
 	
 	public ResourceModel(){
 
+	}
+
+	public String getmIdentifier() {
+		return mIdentifier;
+	}
+
+	public void setmIdentifier(String mIdentifier) {
+		this.mIdentifier = mIdentifier;
 	}
 
 	public String getIdentifier() {

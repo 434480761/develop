@@ -30,17 +30,21 @@ import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
 import nd.esp.service.lifecycle.educommon.support.RelationType;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
@@ -51,6 +55,7 @@ import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.aop.ServiceAuthorAspect;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -61,6 +66,7 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.offlinemetadata.v06.OfflineMetadataViewModel;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
+import nd.esp.service.lifecycle.vos.valid.LifecycleDefault;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -74,6 +80,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -155,6 +162,12 @@ public class NDResourceController {
     @Autowired
     @Qualifier(value = "StatisticalService4QuestionDBImpl")
     private ResourceStatisticalService statisticalService4QuestionDB;
+    
+	@Autowired
+    private AsynEsResourceService esResourceOperation;
+	
+	@Autowired
+	private OfflineService offlineService;
 
 
     /**
@@ -1555,6 +1568,29 @@ public class NDResourceController {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_CREATE_FAIL", "创建资源metadata失败");
 
         }
+    }
+    
+    @RequestMapping(value = "/{uuid}/newversion", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE },produces={MediaType.APPLICATION_JSON_VALUE})
+    public ResourceViewModel createNewVersion(@Validated(LifecycleDefault.class) @RequestBody VersionViewModel versionViewModel,BindingResult validResult,@PathVariable("res_type") String resourceType,@PathVariable String uuid){
+    	//1、参数校验
+        ValidResultHelper.valid(validResult,
+                "LC/CREATE_RESOURCE_NEW_VERSION",
+                "NDResourceController",
+                "createNewVersion");
+        
+    	Map<String,List<String>> tagMap = versionViewModel.getRelations();
+    	if(tagMap != null && tagMap.containsKey("tags") && tagMap.get("tags") != null && CollectionUtils.isNotEmpty(tagMap.get("tags"))){
+    		ResourceViewModel newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel);
+    		if (ResourceTypeSupport.isValidEsResourceType(resourceType)
+    				&& StringUtils.isNotEmpty(newResource.getIdentifier())) {
+    			esResourceOperation.asynAdd(new Resource(resourceType, newResource.getIdentifier()));
+    		}
+    		offlineService.writeToCsAsync(resourceType, uuid);
+    		return newResource;
+    	}else{
+    		//参数校验不通过
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "relations.tags不能为空");
+    	}
     }
 
     private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {

@@ -6,12 +6,13 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeTrargetAndParentModel;
 import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.repository.model.Chapter;
 
 /**
  * 教育资源通用接口的Service
@@ -240,4 +241,13 @@ public interface NDResourceService {
     Map<String, Object> getResPreviewByHref(String resType,String location);
     
     public TreeTrargetAndParentModel getTreeTargetAndParent(KnowledgeModel knowledgeModel, Chapter knowledge);
+    
+    /**
+     * 创建资源新版本
+     * @param uuid
+     * @param vvm
+     * @return
+     */
+    public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm);
+    
 }

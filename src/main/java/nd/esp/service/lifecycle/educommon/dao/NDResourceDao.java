@@ -171,6 +171,14 @@ public interface NDResourceDao {
      */
     public int queryCodeCountByResId4QuestionDb(String resType, String identifier,String code);
     
+    /**
+     * 根据元资源id查找资源列表
+     * @param resType
+     * @param mid
+     * @return
+     */
+    public List<Map<String,Object>> queryResourceByMid(String resType,String mid);
+    
 //    /**
 //     * 删除章节相关的资源关系
 //     * <p>Create Time: 2016年1月28日   </p>

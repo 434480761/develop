@@ -40,6 +40,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResLifeCycleViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResRightViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResTechInfoViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.models.AccessModel;
@@ -1063,6 +1064,13 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()
                                                   + "resourceType:" + resourceType + "uuid:" + uuid);
         }
+        
+        //2、判断该资源下有没有在用的版本
+        List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resourceType,uuid);
+        if(list != null && list.size() > 1){
+        	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/DELETE_RESOURCE_DENY","资源存在子版本，无法删除");
+        }
+        
         //所有通用接口支持的资源都继承了NdResource
         //存在问题，教学目标等，并没有继承NdResource
         ((Education)beanResult).setEnable(false);
@@ -2038,13 +2046,13 @@ public class NDResourceServiceImpl implements NDResourceService{
         // 转换为数据模型
         // 所有通用接口支持的资源在sdk 都继承了Education
         Education education = changeModelToBean(resourceType, resourceModel);  //have set primary_category
-
         try {
             if (operationType == OperationType.CREATE) {
                 // 默认值
                 Timestamp ts = new Timestamp(System.currentTimeMillis());
                 education.setCreateTime(ts);
                 education.setLastUpdate(ts);
+                education.setmIdentifier(education.getIdentifier());
                 if(ResourceNdCode.knowledges.toString().equals(resourceType)){
                     //需要处理下树型结构
                     Chapter knowledge = (Chapter)education;
@@ -2082,6 +2090,7 @@ public class NDResourceServiceImpl implements NDResourceService{
                 }
                 // 不可变的值特别处理
                 education.setCreateTime(oldBean.getCreateTime());
+                education.setmIdentifier(oldBean.getmIdentifier());
                 
                 ResLifeCycleModel lc = resourceModel.getLifeCycle();
                 if(lc == null || StringUtils.isEmpty(lc.getCreator())){
@@ -2705,4 +2714,57 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
         return oldBean;
     }
+
+	@Override
+	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm) {
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		//1、判断是否可以创建版本
+		if(rm.getmIdentifier() != null && !rm.getIdentifier().equals(rm.getmIdentifier())){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已是版本分支，不允许创建新版本");
+		}
+		
+		//2、判断版本号是否重复
+		String version = vvm.getLifeCycle().getVersion();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, uuid);
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String v = (String)map.get("version");
+				if(version.equals(v)){
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已存在此版本号");
+				}
+			}
+		}
+		
+		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resType);
+		Education education = changeModelToBean(resType, rm);
+		String newUuid = UUID.randomUUID().toString();
+		education.setIdentifier(newUuid);
+		education.setmIdentifier(uuid);
+		education.setVersion(version);
+		education.setStatus(vvm.getLifeCycle().getStatus());
+		education.setCreator(vvm.getLifeCycle().getCreator());
+		try {
+			education = (Education) resourceRepository.add(education);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+		
+		List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
+		EducationRelationModel erm = new EducationRelationModel();
+		erm.setResType(resType);
+		erm.setResourceTargetType(resType);
+		erm.setSource(uuid);
+		erm.setTarget(newUuid);
+		erm.setRelationType("VERSION");
+		erm.setTags(vvm.getRelations().get("tags"));
+		educationRelationModels.add(erm);
+		if(CommonServiceHelper.isQuestionDb(resType)){
+			educationRelationService4QuestionDB.createRelation(educationRelationModels, false);
+		}else{
+			educationRelationService.createRelation(educationRelationModels, false);
+		}
+		
+		ResourceViewModel resourceViewModel = BeanMapperUtils.beanMapper(education, ResourceViewModel.class);
+		return resourceViewModel;
+	}
 }
