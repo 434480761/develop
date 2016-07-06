@@ -28,6 +28,7 @@ import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
+import nd.esp.service.lifecycle.educommon.support.RelationType;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
@@ -962,17 +963,23 @@ public class NDResourceController {
                             LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
                             relation + "--relation格式错误");
                 }
+                
+                String resourceType = elements.get(0).trim();
+                String resourceUuid = elements.get(1).trim();
+                String relationType = elements.get(2).trim();
+                 
                 //判断源资源是否存在,stype + suuid
-                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
-                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
+                if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
+                    CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
                 }
                 //r_type的特殊处理
-                if(StringUtils.isEmpty(elements.get(2).trim())){
-                    elements.set(2, null);
+                if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){
+                    relationType = RelationType.ASSOCIATE.getName();
                 }
-                map.put("stype", elements.get(0).trim());
-                map.put("suuid", elements.get(1).trim());
-                map.put("rtype", elements.get(2));
+                
+                map.put("stype", resourceType);
+                map.put("suuid", resourceUuid);
+                map.put("rtype", relationType);
                 
                 relationsMap.add(map);
             }
