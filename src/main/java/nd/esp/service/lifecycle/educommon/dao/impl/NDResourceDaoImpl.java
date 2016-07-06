@@ -2447,6 +2447,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
 		BigInteger num = (BigInteger)query.getSingleResult();
 		return num.intValue();
 	}
+	
+	public List<Map<String,Object>> queryResourceByMid(String resType,String mid){
+		String sql = "select identifier,title,version from ndresource where primary_category='"+resType+"' and m_identifier = '"+mid+"' and enable = 1";
+		if(CommonServiceHelper.isQuestionDb(resType)){
+			return questionJdbcTemplate.queryForList(sql);
+		}
+		return defaultJdbcTemplate.queryForList(sql);
+	}
+	
 	//********************************通用资源删除DAO模块********************************\\
 //    @Override
 //    public void deleteRelationByChapters(String mid) {
