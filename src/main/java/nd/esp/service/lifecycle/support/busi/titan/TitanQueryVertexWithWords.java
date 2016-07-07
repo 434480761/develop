@@ -94,7 +94,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                                 String uniqueKey = TitanUtils.generateKey(scriptParamMap, "search_code");
                                 scriptBuffer.append(uniqueKey);
                                 scriptBuffer.append(").");
-                                scriptParamMap.put(uniqueKey, code);
+                                scriptParamMap.put(uniqueKey, code.trim());
                             }
                             /*if (likeInAndCodeList.size() > 0) {
                                 scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeInAndCodeList, scriptParamMap).replaceFirst(".", "")).append(".");
@@ -115,7 +115,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         String uniqueKey = TitanUtils.generateKey(scriptParamMap, "search_code");
                         scriptBuffer.append(uniqueKey);
                         scriptBuffer.append("),");
-                        scriptParamMap.put(uniqueKey, code);
+                        scriptParamMap.put(uniqueKey, code.trim());
                     }
 
 

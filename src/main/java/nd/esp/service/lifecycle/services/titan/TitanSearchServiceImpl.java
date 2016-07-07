@@ -365,9 +365,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     String[] codes = eqCondition.split(PropOperationConstant.OP_AND);
                     andSearchCode.add(Arrays.asList(codes));
                 } else if (eqCondition.contains("*")) {// contains * like
-                    likeSearchCode.add(eqCondition);
+                    likeSearchCode.add(eqCondition.trim());
                 } else {
-                    inSearchCode.add(eqCondition);
+                    inSearchCode.add(eqCondition.trim());
                 }
             }
             if (CollectionUtils.isNotEmpty(andSearchCode)) conditionMap.put(PropOperationConstant.OP_AND, andSearchCode);
