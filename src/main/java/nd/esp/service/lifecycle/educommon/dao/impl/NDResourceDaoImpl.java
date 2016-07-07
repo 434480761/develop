@@ -157,36 +157,48 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean haveSumSort = false;
         boolean haveSortNum = false;
         boolean haveVipLevel = false;
-        if(showVersion){
-        	sqlOrderBy = "ORDER BY ndr.m_identifier ASC,ndr.version ASC";
-        }else{
-        	if(CollectionUtils.isNotEmpty(orderMap)){
-                List<String> ordersql = new ArrayList<String>();
-                
-                for(String key : orderMap.keySet()){
-                    if(key.equals("size")){
-                        haveSizeSort = true;
+        if(CollectionUtils.isNotEmpty(orderMap)){
+            List<String> ordersql = new ArrayList<String>();
+            
+            for(String key : orderMap.keySet()){
+                if(key.equals("size")){
+                	if(!showVersion){
+                		haveSizeSort = true;
                         ordersql.add("ti." + key + " " + orderMap.get(key));
-                    }else if(key.equals("key_value")){
-                        haveSumSort = true;
+                	}
+                }else if(key.equals("key_value")){
+                	if(!showVersion){
+                		haveSumSort = true;
                         ordersql.add("rs." + key + " " + orderMap.get(key));
-                    }else if(key.equals("sort_num")){
-                    	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
-                    			&& dbName.equals(DbName.DEFAULT) && !reverse){
-                    		haveSortNum = true;
+                	}
+                }else if(key.equals("sort_num")){
+                	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
+                			&& dbName.equals(DbName.DEFAULT) && !reverse){
+                		if(!showVersion){
+                			haveSortNum = true;
                             ordersql.add("rer." + key + " " + orderMap.get(key));
-                    	}
-                    }else if(key.equals("taxOnCode")){//资源等级排序
-                    	haveVipLevel = true;
+                		}
+                	}
+                }else if(key.equals("taxOnCode")){//资源等级排序
+                	if(!showVersion){
+                		haveVipLevel = true;
                     	ordersql.add("rco." + key + " " + orderMap.get(key));
-    				}else{
-                        ordersql.add("ndr." + key + " " + orderMap.get(key));
-                    }
+                	}
+				}else{
+                    ordersql.add("ndr." + key + " " + orderMap.get(key));
                 }
-                
-                if(CollectionUtils.isNotEmpty(ordersql)){
-                    sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
-                }
+            }
+            
+            if(CollectionUtils.isNotEmpty(ordersql)){
+            	if(showVersion){
+            		 sqlOrderBy = "ORDER BY ndr.m_identifier ASC," + StringUtils.join(ordersql, ",");
+            	}else{
+            		sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
+            	}
+            }
+        }else{
+        	if(showVersion){
+            	sqlOrderBy = "ORDER BY ndr.m_identifier ASC,ndr.version ASC";
             }
         }
         
@@ -195,7 +207,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         String commonSelect = "";
         //判断是否有preview
         boolean isNeedPreview = isNeedPreview(resType);
-        commonSelect = "ndr.identifier AS identifier,ndr.m_identifier AS mid,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
+        commonSelect = "ndr.identifier AS identifier,ndr.m_identifier AS mIdentifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
                 + "ndr.code as code," + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
         //LC
@@ -374,6 +386,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
             // 通用属性
             resourceModel.setIdentifier(fullModel.getIdentifier());
+            resourceModel.setmIdentifier(fullModel.getmIdentifier());
             resourceModel.setTitle(fullModel.getTitle());
             resourceModel.setDescription(fullModel.getDescription());
             resourceModel.setLanguage(fullModel.getLanguage());

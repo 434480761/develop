@@ -14,7 +14,7 @@ public class FullModel {
     @Id
     private String identifier;
     
-    private String mid;
+    private String mIdentifier;
     private String title;
     private String description;
     private String language;
@@ -355,10 +355,10 @@ public class FullModel {
 	public void setStatistics_num(Double statistics_num) {
 		this.statistics_num = statistics_num;
 	}
-	public String getMid() {
-		return mid;
+	public String getmIdentifier() {
+		return mIdentifier;
 	}
-	public void setMid(String mid) {
-		this.mid = mid;
+	public void setmIdentifier(String mIdentifier) {
+		this.mIdentifier = mIdentifier;
 	}
 }
