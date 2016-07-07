@@ -179,6 +179,14 @@ public interface NDResourceDao {
      */
     public List<Map<String,Object>> queryResourceByMid(String resType,String mid);
     
+    /**
+     * 批量更新sql
+     * @param resType
+     * @param sqls
+     * @return
+     */
+    public void batchUpdateSql(String resType,String[] sqls);
+    
 //    /**
 //     * 删除章节相关的资源关系
 //     * <p>Create Time: 2016年1月28日   </p>

@@ -9,12 +9,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -1566,7 +1569,12 @@ public class NDResourceController {
     }
     
     @RequestMapping(value = "/{uuid}/newversion", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE },produces={MediaType.APPLICATION_JSON_VALUE})
-    public ResourceViewModel createNewVersion(@Validated(LifecycleDefault.class) @RequestBody VersionViewModel versionViewModel,BindingResult validResult,@PathVariable("res_type") String resourceType,@PathVariable String uuid){
+	public ResourceViewModel createNewVersion(
+			@Validated(LifecycleDefault.class) @RequestBody VersionViewModel versionViewModel,
+			BindingResult validResult,
+			@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid,
+			@AuthenticationPrincipal UserInfo userInfo) {
     	//1、参数校验
         ValidResultHelper.valid(validResult,
                 "LC/CREATE_RESOURCE_NEW_VERSION",
@@ -1575,19 +1583,51 @@ public class NDResourceController {
         
     	Map<String,List<String>> tagMap = versionViewModel.getRelations();
     	if(tagMap != null && tagMap.containsKey("tags") && tagMap.get("tags") != null && CollectionUtils.isNotEmpty(tagMap.get("tags"))){
-    		ResourceViewModel newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel);
+    		ResourceViewModel newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel,userInfo);
     		if (ResourceTypeSupport.isValidEsResourceType(resourceType)
     				&& StringUtils.isNotEmpty(newResource.getIdentifier())) {
     			esResourceOperation.asynAdd(new Resource(resourceType, newResource.getIdentifier()));
     		}
-    		offlineService.writeToCsAsync(resourceType, uuid);
+    		//由于tech_info数据没有拷贝，不异步上传离线文件
+//    		offlineService.writeToCsAsync(resourceType, newResource.getIdentifier());
     		return newResource;
     	}else{
     		//参数校验不通过
     		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "relations.tags不能为空");
     	}
     }
+    
+    @RequestMapping(value = "/{uuid}/version/check", method = RequestMethod.GET, produces={MediaType.APPLICATION_JSON_VALUE})
+	public Map<String, Map<String, Object>> versionCheck(
+			@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid) {
+    	return ndResourceService.versionCheck(resourceType, uuid);
+    }
 
+    @RequestMapping(value = "/{uuid}/release", method = RequestMethod.PUT, produces={MediaType.APPLICATION_JSON_VALUE})
+    public Map<String, Object> versionRelease(@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid,@RequestBody Map<String,String> paramMap){
+    	if(CollectionUtils.isNotEmpty(paramMap)){
+    		Iterator<Map.Entry<String,String>> it = paramMap.entrySet().iterator();
+    		if(it.hasNext()){
+    			Entry<String,String> entry = it.next();
+    			boolean flag = validateStatus(entry.getValue());
+    			if(!flag){
+    				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "status参数不正确！值："+entry.getValue());
+    			}
+    		}
+    		return ndResourceService.versionRelease(resourceType, uuid, paramMap);
+    	}
+    	return null;
+    }
+    
+    private boolean validateStatus(String status){
+    	String statuses = "CREATING|CREATED|EDITING|EDITED|TRANSCODE_WAITING|TRANSCODING|TRANSCODED|TRANSCODE_ERROR|AUDIT_WAITING|AUDITING|AUDITED|PUBLISH_WAITING|PUBLISHING|PUBLISHED|ONLINE|OFFLINE|AUDIT_REJECT|REMOVED|CREATE|INIT|TRANSCODE|AUDIT|REJECT";
+    	String[] arrays = statuses.split("\\|");
+    	List<String> list = Arrays.asList(arrays);
+    	return list.contains(status);
+    }
+    
     private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
 
 

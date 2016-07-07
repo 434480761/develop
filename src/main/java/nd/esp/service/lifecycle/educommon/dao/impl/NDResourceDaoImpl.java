@@ -2450,11 +2450,22 @@ public class NDResourceDaoImpl implements NDResourceDao{
 	}
 	
 	public List<Map<String,Object>> queryResourceByMid(String resType,String mid){
-		String sql = "select identifier,title,version from ndresource where primary_category='"+resType+"' and m_identifier = '"+mid+"' and enable = 1";
+		String sql = "select nd.identifier,nd.title,nd.version,nd.create_time,nd.estatus,c.message from ndresource nd left join contributes c on nd.identifier = c.resource and c.title = 'version' where nd.primary_category='"
+				+ resType
+				+ "' and nd.m_identifier = '"
+				+ mid
+				+ "' and nd.enable = 1";
 		if(CommonServiceHelper.isQuestionDb(resType)){
 			return questionJdbcTemplate.queryForList(sql);
 		}
 		return defaultJdbcTemplate.queryForList(sql);
+	}
+	
+	public void batchUpdateSql(String resType,String[] sqls){
+		if(CommonServiceHelper.isQuestionDb(resType)){
+			questionJdbcTemplate.batchUpdate(sqls);
+		}
+		defaultJdbcTemplate.batchUpdate(sqls);
 	}
 	
 	//********************************通用资源删除DAO模块********************************\\

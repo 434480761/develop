@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.nd.gaea.rest.security.authens.UserInfo;
+
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
@@ -248,6 +250,22 @@ public interface NDResourceService {
      * @param vvm
      * @return
      */
-    public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm);
+    public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo);
     
+    /**
+     * 版本检查
+     * @param resType
+     * @param uuid
+     * @return
+     */
+    public Map<String, Map<String, Object>> versionCheck(String resType,String uuid);
+    
+    /**
+     * 版本发布接口
+     * @param resType
+     * @param uuid
+     * @param paramMap
+     * @return
+     */
+    public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap);
 }

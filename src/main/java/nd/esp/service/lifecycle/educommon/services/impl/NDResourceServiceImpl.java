@@ -26,6 +26,7 @@ import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -35,6 +36,7 @@ import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.support.RelationType;
 import nd.esp.service.lifecycle.educommon.vos.ResEducationalViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResLifeCycleViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResRightViewModel;
@@ -64,6 +66,7 @@ import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
+import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
@@ -109,6 +112,8 @@ import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
 import com.nd.gaea.client.WafResourceAccessException;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
 
 @Service
 public class NDResourceServiceImpl implements NDResourceService{
@@ -195,6 +200,14 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Autowired
     private NotifyReportService nds;
+    
+    @Autowired()
+    @Qualifier("lifecycleServiceV06")
+    private LifecycleServiceV06 lifecycleService;
+    
+    @Autowired()
+    @Qualifier("lifecycleService4QtiV06")
+    private LifecycleServiceV06 lifecycleService4Qti;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -2714,7 +2727,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm) {
+	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
 		//1、判断是否可以创建版本
 		if(rm.getmIdentifier() != null && !rm.getIdentifier().equals(rm.getmIdentifier())){
@@ -2733,6 +2746,9 @@ public class NDResourceServiceImpl implements NDResourceService{
 			}
 		}
 		
+		//3、创建新资源
+		long time = System.currentTimeMillis();
+		Timestamp ts = new Timestamp(time);
 		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resType);
 		Education education = changeModelToBean(resType, rm);
 		String newUuid = UUID.randomUUID().toString();
@@ -2741,19 +2757,22 @@ public class NDResourceServiceImpl implements NDResourceService{
 		education.setVersion(version);
 		education.setStatus(vvm.getLifeCycle().getStatus());
 		education.setCreator(vvm.getLifeCycle().getCreator());
+		education.setCreateTime(ts);
+		education.setLastUpdate(ts);
 		try {
 			education = (Education) resourceRepository.add(education);
 		} catch (EspStoreException e) {
 			e.printStackTrace();
 		}
 		
+		//4、建立资源关系
 		List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
 		EducationRelationModel erm = new EducationRelationModel();
 		erm.setResType(resType);
 		erm.setResourceTargetType(resType);
 		erm.setSource(uuid);
 		erm.setTarget(newUuid);
-		erm.setRelationType("VERSION");
+		erm.setRelationType(RelationType.VERSION.getName());
 		erm.setTags(vvm.getRelations().get("tags"));
 		educationRelationModels.add(erm);
 		if(CommonServiceHelper.isQuestionDb(resType)){
@@ -2762,7 +2781,112 @@ public class NDResourceServiceImpl implements NDResourceService{
 			educationRelationService.createRelation(educationRelationModels, false);
 		}
 		
-		ResourceViewModel resourceViewModel = BeanMapperUtils.beanMapper(education, ResourceViewModel.class);
+		//5、创建资源生命周期
+        LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
+        ResContributeModel contributeModel = new ResContributeModel();
+        contributeModel.setLifecycleStatus(vvm.getLifeCycle().getStatus());
+        contributeModel.setMessage("新版本创建，来源id:"+uuid);
+        contributeModel.setTitle("version");
+        if(userInfo != null){
+        	try {
+        		contributeModel.setTargetType(userInfo.getUserType());
+            	contributeModel.setTargetId(userInfo.getUserId());
+            	contributeModel.setTargetName(userInfo.getUserName());
+            	
+            	List<UserCenterRoleDetails> userRoleList = userInfo.getUserRoles();
+            	if(CollectionUtils.isNotEmpty(userRoleList)){
+            		UserCenterRoleDetails ur = userRoleList.get(0);
+            		contributeModel.setRoleId(ur.getRoleId());
+            		contributeModel.setRoleName(ur.getRoleName());
+            	}
+			} catch (Exception e) {
+				LOG.error("获取UC用户信息出错",e);
+			}
+        	
+        }
+        service.addLifecycleStep(resType, newUuid, contributeModel);
+        ResourceModel resourceModel = new ResourceModel();
+        updateBasicInModel(resourceModel,education);
+		ResourceViewModel resourceViewModel = BeanMapperUtils.beanMapper(resourceModel, ResourceViewModel.class);
 		return resourceViewModel;
+	}
+	
+	
+	public Map<String, Map<String, Object>> versionCheck(String resType,String uuid){
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		String mid = rm.getmIdentifier();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, mid);
+		Map<String, Map<String, Object>> returnMap = new HashMap<String, Map<String,Object>>();
+		
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String version = (String)map.get("version");
+				String identifier = (String)map.get("identifier");
+				Long createTime = (Long)map.get("create_time");
+				String content = (String)map.get("message");
+				Map<String,Object> m = new HashMap<String, Object>();
+				m.put("identifier", identifier);
+				m.put("createTime", new Date(createTime));
+				m.put("content", content);
+				if(StringUtils.isEmpty(content)){
+					m.put("content", "");
+				}
+				
+				returnMap.put(version, m);
+			}
+		}
+		return returnMap;
+	}
+	
+	public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap){
+		List<String> sqls = new ArrayList<String>();
+
+		
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		String mid = rm.getmIdentifier();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, mid);
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String identifier = (String)map.get("identifier");
+				String status = (String)map.get("estatus");
+				if(identifier.equals(uuid)){
+					if(!"ONLINE".equals(status)){
+						String s1 = updateStatusSql(resType, uuid, "ONLINE");
+						sqls.add(s1);
+					}
+					continue;
+				}
+				
+				if(paramMap.containsKey(identifier)){
+					if(status != null && !status.equals(paramMap.get(identifier))){
+						String s = updateStatusSql(resType, identifier, paramMap.get(identifier));
+						sqls.add(s);
+					}
+				}else{
+					if(status != null && status.equals("ONLINE")){
+						String s = updateStatusSql(resType, identifier, "OFFLINE");
+						sqls.add(s);
+					}
+				}
+			}
+		}
+		if(CollectionUtils.isNotEmpty(sqls)){
+			String[] a = new String[]{};
+			ndResourceDao.batchUpdateSql(resType,sqls.toArray(a));
+		}
+		
+		List<Map<String,Object>> list2 = ndResourceDao.queryResourceByMid(resType, mid);
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		if(CollectionUtils.isNotEmpty(list2)){
+			for (Map<String, Object> map : list2) {
+				returnMap.put((String)map.get("identifier"), (String)map.get("estatus"));
+			}
+			return returnMap;
+		}
+		return null;
+	}
+	
+	private String updateStatusSql(String resType,String uuid,String status){
+		return "update ndresource set estatus='"+status+"' where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
 	}
 }
