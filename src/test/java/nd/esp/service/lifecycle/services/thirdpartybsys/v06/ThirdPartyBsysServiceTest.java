@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.util.List;
-
 /**
  * <p>Title: Service层ThirdPartyBsysService测试  </p>
  * <p>Description: ThirdPartyBsysServiceTest </p>
@@ -27,8 +25,6 @@ public class ThirdPartyBsysServiceTest extends BaseControllerConfig {
     
     private final static Logger LOG = LoggerFactory.getLogger(ThirdPartyBsysServiceTest.class);
     
-    private static List<String> coverageList;
-    
     @Autowired
     @Qualifier("ThirdPartyBsysServiceImpl")
     private ThirdPartyBsysService thirdPartyBsysService;
@@ -41,7 +37,7 @@ public class ThirdPartyBsysServiceTest extends BaseControllerConfig {
      */
     @Test
     public void test001checkThirdPartyBsys() throws Exception {
-        ////例1：userId 为空 【期望结果：通过】
+        //例1：userId 为空 【期望结果：通过】
         if(!this.thirdPartyBsysService.checkThirdPartyBsys(null)) {
             LOG.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysServiceTest", "test001checkThirdPartyBsys",
                     "pass", "test001checkThirdPartyBsys test pass"});
@@ -51,7 +47,7 @@ public class ThirdPartyBsysServiceTest extends BaseControllerConfig {
 
         //例2：userId 不为空 值为不存在 【期望结果：通过】
         if(!this.thirdPartyBsysService.checkThirdPartyBsys("-1")){
-            LOG.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysServiceTest", "test001checkThirdPartyBsys",
+            LOG.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysServiceTest", "test001checkThirdPartyBsys2",
                     "pass", "test001checkThirdPartyBsys test pass"});
         } else {
             throw new TestException();
@@ -59,7 +55,7 @@ public class ThirdPartyBsysServiceTest extends BaseControllerConfig {
 
         //例3：userId 不为空 值为存在 【期望结果：通过】
         if(this.thirdPartyBsysService.checkThirdPartyBsys("2080538299")){
-            LOG.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysServiceTest", "test001checkThirdPartyBsys",
+            LOG.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysServiceTest", "test001checkThirdPartyBsys3",
                     "pass", "test001checkThirdPartyBsys test pass"});
         } else {
             throw new TestException();

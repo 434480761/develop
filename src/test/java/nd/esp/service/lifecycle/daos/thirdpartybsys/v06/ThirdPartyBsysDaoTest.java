@@ -47,7 +47,7 @@ public class ThirdPartyBsysDaoTest extends BaseControllerConfig{
     	//例2：userId 不为空 值为不存在 【期望结果：通过】
 		ThirdPartyBsysModel model2 = this.thirdPartyBsysDao.findThirdPartyBsys("-1");
     	if(model2 == null){
-            logger.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysDaoTest", "Test001FindThirdPartyBsys", "pass", "Test001FindThirdPartyBsys test pass"});
+            logger.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysDaoTest", "Test001FindThirdPartyBsys2", "pass", "Test001FindThirdPartyBsys test pass"});
     	} else {
 			throw new TestException();
 		}
@@ -55,7 +55,7 @@ public class ThirdPartyBsysDaoTest extends BaseControllerConfig{
     	//例2：userId 不为空 值为存在 【期望结果：通过】
 		ThirdPartyBsysModel model3 = this.thirdPartyBsysDao.findThirdPartyBsys(userId);
     	if(model3 != null){
-            logger.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysDaoTest", "Test001FindThirdPartyBsys", "pass", "Test001FindThirdPartyBsys test pass"});
+            logger.info("class:{}, method:{}, status:{}, msg:{}", new Object[] {"ThirdPartyBsysDaoTest", "Test001FindThirdPartyBsys3", "pass", "Test001FindThirdPartyBsys test pass"});
     	} else {
 			throw new TestException();
 		}

@@ -43,6 +43,6 @@ public class ThirdPartyBsysDaoImpl implements ThirdPartyBsysDao {
 		StringBuffer sql = new StringBuffer();
 		sql.append(" and user_id = ? limit 1");
 		args.add(userId);
-		return   this.baseDao.queryOne(sql.toString(), args.toArray(), null, ThirdPartyBsysModel.class, TABLE_POSTFIX);
+		return  this.baseDao.queryOne(sql.toString(), args.toArray(), null, ThirdPartyBsysModel.class, TABLE_POSTFIX);
 	}
 }

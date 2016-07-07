@@ -198,9 +198,7 @@ public class UserRoleController {
 		//参数roleId效验
 		AssertUtils.isEmpty(roleId, "role_id");
 		ucRoleClient.checkValidRoleId(roleId, "role_id");
-		// 检查limit参数
-		ParamCheckUtil.checkLimit(limit);// 有抛出异常
-		// 分解数据 获取limit跟offset
+		// 检查limit参数 and 分解数据 获取limit跟offset(有抛出异常)
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);
 		//根据角色id获取角色名
 		String roleName = ucClient.getRoleName(roleId);
