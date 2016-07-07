@@ -48,11 +48,9 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             if(id != null){
                 return model;
             }
+            //增加冗余字段
+            updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
         }
-
-
-        updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
-
         return null;
     }
 
@@ -71,6 +69,8 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
                 model);
         titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
+
+        //增加冗余字段
         updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
         return model;
     }

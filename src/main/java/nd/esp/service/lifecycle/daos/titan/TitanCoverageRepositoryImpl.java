@@ -39,11 +39,14 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
 
+	/**
+	 * 添加覆盖范围：1、添加覆盖范围；2、添加冗余数据
+	 * */
 	@Override
 	public ResCoverage add(ResCoverage resCoverage) {
 
 		addCoverage(resCoverage);
-
+		//添加冗余数据
 		addResourceCoverage(resCoverage);
 
 		return resCoverage;
@@ -88,6 +91,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
 	}
 
+	/**
+	 * 批量增加覆盖范围，支持对多个资源的同时增加
+	 * */
 	@Override
 	public List<ResCoverage> batchAdd(List<ResCoverage> resCoverages) {
 		List<ResCoverage> list = new ArrayList<>();
@@ -98,6 +104,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			sourceMap.put(resCoverage.getResource(),resCoverage.getResType());
 		}
 
+		//增加冗余数据
 		for(String identifier : sourceMap.keySet()){
 			updateResourceCoverage(sourceMap.get(identifier), identifier);
 		}
@@ -111,10 +118,14 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	@Override
 	public ResCoverage update(ResCoverage resCoverage) {
 		updateCoverage(resCoverage);
+		//增加冗余数据
 		updateResourceCoverage(resCoverage.getResType(), resCoverage.getResource());
 		return null;
 	}
 
+	/**
+	 * 批量更新覆盖范围：1、支持对多个资源的同时更新
+	 * */
 	@Override
 	public List<ResCoverage> batchUpdate(List<ResCoverage> resCoverageSet) {
 		Map<String, String> sourceMap = new HashMap<>();
@@ -122,6 +133,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			updateCoverage(resCoverage);
 			sourceMap.put(resCoverage.getResource(),resCoverage.getResType());
 		}
+		//增加冗余数据
 		for(String identifier : sourceMap.keySet()){
 			updateResourceCoverage(sourceMap.get(identifier), identifier);
 		}

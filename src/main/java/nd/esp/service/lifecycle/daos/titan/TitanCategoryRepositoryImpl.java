@@ -19,29 +19,33 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
 
+	/**
+	 * 1、添加维度数据；2、添加资源冗余数据
+	 * */
 	@Override
 	public ResourceCategory add(ResourceCategory resourceCategory) {
 		if(resourceCategory == null){
 			return null;
 		}
+		//添加维度数据
 		ResourceCategory rc = addResourceCategory(resourceCategory);
 		addPath(rc.getResource(), rc.getPrimaryCategory(), rc.getTaxonpath());
 
-
-		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier).properties('search_coverage').drop()");
-		Map<String, Object> param = new HashMap<>();
-		param.put("primaryCategory" ,resourceCategory.getPrimaryCategory());
-		param.put("identifier" ,resourceCategory.getResource());
-
+		//更新资源的冗余数据search_path\search_code
 		List<String> category = new ArrayList<>();
 		category.add(rc.getTaxoncode());
-
 		List<String> pathList = new ArrayList<>();
 		pathList.add(rc.getTaxonpath());
 		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
 
+	/**
+	 * 批添加维度数据：<br>
+	 * 		1、只支持对同一个资源的维度数据进行批量增加，多个资源批量增加会出现异常<br>
+	 *     	2、批量增加前会先删除历史数据<br>
+	 *     	3、更新资源的冗余数据
+	 * */
 	@Override
 	public List<ResourceCategory> batchAdd(
 			List<ResourceCategory> resourceCategories) {
