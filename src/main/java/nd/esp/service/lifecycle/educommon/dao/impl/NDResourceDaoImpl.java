@@ -2176,7 +2176,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         	int i = 1;
         	for(String tag : tags){
         		if(StringUtils.hasText(tag)){
-        			params.put(paramHead + "tags" + i, "\"" + tag + "\"");
+        			params.put(paramHead + "tag" + i, "%\"" + tag + "\"%");
         			i++;
         		}
         	}
