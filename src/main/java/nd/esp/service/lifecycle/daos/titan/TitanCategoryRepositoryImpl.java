@@ -27,15 +27,18 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		ResourceCategory rc = addResourceCategory(resourceCategory);
 		addPath(rc.getResource(), rc.getPrimaryCategory(), rc.getTaxonpath());
 
-		List<String> categoryList = new ArrayList<>();
-		categoryList.add(resourceCategory.getTaxoncode());
-		titanCommonRepository.addSetProperty(resourceCategory.getResource(),
-		resourceCategory.getPrimaryCategory(),"search_code",categoryList);
+
+		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier).properties('search_coverage').drop()");
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,resourceCategory.getPrimaryCategory());
+		param.put("identifier" ,resourceCategory.getResource());
+
+		List<String> category = new ArrayList<>();
+		category.add(rc.getTaxoncode());
 
 		List<String> pathList = new ArrayList<>();
 		pathList.add(rc.getTaxonpath());
-		titanCommonRepository.addSetProperty(resourceCategory.getResource(), resourceCategory.getPrimaryCategory(), "search_path",pathList);
-
+		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
 
@@ -65,11 +68,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			categoryList.add(resourceCategory.getTaxoncode());
 		}
 
-
-		titanCommonRepository.addSetProperty(category.getResource(),
-				category.getPrimaryCategory(),"search_code",categoryList);
-		titanCommonRepository.addSetProperty(category.getResource(), category.getPrimaryCategory(), "search_path",pathList);
-
+		updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
 		return list;
 
 	}
@@ -225,6 +224,17 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 		}
 		return taxoncodeId;
+	}
+
+	private void updateResourceProperty(List<String> pathList , List<String> codeList , String primaryCategory, String identifier){
+		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,primaryCategory);
+		param.put("identifier" ,identifier);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeList);
+
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathList);
+		titanCommonRepository.executeScript(script.toString(), param);
 	}
 
 }

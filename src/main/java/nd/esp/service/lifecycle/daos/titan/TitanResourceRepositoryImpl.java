@@ -49,6 +49,10 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
                 return model;
             }
         }
+
+
+        updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
+
         return null;
     }
 
@@ -67,9 +71,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
                 model);
         titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
-
         updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
-
         return model;
     }
 
@@ -132,13 +134,16 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             searchCoverages.addAll(getAllResourceCoverage(resCoverage, status));
         }
 
-        String deleteScript = "g.V()has(primaryCategory,'identifier',identifier).properties('search_coverage').drop()";
+        StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).properties('search_coverage').drop();");
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory" ,primaryCategory);
         param.put("identifier" ,identifier);
-        titanCommonRepository.executeScript(deleteScript, param);
+        titanCommonRepository.executeScript(script.toString(), param);
 
-        titanCommonRepository.addSetProperty(identifier, primaryCategory ,"search_coverage", searchCoverages);
+
+        script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
+        TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);
+        titanCommonRepository.executeScript(script.toString(), param);
     }
 
     private List<String> getAllResourceCoverage(ResCoverage resCoverage, String status){

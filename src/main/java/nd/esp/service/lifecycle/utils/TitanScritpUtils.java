@@ -152,6 +152,17 @@ public class TitanScritpUtils {
         return graphParams;
     }
 
+    public static void getSetScriptAndParam(StringBuffer scriptBuffer,Map<String, Object> params,
+                                            String fieldName, List<String> values){
+        int index = 0;
+        for (String value : values){
+            String paramKey = fieldName+index;
+            index ++ ;
+            scriptBuffer.append(".property(set,'").append(fieldName).append("',").append(paramKey).append(")");
+            params.put(paramKey , value);
+        }
+    }
+
     static private void getAllDeclareField(Class<?> className,
                                            List<Field> fields) {
         if (className == null) {

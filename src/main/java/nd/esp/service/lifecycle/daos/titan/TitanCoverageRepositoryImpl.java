@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
+import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -233,13 +234,17 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			searchCoverages.addAll(getAllResourceCoverage(resCoverage, education.getStatus()));
 		}
 
-		String deleteScript = "g.V().has(primaryCategory,'identifier',identifier).properties('search_coverage').drop()";
+		String deleteScript = "g.V().has(primaryCategory,'identifier',identifier).properties('search_coverage').drop();";
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory" ,primaryCategory);
 		param.put("identifier" ,identifier);
 		titanCommonRepository.executeScript(deleteScript, param);
 
-		titanCommonRepository.addSetProperty(identifier, primaryCategory ,"search_coverage", searchCoverages);
+		StringBuffer addScript = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
+		TitanScritpUtils.getSetScriptAndParam(addScript, param,"search_coverage",searchCoverages);
+
+		titanCommonRepository.executeScript(addScript.toString(), param);
+
 	}
 
 	private void addResourceCoverage(ResCoverage resCoverage){
@@ -248,7 +253,13 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 		List<String> searchCoverages = getAllResourceCoverage(resCoverage, education.getStatus());
 
-		titanCommonRepository.addSetProperty(resCoverage.getResource() ,resCoverage.getResType() ,"search_coverage",searchCoverages);
+		StringBuffer addScript = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,resCoverage.getResType());
+		param.put("identifier" ,resCoverage.getResource());
+		TitanScritpUtils.getSetScriptAndParam(addScript, param,"search_coverage",searchCoverages);
+
+		titanCommonRepository.executeScript(addScript.toString(), param);
 	}
 
 	private List<String> getAllResourceCoverage(ResCoverage resCoverage, String status){
