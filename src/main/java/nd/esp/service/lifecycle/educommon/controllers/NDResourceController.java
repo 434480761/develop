@@ -319,9 +319,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
+            @RequestParam(required=false,value="tags") List<String> tags,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags);
     }
 	
 	/**
@@ -374,7 +375,7 @@ public class NDResourceController {
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, null, coverages, props, orderBy, null, limit,
-				false, !isAll, "false", printable, printableKey, null,null,false);
+				false, !isAll, "false", printable, printableKey, null,null,false,null);
 	}
 	
 	/**
@@ -417,9 +418,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
+            @RequestParam(required=false,value="tags") List<String> tags,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags);
     }
     
     /**
@@ -465,9 +467,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
+            @RequestParam(required=false,value="tags") List<String> tags,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags);
     }
     
     /**
@@ -524,7 +527,7 @@ public class NDResourceController {
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus) {
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags) {
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1 
                 && coverages.iterator().next().equals(CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE)){
@@ -586,7 +589,7 @@ public class NDResourceController {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         if(isByDB){
         	if(StaticDatas.QUERY_BY_ES_FIRST && 
-        			canQueryByEla(resType, relationsMap, orderMap, words, coveragesList, isNotManagement,forceStatus)){//数据库走ES查询判断
+        			canQueryByEla(resType, relationsMap, orderMap, words, coveragesList, isNotManagement,forceStatus,tags)){//数据库走ES查询判断
         		try {
         			Map<String, Object> changeMap = changeKey(propsMap, orderMap, false);
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
@@ -599,11 +602,11 @@ public class NDResourceController {
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
         			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
 					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus);
+	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags);
 				}
         	}else{
         		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus);
+                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags);
         	}
         }else{
             rListViewModel = 
@@ -637,7 +640,7 @@ public class NDResourceController {
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,
     		Map<String, String>orderMap, String words, List<String> coveragesList, boolean isNotManagement,
-    		boolean forceStatus){
+    		boolean forceStatus,List<String> tags){
 		boolean haveUserCoverage = false;
     	if(CollectionUtils.isNotEmpty(coveragesList)){
 			for(String coverage : coveragesList){
@@ -652,7 +655,8 @@ public class NDResourceController {
     	
     	if(isNotManagement &&
     	   !forceStatus &&
-    	   !haveUserCoverage && 		
+    	   !haveUserCoverage && 
+    	   CollectionUtils.isEmpty(tags) &&
 		   !resType.equals(Constant.RESTYPE_EDURESOURCE) &&
 		   CollectionUtils.isEmpty(relations) &&
 		   StringUtils.isEmpty(words) && 

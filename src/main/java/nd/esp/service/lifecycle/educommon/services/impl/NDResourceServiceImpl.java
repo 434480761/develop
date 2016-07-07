@@ -427,21 +427,21 @@ public class NDResourceServiceImpl implements NDResourceService{
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus) {
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags) {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         rListViewModel.setLimit(limit);
         
         //判断使用IN还是EXISTS
-        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus);
+        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,tags);
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -502,6 +502,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private String statisticsType;
         private String statisticsPlatform;
         private boolean forceStatus;
+        private List<String> tags;
         
         //返回值
         private Long total;
@@ -522,7 +523,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus){
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags){
             this.isCount = isCount;
             this.resType = resType;
             this.resCodes = resCodes;
@@ -543,14 +544,15 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.statisticsType = statisticsType;
             this.statisticsPlatform = statisticsPlatform;
             this.forceStatus = forceStatus;
+            this.tags = tags;
         }
         
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus,tags);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags);
             }
             
             return this;
