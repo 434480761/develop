@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.services.thirdpartybsys.v06;
+package nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06;
 
 /**
  * <p>Title: ThirdPartyBsysService  </p>
@@ -15,6 +15,6 @@ public interface ThirdPartyBsysService {
      * @return
      * @author lanyl
      */
-    boolean checkThirdPartyBsysList(String userId);
+    boolean checkThirdPartyBsys(String userId);
 
 }

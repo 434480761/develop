@@ -1,8 +1,8 @@
-package nd.esp.service.lifecycle.services.thirdpartybsys.v06.impl;
+package nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.impl;
 
-import nd.esp.service.lifecycle.daos.thirdpartybsys.v06.ThirdPartyBsysDao;
+import nd.esp.service.lifecycle.daos.thirdpartybsys.v06.v06.ThirdPartyBsysDao;
 import nd.esp.service.lifecycle.models.ThirdPartyBsysModel;
-import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.ThirdPartyBsysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class ThirdPartyBsysServiceImpl implements ThirdPartyBsysService {
 	 * @return
 	 * @author lanyl
 	 */
-	public boolean checkThirdPartyBsysList(String userId) {
+	public boolean checkThirdPartyBsys(String userId) {
 		ThirdPartyBsysModel model = this.thirdPartyBsysDao.findThirdPartyBsys(userId);
 		if(model != null){
 			return true;

@@ -7,7 +7,7 @@ import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
 import com.nd.gaea.rest.security.authens.UserInfo;
 import com.nd.gaea.rest.security.services.WafUserDetailsService;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
-import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -75,7 +75,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 					//BearerToken用户 当做超级管理员（superadmin）处理
 					if(ucRoleClient.checkBearerTokenUser(authentication)){
 						//BearerToken用户 是否存在白名单中 存在返回true 不存在拦截
-						if(thirdPartyBsysService.checkThirdPartyBsysList(userInfo.getUserId())){
+						if(thirdPartyBsysService.checkThirdPartyBsys(userInfo.getUserId())){
 							return true;
 						}else {
 							throw new LifeCircleException(HttpStatus.FORBIDDEN,

@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.daos.thirdpartybsys.v06;
+package nd.esp.service.lifecycle.daos.thirdpartybsys.v06.v06;
 
 import nd.esp.service.lifecycle.models.ThirdPartyBsysModel;
 

@@ -6,7 +6,7 @@ import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
 import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
-import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -313,7 +313,7 @@ public class UserRoleController {
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
 			//判断是否是bearer_token用户
 			if(RoleEnum.BEARERTOKEN.getValue().equals(userCenterRoleDetails.getRoleName())){
-				if(thirdPartyBsysService.checkThirdPartyBsysList(userInfo.getUserId())){
+				if(thirdPartyBsysService.checkThirdPartyBsys(userInfo.getUserId())){
 					//bearer_token用户存在白名单中，继续下一步
 					isThirdBearerUser = true;
 					break;
