@@ -136,14 +136,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
             boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
-            String statisticsType,String statisticsPlatform,boolean forceStatus) {
+            String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>();
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey, orderMap,statisticsType, statisticsPlatform,forceStatus,querySqls, params);
+        		printable, printableKey, orderMap,statisticsType, statisticsPlatform,forceStatus,showVersion,querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -162,27 +162,43 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
             for(String key : orderMap.keySet()){
                 if(key.equals("size")){
-                    haveSizeSort = true;
-                    ordersql.add("ti." + key + " " + orderMap.get(key));
+                	if(!showVersion){
+                		haveSizeSort = true;
+                        ordersql.add("ti." + key + " " + orderMap.get(key));
+                	}
                 }else if(key.equals("key_value")){
-                    haveSumSort = true;
-                    ordersql.add("rs." + key + " " + orderMap.get(key));
+                	if(!showVersion){
+                		haveSumSort = true;
+                        ordersql.add("rs." + key + " " + orderMap.get(key));
+                	}
                 }else if(key.equals("sort_num")){
                 	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
                 			&& dbName.equals(DbName.DEFAULT) && !reverse){
-                		haveSortNum = true;
-                        ordersql.add("rer." + key + " " + orderMap.get(key));
+                		if(!showVersion){
+                			haveSortNum = true;
+                            ordersql.add("rer." + key + " " + orderMap.get(key));
+                		}
                 	}
                 }else if(key.equals("taxOnCode")){//资源等级排序
-                	haveVipLevel = true;
-                	ordersql.add("rco." + key + " " + orderMap.get(key));
+                	if(!showVersion){
+                		haveVipLevel = true;
+                    	ordersql.add("rco." + key + " " + orderMap.get(key));
+                	}
 				}else{
                     ordersql.add("ndr." + key + " " + orderMap.get(key));
                 }
             }
             
             if(CollectionUtils.isNotEmpty(ordersql)){
-                sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
+            	if(showVersion){
+            		 sqlOrderBy = "ORDER BY ndr.m_identifier ASC," + StringUtils.join(ordersql, ",");
+            	}else{
+            		sqlOrderBy = "ORDER BY " + StringUtils.join(ordersql, ",");
+            	}
+            }
+        }else{
+        	if(showVersion){
+            	sqlOrderBy = "ORDER BY ndr.m_identifier ASC,ndr.version ASC";
             }
         }
         
@@ -191,7 +207,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         String commonSelect = "";
         //判断是否有preview
         boolean isNeedPreview = isNeedPreview(resType);
-        commonSelect = "ndr.identifier AS identifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
+        commonSelect = "ndr.identifier AS identifier,ndr.m_identifier AS mIdentifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
                 + "ndr.code as code," + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
         //LC
@@ -370,6 +386,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
             // 通用属性
             resourceModel.setIdentifier(fullModel.getIdentifier());
+            resourceModel.setmIdentifier(fullModel.getmIdentifier());
             resourceModel.setTitle(fullModel.getTitle());
             resourceModel.setDescription(fullModel.getDescription());
             resourceModel.setLanguage(fullModel.getLanguage());
@@ -640,14 +657,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
     public long commomQueryCount(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, String limit, boolean isNotManagement, boolean reverse, boolean useIn,
-            Boolean printable, String printableKey,boolean forceStatus) {
+            Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey,null,null,null,forceStatus, querySqls, params);
+        		printable, printableKey,null,null,null,forceStatus,showVersion, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -684,7 +701,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
-        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null,null, null,null,false, querySqls, params);
+        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null,null, null,null,false,false, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
     	
@@ -796,12 +813,12 @@ public class NDResourceDaoImpl implements NDResourceDao{
      */
     public boolean judgeUseInOrExists(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
-            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,boolean forceStatus) {
+            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
         //返回值
         boolean useIn = false;
         
         //查询上次total值--start
-        Map<String, Object> map4count = getCommomQueryCountSql(resType,resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus);
+        Map<String, Object> map4count = getCommomQueryCountSql(resType,resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,showVersion);
         int lastCount = getPreSqlCount((String)map4count.get("sql"), (Map<String,Object>)map4count.get("params"));
         //查询上次total值--end
         
@@ -852,14 +869,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private Map<String, Object> getCommomQueryCountSql(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,
-            boolean forceStatus) {
+            boolean forceStatus,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, true,
-        		printable, printableKey,null,null,null,forceStatus, querySqls, params);
+        		printable, printableKey,null,null,null,forceStatus, showVersion, querySqls, params);
         boolean onlyOneType = (boolean)map.get("onlyOneType");
         
         //最终sql
@@ -890,7 +907,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement,boolean reverse,boolean useIn, Boolean printable, String printableKey,
-            Map<String, String> orderMap, String statisticsType, String statisticsPlatform,boolean forceStatus,
+            Map<String, String> orderMap, String statisticsType, String statisticsPlatform,boolean forceStatus,boolean showVersion,
             List<String> querySqls,Map<String,Object> params){
         //判断是否需要交集
         Map<String,Object> dealCategoriesMap = dealAndCategories(categories);
@@ -918,7 +935,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
             // 查询的sql
             querySql = completeQuerySql(isCount, type, resTypes, noAndcategories, andCategories, categoryExclude, relations, coverages, propsMap,
-                    words, isNotManagement, reverse, paramHead, useIn, onlyOneType, printable, printableKey,forceStatus);
+                    words, isNotManagement, reverse, paramHead, useIn, onlyOneType, printable, printableKey,forceStatus,showVersion);
             querySqls.add(querySql);
 
             // 参数处理
@@ -1045,7 +1062,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, String words, boolean isNotManagement, boolean reverse,
             String paramHead, boolean useIn, boolean onlyOneType,
-            Boolean printable, String printableKey,boolean forceStatus) {
+            Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
         String sqlSelect = "SELECT a.identifier";
         if(isCount && onlyOneType){
             sqlSelect = "SELECT COUNT(DISTINCT a.identifier)";
@@ -1053,7 +1070,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
         //sql的sql的FROM,JOIN,ON  WhERE ORDER BY
         String querySqlCondition = commonQuerySql(isCount, resType, resTypes, categories, andCategories, categoryExclude, 
-        		relations, coverages, propsMap, words, isNotManagement, reverse, paramHead,useIn,onlyOneType,printable,printableKey,forceStatus);
+        		relations, coverages, propsMap, words, isNotManagement, reverse, paramHead,useIn,onlyOneType,printable,printableKey,forceStatus,showVersion);
 
         //查询的sql
         String querySql = sqlSelect + " " + querySqlCondition;
@@ -1073,7 +1090,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private String commonQuerySql(Boolean isCount, String resType, List<String> resTypes, Set<String> categories, List<List<String>> andCategories,
             Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, boolean reverse, String paramHead, boolean useIn, boolean onlyOneType,
-            Boolean printable, String printableKey, boolean forceStatus) {
+            Boolean printable, String printableKey, boolean forceStatus, boolean showVersion) {
         //ndresource表
         String tableName = "ndresource a";
         
@@ -1090,11 +1107,18 @@ public class NDResourceDaoImpl implements NDResourceDao{
                 	if(!reverse && !CommonServiceHelper.isQuestionDb(relation.get("stype"))){//查默认库,跨库
                 		List<String> questionIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), relation.get("rtype"), resType, DbName.DEFAULT);
                         String relationInWhereSql = "a.identifier IN ('" + (StringUtils.join(questionIds, "','")) + "')";
+                        if(showVersion){
+                        	relationInWhereSql = "a.m_identifier IN ('" + (StringUtils.join(questionIds, "','")) + "')";
+                        }
                         relationInWhereSqls.add(relationInWhereSql);
                 	}else{
                 		sqlJoin.append(" INNER JOIN resource_relations rr");
                         sqlJoin.append(i);
-                        sqlJoin.append(" ON a.identifier=");
+                        if(showVersion){
+                        	sqlJoin.append(" ON a.m_identifier=");
+                        }else{
+                        	sqlJoin.append(" ON a.identifier=");
+                        }
                         if(reverse){
                             sqlJoin.append("rr" + i + ".source_uuid");
                         }else{
@@ -1114,11 +1138,18 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     if(!reverse && CommonServiceHelper.isQuestionDb(relation.get("stype"))){//查习题库，跨库
                         List<String> resourceIds = getTargetByRelation(relation.get("stype"), relation.get("suuid"), relation.get("rtype"), resType, DbName.QUESTION);
                         String relationInWhereSql = "a.identifier IN ('" + (StringUtils.join(resourceIds, "','")) + "')";
+                        if(showVersion){
+                        	relationInWhereSql = "a.m_identifier IN ('" + (StringUtils.join(resourceIds, "','")) + "')";
+                        }
                         relationInWhereSqls.add(relationInWhereSql);
                     }else{
                         sqlJoin.append(" INNER JOIN resource_relations rr");
                         sqlJoin.append(i);
-                        sqlJoin.append(" ON a.identifier=");
+                        if(showVersion){
+                        	sqlJoin.append(" ON a.m_identifier=");
+                        }else{
+                        	sqlJoin.append(" ON a.identifier=");
+                        }
                         if(reverse){
                             sqlJoin.append("rr" + i + ".source_uuid");
                         }else{
@@ -1137,7 +1168,11 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         //printable & printableKey
         if(printable != null){
-        	sqlJoin.append(" INNER JOIN tech_infos tis ON a.identifier=tis.resource");
+        	if(showVersion){
+        		sqlJoin.append(" INNER JOIN tech_infos tis ON a.m_identifier=tis.resource");
+        	}else{
+        		sqlJoin.append(" INNER JOIN tech_infos tis ON a.identifier=tis.resource");
+        	}
         	sqlJoin.append(" AND tis.res_type='");
         	sqlJoin.append(resType);
         	sqlJoin.append("'");
@@ -1145,7 +1180,12 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         //coverages
         if(CollectionUtils.isNotEmpty(coverages)){
-            sqlJoin.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	if(showVersion){
+        		sqlJoin.append(" INNER JOIN res_coverages rcv ON a.m_identifier=rcv.resource AND rcv.res_type='");
+        	}else{
+        		sqlJoin.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	}
+            
             sqlJoin.append(resType);
             sqlJoin.append("'");
             sqlJoin.append(" AND (");
@@ -1156,7 +1196,11 @@ public class NDResourceDaoImpl implements NDResourceDao{
             }
             sqlJoin.append(")");
         }else{
-            sqlJoin.append(" LEFT JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	if(showVersion){
+        		sqlJoin.append(" LEFT JOIN res_coverages rcv ON a.m_identifier=rcv.resource AND rcv.res_type='");
+        	}else{
+        		sqlJoin.append(" LEFT JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	}
             sqlJoin.append(resType);
             sqlJoin.append("'");
         }
@@ -1179,11 +1223,20 @@ public class NDResourceDaoImpl implements NDResourceDao{
             }
             
             if(havePath){
-                sqlJoin.append(" LEFT JOIN resource_categories rc ON rc.primary_category='" + resType + "' AND a.identifier=rc.resource");
+            	if(showVersion){
+            		sqlJoin.append(" LEFT JOIN resource_categories rc ON rc.primary_category='" + resType + "' AND a.m_identifier=rc.resource");
+            	}else{
+            		sqlJoin.append(" LEFT JOIN resource_categories rc ON rc.primary_category='" + resType + "' AND a.identifier=rc.resource");
+            	}
             }
             if(haveCode || CollectionUtils.isNotEmpty(andCategories)){
                 //至少join一次
-                sqlJoin.append(" LEFT JOIN resource_categories rcc0 ON rcc0.primary_category='" + resType + "' AND a.identifier=rcc0.resource");
+            	if(showVersion){
+            		sqlJoin.append(" LEFT JOIN resource_categories rcc0 ON rcc0.primary_category='" + resType + "' AND a.m_identifier=rcc0.resource");
+            	}else{
+            		sqlJoin.append(" LEFT JOIN resource_categories rcc0 ON rcc0.primary_category='" + resType + "' AND a.identifier=rcc0.resource");
+            	}
+                
                 if(CollectionUtils.isNotEmpty(andCategories)){//注意这里的i是从1开始,使join的次数为andCategories的【maxsize-1】
                     for(int i=1;i<getMaxCount(andCategories);i++){
                         sqlJoin.append(" LEFT JOIN resource_categories rcc");
@@ -1192,7 +1245,11 @@ public class NDResourceDaoImpl implements NDResourceDao{
                         sqlJoin.append(i);
                         sqlJoin.append(".primary_category='");
                         sqlJoin.append(resType);
-                        sqlJoin.append("' AND a.identifier=rcc");
+                        if(showVersion){
+                        	sqlJoin.append("' AND a.m_identifier=rcc");
+                        }else{
+                        	sqlJoin.append("' AND a.identifier=rcc");
+                        }
                         sqlJoin.append(i);
                         sqlJoin.append(".resource");
                     }
@@ -1212,7 +1269,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
                         + " AND a.enable=1 " 
                         + providerLimitSql;
         
-        if(CollectionUtils.isEmpty(coverages)){//当覆盖范围为空时,默认不查RSD(黑名单)
+        if(CollectionUtils.isEmpty(coverages)){//当覆盖范围为空时
             sqlWhere = "WHERE a.primary_category='" + resType + "'" 
                     + existCondition 
                     + " AND a.enable=1 " 
@@ -1230,7 +1287,11 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         String categoryExcludeParamSql = "";
         if(CollectionUtils.isNotEmpty(categoryExclude)){
-            categoryExcludeParamSql = "a.identifier NOT IN (" + categoryExcludeParam4Sql(resType, categoryExclude, paramHead) + ")";
+        	if(showVersion){
+        		categoryExcludeParamSql = "a.m_identifier NOT IN (" + categoryExcludeParam4Sql(resType, categoryExclude, paramHead) + ")";
+        	}else{
+        		categoryExcludeParamSql = "a.identifier NOT IN (" + categoryExcludeParam4Sql(resType, categoryExclude, paramHead) + ")";
+        	}
         }
         
         String propParamSql = "";
