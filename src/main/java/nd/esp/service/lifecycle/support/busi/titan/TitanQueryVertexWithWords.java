@@ -1,9 +1,6 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -90,6 +87,8 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         for (String code : codes) {// and contains like
                             if (code.contains("*")) {
                                 likeInAndCodeList.add(code);
+                                scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeInAndCodeList, scriptParamMap).replaceFirst(".", "")).append(".");
+                                likeInAndCodeList.clear();
                             } else {
                                 scriptBuffer.append("has('search_code',");
                                 String uniqueKey = TitanUtils.generateKey(scriptParamMap, "search_code");
@@ -97,16 +96,18 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                                 scriptBuffer.append(").");
                                 scriptParamMap.put(uniqueKey, code);
                             }
-                            if (likeInAndCodeList.size() > 0) {
+                            /*if (likeInAndCodeList.size() > 0) {
                                 scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeInAndCodeList, scriptParamMap).replaceFirst(".", "")).append(".");
-                            }
+                            }*/
                         }
                         scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
                         scriptBuffer.append(",");
                     }
                 } else if (opt.contains(PropOperationConstant.OP_LIKE)) {
                     List<Object> likeCodeList = (List) entry.getValue();
-                    scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
+                    if (likeCodeList.size() > 0) {
+                        scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
+                    }
                 } else {
                     List<String> inCodeList = (List) entry.getValue();
                     for (String code : inCodeList) {
@@ -123,8 +124,36 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
             }
             scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
             scriptBuffer.append(")");
+        }
+
+        if (CollectionUtils.isNotEmpty(searchPathsConditions)) {
+            scriptBuffer.append(".").append(TitanKeyWords.or.toString()).append("(");
+            for (Map.Entry<String, Object> entry : searchPathsConditions.entrySet()) {
+                String opt = entry.getKey();
+                if (opt.equals(PropOperationConstant.OP_LIKE)) {
+                    List<Object> likeCodeList = (List) entry.getValue();
+                    if (likeCodeList.size() > 0) {
+                        scriptBuffer.append(Titan_OP.like.generateScipt("search_path", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
+                    }
+                } else if (opt.equals(PropOperationConstant.OP_IN)) {
+                    List<String> inCodeList = (List) entry.getValue();
+                    if(inCodeList.size()>0) {
+                        for (String code : inCodeList) {
+                            scriptBuffer.append("has('search_path',");
+                            String uniqueKey = TitanUtils.generateKey(scriptParamMap, "search_path");
+                            scriptBuffer.append(uniqueKey);
+                            scriptBuffer.append("),");
+                            scriptParamMap.put(uniqueKey, code);
+                        }
+                    }
+
+                }
+            }
+            scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
+            scriptBuffer.append(")");
 
         }
+
         return scriptBuffer.toString();
     }
 
