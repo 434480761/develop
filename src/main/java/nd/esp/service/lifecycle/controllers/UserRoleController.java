@@ -6,11 +6,13 @@ import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
 import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.ResTypeEnum;
+import nd.esp.service.lifecycle.support.enums.RoleEnum;
 import nd.esp.service.lifecycle.support.uc.UcClient;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
 import nd.esp.service.lifecycle.support.uc.UserBaseInfo;
@@ -52,6 +54,10 @@ public class UserRoleController {
 	@Autowired
 	@Qualifier("UserCoverageMappingServiceImpl")
 	private UserCoverageMappingService userCoverageMappingService;
+
+	@Autowired
+	@Qualifier("ThirdPartyBsysServiceImpl")
+	private ThirdPartyBsysService thirdPartyBsysService;
 
 	@Autowired
 	private UcClient ucClient;
@@ -302,31 +308,49 @@ public class UserRoleController {
 	 */
 	private void validHasPermission(UserInfo userInfo, String roleId) {
 		//当前用户角色id
+		boolean isThirdBearerUser = false;
 		String tmpRoleId = null;
 		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
-			//库管理员
-			if(UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId())){
-				tmpRoleId = UcRoleClient.COVERAGEADMIN;
-				break;
+			//判断是否是bearer_token用户
+			if(RoleEnum.BEARERTOKEN.getValue().equals(userCenterRoleDetails.getRoleName())){
+				if(thirdPartyBsysService.checkThirdPartyBsysList(userInfo.getUserId())){
+					//bearer_token用户存在白名单中，继续下一步
+					isThirdBearerUser = true;
+					break;
+				}else {
+					//bearer_token用户不存在白名单中，抛错
+					throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.Forbidden.getCode()
+							, LifeCircleErrorMessageMapper.Forbidden.getMessage());
+				}
 			}
 		}
-		for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
-			//超级管理员
-			if(UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId())){
-				tmpRoleId = UcRoleClient.SUPERADMIN;
-				break;
+		//不是bearer_token用户 判断用户拥有的角色权限
+		if(!isThirdBearerUser){
+			for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
+				//库管理员
+				if(UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId())){
+					tmpRoleId = UcRoleClient.COVERAGEADMIN;
+					break;
+				}
 			}
-		}
-		//如果当前用户角色id不属于超级管理员和库管理员 则没有绑定/解除用户的权限
-		if(tmpRoleId == null){
-			//抛错
-			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.Forbidden.getCode()
-					, LifeCircleErrorMessageMapper.Forbidden.getMessage());
-		}else if(tmpRoleId.equals(UcRoleClient.COVERAGEADMIN)
-				&& (UcRoleClient.COVERAGEADMIN.equals(roleId) || UcRoleClient.SUPERADMIN.equals(roleId))){
-			//如果当前用户的roleid属于库管理员  则没有绑定/解除超级管理员和库管理员的权限、抛错
-			throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.CoverageAdminDenied.getCode()
-					, LifeCircleErrorMessageMapper.CoverageAdminDenied.getMessage());
+			for(UserCenterRoleDetails userCenterRoleDetails: userInfo.getUserRoles()){
+				//超级管理员
+				if(UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId())){
+					tmpRoleId = UcRoleClient.SUPERADMIN;
+					break;
+				}
+			}
+			//如果当前用户角色id不属于超级管理员和库管理员 则没有绑定/解除用户的权限
+			if(tmpRoleId == null){
+				//抛错
+				throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.Forbidden.getCode()
+						, LifeCircleErrorMessageMapper.Forbidden.getMessage());
+			}else if(tmpRoleId.equals(UcRoleClient.COVERAGEADMIN)
+					&& (UcRoleClient.COVERAGEADMIN.equals(roleId) || UcRoleClient.SUPERADMIN.equals(roleId))){
+				//如果当前用户的roleid属于库管理员  则没有绑定/解除超级管理员和库管理员的权限、抛错
+				throw new LifeCircleException(HttpStatus.FORBIDDEN,LifeCircleErrorMessageMapper.CoverageAdminDenied.getCode()
+						, LifeCircleErrorMessageMapper.CoverageAdminDenied.getMessage());
+			}
 		}
 	}
 

@@ -16,7 +16,8 @@ public enum RoleEnum {
 	RESCREATOR("ResCreator"),
 	CATEGORYDATAADMIN("CategoryDataAdmin"),
 	RESCONSUMER("ResConsumer"),
-	GUEST("Guest")
+	GUEST("Guest"),
+	BEARERTOKEN("role_biz_server")
 	;
 
 	private String value;

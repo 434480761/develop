@@ -1,22 +1,19 @@
 package nd.esp.service.lifecycle.support.interceptors;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableList;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
+import com.nd.gaea.rest.security.services.WafUserDetailsService;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.RoleResFilterUrlMap;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,12 +23,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.ImmutableList;
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-import com.nd.gaea.rest.security.authens.UserInfo;
-import com.nd.gaea.rest.security.services.WafUserDetailsService;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Title: RoleResInterceptor         </p>
@@ -53,9 +51,12 @@ public class RoleResInterceptor implements HandlerInterceptor {
 
     @Autowired
     private UserRestypeMappingService userRestypeMappingService;
-    
+
     @Autowired
     private UcRoleClient ucRoleClient;
+
+	@Autowired
+	private ThirdPartyBsysService thirdPartyBsysService;
     
     /** 权限启用开关*/
     public static String AUTHORITY_ENABLE = LifeCircleApplicationInitializer.properties.getProperty("esp_authority_enable");
@@ -69,47 +70,58 @@ public class RoleResInterceptor implements HandlerInterceptor {
 	        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 	        // 过滤无鉴权处理
 	        if(authentication != null && !"anonymousUser".equals(authentication.getPrincipal().toString())){
-	            UserInfo userInfo = (UserInfo)authentication.getPrincipal();
-	            if(userInfo != null){
-	                UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
-	                if(userCenterRoleDetails != null){
-	                    // 超级管理员
-	                    if( UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-	                        
-	                    }
-	                    // 库管理员
-	                    else if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-	                        // 过滤访问的URL
-	                        isCoverageadminMatcher(request, userInfo.getUserId());
-	                    }
-	                    // 资源创建者角色
-	                    else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
-	                        // 过滤访问的URL
-	                        isRescreatorMatcher(request, userInfo.getUserId());
-	                    }
-	                    // 维度管理者角色
-	                    else if( UcRoleClient.CATEGORYDATAADMIN.equals(userCenterRoleDetails.getRoleId()) ){
-	                        
-	                    }
-	                    // 资源消费者角色
-	                    else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
-	                        // 过滤访问的URL
-	                        isResconsumerMatcher(request, userInfo.getUserId());
-	                    }
-	                    // 游客角色
-	                    else if( UcRoleClient.GUEST.equals(userCenterRoleDetails.getRoleId()) ){
-	                        
-	                    }
-	                    // 其他情况，视为异常。这个分支是不会进入的，如果进入即存在异常。
-	                    else{
-	                        return false;
-	                    }
-	                    return true;
-	                }
-	                else{
-	                    return false;
-	                }
-	            }
+				UserInfo userInfo = (UserInfo)authentication.getPrincipal();
+				if(userInfo != null){
+					//BearerToken用户 当做超级管理员（superadmin）处理
+					if(ucRoleClient.checkBearerTokenUser(authentication)){
+						//BearerToken用户 是否存在白名单中 存在返回true 不存在拦截
+						if(thirdPartyBsysService.checkThirdPartyBsysList(userInfo.getUserId())){
+							return true;
+						}else {
+							throw new LifeCircleException(HttpStatus.FORBIDDEN,
+									LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+						}
+					}else {//非BearerToken用户 判断用户拥有的角色
+						UserCenterRoleDetails userCenterRoleDetails = ucRoleClient.getMaxRole(userInfo);
+						if(userCenterRoleDetails != null){
+							// 超级管理员
+							if( UcRoleClient.SUPERADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+
+							}
+							// 库管理员
+							else if( UcRoleClient.COVERAGEADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+								// 过滤访问的URL
+								isCoverageadminMatcher(request, userInfo.getUserId());
+							}
+							// 资源创建者角色
+							else if( UcRoleClient.RESCREATOR.equals(userCenterRoleDetails.getRoleId()) ){
+								// 过滤访问的URL
+								isRescreatorMatcher(request, userInfo.getUserId());
+							}
+							// 维度管理者角色
+							else if( UcRoleClient.CATEGORYDATAADMIN.equals(userCenterRoleDetails.getRoleId()) ){
+
+							}
+							// 资源消费者角色
+							else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
+								// 过滤访问的URL
+								isResconsumerMatcher(request, userInfo.getUserId());
+							}
+							// 游客角色
+							else if( UcRoleClient.GUEST.equals(userCenterRoleDetails.getRoleId()) ){
+
+							}
+							// 其他情况，视为异常。这个分支是不会进入的，如果进入即存在异常。
+							else{
+								return false;
+							}
+							return true;
+						}
+						else{
+							return false;
+						}
+					}
+				}
 	        }
 	        return true;
 	    }

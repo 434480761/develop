@@ -5,7 +5,9 @@ import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.enums.RoleEnum;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.List;
  */
 @Component
 public class UcRoleClient {
+
     /** 超级管理员*/
     public static String SUPERADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_super_admin");
     /** 库管理员*/
@@ -97,5 +100,21 @@ public class UcRoleClient {
             }
         }
         return null;
+    }
+
+	/**
+     * 判断用户是否是BearerToken用户且存在白名单中
+     * @param authentication
+     * @return
+     */
+    public boolean checkBearerTokenUser(Authentication authentication){
+        List<UserCenterRoleDetails> authorities = (List<UserCenterRoleDetails>) authentication.getAuthorities();
+        for(UserCenterRoleDetails userCenterRoleDetail: authorities){
+            //BearerToken用户
+            if(RoleEnum.BEARERTOKEN.getValue().equals(userCenterRoleDetail.getRoleName())){
+               return true;
+            }
+        }
+        return false;
     }
 }
