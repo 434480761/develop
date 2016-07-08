@@ -1,11 +1,15 @@
 package nd.esp.service.lifecycle.controllers.ebooks.v06;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
 import nd.esp.service.lifecycle.services.ebooks.v06.EbookService;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.vos.ebooks.v06.EbookViewModel;
@@ -17,11 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 电子教材V0.6API
@@ -34,6 +34,11 @@ public class EbookControllerV06 {
     @Autowired
     @Qualifier("ebookServiceV06")
     private EbookService ebookService;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
 
     // private static final Logger LOG = LoggerFactory.getLogger(EbookControllerV06.class);
 
@@ -74,6 +79,40 @@ public class EbookControllerV06 {
         // 业务校验
         CommonHelper.inputParamValid(ebookViewModel, null, OperationType.UPDATE);
         return operate(ebookViewModel, OperationType.UPDATE);
+
+    }
+
+    /**
+     * 修改电子教材对象
+     *
+     * @param ebookViewModel 电子教材对象
+     * @return
+     */
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public EbookViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody EbookViewModel ebookViewModel,
+                                 BindingResult validResult, @PathVariable String id,
+                                 @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+//        ValidResultHelper.valid(validResult, "LC/UPDATE_EBOOK_PARAM_VALID_FAIL", "EbookControllerV06", "update");
+        ebookViewModel.setIdentifier(id);
+        // 业务校验
+//        CommonHelper.inputParamValid(ebookViewModel, null, OperationType.UPDATE);
+        EbookModel ebookModel = CommonHelper.convertViewModelIn(ebookViewModel, EbookModel.class, ResourceNdCode.ebooks, true);
+
+        // 更新电子教材
+        ebookModel = ebookService.patch(ebookModel);
+
+        ebookViewModel = CommonHelper.convertViewModelOut(ebookModel, EbookViewModel.class);
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.ebooks.toString(), id);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.ebooks.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.ebooks.toString(), id));
+            }
+        }
+        return ebookViewModel;
 
     }
 

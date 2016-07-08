@@ -7,17 +7,21 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
@@ -62,6 +66,11 @@ public class KnowledgeControllerV06 {
     @Autowired
     @Qualifier("knowledgeServiceV06")
     KnowledgeService knowledgeService;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
 
     /**
      * 创建知识点
@@ -154,6 +163,52 @@ public class KnowledgeControllerV06 {
         viewModelOut.setTechInfo(null);
         viewModelOut.setExtProperties(null);
         viewModelOut.setEducationInfo(null);
+
+        return viewModelOut;
+    }
+
+    /**
+     * 更新知识点
+     *
+     * @param viewModel
+     * @param validResult
+     * @param id
+     * @return
+     * @since
+     */
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "/{uuid}", method = { RequestMethod.PATCH }, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public KnowledgeViewModel4Out patchKnowledge(@Validated(ValidUpdateLessPropertiesGroup.class) @RequestBody KnowledgeViewModel4In viewModel,
+                                                  BindingResult validResult, @PathVariable String uuid,
+                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+//        ValidResultHelper.valid(validResult,
+//                "LC/UPDATE_KNOWLEDGE_PARAM_VALID_FAIL",
+//                "KnowledgeControllerV06",
+//                "updateKnowledge");
+        viewModel.setIdentifier(uuid);
+
+//        CommonHelper.inputParamValid(viewModel, "10111",OperationType.UPDATE);
+
+        KnowledgeModel model = CommonHelper.convertViewModelIn(viewModel,
+                KnowledgeModel.class,
+                ResourceNdCode.knowledges, true);
+        model = knowledgeService.patchKnowledge(model);
+
+        KnowledgeViewModel4Out viewModelOut = CommonHelper.convertViewModelOut(model, KnowledgeViewModel4Out.class);
+
+        // 知识点没有techInfo属性
+        viewModelOut.setTechInfo(null);
+        viewModelOut.setExtProperties(null);
+        viewModelOut.setEducationInfo(null);
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.knowledges.toString(), uuid);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.knowledges.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.knowledges.toString(), uuid));
+            }
+        }
 
         return viewModelOut;
     }

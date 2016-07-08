@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewareobjecttemplate.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectTemplateModel;
 import nd.esp.service.lifecycle.services.coursewareobjecttemplate.v06.CourseWareObjectTemplateServiceV06;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -35,5 +36,11 @@ public class CourseWareObjectTemplateServiceImplV06 implements CourseWareObjectT
     public CourseWareObjectTemplateModel updateCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm) {
 
         return (CourseWareObjectTemplateModel)ndResourceService.update(ResourceNdCode.coursewareobjecttemplates.toString(), ctm);
+    }
+
+    @Override
+    public CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm) {
+        ndResourceService.patch(ResourceNdCode.coursewareobjecttemplates.toString(), ctm);
+        return (CourseWareObjectTemplateModel)ndResourceService.getDetail(ResourceNdCode.coursewareobjecttemplates.toString(), ctm.getIdentifier(), IncludesConstant.getIncludesList());
     }
 }

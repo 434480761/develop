@@ -25,5 +25,6 @@ public interface CourseWareObjectServiceV06 {
 	 * @return CourseWareObjectModel
 	 */
 	public CourseWareObjectModel updateCourseWareObject(CourseWareObjectModel cwom);
-	
+
+	CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model);
 }

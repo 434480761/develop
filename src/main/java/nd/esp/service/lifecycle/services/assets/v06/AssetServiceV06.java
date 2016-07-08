@@ -21,4 +21,6 @@ public interface AssetServiceV06{
 	 * @return
 	 */
 	public AssetModel updateAsset(AssetModel am);
+
+	AssetModel patchAsset(AssetModel am);
 }

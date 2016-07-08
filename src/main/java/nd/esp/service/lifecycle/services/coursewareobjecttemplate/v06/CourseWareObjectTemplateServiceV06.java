@@ -16,4 +16,6 @@ public interface CourseWareObjectTemplateServiceV06 {
      * 修改课件颗粒模板
      * */
     public CourseWareObjectTemplateModel updateCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm);
+
+    CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm);
 }

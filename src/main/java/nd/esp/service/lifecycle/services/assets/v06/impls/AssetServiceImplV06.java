@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.assets.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.AssetModel;
 import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
@@ -28,5 +29,12 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	@Override
 	public AssetModel updateAsset(AssetModel am) {
 		return (AssetModel)ndResourceService.update(ResourceNdCode.assets.toString(), am);
+	}
+
+	@Override
+	public AssetModel patchAsset(AssetModel am) {
+		ndResourceService.patch(ResourceNdCode.assets.toString(), am);
+
+		return (AssetModel)ndResourceService.getDetail(ResourceNdCode.assets.toString(), am.getIdentifier(), IncludesConstant.getIncludesList());
 	}
 }

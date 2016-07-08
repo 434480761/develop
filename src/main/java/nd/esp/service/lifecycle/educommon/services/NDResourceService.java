@@ -204,7 +204,7 @@ public interface NDResourceService {
      */
     public ResourceModel update(String resourceType, ResourceModel resourceModel,DbName dbName);
 
-    ResourceModel patch(String resourceType, ResourceModel resourceModel);
+    void patch(String resourceType, ResourceModel resourceModel);
 
     /**
      * 部分更新资源(支持分库)
@@ -214,7 +214,7 @@ public interface NDResourceService {
      * @return
      * @since
      */
-    public ResourceModel patch(String resourceType, ResourceModel resourceModel,DbName dbName);
+    public void patch(String resourceType, ResourceModel resourceModel, DbName dbName);
     
     /**
      * CS文件上传

@@ -21,5 +21,6 @@ public interface QuestionServiceV06{
 	 * @return
 	 */
 	public QuestionModel updateQuestion(QuestionModel questionModel);
-	
+
+	QuestionModel patchQuestion(QuestionModel questionModel);
 }

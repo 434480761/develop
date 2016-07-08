@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.homeworks.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.HomeworkModel;
 import nd.esp.service.lifecycle.services.homeworks.v06.HomeworkServiceV06;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -27,5 +28,11 @@ public class HomeworkServiceImplV06 implements HomeworkServiceV06 {
 	@Override
 	public HomeworkModel updateHomework(HomeworkModel hm) {
 		return (HomeworkModel)ndResourceService.update(ResourceNdCode.homeworks.toString(), hm);
+	}
+
+	@Override
+	public HomeworkModel patchHomework(HomeworkModel hm) {
+		ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm);
+		return (HomeworkModel)ndResourceService.getDetail(ResourceNdCode.homeworks.toString(), hm.getIdentifier(), IncludesConstant.getIncludesList());
 	}
 }

@@ -175,7 +175,7 @@ public class Education extends EspEntity implements Serializable,
 	
 	@Column(name="primary_category")
 	private String primaryCategory;
-	
+
 	public String getmIdentifier() {
 		return mIdentifier;
 	}

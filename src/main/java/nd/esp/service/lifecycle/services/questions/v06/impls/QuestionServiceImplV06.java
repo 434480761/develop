@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.questions.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
@@ -35,4 +36,12 @@ public class QuestionServiceImplV06 implements QuestionServiceV06 {
                 questionModel,DbName.QUESTION);
         return rtQuestionModel;
     }
+
+    @Override
+    public QuestionModel patchQuestion(QuestionModel questionModel) {
+        ndResourceService.patch(ResourceNdCode.questions.toString(),
+                questionModel,DbName.QUESTION);
+        return (QuestionModel)ndResourceService.getDetail(ResourceNdCode.questions.toString(), questionModel.getIdentifier(), IncludesConstant.getIncludesList());
+    }
+
 }

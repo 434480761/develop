@@ -4,7 +4,10 @@ import java.util.concurrent.ExecutorService;
 
 import nd.esp.service.lifecycle.daos.questions.v06.QuestionDao;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.questions.v06.QuestionServiceV06;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -12,6 +15,7 @@ import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.vos.questions.v06.QuestionViewModel;
@@ -28,11 +32,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 
@@ -54,6 +54,11 @@ public class QuestionControllerV06 {
     
     @Autowired
     private QuestionDao questionDao;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
     
     private final static ExecutorService executorService = CommonHelper.getPrimaryExecutorService();
     private final static WafSecurityHttpClient WAF_SECURITY_HTTP_CLIENT = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
@@ -166,6 +171,47 @@ public class QuestionControllerV06 {
         
         callSlidesAsync(id);
         
+        return questionViewModel;
+    }
+
+    /**
+     * 修改习题对象
+     * @param questionViewModel        习题对象
+     * @return
+     */
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public QuestionViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody QuestionViewModel questionViewModel,BindingResult validResult,@PathVariable String id,
+                                   @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+
+        questionViewModel.setIdentifier(id);
+        //入参合法性校验
+//        ValidResultHelper.valid(validResult, LifeCircleErrorMessageMapper.UpdateQuestionFail.getCode(),
+//                "QuestionControllerV06","updateQuestion");
+
+        //业务校验
+//        CommonHelper.inputParamValid(questionViewModel,null,OperationType.UPDATE);
+
+        //model入参转换，部分数据初始化
+        QuestionModel questionModel = CommonHelper.convertViewModelIn(questionViewModel, QuestionModel.class,ResourceNdCode.questions, true);
+
+        //修改习题
+        questionModel = questionService.patchQuestion(questionModel);
+
+        //model出参转换
+        questionViewModel = CommonHelper.convertViewModelOut(questionModel,QuestionViewModel.class);
+
+        callSlidesAsync(id);
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.questions.toString(), id);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.questions.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.questions.toString(), id));
+            }
+        }
+
         return questionViewModel;
     }
     

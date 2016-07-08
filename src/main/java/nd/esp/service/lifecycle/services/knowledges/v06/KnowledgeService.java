@@ -91,6 +91,8 @@ public interface KnowledgeService {
      */
     public void moveKnowledge(String kid, KnowledgeModel knowledgeModel);
 
+    KnowledgeModel patchKnowledge(KnowledgeModel model);
+
     /**
      * 判断是否有孩子节点
      * 

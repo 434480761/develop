@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Sets;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
@@ -2454,12 +2455,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
-		return patch(resourceType, resourceModel,DbName.DEFAULT);
+	public void patch(String resourceType, ResourceModel resourceModel) {
+		patch(resourceType, resourceModel,DbName.DEFAULT);
 	}
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public void patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2477,13 +2478,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
 
 		// 3、categories属性处理
-		if(resourceModel.getCategoryList().size()!=1) {
+		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
 			dealCategoryPatch(resourceType, resourceModel);
 			includeList.add(IncludesConstant.INCLUDE_CG);
 		}
 
 		// 4、tech_info属性处理
-		if(resourceModel.getTechInfoList()!=null){
+		if(resourceModel.getTechInfoList()!=null && CollectionUtils.isNotEmpty(resourceModel.getTechInfoList())){
 			dealTechInfoPatch(resourceType, resourceModel, dbName);
 			includeList.add(IncludesConstant.INCLUDE_TI);
 		}
@@ -2491,7 +2492,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 		// 5、同步推送至报表系统
 		nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
 
-		return getDetail(resourceType, resourceModel.getIdentifier(), includeList);
 	}
 
 	private boolean dealTechInfoPatch(String resourceType, ResourceModel resourceModel, DbName dbName) {
@@ -2615,34 +2615,36 @@ public class NDResourceServiceImpl implements NDResourceService{
 						//资源分类维度
 						resourceCategory.setPrimaryCategory(resourceType);
 
-						switch (resClassificationModel.getOperation()) {
-							case "add":
-								resourceCategory.setIdentifier(UUID.randomUUID().toString());
-								resourceCategories.add(resourceCategory);
-								break;
-							case "update":
-								if(resourceCategory.getIdentifier()!=null) {
+						if(StringUtils.isNotEmpty(resClassificationModel.getOperation())) {
+							switch (resClassificationModel.getOperation()) {
+								case "add":
+									resourceCategory.setIdentifier(UUID.randomUUID().toString());
 									resourceCategories.add(resourceCategory);
-								}
-								break;
-							case "delete":
-								try {
-									if(resourceCategory.getIdentifier()!=null) {
-										repository.del(resourceCategory.getIdentifier());
-									} else {
-										ResourceCategory bean = (ResourceCategory)repository.getByExample(resourceCategory);
-										if(null!=bean) {
-											repository.del(bean.getIdentifier());
-										}
+									break;
+								case "update":
+									if (resourceCategory.getIdentifier() != null) {
+										resourceCategories.add(resourceCategory);
 									}
-								} catch (EspStoreException e) {
-									LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+									break;
+								case "delete":
+									try {
+										if (resourceCategory.getIdentifier() != null) {
+											repository.del(resourceCategory.getIdentifier());
+										} else {
+											ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
+											if (null != bean) {
+												repository.del(bean.getIdentifier());
+											}
+										}
+									} catch (EspStoreException e) {
+										LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
 
-									throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-											LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-											e.getLocalizedMessage());
-								}
-								break;
+										throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+												LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+												e.getLocalizedMessage());
+									}
+									break;
+							}
 						}
 					}
 				}
@@ -2673,18 +2675,30 @@ public class NDResourceServiceImpl implements NDResourceService{
 		// 所有通用接口支持的资源在sdk 都继承了Education
 		Education education = changeModelToBean(resourceType, resourceModel);  //have set primary_category
 
+		Education initEdu = BeanMapperUtils.beanMapper(new ResourceViewModel().getLifeCycle(), Education.class);
+
+		Set<String> ignoreSet = Sets.newHashSet("serialVersionUID", "PROP_CREATETIME", "PROP_LASTUPDATE", "PROP_CATEGORYS", "PROP_RELATIONS", "PROP_TAGS", "PROP_KEYWORDS", "mIdentifier",
+				"enable", "createTime", "dbcreateTime", "primaryCategory");
+
 		boolean bBasicInfoChanged = false;
 		try {
-			Field[] fs = resourceModel.getClass().getDeclaredFields();
+			Field[] fs = Education.class.getDeclaredFields();
 
 			for (int i = 0; i < fs.length; i++) {
-				Object o = fs[i].get(resourceModel);
-				if (o!=null) {
-					bBasicInfoChanged = true;
-					String name = fs[i].getName();
-					String setterName = name.substring(0,1).toUpperCase() + name.substring(1);
-					Method m = resourceModel.getClass().getMethod(setterName, fs[i].getType());
-					m.invoke(oldBean, o);
+				String name = fs[i].getName();
+				if (!ignoreSet.contains(name)) {
+					String getterName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1);
+					Method m = Education.class.getMethod(getterName);
+					Object o = m.invoke(education);
+					Object initValue = m.invoke(initEdu);
+					if (o != null && !o.equals(initValue)) {
+						if(!"creator".equals(name) || StringUtils.isNotEmpty((String)o)) {
+							bBasicInfoChanged = true;
+							String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
+							m = Education.class.getMethod(setterName, fs[i].getType());
+							m.invoke(oldBean, o);
+						}
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -2692,6 +2706,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 			LOG.warn("反射处理扩展属性出错！", e);
 
 		}
+		if(StringUtils.isNotEmpty(education.getTitle())) {
+			oldBean.setTitle(education.getTitle());
+		}
+		if(StringUtils.isNotEmpty(education.getDescription())) {
+			oldBean.setDescription(education.getDescription());
+		}
+
 		if(bBasicInfoChanged) {
 			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 			try {

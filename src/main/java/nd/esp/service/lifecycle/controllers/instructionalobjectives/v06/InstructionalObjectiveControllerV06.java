@@ -2,13 +2,17 @@ package nd.esp.service.lifecycle.controllers.instructionalobjectives.v06;
 
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.vos.instructionalobjectives.v06.InstructionalObjectiveViewModel;
@@ -20,11 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 教学目标V0.6API
@@ -40,6 +40,11 @@ public class InstructionalObjectiveControllerV06 {
 
     @Autowired
     private NotifyInstructionalobjectivesService notifyService;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
     
     // private static final Logger LOG = LoggerFactory.getLogger(InstructionalObjectiveControllerV06.class);
 
@@ -86,6 +91,53 @@ public class InstructionalObjectiveControllerV06 {
         avm.setIdentifier(id);
         CommonHelper.inputParamValid(avm, "10111", OperationType.UPDATE);
         return operate(avm, OperationType.UPDATE);
+    }
+
+    /**
+     * 修改教学目标对象
+     *
+     * @param rm 教学目标对象
+     * @return
+     */
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public InstructionalObjectiveViewModel patch(@Validated(ValidInstructionalObjectiveDefault4UpdateGroup.class) @RequestBody InstructionalObjectiveViewModel avm,
+                                                  BindingResult validResult, @PathVariable String id,
+                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+
+        // 入参合法性校验
+//        ValidResultHelper.valid(validResult,
+//                "LC/UPDATE_INSTRUCTIONALOBJECTIVE_PARAM_VALID_FAIL",
+//                "InstructionalObjectiveControllerV06",
+//                "update");
+        avm.setIdentifier(id);
+//        CommonHelper.inputParamValid(avm, "10111", OperationType.UPDATE);
+        InstructionalObjectiveModel am = CommonHelper.convertViewModelIn(avm,
+                InstructionalObjectiveModel.class,
+                ResourceNdCode.instructionalobjectives, true);
+
+        //add by xiezy - 2016.04.15
+        //更新操作要先保存其原有状态
+        String oldStatus = notifyService.getResourceStatus(avm.getIdentifier());
+
+        am = instructionalObjectiveService.patchInstructionalObjective(am);
+
+        //add by xiezy - 2016.04.15
+        //异步通知智能出题
+        notifyService.asynNotify4Resource(avm.getIdentifier(), avm.getLifeCycle().getStatus(), oldStatus, null, OperationType.UPDATE);
+
+        avm = CommonHelper.convertViewModelOut(am, InstructionalObjectiveViewModel.class);
+        avm.setTechInfo(null); // 没有这个属性
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.instructionalobjectives.toString(), id);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.instructionalobjectives.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.instructionalobjectives.toString(), id));
+            }
+        }
+        return avm;
     }
 
     /**

@@ -12,6 +12,7 @@ import java.util.UUID;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
@@ -83,6 +84,12 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     @Override
     public KnowledgeModel updateKnowledge(KnowledgeModel model) {
         return (KnowledgeModel) ndResourceService.update(ResourceNdCode.knowledges.toString(), model);
+    }
+
+    @Override
+    public KnowledgeModel patchKnowledge(KnowledgeModel model) {
+        ndResourceService.patch(ResourceNdCode.knowledges.toString(), model);
+        return (KnowledgeModel)ndResourceService.getDetail(ResourceNdCode.knowledges.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
     }
     
     @Override

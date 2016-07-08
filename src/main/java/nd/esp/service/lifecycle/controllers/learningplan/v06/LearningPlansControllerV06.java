@@ -9,14 +9,18 @@
 
 package nd.esp.service.lifecycle.controllers.learningplan.v06;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.LearningPlanModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.learningplans.v06.LearningPlansServiceV06;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.transcode.TransCodeManager;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -30,11 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author caocr
@@ -50,6 +50,11 @@ public class LearningPlansControllerV06 {
     
     @Autowired
     private TransCodeUtil transCodeUtil;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
     
     @MarkAspect4Format2Category
     @MarkAspect4OfflineJsonToCS
@@ -107,6 +112,39 @@ public class LearningPlansControllerV06 {
         // model出参转换
         lpvm = CommonHelper.convertViewModelOut(model, LearningPlanViewModel.class);
         
+        return lpvm;
+    }
+
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "{uuid}", method = RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public LearningPlanViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody LearningPlanViewModel lpvm,
+                                        BindingResult validResult, @PathVariable String uuid,
+                                        @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+        // 校验入参
+//        checkParams(lpvm, validResult, uuid, false);
+
+        // model入参转换
+        LearningPlanModel model = CommonHelper.convertViewModelIn(lpvm,
+                LearningPlanModel.class,
+                ResourceNdCode.learningplans, true);
+
+        LOG.info("学案V06更新学案操作，业务逻辑处理");
+
+        // 修改学案
+        model = learningPlansService.patch(model);
+
+        // model出参转换
+        lpvm = CommonHelper.convertViewModelOut(model, LearningPlanViewModel.class);
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.learningplans.toString(), uuid);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.learningplans.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.learningplans.toString(), uuid));
+            }
+        }
+
         return lpvm;
     }
 

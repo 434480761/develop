@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.lessons.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.LessonModel;
 import nd.esp.service.lifecycle.services.lessons.v06.LessonsServiceV06;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -27,6 +28,12 @@ public class LessonsServiceImplV06 implements LessonsServiceV06 {
     @Override
     public LessonModel update(LessonModel model) {
         return (LessonModel)ndResourceService.update(ResourceNdCode.lessons.toString(), model);
+    }
+
+    @Override
+    public LessonModel patch(LessonModel model) {
+        ndResourceService.patch(ResourceNdCode.lessons.toString(), model);
+        return (LessonModel)ndResourceService.getDetail(ResourceNdCode.lessons.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
     }
 
 }
