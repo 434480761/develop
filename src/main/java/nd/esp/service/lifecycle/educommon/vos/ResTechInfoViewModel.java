@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import nd.esp.service.lifecycle.vos.valid.TechInfoDefault;
 
 import org.hibernate.validator.constraints.Length;
@@ -41,8 +42,11 @@ public class ResTechInfoViewModel {
 	private String entry;
 	private boolean printable = false;
 
-	public ResTechInfoViewModel(){
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String operation;
 
+	public ResTechInfoViewModel(){
+		operation = null;
 	}
 
 	public String getFormat() {
@@ -118,4 +122,11 @@ public class ResTechInfoViewModel {
 		this.printable = printable;
 	}
 
+	public String getOperation() {
+		return operation;
+	}
+
+	public void setOperation(String operation) {
+		this.operation = operation;
+	}
 }

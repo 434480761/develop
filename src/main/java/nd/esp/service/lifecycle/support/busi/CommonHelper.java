@@ -271,6 +271,7 @@ public class CommonHelper {
                         resClassificationModel.setResourceId(resourceId);
                         resClassificationModel.setTaxonpath(rcvm.getTaxonpath());
                         resClassificationModel.setTaxoncode(Arrays.asList(rcvm.getTaxonpath().split("/")).get(index));
+						resClassificationModel.setOperation(rcvm.getOperation());
 
                         //如果taxonCode为空就不加入到resultList中
                         if(!StringUtils.isEmpty(Arrays.asList(rcvm.getTaxonpath().split("/")).get(index))){
@@ -281,6 +282,7 @@ public class CommonHelper {
 						resClassificationModel.setIdentifier(UUID.randomUUID().toString());
 						resClassificationModel.setResourceId(resourceId);
 						resClassificationModel.setTaxoncode(rcvm.getTaxoncode());
+						resClassificationModel.setOperation(rcvm.getOperation());
 						resultList.add(resClassificationModel);
 					}
                 }
@@ -303,6 +305,7 @@ public class CommonHelper {
                         }
                         
                         resClassificationModel.setTaxoncode(rcvm.getTaxoncode());
+						resClassificationModel.setOperation(rcvm.getOperation());
                         resultList.add(resClassificationModel);
 
                         if (rcvm.getTaxoncode() != null && rcvm.getTaxoncode().equals(rc.getNdCode())) {

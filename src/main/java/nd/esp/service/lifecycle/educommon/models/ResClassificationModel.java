@@ -38,6 +38,8 @@ public class ResClassificationModel implements Comparable<ResClassificationModel
 	private String categoryCode;
 	private String categoryName;
 
+	private String operation;
+
 	public ResClassificationModel(){
 
 	}
@@ -113,7 +115,15 @@ public class ResClassificationModel implements Comparable<ResClassificationModel
 	public void setResourceId(String resourceId) {
 		this.resourceId = resourceId;
 	}
-	
+
+	public String getOperation() {
+		return operation;
+	}
+
+	public void setOperation(String operation) {
+		this.operation = operation;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

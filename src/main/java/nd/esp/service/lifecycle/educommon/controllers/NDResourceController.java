@@ -1541,6 +1541,84 @@ public class NDResourceController {
         }
     }
 
+    /**
+     * 离线版资源同步入库，具体流程是：
+     * 1.同步上传离线版的元数据。
+     * 2.上传结束后，提交元数据的存储相对地址信息。
+     * 3.解析离线元数据进行入库。
+     * http://wiki.sdp.nd/index.php?title=LCMS_API_RA00110
+     * @param viewModel 元数据的存储相对地址信息
+     * @param validResult BindingResult
+     * @param resType 资源类型
+     * @param uuid 资源id
+     * @since
+     */
+    @RequestMapping(value = "/{uuid}/actions/refresh", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE })
+    public void refreshOfflineMetadata(@Valid @RequestBody OfflineMetadataViewModel viewModel,
+                                      BindingResult validResult,
+                                      @PathVariable(value = "res_type") String resType,
+                                      @PathVariable String uuid) throws Exception {
+        ValidResultHelper.valid(validResult,
+                "LC/CREATE_OFFLINE_METADATA_PARAM_VALID_FAIL",
+                "NDResourceController",
+                "createOfflineMetadata");
+
+        commonServiceHelper.assertDownloadable(resType);
+
+        if (!CommonHelper.checkUuidPattern(uuid)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+        }
+
+        if(!CommonHelper.resourceExistNoException(resType, uuid, ResourceType.RESOURCE_SOURCE)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/RESOURCE_NOT_EXIST", "资源不存在");
+        }
+
+        if (viewModel.getTechInfo() == null || !viewModel.getTechInfo().containsKey("href")) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.ChecTechInfoFail);
+        }
+
+        String rootPath = NDResourceServiceImpl.getRootPathFromLocation(viewModel.getTechInfo()
+                .get("href")
+                .getLocation());
+
+        CSInstanceInfo csInstanceInfo = NDResourceServiceImpl.getCsInstanceAccordingRootPath(rootPath);
+
+        String path = NDResourceServiceImpl.producePath(rootPath, resType, uuid);
+
+        CsSession csSession = contentService.getAssignSession(path, csInstanceInfo.getServiceId());
+
+        if (csSession == null) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "取不到session，路径:" + path);
+        }
+
+        String url = csInstanceInfo.getUrl() + "/download?path=" + path + "/metadata.json";
+
+        String metaDataJson = DownloadFile(url, csSession.getSession());
+
+        if (StringUtils.isEmpty(metaDataJson)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "下载文件：" + url
+                    + "失败");
+        }
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<String>(metaDataJson, httpHeaders);
+
+        String result = wafSecurityHttpClient.executeForObject(Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + resType
+                + "/" + uuid, HttpMethod.PUT, entity, String.class);
+
+        if (null == result) {
+
+            LOG.warn("创建资源metadata失败");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_CREATE_FAIL", "创建资源metadata失败");
+
+        }
+    }
+
     private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
 
 

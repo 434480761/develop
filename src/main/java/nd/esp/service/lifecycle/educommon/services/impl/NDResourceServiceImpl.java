@@ -2417,7 +2417,261 @@ public class NDResourceServiceImpl implements NDResourceService{
         return resourceModel;
     }
 
-    /**
+	@Override
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
+		return patch(resourceType, resourceModel,DbName.DEFAULT);
+	}
+
+	@Override
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+		// 0、校验资源是否存在
+		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
+
+		// 1、判断资源编码是否唯一
+		if(StringUtils.isNotEmpty(resourceModel.getNdresCode())){
+			boolean flagCode = isDuplicateCode(resourceType,resourceModel.getIdentifier(),resourceModel.getNdresCode());
+			if(flagCode){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckDuplicateCodeFail);
+			}
+		}
+
+		List<String> includeList = new ArrayList<>();
+
+		// 2、基本属性的处理
+		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
+
+		// 3、categories属性处理
+		if(resourceModel.getCategoryList().size()!=1) {
+			dealCategoryPatch(resourceType, resourceModel);
+			includeList.add(IncludesConstant.INCLUDE_CG);
+		}
+
+		// 4、tech_info属性处理
+		if(resourceModel.getTechInfoList()!=null){
+			dealTechInfoPatch(resourceType, resourceModel, dbName);
+			includeList.add(IncludesConstant.INCLUDE_TI);
+		}
+
+		// 5、同步推送至报表系统
+		nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
+
+		return getDetail(resourceType, resourceModel.getIdentifier(), includeList);
+	}
+
+	private boolean dealTechInfoPatch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+		ResourceRepository repository = commonServiceHelper.getTechInfoRepositoryByResType(resourceType);
+		// resource id
+		String uuid = resourceModel.getIdentifier();
+		List<ResTechInfoModel> techInfoList = resourceModel.getTechInfoList();
+		List<TechInfo> list = new ArrayList<TechInfo>();
+		List<ResTechInfoModel> returnList = new ArrayList<ResTechInfoModel>();
+		if (CollectionUtils.isNotEmpty(techInfoList)) {
+			for (ResTechInfoModel rtim : techInfoList) {
+				TechInfo ti = new TechInfo();
+				if ("add".equals(rtim.getOperation())) {
+					ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
+					ti.setResource(uuid);
+					ti.setResType(resourceType);
+					ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
+					ti.setIdentifier(UUID.randomUUID().toString());
+					list.add(ti);
+				} else {
+					ti.setResource(uuid);
+					ti.setResType(resourceType);
+					ti.setTitle(rtim.getTitle());
+					try {
+						TechInfo target = (TechInfo)repository.getByExample(ti);
+						if(target!=null) {
+							if("update".equals(rtim.getOperation())) {
+								ti.setIdentifier(target.getIdentifier());
+								list.add(ti);
+							} else if("delete".equals(rtim.getOperation())) {
+								repository.del(target.getIdentifier());
+							}
+						}
+					} catch (EspStoreException e) {
+						LOG.error("技术属性创建操作出错了", e);
+
+						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+								LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+								e.getLocalizedMessage());
+					}
+				}
+			}
+		}
+		try {
+			if (!list.isEmpty()) {
+
+				LOG.debug("调用sdk方法：batchAdd");
+
+				list = commonServiceHelper.getTechInfoRepositoryByResType(resourceType).batchAdd(list);
+			}
+			resourceModel.setTechInfoList(returnList);
+		} catch (EspStoreException e) {
+
+			LOG.error("技术属性创建操作出错了", e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getLocalizedMessage());
+		}
+		return true;
+
+	}
+
+	private void dealCategoryPatch(String resourceType, ResourceModel resourceModel) {
+		ResourceRepository repository = commonServiceHelper.getResourceCategoryRepositoryByResType(resourceType);
+		String uuid = resourceModel.getIdentifier();
+		List<ResClassificationModel> categories = resourceModel.getCategoryList();
+		Set<ResClassificationModel> resClassificationModelSet = new HashSet<ResClassificationModel>(categories);
+		List<ResourceCategory> resourceCategories = new ArrayList<ResourceCategory>();
+		if (CollectionUtils.isNotEmpty(categories)) {
+			Set<String> ndCodeSet = new HashSet<String>();
+			List<CategoryData> categoryDatas = null;
+			for (ResClassificationModel resClassificationModel : categories) {
+				ndCodeSet.add(resClassificationModel.getTaxoncode());
+			}
+
+			LOG.debug("调用sdk方法：getListWhereInCondition");
+
+			try {
+				categoryDatas = categoryDataRepository.getListWhereInCondition("ndCode",
+						new ArrayList<String>(ndCodeSet));
+			} catch (EspStoreException e) {
+
+				LOG.error("根据ndCode获取维度数据操作出错了", e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getLocalizedMessage());
+			}
+			if (categoryDatas.size() != ndCodeSet.size()) {
+
+				LOG.error(LifeCircleErrorMessageMapper.CheckNdCodeFail.getMessage() + ndCodeSet);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckNdCodeFail);
+			}
+
+			// 取 分类维度到shortName的映射
+			Map<String, String> categoryNdCodeToShortNameMap = commonServiceHelper.getCategoryByData(categoryDatas);
+			if (CollectionUtils.isEmpty(categoryDatas)) {
+				return;
+			}
+			for (CategoryData cd : categoryDatas) {
+				for (ResClassificationModel resClassificationModel : resClassificationModelSet) {
+					if (resClassificationModel.getTaxoncode().equals(cd.getNdCode())) {
+						// 通过取维度数据详情，补全resource_category中间表的数据
+						resClassificationModel.setShortName(cd.getShortName());
+						resClassificationModel.setTaxoncodeId(cd.getIdentifier());
+						resClassificationModel.setTaxonname(cd.getTitle());
+						resClassificationModel.setCategoryCode(cd.getNdCode().substring(0, 2));
+
+						// 取维度的shortName
+						if (categoryNdCodeToShortNameMap.get(resClassificationModel.getCategoryCode()) != null) {
+							resClassificationModel.setCategoryName(categoryNdCodeToShortNameMap.get(resClassificationModel.getCategoryCode()));
+						}
+
+						// 转换到sdk bean
+						ResourceCategory resourceCategory = BeanMapperUtils.beanMapper(resClassificationModel,
+								ResourceCategory.class);
+						resourceCategory.setResource(uuid);
+						//资源分类维度
+						resourceCategory.setPrimaryCategory(resourceType);
+
+						switch (resClassificationModel.getOperation()) {
+							case "add":
+								resourceCategory.setIdentifier(UUID.randomUUID().toString());
+								resourceCategories.add(resourceCategory);
+								break;
+							case "update":
+								if(resourceCategory.getIdentifier()!=null) {
+									resourceCategories.add(resourceCategory);
+								}
+								break;
+							case "delete":
+								try {
+									if(resourceCategory.getIdentifier()!=null) {
+										repository.del(resourceCategory.getIdentifier());
+									} else {
+										ResourceCategory bean = (ResourceCategory)repository.getByExample(resourceCategory);
+										if(null!=bean) {
+											repository.del(bean.getIdentifier());
+										}
+									}
+								} catch (EspStoreException e) {
+									LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+									throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+											LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+											e.getLocalizedMessage());
+								}
+								break;
+						}
+					}
+				}
+			}
+
+			if (!resourceCategories.isEmpty()) {
+				try {
+					LOG.debug("调用sdk方法：batchAdd");
+
+					resourceCategories = repository.batchAdd(resourceCategories);
+
+				} catch (EspStoreException e) {
+
+					LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+							e.getLocalizedMessage());
+				}
+			}
+		}
+	}
+
+	private void dealBasicInfoPatch(String resourceType, ResourceModel resourceModel, Education oldBean) {
+		@SuppressWarnings("rawtypes")
+		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resourceType);
+		// 转换为数据模型
+		// 所有通用接口支持的资源在sdk 都继承了Education
+		Education education = changeModelToBean(resourceType, resourceModel);  //have set primary_category
+
+		boolean bBasicInfoChanged = false;
+		try {
+			Field[] fs = resourceModel.getClass().getDeclaredFields();
+
+			for (int i = 0; i < fs.length; i++) {
+				Object o = fs[i].get(resourceModel);
+				if (o!=null) {
+					bBasicInfoChanged = true;
+					String name = fs[i].getName();
+					String setterName = name.substring(0,1).toUpperCase() + name.substring(1);
+					Method m = resourceModel.getClass().getMethod(setterName, fs[i].getType());
+					m.invoke(oldBean, o);
+				}
+			}
+		} catch (Exception e) {
+
+			LOG.warn("反射处理扩展属性出错！", e);
+
+		}
+		if(bBasicInfoChanged) {
+			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+			try {
+				education = (Education) resourceRepository.update(oldBean);
+			} catch (EspStoreException e) {
+
+				LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
+	}
+
+	/**
      * @author linsm
      * @param resourceType
      * @param resourceModel

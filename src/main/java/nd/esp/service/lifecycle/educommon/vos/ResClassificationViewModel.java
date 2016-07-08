@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.educommon.vos;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * @author johnny
@@ -26,8 +27,11 @@ public class ResClassificationViewModel implements Comparable<ResClassificationV
 	 */
 	private String taxoncode;
 
-	public ResClassificationViewModel(){
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String operation;
 
+	public ResClassificationViewModel(){
+		operation = null;
 	}
 
 	public String getIdentifier() {
@@ -60,6 +64,14 @@ public class ResClassificationViewModel implements Comparable<ResClassificationV
 
 	public void setTaxoncode(String taxoncode) {
 		this.taxoncode = taxoncode;
+	}
+
+	public String getOperation() {
+		return operation;
+	}
+
+	public void setOperation(String operation) {
+		this.operation = operation;
 	}
 
 	@Override

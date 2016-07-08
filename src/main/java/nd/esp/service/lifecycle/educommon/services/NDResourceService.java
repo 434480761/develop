@@ -199,6 +199,18 @@ public interface NDResourceService {
      * @since
      */
     public ResourceModel update(String resourceType, ResourceModel resourceModel,DbName dbName);
+
+    ResourceModel patch(String resourceType, ResourceModel resourceModel);
+
+    /**
+     * 部分更新资源(支持分库)
+     * @author qil
+     * @param resourceType
+     * @param resourceModel
+     * @return
+     * @since
+     */
+    public ResourceModel patch(String resourceType, ResourceModel resourceModel,DbName dbName);
     
     /**
      * CS文件上传
