@@ -26,6 +26,7 @@ import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -35,13 +36,16 @@ import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.support.RelationType;
 import nd.esp.service.lifecycle.educommon.vos.ResEducationalViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResLifeCycleViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResRightViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResTechInfoViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
@@ -62,14 +66,18 @@ import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
+import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeService;
@@ -108,6 +116,8 @@ import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
 import com.nd.gaea.client.WafResourceAccessException;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
+import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
+import com.nd.gaea.rest.security.authens.UserInfo;
 
 @Service
 public class NDResourceServiceImpl implements NDResourceService{
@@ -171,6 +181,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Qualifier("coverageService4QuestionDBImpl")
     private CoverageService coverageService4QuestionDB;
     
+	@Autowired
+    private AsynEsResourceService esResourceOperation;
+	
+	@Autowired
+	private OfflineService offlineService;
+    
     /**
      * SDK注入
      */
@@ -194,6 +210,14 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Autowired
     private NotifyReportService nds;
+    
+    @Autowired()
+    @Qualifier("lifecycleServiceV06")
+    private LifecycleServiceV06 lifecycleService;
+    
+    @Autowired()
+    @Qualifier("lifecycleService4QtiV06")
+    private LifecycleServiceV06 lifecycleService4Qti;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -427,21 +451,21 @@ public class NDResourceServiceImpl implements NDResourceService{
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform) {
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion) {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         rListViewModel.setLimit(limit);
         
         //判断使用IN还是EXISTS
-        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey);
+        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,showVersion);
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -501,6 +525,8 @@ public class NDResourceServiceImpl implements NDResourceService{
         private String printableKey;
         private String statisticsType;
         private String statisticsPlatform;
+        private boolean forceStatus;
+        private boolean showVersion;
         
         //返回值
         private Long total;
@@ -521,7 +547,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform){
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion){
             this.isCount = isCount;
             this.resType = resType;
             this.resCodes = resCodes;
@@ -541,14 +567,16 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.printableKey = printableKey;
             this.statisticsType = statisticsType;
             this.statisticsPlatform = statisticsPlatform;
+            this.forceStatus = forceStatus;
+            this.showVersion = showVersion;
         }
         
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus,showVersion);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
             }
             
             return this;
@@ -1059,6 +1087,13 @@ public class NDResourceServiceImpl implements NDResourceService{
                                           LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()
                                                   + "resourceType:" + resourceType + "uuid:" + uuid);
         }
+        
+        //2、判断该资源下有没有在用的版本
+        List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resourceType,uuid);
+        if(list != null && list.size() > 1){
+        	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/DELETE_RESOURCE_DENY","资源存在子版本，无法删除");
+        }
+        
         //所有通用接口支持的资源都继承了NdResource
         //存在问题，教学目标等，并没有继承NdResource
         ((Education)beanResult).setEnable(false);
@@ -2034,13 +2069,13 @@ public class NDResourceServiceImpl implements NDResourceService{
         // 转换为数据模型
         // 所有通用接口支持的资源在sdk 都继承了Education
         Education education = changeModelToBean(resourceType, resourceModel);  //have set primary_category
-
         try {
             if (operationType == OperationType.CREATE) {
                 // 默认值
                 Timestamp ts = new Timestamp(System.currentTimeMillis());
                 education.setCreateTime(ts);
                 education.setLastUpdate(ts);
+                education.setmIdentifier(education.getIdentifier());
                 if(ResourceNdCode.knowledges.toString().equals(resourceType)){
                     //需要处理下树型结构
                     Chapter knowledge = (Chapter)education;
@@ -2078,6 +2113,7 @@ public class NDResourceServiceImpl implements NDResourceService{
                 }
                 // 不可变的值特别处理
                 education.setCreateTime(oldBean.getCreateTime());
+                education.setmIdentifier(oldBean.getmIdentifier());
                 
                 ResLifeCycleModel lc = resourceModel.getLifeCycle();
                 if(lc == null || StringUtils.isEmpty(lc.getCreator())){
@@ -2955,4 +2991,179 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
         return oldBean;
     }
+
+	@Override
+	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		//1、判断是否可以创建版本
+		if(rm.getmIdentifier() != null && !rm.getIdentifier().equals(rm.getmIdentifier())){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已是版本分支，不允许创建新版本");
+		}
+		
+		//2、判断版本号是否重复
+		String version = vvm.getLifeCycle().getVersion();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, uuid);
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String v = (String)map.get("version");
+				if(version.equals(v)){
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已存在此版本号");
+				}
+			}
+		}
+		
+		//3、创建新资源
+		long time = System.currentTimeMillis();
+		Timestamp ts = new Timestamp(time);
+		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resType);
+		Education education = changeModelToBean(resType, rm);
+		String newUuid = UUID.randomUUID().toString();
+		education.setIdentifier(newUuid);
+		education.setmIdentifier(uuid);
+		education.setVersion(version);
+		education.setStatus(vvm.getLifeCycle().getStatus());
+		education.setCreator(vvm.getLifeCycle().getCreator());
+		education.setCreateTime(ts);
+		education.setLastUpdate(ts);
+		try {
+			education = (Education) resourceRepository.add(education);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+		
+		//4、建立资源关系
+		List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
+		EducationRelationModel erm = new EducationRelationModel();
+		erm.setResType(resType);
+		erm.setResourceTargetType(resType);
+		erm.setSource(uuid);
+		erm.setTarget(newUuid);
+		erm.setRelationType(RelationType.VERSION.getName());
+		erm.setTags(vvm.getRelations().get("tags"));
+		educationRelationModels.add(erm);
+		if(CommonServiceHelper.isQuestionDb(resType)){
+			educationRelationService4QuestionDB.createRelation(educationRelationModels, false);
+		}else{
+			educationRelationService.createRelation(educationRelationModels, false);
+		}
+		
+		//5、创建资源生命周期
+        LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
+        ResContributeModel contributeModel = new ResContributeModel();
+        contributeModel.setLifecycleStatus(vvm.getLifeCycle().getStatus());
+        contributeModel.setMessage("新版本创建，来源id:"+uuid);
+        contributeModel.setTitle("version");
+        if(userInfo != null){
+        	try {
+        		contributeModel.setTargetType(userInfo.getUserType());
+            	contributeModel.setTargetId(userInfo.getUserId());
+            	contributeModel.setTargetName(userInfo.getUserName());
+            	
+            	List<UserCenterRoleDetails> userRoleList = userInfo.getUserRoles();
+            	if(CollectionUtils.isNotEmpty(userRoleList)){
+            		UserCenterRoleDetails ur = userRoleList.get(0);
+            		contributeModel.setRoleId(ur.getRoleId());
+            		contributeModel.setRoleName(ur.getRoleName());
+            	}
+			} catch (Exception e) {
+				LOG.error("获取UC用户信息出错",e);
+			}
+        	
+        }
+        service.addLifecycleStep(resType, newUuid, contributeModel);
+        ResourceModel resourceModel = new ResourceModel();
+        updateBasicInModel(resourceModel,education);
+		ResourceViewModel resourceViewModel = BeanMapperUtils.beanMapper(resourceModel, ResourceViewModel.class);
+		return resourceViewModel;
+	}
+	
+	
+	public Map<String, Map<String, Object>> versionCheck(String resType,String uuid){
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		String mid = rm.getmIdentifier();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, mid);
+		Map<String, Map<String, Object>> returnMap = new HashMap<String, Map<String,Object>>();
+		
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String version = (String)map.get("version");
+				String identifier = (String)map.get("identifier");
+				Long createTime = (Long)map.get("create_time");
+				String content = (String)map.get("message");
+				Map<String,Object> m = new HashMap<String, Object>();
+				m.put("identifier", identifier);
+				m.put("createTime", new Date(createTime));
+				m.put("content", content);
+				if(StringUtils.isEmpty(content)){
+					m.put("content", "");
+				}
+				
+				returnMap.put(version, m);
+			}
+		}
+		return returnMap;
+	}
+	
+	public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap){
+		List<String> sqls = new ArrayList<String>();
+		List<String> ids = new ArrayList<String>();
+		
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		String mid = rm.getmIdentifier();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, mid);
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String identifier = (String)map.get("identifier");
+				String status = (String)map.get("estatus");
+				if(identifier.equals(uuid)){
+					if(!"ONLINE".equals(status)){
+						String s1 = updateStatusSql(resType, uuid, "ONLINE");
+						sqls.add(s1);
+						ids.add(identifier);
+					}
+					continue;
+				}
+				
+				if(paramMap.containsKey(identifier)){
+					if(status != null && !status.equals(paramMap.get(identifier))){
+						String s = updateStatusSql(resType, identifier, paramMap.get(identifier));
+						sqls.add(s);
+						ids.add(identifier);
+					}
+				}else{
+					if(status != null && status.equals("ONLINE")){
+						String s = updateStatusSql(resType, identifier, "OFFLINE");
+						sqls.add(s);
+						ids.add(identifier);
+					}
+				}
+			}
+		}
+		if(CollectionUtils.isNotEmpty(sqls)){
+			String[] a = new String[]{};
+			ndResourceDao.batchUpdateSql(resType,sqls.toArray(a));
+		}
+		
+		//通知ES和同步离线文件
+		if(ResourceTypeSupport.isValidEsResourceType(resType) && CollectionUtils.isNotEmpty(ids)){
+			for (String id : ids) {
+				esResourceOperation.asynAdd(new Resource(resType, id));
+				offlineService.writeToCsAsync(resType, id);
+			}
+		}
+		
+		List<Map<String,Object>> list2 = ndResourceDao.queryResourceByMid(resType, mid);
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		if(CollectionUtils.isNotEmpty(list2)){
+			for (Map<String, Object> map : list2) {
+				returnMap.put((String)map.get("identifier"), (String)map.get("estatus"));
+			}
+			return returnMap;
+		}
+		return null;
+	}
+	
+	private String updateStatusSql(String resType,String uuid,String status){
+		return "update ndresource set estatus='"+status+"',last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
+	}
 }

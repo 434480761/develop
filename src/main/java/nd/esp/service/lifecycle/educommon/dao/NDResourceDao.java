@@ -32,7 +32,7 @@ public interface NDResourceDao {
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
             boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
-            String statisticsType,String statisticsPlatform);
+            String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion);
 
     /**
      * 查询总数
@@ -53,7 +53,7 @@ public interface NDResourceDao {
     public long commomQueryCount(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, String limit, boolean isNotManagement, boolean reverse, boolean useIn,
-            Boolean printable, String printableKey);
+            Boolean printable, String printableKey,boolean forceStatus,boolean showVersion);
     
     /**
      * 资源统计
@@ -78,7 +78,7 @@ public interface NDResourceDao {
      */
     public boolean judgeUseInOrExists(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
-            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey);
+            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,boolean forceStatus,boolean showVersion);
     
     /**
      * 判断是否使用Redis.
@@ -170,6 +170,22 @@ public interface NDResourceDao {
      * @return
      */
     public int queryCodeCountByResId4QuestionDb(String resType, String identifier,String code);
+    
+    /**
+     * 根据元资源id查找资源列表
+     * @param resType
+     * @param mid
+     * @return
+     */
+    public List<Map<String,Object>> queryResourceByMid(String resType,String mid);
+    
+    /**
+     * 批量更新sql
+     * @param resType
+     * @param sqls
+     * @return
+     */
+    public void batchUpdateSql(String resType,String[] sqls);
     
 //    /**
 //     * 删除章节相关的资源关系
