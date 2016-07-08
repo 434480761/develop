@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.support;
 
+import nd.esp.service.lifecycle.support.enums.ResTypeEnum;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -40,41 +42,37 @@ public class RoleResFilterUrlMap {
 	 */
 	public static final Map<String,String> getResCreatorMap(){
 		Map<String,String> m = new LinkedHashMap<String,String>();
-		
-		// /v0.3/{res_type} POST
-		m.put("/(\\w+)" + "/POST", "");
-		//m.put("/(\\w+)/(\\w+)" + "/POST", "");
-		
-		// /v0.3/{res_type}/* PUT
-		m.put("/(\\w+)/([a-zA-Z0-9-]+)" + "/PUT", "");
-		//m.put("/(\\w+)/(\\w+)/actions/move" + "/PUT", "");   
-		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)" + "/PUT", ""); 
-		//m.put("/(\\w+)/(\\w+)/chapters/(\\w+)/actions/move" + "/PUT", ""); 
-		
-		// /v0.3/{res_type}/* GET
-		//m.put("/(\\w+)/([a-zA-Z0-9-]+)" + "/GET", "");
-		// /v0.3/{res_type}/list GET
-        m.put("/(\\w+)/list" + "/GET", "");
-        // /v0.3/{res_type}/*/archive POST
-       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/archive" + "/POST", "");
-       	// /v0.3/{res_type}/*/archiveinfo GET
-       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
-       	// /v0.3/{res_type}/*/uploadurl GET
-       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/uploadurl" + "/GET", "");
-       	// /v0.3/{res_type}/*/downloadurl GET
-       	m.put("/(\\w+)/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
-       	// /v0.3/{res_type}/*/relations POST
-		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations" + "/POST", "");
-		// /v0.3/{res_type}/*/relations/* PUT
-		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations/(\\w+)" + "/PUT", "");
-		// /v0.3/{res_type}/*/relations DELETE
-		m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations" + "/DELETE", "");
-		// /v0.3/{res_type}/*/relations/* DELETE
-        m.put("/(\\w+)/([a-zA-Z0-9-]+)/relations/([a-zA-Z0-9-]+)" + "/DELETE", "");
-		// /v0.3/{res_type}/*/relations GET
-		// /v0.3/{res_type}/*/targets GET
-		m.put("/(\\w+)/([a-zA-Z0-9-]+)/targets" + "/GET", "");
-		// /v0.3/{res_type}/*/targets/* GET
+
+		for (ResTypeEnum e : ResTypeEnum.values()){
+			// /v0.3/{res_type} POST
+			m.put("/"+ e.getValue() + "/POST", "");
+			// /v0.3/{res_type}/* PUT
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/PUT", "");
+			// /v0.3/{res_type}/* GET
+			//m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/GET", "");
+			// /v0.3/{res_type}/list GET
+			m.put("/"+ e.getValue() + "/list" + "/GET", "");
+			// /v0.3/{res_type}/*/archive POST
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/archive" + "/POST", "");
+			// /v0.3/{res_type}/*/archiveinfo GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
+			// /v0.3/{res_type}/*/uploadurl GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/uploadurl" + "/GET", "");
+			// /v0.3/{res_type}/*/downloadurl GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
+			// /v0.3/{res_type}/*/relations POST
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations" + "/POST", "");
+			// /v0.3/{res_type}/*/relations/* PUT
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations/(\\w+)" + "/PUT", "");
+			// /v0.3/{res_type}/*/relations DELETE
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations" + "/DELETE", "");
+			// /v0.3/{res_type}/*/relations/* DELETE
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations/([a-zA-Z0-9-]+)" + "/DELETE", "");
+			// /v0.3/{res_type}/*/relations GET
+			// /v0.3/{res_type}/*/targets GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/targets" + "/GET", "");
+			// /v0.3/{res_type}/*/targets/* GET
+		}
 		return m;
 	}
     
@@ -118,16 +116,18 @@ public class RoleResFilterUrlMap {
      */
     public static final Map<String,String> getResConsumerMap(){
         Map<String,String> m = new LinkedHashMap<String,String>();
-        // /v0.3/{res_type}/list
-        m.put("/(\\w+)/list" + "/GET", "");   
-        // /v0.3/{res_type}/*/archive POST
-        m.put("/(\\w+)/([a-zA-Z0-9-]+)/archive" + "/POST", "");
-        // /v0.3/{res_type}/*/archiveinfo GET
-        m.put("/(\\w+)/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
-        // /v0.3/{res_type}/*/downloadurl GET
-        m.put("/(\\w+)/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
-        // /v0.3/{res_type}/*/targets GET
-        m.put("/(\\w+)/([a-zA-Z0-9-]+)/targets" + "/GET", "");
+		for (ResTypeEnum e : ResTypeEnum.values()){
+			// /v0.3/{res_type}/list
+			m.put("/"+ e.getValue() +"/list" + "/GET", "");
+			// /v0.3/{res_type}/*/archive POST
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/archive" + "/POST", "");
+			// /v0.3/{res_type}/*/archiveinfo GET
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/archiveinfo" + "/GET", "");
+			// /v0.3/{res_type}/*/downloadurl GET
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
+			// /v0.3/{res_type}/*/targets GET
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/targets" + "/GET", "");
+		}
         return m;
     }   
 }
