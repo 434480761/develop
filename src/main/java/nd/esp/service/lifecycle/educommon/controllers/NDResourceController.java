@@ -1621,9 +1621,8 @@ public class NDResourceController {
     				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "status参数不正确！值："+entry.getValue());
     			}
     		}
-    		return ndResourceService.versionRelease(resourceType, uuid, paramMap);
     	}
-    	return null;
+    	return ndResourceService.versionRelease(resourceType, uuid, paramMap);
     }
     
     private boolean validateStatus(String status){

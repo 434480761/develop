@@ -45,6 +45,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
@@ -65,15 +66,18 @@ import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeService;
@@ -176,6 +180,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Autowired
     @Qualifier("coverageService4QuestionDBImpl")
     private CoverageService coverageService4QuestionDB;
+    
+	@Autowired
+    private AsynEsResourceService esResourceOperation;
+	
+	@Autowired
+	private OfflineService offlineService;
     
     /**
      * SDK注入
@@ -2842,7 +2852,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 	
 	public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap){
 		List<String> sqls = new ArrayList<String>();
-
+		List<String> ids = new ArrayList<String>();
 		
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
 		String mid = rm.getmIdentifier();
@@ -2855,6 +2865,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 					if(!"ONLINE".equals(status)){
 						String s1 = updateStatusSql(resType, uuid, "ONLINE");
 						sqls.add(s1);
+						ids.add(identifier);
 					}
 					continue;
 				}
@@ -2863,11 +2874,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 					if(status != null && !status.equals(paramMap.get(identifier))){
 						String s = updateStatusSql(resType, identifier, paramMap.get(identifier));
 						sqls.add(s);
+						ids.add(identifier);
 					}
 				}else{
 					if(status != null && status.equals("ONLINE")){
 						String s = updateStatusSql(resType, identifier, "OFFLINE");
 						sqls.add(s);
+						ids.add(identifier);
 					}
 				}
 			}
@@ -2875,6 +2888,14 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(CollectionUtils.isNotEmpty(sqls)){
 			String[] a = new String[]{};
 			ndResourceDao.batchUpdateSql(resType,sqls.toArray(a));
+		}
+		
+		//通知ES和同步离线文件
+		if(ResourceTypeSupport.isValidEsResourceType(resType) && CollectionUtils.isNotEmpty(ids)){
+			for (String id : ids) {
+				esResourceOperation.asynAdd(new Resource(resType, id));
+				offlineService.writeToCsAsync(resType, id);
+			}
 		}
 		
 		List<Map<String,Object>> list2 = ndResourceDao.queryResourceByMid(resType, mid);
@@ -2889,6 +2910,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 	}
 	
 	private String updateStatusSql(String resType,String uuid,String status){
-		return "update ndresource set estatus='"+status+"' where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
+		return "update ndresource set estatus='"+status+"',last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
 	}
 }
