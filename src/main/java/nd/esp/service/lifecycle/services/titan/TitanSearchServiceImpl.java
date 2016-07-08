@@ -759,7 +759,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             }
             eqRelationTitanEdgeAndVertexExpression
                     .setTitanQueryVertex(titanQueryVertex);
-            titanQueryVertex.setVertexLabel(chunks[0]);
+//            titanQueryVertex.setVertexLabel(chunks[0]);
             Map<String, Map<Titan_OP, List<Object>>> edgePropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
             edgePropertiesMap.put(ES_Field.enable.toString(),
                     generateFieldCondtion(ES_Field.enable.toString(), true));
@@ -769,6 +769,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             titanQueryEdge.setPropertiesMap(edgePropertiesMap);
             Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
             titanQueryVertex.setPropertiesMap(vertexPropertiesMap);
+            vertexPropertiesMap.put(
+                    "primary_category",
+                    generateFieldCondtion("primary_category",
+                            chunks[0]));
             vertexPropertiesMap.put(
                     ES_Field.identifier.toString(),
                     generateFieldCondtion(ES_Field.identifier.toString(),
@@ -780,7 +784,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (titanExpression.getFirstTitanQueryEdgeAndVertex() == null) {
                 titanExpression
                         .setFirstTitanQueryEdgeAndVertex(eqRelationTitanEdgeAndVertexExpression);
-            } else if (eqRelationTitanEdgeAndVertexExpression
+            } 
+            /*else if (eqRelationTitanEdgeAndVertexExpression
                     .getTitanQueryVertex() instanceof TitanQueryVertexForTree
                     || (!(titanExpression.getFirstTitanQueryEdgeAndVertex()
                     .getTitanQueryVertex() instanceof TitanQueryVertexForTree)
@@ -796,7 +801,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                         .getFirstTitanQueryEdgeAndVertex());
                 titanExpression
                         .setFirstTitanQueryEdgeAndVertex(eqRelationTitanEdgeAndVertexExpression);
-            } else {
+            }*/
+            else {
                 relationTitanEdgeExpression
                         .addCondition(eqRelationTitanEdgeAndVertexExpression);
             }
