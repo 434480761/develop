@@ -100,13 +100,14 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	public void deleteAll(String primaryCategory, String identifier) {
 		String deleteScript = "g.V().has(primaryCategory,'identifier',identifier)" +
 				".outE().or(hasLabel('has_categories_path'),hasLabel('has_category_code')).drop();";
-		deleteScript = deleteScript + "g.V().has(primaryCategory,'identifier',identifier).properties('search_code','search_path').drop()";
+		String deleteScript2 = "g.V().has(primaryCategory,'identifier',identifier).properties('search_code','search_path').drop()";
 
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory", primaryCategory);
 		param.put("identifier", identifier);
 
 		titanCommonRepository.executeScript(deleteScript, param);
+		titanCommonRepository.executeScript(deleteScript2, param);
 	}
 
 
