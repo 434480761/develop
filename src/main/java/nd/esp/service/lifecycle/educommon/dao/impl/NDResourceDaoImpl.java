@@ -1969,15 +1969,30 @@ public class NDResourceDaoImpl implements NDResourceDao{
     		int i = 1;
     		for(String tag : tags){
     			if(StringUtils.hasText(tag)){
-    				String tagSql = "a.tags LIKE :" + paramHead + "tag" + i;
-        			tagsSqlList.add(tagSql);
-        			
+    				List<String> tagAndOp = Arrays.asList(tag.split(" and "));
+    				if(CollectionUtils.isNotEmpty(tagAndOp)){
+    					List<String> tagAndList = new ArrayList<String>();
+    					int j = 1;
+    					for(String tagAnd : tagAndOp){
+    						if(StringUtils.hasText(tagAnd)){
+    							String tagSql = "a.tags LIKE :" + paramHead + "tag" + i + j;
+    							tagAndList.add(tagSql);
+    							
+    							j++;
+    						}
+    					}
+    					
+    					if(CollectionUtils.isNotEmpty(tagAndList)){
+    						tagsSqlList.add("(" + StringUtils.join(tagAndList, " AND ") + ")");
+    					}
+    				}
+    				
         			i++;
     			}
     		}
     		
     		if(CollectionUtils.isNotEmpty(tagsSqlList)){
-    			result = "(" + StringUtils.join(tagsSqlList, " AND ") + ")";
+    			result = "(" + StringUtils.join(tagsSqlList, " OR ") + ")";
         	}
     	}
     	
@@ -2176,7 +2191,18 @@ public class NDResourceDaoImpl implements NDResourceDao{
         	int i = 1;
         	for(String tag : tags){
         		if(StringUtils.hasText(tag)){
-        			params.put(paramHead + "tag" + i, "%\"" + tag + "\"%");
+        			List<String> tagAndOp = Arrays.asList(tag.split(" and "));
+        			if(CollectionUtils.isNotEmpty(tagAndOp)){
+        				int j = 1;
+        				for(String tagAnd : tagAndOp){
+        					if(StringUtils.hasText(tagAnd)){
+        						params.put(paramHead + "tag" + i + j, "%\"" + tagAnd + "\"%");
+        						
+        						j++;
+        					}
+        				}
+        			}
+        			
         			i++;
         		}
         	}
