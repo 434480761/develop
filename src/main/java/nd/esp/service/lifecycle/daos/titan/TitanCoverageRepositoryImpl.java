@@ -237,7 +237,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 	private void updateResourceCoverage(String primaryCategory, String identifier){
 		Education education = getEducation(primaryCategory, identifier);
-
+		if(education == null){
+			return;
+		}
 		List<String> searchCoverages = new ArrayList<>();
 		Set<String> uuids = new HashSet<>();
 		uuids.add(identifier);
@@ -261,8 +263,14 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 	private void addResourceCoverage(ResCoverage resCoverage){
 
-		Education education = getEducation(resCoverage.getResType(), resCoverage.getResource());
+		if(resCoverage == null){
+			return;
+		}
 
+		Education education = getEducation(resCoverage.getResType(), resCoverage.getResource());
+		if(education == null){
+			return;
+		}
 		List<String> searchCoverages = getAllResourceCoverage(resCoverage, education.getStatus());
 
 		StringBuffer addScript = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
@@ -291,7 +299,12 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 
 	private Education getEducation(String primaryCategory, String identifier){
-		EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+		String pc = primaryCategory;
+		if("guidancebooks".equals(primaryCategory)) {
+			pc = "teachingmaterials";
+		}
+
+		EspRepository<?> espRepository = ServicesManager.get(pc);
 		Education education = null;
 		try {
 			education = (Education) espRepository.get(identifier);

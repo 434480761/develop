@@ -154,6 +154,9 @@ public class TitanScritpUtils {
 
     public static void getSetScriptAndParam(StringBuffer scriptBuffer,Map<String, Object> params,
                                             String fieldName, List<String> values){
+        if(values == null){
+            return;
+        }
         int index = 0;
         for (String value : values){
             String paramKey = fieldName+index;
