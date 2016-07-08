@@ -158,10 +158,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             Map<String, Map<String, List<String>>> params,
             Map<String, String> orderMap, int from, int size, boolean reverse,
             String words) {
-        System.out.println("params:" + params);
-        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
-        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        //System.out.println("params:" + params);
+       // System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
+       // System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
+       // System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -210,8 +210,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan generate script consume times:"
                 + (System.currentTimeMillis() - generateScriptBegin));
 
-        System.out.println(scriptForResultAndCount);
-        System.out.println(scriptParamMap);
+       // System.out.println(scriptForResultAndCount);
+        //System.out.println(scriptParamMap);
         long searchBegin = System.currentTimeMillis();
         ResultSet resultSet = titanResourceRepository.search(
                 scriptForResultAndCount, scriptParamMap);
@@ -224,7 +224,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         while (iterator.hasNext()) {
             resultStr.add(iterator.next().getString());
         }
-        System.out.println(resultStr);
+        //System.out.println(resultStr);
         LOG.info("get resultset consume times:"
                 + (System.currentTimeMillis() - getResultBegin));
 

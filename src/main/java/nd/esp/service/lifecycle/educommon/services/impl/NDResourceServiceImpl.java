@@ -254,7 +254,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		//just for test by lsm
 		listViewModel = 
-				titanSearchService.search(resType, includes, params, orderMap,
+				titanSearchService.searchWithAdditionProperties(resType, includes, params, orderMap,
 						result[0], result[1],reverse,words);
 		listViewModel.setLimit(limit);
 		return listViewModel;
