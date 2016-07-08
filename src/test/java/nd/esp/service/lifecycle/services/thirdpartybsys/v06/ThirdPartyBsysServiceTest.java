@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.services.thirdpartybsys.v06;
 
 import nd.esp.service.lifecycle.BaseControllerConfig;
-import nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.utils.common.TestException;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

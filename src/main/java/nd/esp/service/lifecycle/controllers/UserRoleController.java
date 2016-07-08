@@ -6,7 +6,7 @@ import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
 import com.nd.gaea.rest.security.authens.UserInfo;
 import nd.esp.service.lifecycle.models.UserCoverageMappingModel;
 import nd.esp.service.lifecycle.models.UserRestypeMappingModel;
-import nd.esp.service.lifecycle.services.thirdpartybsys.v06.v06.ThirdPartyBsysService;
+import nd.esp.service.lifecycle.services.thirdpartybsys.v06.ThirdPartyBsysService;
 import nd.esp.service.lifecycle.services.usercoveragemapping.v06.UserCoverageMappingService;
 import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappingService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
