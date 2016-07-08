@@ -93,6 +93,13 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	        instructionalObjectiveModel.setEducationInfo(null);
 
 	        return instructionalObjectiveModel;
+		}else if(instructionalObjectiveModel.getCustomProperties() != null && instructionalObjectiveModel.getCustomProperties().contains("onlystatus")){
+	        instructionalObjectiveModel = (InstructionalObjectiveModel) ndResourceService.update(ResourceNdCode.instructionalobjectives.toString(),
+                    instructionalObjectiveModel);
+			instructionalObjectiveModel.setPreview(null);
+			instructionalObjectiveModel.setEducationInfo(null);
+			
+			return instructionalObjectiveModel;
 		}else{
 			String oldId = instructionalObjectiveModel.getIdentifier();
 			if(initalId != null){

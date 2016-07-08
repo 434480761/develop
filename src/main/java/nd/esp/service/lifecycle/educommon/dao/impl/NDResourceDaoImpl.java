@@ -1820,18 +1820,6 @@ public class NDResourceDaoImpl implements NDResourceDao{
         return result;
     }
     
-    private String relationsExcludeParam4Sql(String resType,Set<String> relationsExclude, String paramHead){
-        String result = "";
-        
-        if(CollectionUtils.isNotEmpty(relationsExclude)){
-            result = "SELECT ndex.identifier FROM ndresource ndex INNER JOIN resource_categories rcex ON ndex.identifier=rcex.resource";
-            result += " WHERE ndex.enable=1 AND ndex.primary_category='" + resType + "'";
-            result += " AND rcex.taxOnCode IN (:" + paramHead + "cgexs)";
-        }
-        
-        return result;
-    }
-    
     /**
      * prop sql参数拼接     
      * <p>Create Time: 2015年7月14日   </p>
