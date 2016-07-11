@@ -338,7 +338,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
 
     }
 	
@@ -436,7 +436,7 @@ public class NDResourceController {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, relations, coverages, props, orderBy, words
 						+ "$" + fulltext, limit, QueryType.TITAN, !isAll,
-				reverse,printable, printableKey,null,null);
+				reverse,printable, printableKey,null,null,false,false);
 	}
 	
 	/**
@@ -483,7 +483,7 @@ public class NDResourceController {
             @RequestParam String words,@RequestParam String limit){
         
 
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, showVersion);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, showVersion);
 
     }
     
@@ -534,7 +534,7 @@ public class NDResourceController {
             @RequestParam String words,@RequestParam String limit){
         
 
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
 
     }
     
@@ -592,7 +592,7 @@ public class NDResourceController {
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
 
-            List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
+            List<String> orderBy, String words, String limit, QueryType queryType, boolean isNotManagement, String reverse,
             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,
             boolean showVersion) {
 
@@ -659,7 +659,7 @@ public class NDResourceController {
 		case DB:
 			if (StaticDatas.QUERY_BY_ES_FIRST
 					&& canQueryByEla(resType, relationsMap, orderMap, words,
-							coveragesList, isNotManagement)) {// 数据库走ES查询判断
+							coveragesList, isNotManagement,forceStatus,showVersion)) {// 数据库走ES查询判断
 				try {
 					Map<String, Object> changeMap = changeKey(propsMap,
 							orderMap, false);
@@ -683,7 +683,7 @@ public class NDResourceController {
 							resType, resCodes, includesList, categories,
 							categoryExclude, relationsMap, coveragesList,
 							propsMap, orderMap, words, limit, isNotManagement,
-							reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform);
+							reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
 				}
 			} else {
 				rListViewModel = ndResourceService.resourceQueryByDB(resType,
