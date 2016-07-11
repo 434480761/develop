@@ -1687,7 +1687,12 @@ public class NDResourceController {
         
     	Map<String,List<String>> tagMap = versionViewModel.getRelations();
     	if(tagMap != null && tagMap.containsKey("tags") && tagMap.get("tags") != null && CollectionUtils.isNotEmpty(tagMap.get("tags"))){
-    		ResourceViewModel newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel,userInfo);
+    		ResourceViewModel newResource = null;
+    		if(commonServiceHelper.isQuestionDb(resourceType)){
+    			newResource = ndResourceService.createNewVersion4Question(resourceType, uuid, versionViewModel,userInfo);
+    		}else{
+    			newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel,userInfo);
+    		}
     		if (ResourceTypeSupport.isValidEsResourceType(resourceType)
     				&& StringUtils.isNotEmpty(newResource.getIdentifier())) {
     			esResourceOperation.asynAdd(new Resource(resourceType, newResource.getIdentifier()));
