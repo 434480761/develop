@@ -86,7 +86,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         List<Object> likeInAndCodeList = new ArrayList<>();
                         for (String code : codes) {// and contains like
                             if (code.contains("*")) {
-                                likeInAndCodeList.add(code);
+                                likeInAndCodeList.add(code.trim());
                                 scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeInAndCodeList, scriptParamMap).replaceFirst(".", "")).append(".");
                                 likeInAndCodeList.clear();
                             } else {
