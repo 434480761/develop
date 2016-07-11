@@ -19,6 +19,8 @@ import nd.esp.service.lifecycle.support.uc.UserBaseInfo;
 import nd.esp.service.lifecycle.support.uc.UserItems;
 import nd.esp.service.lifecycle.utils.AssertUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
+import nd.esp.service.lifecycle.vos.RoleViewModel;
+import nd.esp.service.lifecycle.vos.UserRoleListViewModel;
 import nd.esp.service.lifecycle.vos.UserRoleViewModel;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -207,15 +209,15 @@ public class UserRoleController {
 		UserItems userItems = this.ucClient.listRoleUsers(roleId,orgId,limitResult[0],limitResult[1]);
 		List<String> userIdList = new ArrayList<String>(userItems.size());
 
-		ArrayList<UserRoleViewModel> userRoleViewModelArrayList = new ArrayList<UserRoleViewModel>();
+		ArrayList<UserRoleListViewModel> userRoleViewModelArrayList = new ArrayList<UserRoleListViewModel>();
 		for (UserBaseInfo userInfo : userItems) {
 			//用户角色返回数据model
-			UserRoleViewModel userRoleViewModel = new UserRoleViewModel();
-			userRoleViewModel.setUserId(userInfo.getUserId());
-			userRoleViewModel.setRoleId(roleId);
-			userRoleViewModel.setRoleName(roleName);
-			userRoleViewModel.setUserName(userInfo.getUserName());
-			userRoleViewModelArrayList.add(userRoleViewModel);
+			UserRoleListViewModel userRoleListViewModel = new UserRoleListViewModel();
+			userRoleListViewModel.setUserId(userInfo.getUserId());
+			userRoleListViewModel.setRoleId(roleId);
+			userRoleListViewModel.setRoleName(roleName);
+			userRoleListViewModel.setUserName(userInfo.getUserName());
+			userRoleViewModelArrayList.add(userRoleListViewModel);
 			//获取用户id列表
 			userIdList.add(userInfo.getUserId());
 		}
@@ -241,31 +243,23 @@ public class UserRoleController {
 
 	/**
 	 * 查询角色用户
-	 * @param roleId
 	 * @param userId
 	 * @param userInfo
 	 * @return
 	 * @author lanyl
 	 */
-	@RequestMapping(value = "/{userId:\\d+}/roles/{roleId:\\d+}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public UserRoleViewModel getUserRole(@PathVariable String userId ,@PathVariable String roleId ,@AuthenticationPrincipal UserInfo userInfo) {
+	@RequestMapping(value = "/{userId:\\d+}/roles", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public UserRoleViewModel getUserRole(@PathVariable String userId ,@AuthenticationPrincipal UserInfo userInfo) {
 		//参数userId效验
 		AssertUtils.isEmpty(userId, "user_id");
 		AssertUtils.isLong(userId, "user_id");
-		//参数roleId效验
-		AssertUtils.isEmpty(roleId, "role_id");
-		//角色id参数只能为6种权限角色中的一种
-		ucRoleClient.checkValidRoleId(roleId, "role_id");
 		
 		//用户角色返回数据model
 		UserRoleViewModel userRoleViewModel = new UserRoleViewModel();
 
-		//根据角色id获取角色名
-		String roleName = ucClient.getRoleNameByUserId(userId, roleId);
-		if(StringUtils.isNotBlank(roleName)){
-			userRoleViewModel.setRoleId(roleId);
-			userRoleViewModel.setRoleName(roleName);
-		}
+		//根据角色id获取角色列表
+		List<RoleViewModel> roleList = this.getRoleList(userId);
+		userRoleViewModel.setRoles(roleList);
 
 		//通过uc接口获取用户角色
 		String userName = this.ucClient.getUserName(userId);
@@ -389,4 +383,32 @@ public class UserRoleController {
 		}
 		return resTypeList;
 	}
+
+
+	/**
+	 * 通过用户id获取角色信息
+	 * @param userId
+	 * @return
+	 */
+	private List<RoleViewModel> getRoleList(String userId){
+		List<RoleViewModel> result = new ArrayList<RoleViewModel>();
+		JSONObject jsonObject = this.ucClient.listUserRoles(userId);
+		if(jsonObject != null){
+			JSONArray jsonArray = jsonObject.getJSONArray("items");
+			if(jsonArray != null && jsonArray.size() > 0){
+				Integer size = jsonArray.size();
+				for(int i = 0; i < size; i++){
+					RoleViewModel tmp = new RoleViewModel();
+					tmp.setRoleId(jsonArray.getJSONObject(i).getString("role_id"));
+					tmp.setRoleName(jsonArray.getJSONObject(i).getString("role_name"));
+					result.add(tmp);
+				}
+			}
+			return result;
+		}else {
+			return result;
+		}
+	}
+
+
 }

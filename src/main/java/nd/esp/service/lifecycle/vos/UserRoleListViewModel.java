@@ -1,27 +1,35 @@
 package nd.esp.service.lifecycle.vos;
 
-
 import java.util.List;
 
 /**
+ * <p>Title: UserRoleListViewModel</p>
+ * <p>Description: UserRoleListViewModel</p>
+ * <p>Copyright: Copyright (c) 2016  </p>
+ * <p>Company:ND Co., Ltd.  </p>
+ * <p>Create Time: 2016/7/11 </p>
  *
- * <p>Title: 角色列表model        </p>
- * <p>Description: UserRoleViewModel </p>
- * <p>Copyright: Copyright (c) 2016     </p>
- * <p>Company: ND Co., Ltd.       </p>
- * <p>Create Time: 2016年06月30日           </p>
  * @author lanyl
  */
-public class UserRoleViewModel {
-    /**
-     * 用户ID
-     */
-    private String userId;
+public class UserRoleListViewModel {
+
+	/**
+	 * 用户ID
+	 */
+	private String userId;
 
 	/**
 	 * 用户名称
 	 */
 	private String userName;
+	/**
+	 * 角色ID
+	 */
+	private String roleId;
+	/**
+	 * 覆角色名称
+	 */
+	private String roleName;
 	/**
 	 * 覆盖范围的数组
 	 */
@@ -30,8 +38,6 @@ public class UserRoleViewModel {
 	 * 资源类型数组
 	 */
 	private List<String> resTypes;
-
-	private List<RoleViewModel> roles;
 
 	public String getUserId() {
 		return userId;
@@ -49,6 +55,22 @@ public class UserRoleViewModel {
 		this.userName = userName;
 	}
 
+	public String getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(String roleId) {
+		this.roleId = roleId;
+	}
+
+	public String getRoleName() {
+		return roleName;
+	}
+
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+
 	public List<String> getCoverages() {
 		return coverages;
 	}
@@ -63,13 +85,5 @@ public class UserRoleViewModel {
 
 	public void setResTypes(List<String> resTypes) {
 		this.resTypes = resTypes;
-	}
-
-	public List<RoleViewModel> getRoles() {
-		return roles;
-	}
-
-	public void setRoles(List<RoleViewModel> roles) {
-		this.roles = roles;
 	}
 }
