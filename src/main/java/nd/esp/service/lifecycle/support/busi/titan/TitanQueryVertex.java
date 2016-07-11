@@ -38,10 +38,10 @@ public class TitanQueryVertex extends TitanQueryElement {
 
 	@Override
 	public String generateScript(Map<String, Object> scriptParamMap) {
-		if (StringUtils.isEmpty(vertexLabel)) {
-			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"LC/QUERY/PARAM", "vertexLabel");
-		}
+//		if (StringUtils.isEmpty(vertexLabel)) {
+//			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+//					"LC/QUERY/PARAM", "vertexLabel");
+//		}
 		String head = null;
 		switch (this.titanVertexDirection) {
 		case no:
@@ -57,8 +57,14 @@ public class TitanQueryVertex extends TitanQueryElement {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					"LC/QUERY/PARAM", "titanVertexDirection");
 		}
-		return head + appendVertexLabel(scriptParamMap)
-				+ super.generateScript(scriptParamMap);
+		
+		if (StringUtils.isEmpty(vertexLabel)){
+			return head+"()"+ super.generateScript(scriptParamMap);
+		}else{
+			return head + appendVertexLabel(scriptParamMap)
+					+ super.generateScript(scriptParamMap);
+		}
+		
 	}
 
 	protected String appendVertexLabel(Map<String, Object> scriptParamMap) {

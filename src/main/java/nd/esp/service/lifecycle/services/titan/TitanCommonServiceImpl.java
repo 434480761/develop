@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -17,10 +18,13 @@ public class TitanCommonServiceImpl implements TitanCommonService {
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
+    @Autowired
+    private TitanCoverageRepository titanCoverageRepository;
+
     @Override
     public void delete(String type, String id) {
         if(type==EDGE){
-            titanCommonRepository.deleteEdgeById(id);
+            titanCoverageRepository.delete(id);
         } else if(type==VERTEX){
 
         }

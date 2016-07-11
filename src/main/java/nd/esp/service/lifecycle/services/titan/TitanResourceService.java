@@ -22,6 +22,7 @@ public interface TitanResourceService {
 
 	void timeTaskImport(Integer page , String type);
 	long importAllRelation();
+	long importRelation(String sourceType,String targetType);
 
 	long importKnowledgeRelation();
 }

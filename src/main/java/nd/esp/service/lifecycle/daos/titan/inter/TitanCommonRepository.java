@@ -31,4 +31,9 @@ public interface TitanCommonRepository {
     public void butchDeleteVertexById(List<String> ids);
     public void butchDeleteEdgeById(List<String> ids);
 
+    public void addSetProperty(String identifier, String primaryCategory, String fieldName, List<String> values);
+
+    public void deleteNodeField(String identifier, String primaryCategory, String fieldName);
+
+
 }

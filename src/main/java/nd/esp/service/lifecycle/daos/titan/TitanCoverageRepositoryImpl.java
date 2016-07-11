@@ -1,24 +1,35 @@
 package nd.esp.service.lifecycle.daos.titan;
 
+import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
+import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.EspRepository;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
+import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
+import nd.esp.service.lifecycle.services.titan.TitanResultParse;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
+import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	private final static Logger LOG = LoggerFactory.getLogger(TitanCoverageRepositoryImpl.class);
 	private static Map<String, Long> coverageCacheMap = new HashMap<>();
 	private static List<String> coverageCacheTargetList = new ArrayList<>();
+
+	@Autowired
+	private CoverageDao coverageDao;
+
+
 	static {
 		coverageCacheTargetList.add("nd_org_shareing");
 		coverageCacheTargetList.add("nd_org_owner");
@@ -28,39 +39,15 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
 
+	/**
+	 * 添加覆盖范围：1、添加覆盖范围；2、添加冗余数据
+	 * */
 	@Override
 	public ResCoverage add(ResCoverage resCoverage) {
 
-		Long coverageNodeId = getCoverageNodeId(resCoverage);
-		if (coverageNodeId == null) {
-			// coverage node not exist
-			// create coverage node and create has_coveage edge
-			StringBuffer scriptBuffer = new StringBuffer(
-					"graph.addVertex(T.label,'coverage','target_type',target_type,'strategy',strategy,'target',target).id()");
-			Map<String, Object> innerGraphParams = new HashMap<String, Object>();
-			innerGraphParams.put(ES_Field.target_type.toString(),
-					resCoverage.getTargetType());
-			innerGraphParams.put(ES_Field.target.toString(),
-					resCoverage.getTarget());
-			innerGraphParams.put(ES_Field.strategy.toString(),
-					resCoverage.getStrategy());
-
-			coverageNodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() , innerGraphParams);
-		}
-
-		if(coverageNodeId == null){
-			return null;
-		}
-
-		String script = "g.V().has(primaryCategory,'identifier',identifier).next()" +
-				".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier).id()";
-		Map<String, Object> graphParams = new HashMap<String, Object>();
-		graphParams.put("primaryCategory", resCoverage.getResType());
-		graphParams.put("identifier", resCoverage.getResource());
-		graphParams.put("coverageNodeId", coverageNodeId);
-		graphParams.put("edgeIdentifier",resCoverage.getIdentifier());
-
-		titanCommonRepository.executeScript(script , graphParams);
+		addCoverage(resCoverage);
+		//添加冗余数据
+		addResourceCoverage(resCoverage);
 
 		return resCoverage;
 	}
@@ -104,13 +91,24 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
 	}
 
+	/**
+	 * 批量增加覆盖范围，支持对多个资源的同时增加
+	 * */
 	@Override
 	public List<ResCoverage> batchAdd(List<ResCoverage> resCoverages) {
 		List<ResCoverage> list = new ArrayList<>();
+		Map<String, String> sourceMap = new HashMap<>();
 		for (ResCoverage resCoverage : resCoverages) {
-			ResCoverage rc = add(resCoverage);
+			ResCoverage rc = addCoverage(resCoverage);
 			list.add(rc);
+			sourceMap.put(resCoverage.getResource(),resCoverage.getResType());
 		}
+
+		//增加冗余数据
+		for(String identifier : sourceMap.keySet()){
+			updateResourceCoverage(sourceMap.get(identifier), identifier);
+		}
+
 		return list;
 	}
 
@@ -119,15 +117,25 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	 * */
 	@Override
 	public ResCoverage update(ResCoverage resCoverage) {
-		delete(resCoverage.getIdentifier());
-		add(resCoverage);
+		updateCoverage(resCoverage);
+		//增加冗余数据
+		updateResourceCoverage(resCoverage.getResType(), resCoverage.getResource());
 		return null;
 	}
 
+	/**
+	 * 批量更新覆盖范围：1、支持对多个资源的同时更新
+	 * */
 	@Override
 	public List<ResCoverage> batchUpdate(List<ResCoverage> resCoverageSet) {
+		Map<String, String> sourceMap = new HashMap<>();
 		for(ResCoverage resCoverage : resCoverageSet){
-			update(resCoverage);
+			updateCoverage(resCoverage);
+			sourceMap.put(resCoverage.getResource(),resCoverage.getResType());
+		}
+		//增加冗余数据
+		for(String identifier : sourceMap.keySet()){
+			updateResourceCoverage(sourceMap.get(identifier), identifier);
 		}
 		return null;
 	}
@@ -138,12 +146,28 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		if(id==null){
 			return false;
 		}
-		String script = "g.E().has('identifier',identifier)";
+
+		String srciptResource = "g.E().has('identifier',identifier).outV().valueMap()";
+		Map<String, Object> paramResource = new HashMap<>();
+		paramResource.put("identifier",id);
+		ResultSet resultSet = titanCommonRepository.executeScriptResultSet(srciptResource, paramResource);
+
+		Iterator<Result> iterator = resultSet.iterator();
+		String result = "";
+		if (iterator.hasNext()){
+			result = iterator.next().getString();
+		}
+		Map<String,String> valueMap = TitanResultParse.toMap(result);
+		String resourceIdentifier = valueMap.get("identifier");
+		String primaryCategory = valueMap.get("primary_category");
+		updateResourceCoverage(primaryCategory, resourceIdentifier);
+
+
+		String script = "g.E().has('identifier',identifier).drop()";
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("identifier",id);
 
 		titanCommonRepository.executeScript(script,paramMap);
-
 		return true;
 	}
 
@@ -168,6 +192,127 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	@Override
 	public long countCover() {
 		return 0;
+	}
+
+	private ResCoverage updateCoverage(ResCoverage resCoverage){
+		delete(resCoverage.getIdentifier());
+		add(resCoverage);
+		return resCoverage;
+	}
+
+	private ResCoverage addCoverage(ResCoverage resCoverage){
+		Long coverageNodeId = getCoverageNodeId(resCoverage);
+		if (coverageNodeId == null) {
+			// coverage node not exist
+			// create coverage node and create has_coveage edge
+			StringBuffer scriptBuffer = new StringBuffer(
+					"graph.addVertex(T.label,'coverage','target_type',target_type,'strategy',strategy,'target',target).id()");
+			Map<String, Object> innerGraphParams = new HashMap<String, Object>();
+			innerGraphParams.put(ES_Field.target_type.toString(),
+					resCoverage.getTargetType());
+			innerGraphParams.put(ES_Field.target.toString(),
+					resCoverage.getTarget());
+			innerGraphParams.put(ES_Field.strategy.toString(),
+					resCoverage.getStrategy());
+
+			coverageNodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() , innerGraphParams);
+		}
+
+		if(coverageNodeId == null){
+			return null;
+		}
+
+		String script = "g.V().has(primaryCategory,'identifier',identifier).next()" +
+				".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier).id()";
+		Map<String, Object> graphParams = new HashMap<String, Object>();
+		graphParams.put("primaryCategory", resCoverage.getResType());
+		graphParams.put("identifier", resCoverage.getResource());
+		graphParams.put("coverageNodeId", coverageNodeId);
+		graphParams.put("edgeIdentifier",resCoverage.getIdentifier());
+
+		titanCommonRepository.executeScript(script , graphParams);
+
+		return resCoverage;
+	}
+
+	private void updateResourceCoverage(String primaryCategory, String identifier){
+		Education education = getEducation(primaryCategory, identifier);
+		if(education == null){
+			return;
+		}
+		List<String> searchCoverages = new ArrayList<>();
+		Set<String> uuids = new HashSet<>();
+		uuids.add(identifier);
+		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+		for (ResCoverage resCoverage : resCoverageList){
+			searchCoverages.addAll(getAllResourceCoverage(resCoverage, education.getStatus()));
+		}
+
+		String deleteScript = "g.V().has(primaryCategory,'identifier',identifier).properties('search_coverage').drop();";
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,primaryCategory);
+		param.put("identifier" ,identifier);
+		titanCommonRepository.executeScript(deleteScript, param);
+
+		StringBuffer addScript = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
+		TitanScritpUtils.getSetScriptAndParam(addScript, param,"search_coverage",searchCoverages);
+
+		titanCommonRepository.executeScript(addScript.toString(), param);
+
+	}
+
+	private void addResourceCoverage(ResCoverage resCoverage){
+
+		if(resCoverage == null){
+			return;
+		}
+
+		Education education = getEducation(resCoverage.getResType(), resCoverage.getResource());
+		if(education == null){
+			return;
+		}
+		List<String> searchCoverages = getAllResourceCoverage(resCoverage, education.getStatus());
+
+		StringBuffer addScript = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,resCoverage.getResType());
+		param.put("identifier" ,resCoverage.getResource());
+		TitanScritpUtils.getSetScriptAndParam(addScript, param,"search_coverage",searchCoverages);
+
+		titanCommonRepository.executeScript(addScript.toString(), param);
+	}
+
+	private List<String> getAllResourceCoverage(ResCoverage resCoverage, String status){
+		List<String> searchCoverages = new ArrayList<>();
+		String value1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy() +"/"+status;
+		String value2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+status;
+		String value3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy() +"/";
+		String value4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
+
+		searchCoverages.add(value1);
+		searchCoverages.add(value2);
+		searchCoverages.add(value3);
+		searchCoverages.add(value4);
+
+		return searchCoverages;
+	}
+
+
+	private Education getEducation(String primaryCategory, String identifier){
+		String pc = primaryCategory;
+		if("guidancebooks".equals(primaryCategory)) {
+			pc = "teachingmaterials";
+		}
+
+		EspRepository<?> espRepository = ServicesManager.get(pc);
+		Education education = null;
+		try {
+			education = (Education) espRepository.get(identifier);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+
+		return education;
 	}
 
 }

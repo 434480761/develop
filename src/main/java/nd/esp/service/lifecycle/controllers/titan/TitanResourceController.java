@@ -72,6 +72,21 @@ public class TitanResourceController {
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
 	}
+	
+	
+	/**
+	 * 导入数据
+	 * G
+	 * @author linsm
+	 */
+	@RequestMapping(value = "/sample", method = RequestMethod.GET)
+	public void indexSample() {
+		titanResourceService.importData(ResourceNdCode.teachingmaterials.toString());
+		titanResourceService.importData(ResourceNdCode.chapters.toString());
+		titanResourceService.createChapterRelation();
+		titanResourceService.importData(ResourceNdCode.assets.toString());
+		titanResourceService.importRelation(ResourceNdCode.chapters.toString(),ResourceNdCode.assets.toString());
+	}
 
 	@RequestMapping(value = "/all/time", method = RequestMethod.GET)
 	public void indexAllTime(@RequestParam Integer page , @RequestParam String type) {

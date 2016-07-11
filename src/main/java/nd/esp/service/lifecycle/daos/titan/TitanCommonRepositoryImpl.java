@@ -219,6 +219,36 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
     }
 
+    @Override
+    public void addSetProperty(String identifier, String primaryCategory, String fieldName, List<String> values) {
+        StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier)");
+        Map<String, Object> param = new HashMap<>();
+        param.put("primaryCategory",primaryCategory);
+        param.put("identifier",identifier);
+
+        int index = 0;
+        for (String value : values){
+            String paramKey = "value"+index;
+            index ++ ;
+            script.append(".property(set,'").append(fieldName).append("',").append(paramKey).append(")");
+            param.put(paramKey , value);
+        }
+
+        script.append(";");
+
+        submitScript(script.toString(),param);
+    }
+
+    @Override
+    public void deleteNodeField(String identifier, String primaryCategory, String fieldName) {
+        String script =  "g.V().has(primaryCategory,'identifier',identifier).properties(fieldName).drop()";
+        Map<String, Object> param = new HashMap<>();
+        param.put("primaryCategory",primaryCategory);
+        param.put("identifier",identifier);
+        param.put("fieldName",fieldName);
+        submitScript(script, param);
+    }
+
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws RuntimeException {
         Double id = null;
         try {

@@ -38,6 +38,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBReposi
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.Client;
@@ -156,6 +157,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		long size = 0L;
 		size =  pageQueryRelation(resourceRelationRepository);
 		size = size + pageQueryRelation(resourceRelation4QuestionDBRepository);
+		return size;
+	}
+	
+	@Override
+	public long importRelation(String sourceType,String targetType){
+		long size = 0L;
+		size =  pageQueryRelation(sourceType,targetType);
 		return size;
 	}
 
@@ -374,6 +382,75 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		List entitylist = null;
 
 		List<Item<? extends Object>> items = new ArrayList<>();
+
+		Sort sort = new Sort(Direction.ASC, fieldName);
+		do {
+			Pageable pageable = new PageRequest(page, row, sort);
+
+			try {
+				resourcePage = resourceRepository.findByItems(items, pageable);
+				if (resourcePage == null) {
+					break;
+				}
+				entitylist = resourcePage.getContent();
+				if (entitylist == null) {
+					continue;
+				}
+				List<ResourceRelation> resourceRelations = new ArrayList<ResourceRelation>();
+				for (Object object : entitylist) {
+					ResourceRelation relation = (ResourceRelation) object;
+					resourceRelations.add(relation);
+				}
+				if(entitylist.size()==0){
+					continue;
+				}
+
+				resourceRelations = titanRelationRepository.batchAdd(resourceRelations);
+				indexNum += resourceRelations.size();
+
+				LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
+			} catch (Exception e) {
+				e.printStackTrace();
+				LOG.error(e.getMessage());
+			}
+		} while (++page < resourcePage.getTotalPages());
+
+		return indexNum;
+	}
+	
+	
+	public long pageQueryRelation(String sourceType, String targetType) {
+		String fieldName = "identifier";
+
+		long indexNum = 0;
+		// 分页
+		int page = 0;
+		int row = 500;
+		@SuppressWarnings("rawtypes")
+		Page resourcePage = null;
+		@SuppressWarnings("rawtypes")
+		List entitylist = null;
+
+		List<Item<? extends Object>> items = new ArrayList<>();
+		//sourceType
+		Item<String> sourceTypeItem = new Item<String>();
+		sourceTypeItem.setKey("resType");
+		sourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
+		sourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+		sourceTypeItem.setValue(ValueUtils.newValue(sourceType));
+		items.add(sourceTypeItem);
+		//targetType
+		Item<String> targetTypeItem = new Item<String>();
+		targetTypeItem.setKey("resourceTargetType");
+		targetTypeItem.setComparsionOperator(ComparsionOperator.EQ);
+		targetTypeItem.setLogicalOperator(LogicalOperator.AND);
+		targetTypeItem.setValue(ValueUtils.newValue(targetType));
+		items.add(targetTypeItem);
+		
+		ResourceRepository  resourceRepository = resourceRelationRepository;
+		if(ResourceNdCode.questions.toString().equals(sourceType)){
+			resourceRepository = resourceRelation4QuestionDBRepository;
+		}
 
 		Sort sort = new Sort(Direction.ASC, fieldName);
 		do {

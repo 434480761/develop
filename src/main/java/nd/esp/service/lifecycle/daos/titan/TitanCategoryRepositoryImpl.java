@@ -19,16 +19,33 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
 
+	/**
+	 * 1、添加维度数据；2、添加资源冗余数据
+	 * */
 	@Override
 	public ResourceCategory add(ResourceCategory resourceCategory) {
 		if(resourceCategory == null){
 			return null;
 		}
+		//添加维度数据
 		ResourceCategory rc = addResourceCategory(resourceCategory);
 		addPath(rc.getResource(), rc.getPrimaryCategory(), rc.getTaxonpath());
+
+		//更新资源的冗余数据search_path\search_code
+		List<String> category = new ArrayList<>();
+		category.add(rc.getTaxoncode());
+		List<String> pathList = new ArrayList<>();
+		pathList.add(rc.getTaxonpath());
+		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
 
+	/**
+	 * 批添加维度数据：<br>
+	 * 		1、只支持对同一个资源的维度数据进行批量增加，多个资源批量增加会出现异常<br>
+	 *     	2、批量增加前会先删除历史数据<br>
+	 *     	3、更新资源的冗余数据
+	 * */
 	@Override
 	public List<ResourceCategory> batchAdd(
 			List<ResourceCategory> resourceCategories) {
@@ -43,15 +60,19 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		// FIXME
 		List<ResourceCategory> list = new ArrayList<>();
 		//批量保存PATH
-		batchAddPath(resourceCategories);
+		List<String> pathList = batchAddPath(resourceCategories);
 
 		//批量保存维度数据
+		List<String> categoryList = new ArrayList<>();
 		for (ResourceCategory resourceCategory : resourceCategories) {
 			ResourceCategory rc = addResourceCategory(resourceCategory);
 			if(rc!=null){
 				list.add(rc);
 			}
+			categoryList.add(resourceCategory.getTaxoncode());
 		}
+
+		updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
 		return list;
 
 	}
@@ -73,15 +94,22 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	}
 
 	@Override
+	/**
+	 * 删除维度数据和相关的冗余数据
+	 * */
 	public void deleteAll(String primaryCategory, String identifier) {
 		String deleteScript = "g.V().has(primaryCategory,'identifier',identifier)" +
 				".outE().or(hasLabel('has_categories_path'),hasLabel('has_category_code')).drop();";
+		String deleteScript2 = "g.V().has(primaryCategory,'identifier',identifier).properties('search_code','search_path').drop()";
+
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory", primaryCategory);
 		param.put("identifier", identifier);
 
 		titanCommonRepository.executeScript(deleteScript, param);
+		titanCommonRepository.executeScript(deleteScript2, param);
 	}
+
 
 	private List<String> batchAddPath(List<ResourceCategory> resourceCategories){
 		if(resourceCategories==null||resourceCategories.size()==0){
@@ -201,6 +229,17 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 		}
 		return taxoncodeId;
+	}
+
+	private void updateResourceProperty(List<String> pathList , List<String> codeList , String primaryCategory, String identifier){
+		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
+		Map<String, Object> param = new HashMap<>();
+		param.put("primaryCategory" ,primaryCategory);
+		param.put("identifier" ,identifier);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeList);
+
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathList);
+		titanCommonRepository.executeScript(script.toString(), param);
 	}
 
 }
