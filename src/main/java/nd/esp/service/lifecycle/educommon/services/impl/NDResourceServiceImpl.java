@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
@@ -113,6 +112,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
 import com.nd.gaea.client.WafResourceAccessException;
@@ -3098,7 +3098,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		return resourceViewModel;
 	}
 	
-	
+	@Override
 	public Map<String, Map<String, Object>> versionCheck(String resType,String uuid){
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
 		String mid = rm.getmIdentifier();

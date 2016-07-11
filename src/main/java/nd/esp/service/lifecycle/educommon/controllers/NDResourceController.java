@@ -9,7 +9,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1370,6 +1369,17 @@ public class NDResourceController {
         }
     }
     
+    /**
+     * 通用查询-时间参数带and的处理
+     * @author xiezy
+     * @date 2016年7月11日
+     * @param resType
+     * @param prop
+     * @param properties
+     * @param propsMap
+     * @param op1
+     * @param op2
+     */
     private void dealTimeParam4HaveAndOp(String resType,String prop,Properties properties,Map<String,Set<String>> propsMap,String op1,String op2){
     	List<String> elements = Arrays.asList(prop.split(" and "));
         // 格式错误判断
@@ -1651,7 +1661,17 @@ public class NDResourceController {
         }
     }
 
-    
+    /**
+     * 新增版本资源
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param versionViewModel
+     * @param validResult
+     * @param resourceType
+     * @param uuid
+     * @param userInfo
+     * @return
+     */
     @RequestMapping(value = "/{uuid}/newversion", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE },produces={MediaType.APPLICATION_JSON_VALUE})
 	public ResourceViewModel createNewVersion(
 			@Validated(LifecycleDefault.class) @RequestBody VersionViewModel versionViewModel,
@@ -1681,13 +1701,30 @@ public class NDResourceController {
     	}
     }
     
+    /**
+     * 资源版本检测接口
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param resourceType
+     * @param uuid
+     * @return
+     */
     @RequestMapping(value = "/{uuid}/version/check", method = RequestMethod.GET, produces={MediaType.APPLICATION_JSON_VALUE})
 	public Map<String, Map<String, Object>> versionCheck(
 			@PathVariable("res_type") String resourceType,
 			@PathVariable String uuid) {
     	return ndResourceService.versionCheck(resourceType, uuid);
     }
-
+    
+    /**
+     * 资源版本发布接口
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param resourceType
+     * @param uuid
+     * @param paramMap
+     * @return
+     */
     @RequestMapping(value = "/{uuid}/release", method = RequestMethod.PUT, produces={MediaType.APPLICATION_JSON_VALUE})
     public Map<String, Object> versionRelease(@PathVariable("res_type") String resourceType,
 			@PathVariable String uuid,@RequestBody Map<String,String> paramMap){
@@ -1695,7 +1732,7 @@ public class NDResourceController {
     		Iterator<Map.Entry<String,String>> it = paramMap.entrySet().iterator();
     		if(it.hasNext()){
     			Entry<String,String> entry = it.next();
-    			boolean flag = validateStatus(entry.getValue());
+    			boolean flag = LifecycleStatus.isLegalStatus(entry.getValue());
     			if(!flag){
     				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "status参数不正确！值："+entry.getValue());
     			}
@@ -1704,15 +1741,10 @@ public class NDResourceController {
     	return ndResourceService.versionRelease(resourceType, uuid, paramMap);
     }
     
-    private boolean validateStatus(String status){
-    	String statuses = "CREATING|CREATED|EDITING|EDITED|TRANSCODE_WAITING|TRANSCODING|TRANSCODED|TRANSCODE_ERROR|AUDIT_WAITING|AUDITING|AUDITED|PUBLISH_WAITING|PUBLISHING|PUBLISHED|ONLINE|OFFLINE|AUDIT_REJECT|REMOVED|CREATE|INIT|TRANSCODE|AUDIT|REJECT";
-    	String[] arrays = statuses.split("\\|");
-    	List<String> list = Arrays.asList(arrays);
-    	return list.contains(status);
-    }
-    
+    /**
+     * 由Model转为ViewModel
+     */
     private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
-
 
         return  CommonHelper.changeToView(model,resourceType,includes,commonServiceHelper);
     }
