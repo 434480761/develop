@@ -10,6 +10,7 @@ import java.util.Set;
 
 import javax.persistence.Query;
 
+import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.elasticsearch.EsResourceOperation;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
@@ -62,6 +63,9 @@ public class IndexDataServiceImpl implements IndexDataService {
 
 	@Autowired
 	private SyncResourceService syncResourceService;
+	
+	@Autowired
+	private CoverageDao coverageDao;
 
 	/**
 	 * 重建索引
@@ -309,15 +313,9 @@ public class IndexDataServiceImpl implements IndexDataService {
 
 	private Map<String, List<ResCoverageModel>> getCoverages(
 			String resourceType, Set<String> uuids) {
-		Query query = commonServiceHelper
-				.getResCoverageRepositoryByResType(resourceType)
-				.getEntityManager()
-				.createNamedQuery("batchGetCoverageByResource");
-		query.setParameter("rt", resourceType);
-		query.setParameter("rids", uuids);
 
 		@SuppressWarnings("unchecked")
-		List<ResCoverage> result = query.getResultList();
+		List<ResCoverage> result = coverageDao.queryCoverageByResource(resourceType, uuids);
 		Map<String, List<ResCoverageModel>> resultMap = new HashMap<String, List<ResCoverageModel>>();
 		if (CollectionUtils.isNotEmpty(result)) {
 			for (ResCoverage resCoverage : result) {

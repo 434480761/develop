@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.educommon.controllers;
+﻿package nd.esp.service.lifecycle.educommon.controllers;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -339,6 +339,7 @@ public class NDResourceController {
             @RequestParam String words,@RequestParam String limit){
 
 		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
+
     }
 	
 	/**
@@ -391,7 +392,51 @@ public class NDResourceController {
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, null, coverages, props, orderBy, null, limit,
-				false, !isAll, "false", printable, printableKey, null,null,false,false);
+
+				QueryType.ES, !isAll, "false", printable, printableKey, null,null,false,false);
+	}
+	
+	
+	/**
+	 * 
+	 * @param resType
+	 * @param resCodes
+	 * @param includes
+	 * @param categories
+	 * @param categoryExclude
+	 * @param relations
+	 * @param coverages
+	 * @param props
+	 * @param orderBy
+	 * @param isAll
+	 * @param reverse
+	 * @param limit
+	 * @author linsm
+	 * @return
+	 */
+	@RequestMapping(value = "/actions/titan", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
+	public ListViewModel<ResourceViewModel> requestQueringByTitan(
+			@PathVariable(value = "res_type") String resType,
+			@RequestParam(required = false, value = "rescode") String resCodes,
+			@RequestParam(required = false, value = "include") String includes,
+			@RequestParam(required = false, value = "category") Set<String> categories,
+			@RequestParam(required = false, value = "category_exclude") Set<String> categoryExclude,
+			@RequestParam(required = false, value = "relation") Set<String> relations,
+			@RequestParam(required = false, value = "coverage") Set<String> coverages,
+			@RequestParam(required = false, value = "prop") List<String> props,
+			@RequestParam(required = false, value = "orderby") List<String> orderBy,
+			@RequestParam(required = false, value = "isAll", defaultValue = "false") Boolean isAll,
+			@RequestParam(required = false, value = "reverse") String reverse,
+			@RequestParam String words,
+			@RequestParam(required = false, value = "fulltext") String fulltext,
+			@RequestParam(required=false,value="printable") Boolean printable,
+            @RequestParam(required=false,value="printable_key") String printableKey,
+			@RequestParam String limit) {
+		// FIXME 暂时先共用一个参数 (by lsm)
+		return requestQuering(resType, resCodes, includes, categories,
+				categoryExclude, relations, coverages, props, orderBy, words
+						+ "$" + fulltext, limit, QueryType.TITAN, !isAll,
+				reverse,printable, printableKey,null,null);
 	}
 	
 	/**
@@ -437,7 +482,9 @@ public class NDResourceController {
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
         
+
         return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, showVersion);
+
     }
     
     /**
@@ -486,7 +533,9 @@ public class NDResourceController {
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
         
+
         return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, showVersion);
+
     }
     
     /**
@@ -542,9 +591,11 @@ public class NDResourceController {
     @SuppressWarnings("unchecked")
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
+
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,
             boolean showVersion) {
+
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1 
                 && coverages.iterator().next().equals(CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE)){
@@ -573,7 +624,7 @@ public class NDResourceController {
         //参数校验和处理
         Map<String, Object> paramMap = 
         		requestParamVerifyAndHandle(resType, resCodes, includes, categories, categoryExclude,
-        									relations, coverages, props, orderBy, limit, isByDB, reverse);
+        									relations, coverages, props, orderBy, limit, queryType, reverse);
         
         // include
 		List<String> includesList = (List<String>)paramMap.get("include");
@@ -604,31 +655,58 @@ public class NDResourceController {
         
         //调用service,获取到业务模型的list
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
-        if(isByDB){
-        	if(StaticDatas.QUERY_BY_ES_FIRST && 
-        			canQueryByEla(resType, relationsMap, orderMap, words, coveragesList, isNotManagement,forceStatus,showVersion)){//数据库走ES查询判断
-        		try {
-        			Map<String, Object> changeMap = changeKey(propsMap, orderMap, false);
-        			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
-        			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
-        			rListViewModel = 
-                            ndResourceService.resourceQueryByEla(resType, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement, reverseBoolean, printable, printableKey);
-				} catch (Exception e) {//如果ES出错,通过数据库查一遍
+        switch (queryType) {
+		case DB:
+			if (StaticDatas.QUERY_BY_ES_FIRST
+					&& canQueryByEla(resType, relationsMap, orderMap, words,
+							coveragesList, isNotManagement)) {// 数据库走ES查询判断
+				try {
+					Map<String, Object> changeMap = changeKey(propsMap,
+							orderMap, false);
+					propsMap = (Map<String, Set<String>>) changeMap
+							.get("propsMapNew");
+					orderMap = (Map<String, String>) changeMap
+							.get("orderMapNew");
+					rListViewModel = ndResourceService.resourceQueryByEla(
+							resType, includesList, categories, categoryExclude,
+							relationsMap, coveragesList, propsMap, orderMap,
+							words, limit, isNotManagement, reverseBoolean,printable,printableKey);
+				} catch (Exception e) {// 如果ES出错,通过数据库查一遍
 					LOG.error("ES查询出错,通用DB查询");
-					Map<String, Object> changeMap = changeKey(propsMap, orderMap, true);
-        			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
-        			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
-					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
+					Map<String, Object> changeMap = changeKey(propsMap,
+							orderMap, true);
+					propsMap = (Map<String, Set<String>>) changeMap
+							.get("propsMapNew");
+					orderMap = (Map<String, String>) changeMap
+							.get("orderMapNew");
+					rListViewModel = ndResourceService.resourceQueryByDB(
+							resType, resCodes, includesList, categories,
+							categoryExclude, relationsMap, coveragesList,
+							propsMap, orderMap, words, limit, isNotManagement,
+							reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform);
 				}
-        	}else{
-        		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
-        	}
-        }else{
-            rListViewModel = 
-                    ndResourceService.resourceQueryByEla(resType, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement, reverseBoolean, printable, printableKey);
-        }
+			} else {
+				rListViewModel = ndResourceService.resourceQueryByDB(resType,
+						resCodes, includesList, categories, categoryExclude,
+						relationsMap, coveragesList, propsMap, orderMap, words,
+						limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
+			}
+			break;
+		case ES:
+			rListViewModel = ndResourceService.resourceQueryByEla(resType,
+					includesList, categories, categoryExclude, relationsMap,
+					coveragesList, propsMap, orderMap, words, limit,
+					isNotManagement, reverseBoolean,printable,printableKey);
+			break;
+		case TITAN:
+			rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+					includesList, categories, categoryExclude, relationsMap,
+					coveragesList, propsMap, orderMap, words, limit,
+					isNotManagement, reverseBoolean,printable,printableKey);
+			break;
+		default:
+			break;
+		}
         
         //ListViewModel<ResourceModel> 转换为  ListViewModel<ResourceViewModel>
         ListViewModel<ResourceViewModel> result = new ListViewModel<ResourceViewModel>();
@@ -803,7 +881,7 @@ public class NDResourceController {
     	//参数校验和处理
     	Map<String, Object> paramMap = 
     			requestParamVerifyAndHandle(resType, null, null, categories, null, null, 
-    										coverages, props, null, "(0,1)", true, null);
+    										coverages, props, null, "(0,1)", QueryType.DB, null);
     	
     	//categories
         categories = (Set<String>)paramMap.get("category");
@@ -892,7 +970,7 @@ public class NDResourceController {
      */
     private Map<String, Object> requestParamVerifyAndHandle(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
-            List<String> orderBy, String limit, boolean isByDB, String reverse){
+            List<String> orderBy, String limit, QueryType queryType, String reverse){
     	//reverse,默认为false
         boolean reverseBoolean = false;
         if(StringUtils.isNotEmpty(reverse) && reverse.equals("true")){
@@ -976,8 +1054,17 @@ public class NDResourceController {
                 String relationType = elements.get(2).trim();
                  
                 //判断源资源是否存在,stype + suuid
-                if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
-                    CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
+                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
+                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
+                }else{
+                	// "relation参数进行递归查询时,目前仅支持:chapters,knowledges"
+					if (!IndexSourceType.ChapterType.getName().equals(elements.get(0)) &&
+							!IndexSourceType.KnowledgeType.getName().equals(elements.get(0))) {
+						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+								LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+								"relation参数进行递归查询时,目前仅支持:chapters,knowledges");
+					}
+
                 }
                 //r_type的特殊处理
                 if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){
@@ -1008,11 +1095,17 @@ public class NDResourceController {
         Map<String,Set<String>> propsMap = new HashMap<String, Set<String>>();
         //获取props的.properties文件,目的是筛选匹配支持的属性
         Properties properties = null;
-        if(isByDB){
-            properties = LifeCircleApplicationInitializer.props_properties_db;
-        }else{
-            properties = LifeCircleApplicationInitializer.props_properties_es;
-        }
+        switch (queryType) {
+		case DB:
+			properties = LifeCircleApplicationInitializer.props_properties_db;
+			break;
+		case ES:
+		case TITAN:
+			properties = LifeCircleApplicationInitializer.props_properties_es;
+			break;
+		default:
+			break;
+		}
                 
         if(CollectionUtils.isEmpty(props)){
             propsMap = null;
@@ -1801,5 +1894,9 @@ public class NDResourceController {
     	}else{
     		statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
     	}
+    }
+    
+    public static enum QueryType{
+    	DB,ES,TITAN
     }
 }

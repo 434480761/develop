@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverage4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
@@ -27,6 +29,9 @@ public class CoverageDaoImpl implements CoverageDao{
     
     @Autowired
     private ResCoverage4QuestionDBRepository resCoverage4QuestionDBRepository;
+    
+    @Autowired
+    private CommonServiceHelper commonServiceHelper;
     
     @Override
     public Map<String, List<CoverageViewModel>> batchGetCoverageByResource(String resType, List<String> rids,DbName dbName) {
@@ -61,4 +66,19 @@ public class CoverageDaoImpl implements CoverageDao{
         
         return resultMap;
     }
+    
+    @Override
+    public List<ResCoverage> queryCoverageByResource(String resourceType,
+			Set<String> uuids) {
+		Query query = commonServiceHelper
+				.getResCoverageRepositoryByResType(resourceType)
+				.getEntityManager()
+				.createNamedQuery("batchGetCoverageByResource");
+		query.setParameter("rt", resourceType);
+		query.setParameter("rids", uuids);
+
+		@SuppressWarnings("unchecked")
+		List<ResCoverage> result = query.getResultList();
+		return result;
+	}
 }

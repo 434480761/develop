@@ -1,0 +1,215 @@
+@CHARSET "UTF-8";
+
+body {
+    font-family: Verdana;
+    font-size: 14px;
+    margin: 0;
+}
+
+#container {
+    margin: 0 auto;
+    width: 1200px;
+}
+
+#header {
+    height: 50px;
+    background: #EDEDED;
+}
+
+#mainContent {
+    border: 2px;
+    border-style: solid;
+    border-color: #DDDDDD;
+    height: 800px;
+    margin-bottom: 5px;
+}
+
+#sidebar_lift {
+    margin: 0;
+    padding: 0;
+    float: left;
+    width: 140px;
+    margin-right: 10px;
+    height: 800px;
+    /* background-color: #F5f5f5; */
+}
+
+#sidebar_right {
+    margin: 0;
+    padding: 0;
+    float: right;
+    margin-left: 10px;
+    width: 436px;
+    height: 800px;
+    background-color: #F5f5f5;
+}
+
+#content {
+    margin: 0;
+    padding: 0;
+    width: 500px;
+    float: left;
+    height: 800px;
+}
+
+#footer {
+    height: 10px;
+}
+
+#search {
+    border-top: 10px;
+}
+
+/*节点字体样式*/
+.nodetext {
+    font-size: 12px;
+    font-family: SimSun;
+    color: #999999;
+    fill: #999999;
+}
+
+/*线字体样式*/
+.linetext {
+    font-size: 12px;
+    font-family: SimSun;
+    fill: #0000FF;
+    /* fill-opacity:0.0; */
+}
+
+.search .logo {
+    float: left;
+    width: 150px;
+}
+
+.search .logo .text {
+    padding: 0px;
+    margin: 0px;
+    margin-top: 7px;
+    text-align: center;
+    font-size: 23px;
+}
+
+.path_start_div {
+    float: left;
+    margin-top: 10px;
+}
+
+.path_start_div > input {
+    width: 150px;
+}
+
+.path_end_div {
+    float: left;
+    margin-left: 50px;
+    margin-top: 10px;
+}
+
+.path_end_div > input {
+    width: 150px;
+}
+
+.search_depth_div {
+    margin-left: 30px;
+    margin-top: 10px;
+    float: left;
+}
+
+.search_relaiton_div {
+    margin-left: 30px;
+    margin-top: 10px;
+    float: left;
+}
+
+.search_button_div .submit {
+    float: left;
+    margin-left: 30px;
+    margin-top: 10px;
+}
+
+.adddepth_div {
+    float: left;
+    margin-top: 10px;
+    margin-left: 50px;
+}
+
+.subdepth_div {
+    float: left;
+    margin-top: 10px;
+    margin-left: 50px;
+}
+
+.text_start_div {
+    position: absolute;
+    margin-left: 185px;
+    margin-top: 30px;
+}
+
+.text_end_div {
+    position: absolute;
+    margin-left: 423px;
+    margin-top: 30px;
+}
+
+.text_div_default {
+    background-color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+    color: #000000;
+    width: 152px;;
+}
+
+.text_div_clicked {
+    background-color: #DDDDDD;
+    margin: 0;
+    padding: 0;
+    color: #0000ff;
+    width: 152px;
+}
+
+#sidebar_right .line {
+    margin-top: 15px;
+    background-color: #DDDDDD;
+}
+
+#sidebar_right .search .type {
+    width: 150px;
+    margin-top: 10px;
+}
+
+#sidebar_right .search .name {
+    width: 145px;
+}
+
+#sidebar_right .search .submit {
+    margin-left: 30px;
+    margin-top: 10px;
+}
+
+#sidebar_right .content_div {
+    margin: 0;
+    padding: 0;
+    height: inherit;
+    width: inherit;
+}
+
+.right_context_li_default {
+    margin-top: 15px;
+    color: #000000;
+}
+
+.right_context_li_click {
+    margin-top: 15px;
+    color: #009ACD;
+}
+
+.float_description {
+    margin: 0;
+    padding: 0;
+    border-style: solid;
+    border: 1px;
+    border-color: #DDDDDD;
+    position: absolute;
+    width: 200px;
+    height: auto;
+    background-color: #F5f5f5;
+}

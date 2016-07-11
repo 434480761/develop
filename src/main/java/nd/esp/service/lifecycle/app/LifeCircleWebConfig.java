@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthRes
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
+import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
 import nd.esp.service.lifecycle.utils.JDomUtils;
 
 import org.elasticsearch.client.Client;
@@ -169,6 +170,13 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
     public Client getClient(){
     	return EsClientSupport.getClient();
     }
+    
+    //titan
+    @Bean
+	public org.apache.tinkerpop.gremlin.driver.Client getGremlinClient(
+			GremlinClientFactory gremlinClientFactory) {
+		return gremlinClientFactory.getGremlinClient();
+	}
     /**
      * 加载packageUtil
      * @return
