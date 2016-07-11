@@ -269,6 +269,14 @@ public interface NDResourceService {
     public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo);
     
     /**
+     * 创建资源新版本(习题库)
+     * @param uuid
+     * @param vvm
+     * @return
+     */
+    public ResourceViewModel createNewVersion4Question(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo);
+    
+    /**
      * 版本检查
      * @param resType
      * @param uuid
