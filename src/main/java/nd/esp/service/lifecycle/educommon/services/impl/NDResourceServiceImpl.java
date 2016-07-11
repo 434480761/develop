@@ -3015,7 +3015,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	@Transactional
+    //@Transactional(value="transactionManager")
 	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC,IncludesConstant.INCLUDE_EDU,IncludesConstant.INCLUDE_CR));
 		//1、判断是否可以创建版本
