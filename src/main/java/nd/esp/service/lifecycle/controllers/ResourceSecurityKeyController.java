@@ -41,7 +41,7 @@ public class ResourceSecurityKeyController {
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public Map<String, Object> getResourceSecurityKey(
 	        @RequestParam(required=true,value="uuid") String uuid,
-	        @RequestParam(required=true,value="key") String key)  {
+	        @RequestParam(required=true,value="key") String key) throws Exception {
 		
 		// 有效性检验
 		AssertUtils.isUuidPattern(uuid, "uuid");
