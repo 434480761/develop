@@ -123,6 +123,66 @@ public class EducationRelationControllerV06 {
         return educationRelationViewModel;
     }
     
+    
+    /**
+     * 批量创建资源关系
+     * 
+     * @param resType                              源资源类型
+     * @param sourceUuid                           源资源的id
+     * @param educationRelationModel               创建时的入参
+     * @param bindingResult                        入参校验的绑定结果
+     * @return
+     * @since
+     */
+    @RequestMapping(value = "/{source_uuid}/relations/batch", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<EducationRelationViewModel> batchCreateRelation(@PathVariable(value="res_type") String resType,@PathVariable(value="source_uuid") String sourceUuid,
+                                              @Validated(CreateEducationRelationDefault.class) @RequestBody List<EducationRelationViewModel> educationRelationViewModels,BindingResult bindingResult){
+        // 校验入参
+        ValidResultHelper.valid(bindingResult,
+                                "LC/CREATE_RELATION_PARAM_VALID_FAIL",
+                                "EducationRelationControllerV06",
+                                "batchCreateRelation");
+        List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
+        
+        //数据模型转换
+        if(CollectionUtils.isNotEmpty(educationRelationViewModels)){
+        	for (EducationRelationViewModel educationRelationViewModel : educationRelationViewModels) {
+        		if(StringUtils.isEmpty(educationRelationViewModel.getResourceTargetType())){
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    		"LC/CHECK_PARAM_VALID_FAIL",
+                            "resourceTargetType不能为空");
+        		}
+        		if(StringUtils.isEmpty(educationRelationViewModel.getTarget())){
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    		"LC/CHECK_PARAM_VALID_FAIL",
+                            "target不能为空");
+        		}
+        		EducationRelationModel educationRelationModel = BeanMapperUtils.beanMapper(educationRelationViewModel,
+                        EducationRelationModel.class);
+                educationRelationModel.setResType(resType);
+                educationRelationModel.setSource(sourceUuid);
+        		educationRelationModels.add(educationRelationModel);
+			}
+        }
+        // 创建资源关系
+        List<EducationRelationModel> resultList = null;
+        if (CommonServiceHelper.isQuestionDb(resType)) {
+            resultList = educationRelationServiceForQuestion.createRelation(educationRelationModels, false);
+        } else {
+            resultList = educationRelationService.createRelation(educationRelationModels, false);
+        }
+        
+        //返回处理,这里只会有一条记录
+        List<EducationRelationViewModel> returnList = new ArrayList<EducationRelationViewModel>();
+        if(CollectionUtils.isNotEmpty(resultList)){
+        	for (EducationRelationModel erm : resultList) {
+        		EducationRelationViewModel ervm = BeanMapperUtils.beanMapper(erm, EducationRelationViewModel.class);
+        		returnList.add(ervm);
+			}
+        }
+        return returnList;
+    }
+    
     /**
      * 修改资源关系
      * 
@@ -523,6 +583,18 @@ public class EducationRelationControllerV06 {
     public List<Map<String,Object>> queryKnowledgeTree(@PathVariable(value="res_type") String resType,@PathVariable(value="uuid") String knowledgeId){
     	if(IndexSourceType.KnowledgeType.getName().equals(resType)){
     		return educationRelationService.queryKnowledgeTree(knowledgeId);
+    	}
+    	return null;
+    }
+    
+    /**
+     * 查询套件目录树
+     * @return
+     */
+    @RequestMapping(value = "/tree/suiteDirectory", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<Map<String,Object>> querySuiteDirectoryTree(@PathVariable(value="res_type") String resType){
+    	if(IndexSourceType.AssetType.getName().equals(resType)){
+    		return educationRelationService.querySuiteDirectory();
     	}
     	return null;
     }

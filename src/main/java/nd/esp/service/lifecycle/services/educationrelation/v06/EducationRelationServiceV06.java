@@ -250,4 +250,10 @@ public interface EducationRelationServiceV06 {
      * @return
      */
     public List<Map<String,Object>> queryKnowledgeTree(String uuid);
+    
+    /**
+     * 查询套件目录树
+     * @return
+     */
+    public List<Map<String,Object>> querySuiteDirectory();
 }
