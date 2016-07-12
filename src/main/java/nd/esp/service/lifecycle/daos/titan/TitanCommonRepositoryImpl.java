@@ -69,81 +69,6 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         submitScript(script, null);
     }
 
-
-    /**
-     * 通过源资和目标资源删除关系
-     */
-    @Override
-    public void dropEdge(String sourceType, String sourceId, String targetType, String targetId) throws Exception {
-        String script = "g.V().has(sourceType,'identifier',sourceId).outE()" +
-                ".as('x').select('x').inV().has(targetType,'identifier',targetId)" +
-                ".select('x').drop()";
-        Map<String, Object> param = new HashMap<>();
-        param.put("sourceType", sourceType);
-        param.put("sourceId", sourceId);
-        param.put("targetType", targetType);
-        param.put("targetId", targetId);
-
-        submitScript(script, param);
-    }
-
-    @Override
-    public String addEdge(String sourceType, String sourceid, String targetType, String targetid, String edgeLabel, Object params) throws Exception {
-        Long sourceNodeId = getVertexIdByLabelAndId(sourceType, sourceid);
-        if(sourceNodeId == null){
-            LOG.info("源资源不存在:"+sourceid);
-        }
-
-        Long targetNodeId = getVertexIdByLabelAndId(targetType, targetid);
-        if(targetNodeId == null){
-            LOG.info("目标资源不存在:"+sourceid);
-        }
-
-        StringBuffer script = new StringBuffer("g.V(sourceNodeId).next().addEdge(edgeLabel,g.V(targetNodeId)");
-        Map<String, Object> paramMap = TitanScritpUtils.getParamAndChangeScript(script, params);
-        paramMap.put("sourceNodeId",sourceNodeId);
-        paramMap.put("edgeLabel",edgeLabel);
-        paramMap.put("targetNodeId",targetNodeId);
-        script.append(").id()");
-
-        return submitUniqueString(script.toString(), paramMap);
-    }
-
-
-
-
-    /**
-     * 通过源资源和目标资源删除关系（软删除）
-     */
-    @Override
-    public String dropEdgeSoft(String sourceType, String sourceId, String targetType, String targetId) throws Exception {
-        String script = "g.V().has(sourceType,'identifier',sourceId).outE()" +
-                ".as('x').select('x').inV().has(targetType,'identifier',targetId)" +
-                ".select('x').property('enable','false').id()";
-        Map<String, Object> param = new HashMap<>();
-        param.put("sourceType", sourceType);
-        param.put("sourceId", sourceId);
-        param.put("targetType", targetType);
-        param.put("targetId", targetId);
-
-        return submitUniqueString(script, param);
-    }
-
-    @Override
-    public void dropVertexById(Long id) throws Exception {
-        String script = "g.V(" + id + ").drop();";
-        submitScript(script, null);
-    }
-
-    @Override
-    public Long dropVertexSoftById(Long id) throws Exception {
-        String script = "g.V(" + id + ").property('lc_enable','false').id()";
-        Map<String, Object> param = new HashMap<>();
-        param.put("id", id);
-
-        return submitUniqueLong(script, param);
-    }
-
     @Override
     public Long getVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
         String script = "g.V().has(primaryCategory,'identifier',identifier).id()";
@@ -155,15 +80,6 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     @Override
-    public String getEdgeIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
-        String script = "g.E().has(primaryCategory,'identifier',identifier).id()";
-        Map<String, Object> param = new HashMap<>();
-        param.put("primaryCategory", primaryCategory);
-        param.put("identifier", identifier);
-        return executeScriptUniqueString(script,param);
-    }
-
-    @Override
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception {
         return submitScriptResultRet(script, params);
     }
@@ -171,11 +87,6 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     @Override
     public ResultSet executeScriptResultSet(String script) throws Exception {
         return submitScriptResultRet(script, null);
-    }
-
-    @Override
-    public List<Long> executeScriptListLong(String script, Map<String, Object> params) throws Exception {
-        return submitListLong(script, params);
     }
 
     @Override
@@ -281,25 +192,6 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         return ids;
     }
 
-    private List<Long> submitListLong(String script, Map<String, Object> params) throws Exception {
-        if(!StaticDatas.TITAN_SWITCH){
-            return new ArrayList<>();
-        }
-        List<Long> ids = new LinkedList<>();
-        try {
-            ResultSet resultSet = client.submit(script, params);
-            Iterator<Result> iterator = resultSet.iterator();
-            while (iterator.hasNext()) {
-                Long id = iterator.next().getLong();
-                ids.add(id);
-            }
-        } catch (RuntimeException ex) {
-            LOG.error("gremlin submit script:{" + script + "}|params:{" + params + "}");
-            throw ex;
-        }
-
-        return ids;
-    }
 
     private void submitScript(String script, Map<String, Object> params) throws Exception{
         if(!StaticDatas.TITAN_SWITCH){
