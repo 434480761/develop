@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.controllers.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanSyncTimerTask;
 import nd.esp.service.lifecycle.services.titan.TitanResourceService;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -26,6 +27,15 @@ public class TitanResourceController {
 
 	@Autowired
 	private TitanCoverageRepository titanCoverageRepository;
+
+	@Autowired
+	private TitanSyncTimerTask titanSyncTimerTask;
+
+	@RequestMapping(value = "/sync", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public void titanSyncTest(){
+		titanSyncTimerTask.sync();
+	}
 
 	/**
 	 * 导入数据
