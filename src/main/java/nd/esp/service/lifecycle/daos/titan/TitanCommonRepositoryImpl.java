@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.daos.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
@@ -242,6 +243,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws Exception {
+        if(!StaticDatas.TITAN_SWITCH){
+            return 0D;
+        }
         Double id = null;
         try {
             ResultSet resultSet = client.submit(script, params);
@@ -258,6 +262,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private List<Double> submitListDouble(String script, Map<String, Object> params) throws Exception {
+        if(!StaticDatas.TITAN_SWITCH){
+            return new ArrayList<>();
+        }
         List<Double> ids = new LinkedList<>();
         try {
             ResultSet resultSet = client.submit(script, params);
@@ -275,6 +282,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private List<Long> submitListLong(String script, Map<String, Object> params) throws Exception {
+        if(!StaticDatas.TITAN_SWITCH){
+            return new ArrayList<>();
+        }
         List<Long> ids = new LinkedList<>();
         try {
             ResultSet resultSet = client.submit(script, params);
@@ -292,6 +302,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private void submitScript(String script, Map<String, Object> params) throws Exception{
+        if(!StaticDatas.TITAN_SWITCH){
+            return;
+        }
         try {
             ResultSet resultSet = client.submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
@@ -305,6 +318,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private ResultSet submitScriptResultRet(String script, Map<String, Object> params) throws Exception{
+        if(!StaticDatas.TITAN_SWITCH){
+            return null;
+        }
         ResultSet resultSet = null;
         try {
             resultSet = client.submit(script, params);
@@ -321,6 +337,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private Long submitUniqueLong(String script, Map<String, Object> params) throws Exception {
+        if(!StaticDatas.TITAN_SWITCH){
+            return 0L;
+        }
         Long id = null;
         try {
             ResultSet resultSet = client.submit(script, params);
@@ -341,6 +360,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private String submitUniqueString(String script, Map<String, Object> params) throws Exception {
+        if(!StaticDatas.TITAN_SWITCH){
+            return "****";
+        }
         String id = null;
         try {
             ResultSet resultSet = client.submit(script, params);

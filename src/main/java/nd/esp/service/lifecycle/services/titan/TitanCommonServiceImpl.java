@@ -25,7 +25,7 @@ public class TitanCommonServiceImpl implements TitanCommonService {
     public void delete(String type, String id) {
         if(EDGE.equals(type)){
             try {
-                titanCommonRepository.deleteEdgeById(id);
+                titanCoverageRepository.delete(id);
             } catch (Exception e) {
                 e.printStackTrace();
                 //TODO 出现异常处理方式，重新执行这条sql语句

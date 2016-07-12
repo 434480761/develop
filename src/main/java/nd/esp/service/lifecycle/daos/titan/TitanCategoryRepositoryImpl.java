@@ -25,7 +25,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	private TitanCommonRepository titanCommonRepository;
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(TitanTechInfoRepositoryImpl.class);
+			.getLogger(TitanCategoryRepositoryImpl.class);
 
 	@Autowired
 	private TitanRepositoryUtils titanRepositoryUtils;
@@ -175,13 +175,15 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 		for(String key : resourceCategoryMap.keySet()){
 			for(String path : resourceCategoryMap.get(key)){
+				if(path!= null && !"".equals(path)){
 				String p = addPath(key,primaryCategory,path);
-				if(p != null){
-					pathList.add(p);
-				} else {
-					LOG.info("Category处理出错");
-					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-							primaryCategory,key);
+					if(p != null){
+						pathList.add(p);
+					} else {
+						LOG.info("Category处理出错");
+						titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+								primaryCategory,key);
+					}
 				}
 			}
 		}
