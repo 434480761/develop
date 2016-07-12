@@ -439,6 +439,29 @@ public class NDResourceController {
 				reverse,printable, printableKey,null,null,false,false);
 	}
 	
+	@RequestMapping(value = "/actions/titan_es", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
+	public ListViewModel<ResourceViewModel> requestQueringByTitanES(
+			@PathVariable(value = "res_type") String resType,
+			@RequestParam(required = false, value = "rescode") String resCodes,
+			@RequestParam(required = false, value = "include") String includes,
+			@RequestParam(required = false, value = "category") Set<String> categories,
+			@RequestParam(required = false, value = "category_exclude") Set<String> categoryExclude,
+			@RequestParam(required = false, value = "relation") Set<String> relations,
+			@RequestParam(required = false, value = "coverage") Set<String> coverages,
+			@RequestParam(required = false, value = "prop") List<String> props,
+			@RequestParam(required = false, value = "orderby") List<String> orderBy,
+			@RequestParam(required = false, value = "isAll", defaultValue = "false") Boolean isAll,
+			@RequestParam(required = false, value = "reverse") String reverse,
+			@RequestParam String words,
+			@RequestParam(required=false,value="printable") Boolean printable,
+            @RequestParam(required=false,value="printable_key") String printableKey,
+			@RequestParam String limit) {
+		// FIXME 暂时先共用一个参数 (by lsm)
+		return requestQuering(resType, resCodes, includes, categories,
+				categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
+				reverse,printable, printableKey,null,null,false,false);
+	}
+	
 	/**
      * 资源检索 -- 直接查询数据库,数据可以保证实时性
      * <p>Description:  资源检索升级目的主要是使得查询效率更高，准确度更高。
@@ -704,21 +727,29 @@ public class NDResourceController {
 					coveragesList, propsMap, orderMap, words, limit,
 					isNotManagement, reverseBoolean,printable,printableKey);
 			break;
+		case TITAN_ES:
+			rListViewModel = ndResourceService.resourceQueryByTitanES(resType,
+					includesList, categories, categoryExclude, relationsMap,
+					coveragesList, propsMap, orderMap, words, limit,
+					isNotManagement, reverseBoolean,printable,printableKey);
+			break;
 		default:
 			break;
 		}
         
         //ListViewModel<ResourceModel> 转换为  ListViewModel<ResourceViewModel>
         ListViewModel<ResourceViewModel> result = new ListViewModel<ResourceViewModel>();
-        result.setTotal(rListViewModel.getTotal());
-        result.setLimit(rListViewModel.getLimit());
-        //items处理
-        List<ResourceViewModel> items = new ArrayList<ResourceViewModel>();
-        for(ResourceModel resourceModel : rListViewModel.getItems()){
-            ResourceViewModel resourceViewModel = changeToView(resourceModel, resType,includesList);
-            items.add(resourceViewModel);
-        }
-        result.setItems(items);
+		if(rListViewModel!=null) {
+			result.setTotal(rListViewModel.getTotal());
+			result.setLimit(rListViewModel.getLimit());
+			//items处理
+			List<ResourceViewModel> items = new ArrayList<ResourceViewModel>();
+			for (ResourceModel resourceModel : rListViewModel.getItems()) {
+				ResourceViewModel resourceViewModel = changeToView(resourceModel, resType, includesList);
+				items.add(resourceViewModel);
+			}
+			result.setItems(items);
+		}
         
         return result;
     }
@@ -1902,6 +1933,6 @@ public class NDResourceController {
     }
     
     public static enum QueryType{
-    	DB,ES,TITAN
+    	DB,ES,TITAN,TITAN_ES
     }
 }
