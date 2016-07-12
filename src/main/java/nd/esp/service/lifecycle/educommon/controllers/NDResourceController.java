@@ -739,15 +739,17 @@ public class NDResourceController {
         
         //ListViewModel<ResourceModel> 转换为  ListViewModel<ResourceViewModel>
         ListViewModel<ResourceViewModel> result = new ListViewModel<ResourceViewModel>();
-        result.setTotal(rListViewModel.getTotal());
-        result.setLimit(rListViewModel.getLimit());
-        //items处理
-        List<ResourceViewModel> items = new ArrayList<ResourceViewModel>();
-        for(ResourceModel resourceModel : rListViewModel.getItems()){
-            ResourceViewModel resourceViewModel = changeToView(resourceModel, resType,includesList);
-            items.add(resourceViewModel);
-        }
-        result.setItems(items);
+		if(rListViewModel!=null) {
+			result.setTotal(rListViewModel.getTotal());
+			result.setLimit(rListViewModel.getLimit());
+			//items处理
+			List<ResourceViewModel> items = new ArrayList<ResourceViewModel>();
+			for (ResourceModel resourceModel : rListViewModel.getItems()) {
+				ResourceViewModel resourceViewModel = changeToView(resourceModel, resType, includesList);
+				items.add(resourceViewModel);
+			}
+			result.setItems(items);
+		}
         
         return result;
     }

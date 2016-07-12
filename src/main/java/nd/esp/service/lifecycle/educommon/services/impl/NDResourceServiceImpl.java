@@ -309,7 +309,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		listViewModel = 
 				titanSearchService.searchUseES(resType, includes, params, orderMap,
 						result[0], result[1],reverse,words);
-		listViewModel.setLimit(limit);
+		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
     
