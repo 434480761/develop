@@ -2680,7 +2680,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 		Set<String> ignoreSet = Sets.newHashSet("serialVersionUID", "PROP_CREATETIME", "PROP_LASTUPDATE", "PROP_CATEGORYS", "PROP_RELATIONS", "PROP_TAGS", "PROP_KEYWORDS", "mIdentifier",
 				"enable", "createTime", "dbcreateTime", "primaryCategory");
 
-		boolean bBasicInfoChanged = false;
 		try {
 			Field[] fs = Education.class.getDeclaredFields();
 
@@ -2693,7 +2692,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 					Object initValue = m.invoke(initEdu);
 					if (o != null && !o.equals(initValue)) {
 						if(!"creator".equals(name) || StringUtils.isNotEmpty((String)o)) {
-							bBasicInfoChanged = true;
 							String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
 							m = Education.class.getMethod(setterName, fs[i].getType());
 							m.invoke(oldBean, o);
@@ -2713,18 +2711,16 @@ public class NDResourceServiceImpl implements NDResourceService{
 			oldBean.setDescription(education.getDescription());
 		}
 
-		if(bBasicInfoChanged) {
-			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-			try {
-				education = (Education) resourceRepository.update(oldBean);
-			} catch (EspStoreException e) {
+		oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		try {
+			education = (Education) resourceRepository.update(oldBean);
+		} catch (EspStoreException e) {
 
-				LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
 
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-						e.getMessage());
-			}
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 	}
 
