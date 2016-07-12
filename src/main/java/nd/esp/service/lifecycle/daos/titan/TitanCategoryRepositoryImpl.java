@@ -78,33 +78,37 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			return null;
 		}
 
-		//FIXME 不是所有的添加都需要删除
-		ResourceCategory category = resourceCategories.get(0);
-		deleteAll(category.getPrimaryCategory(), category.getResource());
-
+		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<String, List<ResourceCategory>>();
+		for(ResourceCategory resourceCategory:resourceCategories){
+			List<ResourceCategory> valuesCategories = resourceCategoryMap.get(resourceCategory.getResource());
+			if(valuesCategories==null){
+				valuesCategories = new ArrayList<ResourceCategory>();
+				resourceCategoryMap.put(resourceCategory.getResource(), valuesCategories);
+			}
+			valuesCategories.add(resourceCategory);
+		}
 		// FIXME
 		List<ResourceCategory> list = new ArrayList<>();
-		//批量保存PATH
-		List<String> pathList = batchAddPath(resourceCategories);
+		for(List<ResourceCategory> entryValueCategories:resourceCategoryMap.values()){
+			//FIXME 不是所有的添加都需要删除
+			ResourceCategory category = entryValueCategories.get(0);
+			deleteAll(category.getPrimaryCategory(), category.getResource());
 
-		//批量保存维度数据
-		List<String> categoryList = new ArrayList<>();
-		for (ResourceCategory resourceCategory : resourceCategories) {
-			ResourceCategory rc = addResourceCategory(resourceCategory);
-			if(rc!=null){
-				list.add(rc);
+			//批量保存PATH
+			List<String> pathList = batchAddPath(entryValueCategories);
+
+			//批量保存维度数据
+			List<String> categoryList = new ArrayList<>();
+			for (ResourceCategory resourceCategory : entryValueCategories) {
+				ResourceCategory rc = addResourceCategory(resourceCategory);
+				if(rc!=null){
+					list.add(rc);
+				}
+				categoryList.add(resourceCategory.getTaxoncode());
 			}
-			categoryList.add(resourceCategory.getTaxoncode());
+			updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
 		}
-		if(list.size()!=resourceCategories.size()){
-			LOG.info("Category处理出错");
-			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-					category.getPrimaryCategory(),category.getResource());
-		}
-
-		updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
 		return list;
-
 	}
 
 	@Override
