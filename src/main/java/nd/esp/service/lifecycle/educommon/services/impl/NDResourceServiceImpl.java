@@ -2504,35 +2504,40 @@ public class NDResourceServiceImpl implements NDResourceService{
 		List<ResTechInfoModel> returnList = new ArrayList<ResTechInfoModel>();
 		if (CollectionUtils.isNotEmpty(techInfoList)) {
 			for (ResTechInfoModel rtim : techInfoList) {
+				if(StringUtils.isEmpty(rtim.getOperation())) {
+					rtim.setOperation("add");
+				}
 				TechInfo ti = new TechInfo();
-				if ("add".equals(rtim.getOperation())) {
-					ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
-					ti.setResource(uuid);
-					ti.setResType(resourceType);
-					ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
-					ti.setIdentifier(UUID.randomUUID().toString());
-					list.add(ti);
-				} else {
-					ti.setResource(uuid);
-					ti.setResType(resourceType);
-					ti.setTitle(rtim.getTitle());
-					try {
-						TechInfo target = (TechInfo)repository.getByExample(ti);
-						if(target!=null) {
-							if("update".equals(rtim.getOperation())) {
-								ti.setIdentifier(target.getIdentifier());
-								list.add(ti);
-							} else if("delete".equals(rtim.getOperation())) {
-								repository.del(target.getIdentifier());
-							}
+				ti.setResource(uuid);
+				ti.setResType(resourceType);
+				ti.setTitle(rtim.getTitle());
+				try {
+					TechInfo target = (TechInfo)repository.getByExample(ti);
+					if(target!=null) {
+						if("update".equals(rtim.getOperation()) || "add".equals(rtim.getOperation())) {
+							ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
+							ti.setResource(uuid);
+							ti.setResType(resourceType);
+							ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
+							ti.setIdentifier(target.getIdentifier());
+							list.add(ti);
+						} else if("delete".equals(rtim.getOperation())) {
+							repository.del(target.getIdentifier());
 						}
-					} catch (EspStoreException e) {
-						LOG.error("技术属性创建操作出错了", e);
-
-						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-								LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-								e.getLocalizedMessage());
+					} else if ("add".equals(rtim.getOperation())) {
+						ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
+						ti.setResource(uuid);
+						ti.setResType(resourceType);
+						ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
+						ti.setIdentifier(UUID.randomUUID().toString());
+						list.add(ti);
 					}
+				} catch (EspStoreException e) {
+					LOG.error("技术属性创建操作出错了", e);
+
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+							e.getLocalizedMessage());
 				}
 			}
 		}
@@ -2616,36 +2621,38 @@ public class NDResourceServiceImpl implements NDResourceService{
 						//资源分类维度
 						resourceCategory.setPrimaryCategory(resourceType);
 
-						if(StringUtils.isNotEmpty(resClassificationModel.getOperation())) {
-							switch (resClassificationModel.getOperation()) {
-								case "add":
-									resourceCategory.setIdentifier(UUID.randomUUID().toString());
-									resourceCategories.add(resourceCategory);
-									break;
-								case "update":
-									if (resourceCategory.getIdentifier() != null) {
-										resourceCategories.add(resourceCategory);
-									}
-									break;
-								case "delete":
-									try {
-										if (resourceCategory.getIdentifier() != null) {
-											repository.del(resourceCategory.getIdentifier());
-										} else {
-											ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
-											if (null != bean) {
-												repository.del(bean.getIdentifier());
-											}
-										}
-									} catch (EspStoreException e) {
-										LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+						if(StringUtils.isEmpty(resClassificationModel.getOperation())) {
+							resClassificationModel.setOperation("add");
+						}
 
-										throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-												LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-												e.getLocalizedMessage());
+						switch (resClassificationModel.getOperation()) {
+							case "add":
+								resourceCategory.setIdentifier(UUID.randomUUID().toString());
+								resourceCategories.add(resourceCategory);
+								break;
+							case "update":
+								if (resourceCategory.getIdentifier() != null) {
+									resourceCategories.add(resourceCategory);
+								}
+								break;
+							case "delete":
+								try {
+									if (resourceCategory.getIdentifier() != null) {
+										repository.del(resourceCategory.getIdentifier());
+									} else {
+										ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
+										if (null != bean) {
+											repository.del(bean.getIdentifier());
+										}
 									}
-									break;
-							}
+								} catch (EspStoreException e) {
+									LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+									throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+											LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+											e.getLocalizedMessage());
+								}
+								break;
 						}
 					}
 				}
