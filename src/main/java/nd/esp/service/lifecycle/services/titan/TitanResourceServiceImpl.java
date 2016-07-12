@@ -29,6 +29,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
@@ -219,6 +220,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	private List<ResCoverage> getResCoverage(List<ResCoverage> resCoverageList ){
+		if(CollectionUtils.isEmpty(resCoverageList)){
+			return new ArrayList<>();
+		}
 		List<ResCoverage> resCoverageListNew = new ArrayList<>();
 		Map<String,List<ResCoverage>> resCoverageMap = new HashMap<>();
 		for(ResCoverage rc : resCoverageList){
@@ -957,26 +961,31 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             Set<String> paths = new HashSet<>();
             List<ResCoverage> tempCoverageList = coverageMap.get(uuid);
             List<ResourceCategory> tempCategoryList = categoryMap.get(uuid);
-            for(ResCoverage resCoverage : tempCoverageList){
-                String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
-                String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
-                String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
-                String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
-                resCoverages.add(setValue1);
-                resCoverages.add(setValue2);
-                resCoverages.add(setValue3);
-                resCoverages.add(setValue4);
-            }
+			if(CollectionUtils.isNotEmpty(tempCoverageList)){
+				for(ResCoverage resCoverage : tempCoverageList){
+					String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
+					String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
+					String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
+					String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
+					resCoverages.add(setValue1);
+					resCoverages.add(setValue2);
+					resCoverages.add(setValue3);
+					resCoverages.add(setValue4);
+				}
+			}
 
-            for(ResourceCategory category : tempCategoryList){
-                if(StringUtils.isNotEmpty(category.getTaxonpath())){
-                    paths.add(category.getTaxonpath());
-                }
-                if(StringUtils.isNotEmpty(category.getTaxoncode())){
-                    categoryCodes.add(category.getTaxoncode());
-                }
+			if(CollectionUtils.isNotEmpty(tempCategoryList)){
+				for(ResourceCategory category : tempCategoryList){
+					if(StringUtils.isNotEmpty(category.getTaxonpath())){
+						paths.add(category.getTaxonpath());
+					}
+					if(StringUtils.isNotEmpty(category.getTaxoncode())){
+						categoryCodes.add(category.getTaxoncode());
+					}
 
-            }
+				}
+			}
+
 
             StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
             Map<String, Object> param = new HashMap<>();
