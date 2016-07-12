@@ -56,18 +56,18 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 //	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/*").permitAll();
 //	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*").permitAll();
 
+			//维度管理者角色--[CategoryDataAdmin]
+			http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
+			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
+			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
+			http.authorizeRequests().antMatchers("/v*/categorypatterns").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
+			http.authorizeRequests().antMatchers("/v*/categorypatterns/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
+
 	        // 资源消费者角色--[ResConsumer]
 	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/archive").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/archiveinfo").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/downloadurl").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/list").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-
-	        //维度管理者角色--[CategoryDataAdmin]
-	        http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-	        http.authorizeRequests().antMatchers("/v*/categorypatterns").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-	        http.authorizeRequests().antMatchers("/v*/categorypatterns/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 
 	        // 资源创建者角色(ResCreator)
 	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
