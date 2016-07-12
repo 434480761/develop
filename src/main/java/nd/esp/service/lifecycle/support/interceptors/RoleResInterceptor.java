@@ -241,36 +241,38 @@ public class RoleResInterceptor implements HandlerInterceptor {
      */
 	private void isCoverageMatch(String method, String userId, HttpServletRequest request) throws IOException{
         //post, put, delete请求，coverages[i].target值
-        if(ImmutableList.<String>of("POST", "PUT", "DELETE").contains(method)){
+        if(ImmutableList.<String>of("POST", "PUT").contains(method)){
             // 从Request中获取请求的Body
             RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) request);
             String body = requestWrapper.getBody();
             JSONObject json = JSONObject.parseObject(body);
-            JSONArray coverages = json.getJSONArray("coverages");
-            // 如果coverages不空的情况下，进行判断
-            if(coverages != null && coverages.size() > 0){
-                // 获取用户所拥有的公私有库列表
-                List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
-                for(int i=0, num = coverages.size(); i < num; i++){
-                    JSONObject coverage = coverages.getJSONObject(i);
-                    if(coverage != null && coverage.size() >0){
-                        // 获取target_type
-                        String targetType = coverage.getString("target_type");
-                        // 获取target
-                        String target = coverage.getString("target");
-                        // 获取coverageStr
-                        String coverageStr  = targetType + "/" + target;
-                        // 获取用户的覆盖范围列表, 如果不存在, 则没有权限 报错
-                        if(!userCoverageList.contains(coverageStr)){
-                            throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                                    LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-                        }
-                    }
-                }
-            }
+			if(json != null){
+				JSONArray coverages = json.getJSONArray("coverages");
+				// 如果coverages不空的情况下，进行判断
+				if(coverages != null && coverages.size() > 0){
+					// 获取用户所拥有的公私有库列表
+					List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
+					for(int i=0, num = coverages.size(); i < num; i++){
+						JSONObject coverage = coverages.getJSONObject(i);
+						if(coverage != null && coverage.size() >0){
+							// 获取target_type
+							String targetType = coverage.getString("target_type");
+							// 获取target
+							String target = coverage.getString("target");
+							// 获取coverageStr
+							String coverageStr  = targetType + "/" + target;
+							// 获取用户的覆盖范围列表, 如果不存在, 则没有权限 报错
+							if(!userCoverageList.contains(coverageStr)){
+								throw new LifeCircleException(HttpStatus.FORBIDDEN,
+										LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+							}
+						}
+					}
+				}
+			}
         }
         // get请求，获取coverage参数值
-        else if(ImmutableList.<String>of("GET").contains(method)){
+        else if(ImmutableList.<String>of("GET", "DELETE").contains(method)){
             // 从Request中获取请求的parameter
             String coverage = request.getParameter("coverage");
             // 如果coverage不空的情况下，进行判断
