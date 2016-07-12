@@ -179,7 +179,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 				String[] resTypes = StringUtils.split(request.getRequestURI(),"/");
 				if(resTypes.length >=2){
 					// 进行resType权限验证
-					this.isResTypeMatch(resTypes[2], userId);
+					this.isResTypeMatch(resTypes[1], userId);
 				}
                 // 进行coverage权限验证
                 this.isCoverageMatch(request.getMethod(), userId, request);
@@ -204,7 +204,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 				String[] resTypes = StringUtils.split(request.getRequestURI(),"/");
 				if(resTypes.length >=2){
 					// 进行resType权限验证
-					this.isResTypeMatch(resTypes[2], userId);
+					this.isResTypeMatch(resTypes[1], userId);
 				}
                 // 进行coverage权限验证
                 this.isCoverageMatch(request.getMethod(), userId, request);
