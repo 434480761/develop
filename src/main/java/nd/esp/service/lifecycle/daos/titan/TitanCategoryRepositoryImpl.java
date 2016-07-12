@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.slf4j.Logger;
@@ -175,8 +176,8 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 		for(String key : resourceCategoryMap.keySet()){
 			for(String path : resourceCategoryMap.get(key)){
-				if(path!= null && !"".equals(path)){
-				String p = addPath(key,primaryCategory,path);
+				if(StringUtils.isNotEmpty(path)){
+					String p = addPath(key,primaryCategory,path);
 					if(p != null){
 						pathList.add(p);
 					} else {
