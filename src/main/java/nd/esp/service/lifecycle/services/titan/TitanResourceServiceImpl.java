@@ -29,6 +29,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.Client;
@@ -154,7 +155,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		size = size + pageQueryRelation(resourceRelation4QuestionDBRepository);
 		return size;
 	}
-	
+
 	@Override
 	public long importRelation(String sourceType,String targetType){
 		long size = 0L;
@@ -417,8 +418,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		return indexNum;
 	}
-	
-	
+
+
 	public long pageQueryRelation(String sourceType, String targetType) {
 		String fieldName = "identifier";
 
@@ -446,7 +447,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		targetTypeItem.setLogicalOperator(LogicalOperator.AND);
 		targetTypeItem.setValue(ValueUtils.newValue(targetType));
 		items.add(targetTypeItem);
-		
+
 		ResourceRepository  resourceRepository = resourceRelationRepository;
 		if(ResourceNdCode.questions.toString().equals(sourceType)){
 			resourceRepository = resourceRelation4QuestionDBRepository;
@@ -915,60 +916,83 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 	}
 
-	private void importDataOperate4update(List<Education> resources , String primaryCategory){
-		for(Education education : resources){
-			Set<String> uuids = new HashSet<>();
-			uuids.add(education.getIdentifier());
+	private void importDataOperate4update(List<Education> educations , String primaryCategory){
+        Set<String> uuids = new HashSet<String>();
+        for (Education education : educations) {
+            uuids.add(education.getIdentifier());
+        }
+        //后去coverage、category
+        List<ResCoverage> resCoverageList =getResCoverage(coverageDao.queryCoverageByResource(primaryCategory, uuids));
+        List<String> resourceTypes = new ArrayList<String>();
+        resourceTypes.add(primaryCategory);
+        List<ResourceCategory> resourceRepositoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
 
-			List<ResCoverage> resCoverageList =getResCoverage(
-					coverageDao.queryCoverageByResource(primaryCategory, uuids));
+        Map<String, List<ResCoverage>> coverageMap = new HashMap<>();
+        Map<String, List<ResourceCategory>> categoryMap = new HashMap<>();
+        for (ResCoverage resCoverage : resCoverageList){
+            List<ResCoverage> coverageList = coverageMap.get(resCoverage.getResource());
+            if(coverageList == null){
+                coverageList = new ArrayList<>();
+                coverageMap.put(resCoverage.getResource(), coverageList);
+            }
 
-			List<String> resourceTypes = new ArrayList<String>();
-			resourceTypes.add(primaryCategory);
-			List<ResourceCategory> categories = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+            coverageList.add(resCoverage);
+        }
 
-			Set<String> paths = new HashSet<>();
-			Set<String> categoryCodes = new HashSet<>();
-			for(ResourceCategory category : categories){
-				String path = category.getTaxonpath();
-				String categoryCode = category.getTaxoncode();
-				if(path !=null && !path.equals("")){
-					paths.add(path);
-				}
-				if(categoryCode!=null && !categoryCode.equals("")){
-					categoryCodes.add(categoryCode);
-				}
-			}
+        for(ResourceCategory category : resourceRepositoryList){
+            List<ResourceCategory> categoryList = categoryMap.get(category.getResource());
+            if(categoryList == null){
+                categoryList = new ArrayList<>();
+                categoryMap.put(category.getResource(), categoryList);
+            }
 
-			Set<String> resCoverages = new HashSet<>();
-			for(ResCoverage resCoverage : resCoverageList){
-				String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
-				String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
-				String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
-				String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
-				resCoverages.add(setValue1);
-				resCoverages.add(setValue2);
-				resCoverages.add(setValue3);
-				resCoverages.add(setValue4);
-			}
+            categoryList.add(category);
+        }
 
-			StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
-			Map<String, Object> param = new HashMap<>();
-			param.put("primaryCategory",primaryCategory);
-			param.put("identifier",education.getIdentifier());
+        //保存数据
+        for(Education education : educations){
+            String uuid = education.getIdentifier();
+            Set<String> resCoverages = new HashSet<>() ;
+            Set<String> categoryCodes = new HashSet<>();
+            Set<String> paths = new HashSet<>();
+            List<ResCoverage> tempCoverageList = coverageMap.get(uuid);
+            List<ResourceCategory> tempCategoryList = categoryMap.get(uuid);
+            for(ResCoverage resCoverage : tempCoverageList){
+                String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
+                String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
+                String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
+                String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
+                resCoverages.add(setValue1);
+                resCoverages.add(setValue2);
+                resCoverages.add(setValue3);
+                resCoverages.add(setValue4);
+            }
 
-			addSetProperty("search_coverage",resCoverages,script,param);
-			addSetProperty("search_code",categoryCodes,script,param);
-			addSetProperty("search_path",paths,script,param);
+            for(ResourceCategory category : tempCategoryList){
+                if(StringUtils.isNotEmpty(category.getTaxonpath())){
+                    paths.add(category.getTaxonpath());
+                }
+                if(StringUtils.isNotEmpty(category.getTaxoncode())){
+                    categoryCodes.add(category.getTaxoncode());
+                }
 
-			try {
-				titanCommonRepository.executeScript(script.toString(),param);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+            }
 
-		}
+            StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
+            Map<String, Object> param = new HashMap<>();
+            param.put("primaryCategory",primaryCategory);
+            param.put("identifier",education.getIdentifier());
 
+            addSetProperty("search_coverage",resCoverages,script,param);
+            addSetProperty("search_code",categoryCodes,script,param);
+            addSetProperty("search_path",paths,script,param);
+
+            try {
+                titanCommonRepository.executeScript(script.toString(),param);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 	}
 
 	private void addSetProperty(String fieldName,
