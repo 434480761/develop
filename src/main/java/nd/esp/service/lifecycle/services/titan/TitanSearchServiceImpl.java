@@ -264,6 +264,16 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return viewModels;
 
     }
+    
+    
+    @Override
+    public ListViewModel<ResourceModel> searchUseES(String resType,
+                                               List<String> includes,
+                                               Map<String, Map<String, List<String>>> params,
+                                               Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
+    	//FIXME to do the es search 
+    	return null;
+    }
 
     private void dealWithSearchCoverage(
             Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
