@@ -21,13 +21,24 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
 
     @Override
     public void addNode(TitanTreeModel titanTreeModel) {
-        createNewRelation(titanTreeModel);
+        try{
+            createNewRelation(titanTreeModel);
+        }catch (Exception e){
+            e.printStackTrace();
+            LOG.info("move node error");
+        }
     }
 
     @Override
     public void moveNode(TitanTreeModel titanTreeModel) {
-        deleteOldRelation(titanTreeModel);
-        createNewRelation(titanTreeModel);
+        try{
+            deleteOldRelation(titanTreeModel);
+            createNewRelation(titanTreeModel);
+        }catch (Exception e){
+            e.printStackTrace();
+            LOG.info("move node error");
+        }
+
     }
 
     private void deleteOldRelation(TitanTreeModel titanTreeModel){

@@ -12,13 +12,7 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
@@ -28,11 +22,7 @@ import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
 import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
-import nd.esp.service.lifecycle.repository.model.ResCoverage;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
@@ -54,7 +44,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class TitanResourceServiceImpl implements TitanResourceService {
-
+	private static String s_primaryCategory ;
+	private static Integer s_page;
+	private static Integer s_totalPage;
 	private static final Logger LOG = LoggerFactory
 			.getLogger(TitanResourceServiceImpl.class);
 
@@ -96,6 +88,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Autowired
 	private KnowledgeRelationRepository knowledgeRelationRepository;
+
+	@Autowired
+	private TitanCommonRepository titanCommonRepository;
 
 	@Autowired
 	private Client client;
@@ -216,6 +211,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return titanResourceRepository.count(primaryCategory);
 	}
 
+	@Override
+	public void timeTaskImport4Update(Integer page, String type) {
+		TimeTaskPageQuery4Update timeTaskPageQuery4Update = new TimeTaskPageQuery4Update(page, type);
+		timeTaskPageQuery4Update.schedule();
+	}
 
 	private List<ResCoverage> getResCoverage(List<ResCoverage> resCoverageList ){
 		List<ResCoverage> resCoverageListNew = new ArrayList<>();
@@ -787,6 +787,208 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			}
 			return false;
 		}
+	}
+
+	private class TimeTaskPageQuery4Update{
+
+		private String primaryCategory = null;
+		private Integer page =0;
+		private Integer totalPage = null;
+		private List<String> primaryCategorys = null;
+		private Iterator<String> iterator = null;
+		public TimeTaskPageQuery4Update(Integer page, String type){
+			primaryCategorys = new LinkedList<>();
+			primaryCategorys.add("chapters");
+			primaryCategorys.addAll(ResourceTypeSupport.getAllValidEsResourceTypeList());
+			iterator = primaryCategorys.iterator();
+			//把遍历器遍历到指定的位置
+			if(type!=null && !type.equals("")){
+				while (iterator.hasNext()){
+					String next = iterator.next();
+					if(type.equals(next)){
+						break;
+					}
+				}
+			}
+
+			this.page = page;
+			totalPage = 10000;
+			primaryCategory = type;
+		}
+		public void schedule(){
+			while (true){
+				if(isWeek() || !isWeek() && isScheduleTime()){
+					//更新分页条件
+					if((primaryCategory == null|| totalPage==null ||page > totalPage) && iterator.hasNext()){
+						primaryCategory = iterator.next();
+						page = 0;
+					}
+
+					if(page > totalPage && !iterator.hasNext()){
+						LOG.info("数导入完成");
+						break;
+					}
+
+					LOG.info("当前执行--primaryCategory:{};totalPage:{};page:{}",primaryCategory,totalPage,page);
+					totalPage = pageQuery(primaryCategory, page);
+					page ++ ;
+				} else {
+					try {
+						LOG.info("sleep");
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		private Integer pageQuery(String primaryCategory, Integer page){
+			String fieldName = "dblastUpdate";
+
+			int row = 500;
+			EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+			@SuppressWarnings("rawtypes")
+			Page resourcePage = null;
+			@SuppressWarnings("rawtypes")
+			List entitylist = null;
+
+			List<Item<? extends Object>> items = new ArrayList<>();
+
+			Item<String> resourceTypeItem = new Item<String>();
+			resourceTypeItem.setKey("primaryCategory");
+			resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
+			resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+			resourceTypeItem.setValue(ValueUtils.newValue(primaryCategory));
+			items.add(resourceTypeItem);
+
+			Sort sort = new Sort(Direction.ASC, fieldName);
+			Pageable pageable = new PageRequest(page, row, sort);
+
+			try {
+				resourcePage = espRepository.findByItems(items, pageable);
+				if (resourcePage == null) {
+					return null;
+				}
+				entitylist = resourcePage.getContent();
+				if (entitylist == null) {
+					return resourcePage.getTotalPages();
+				}
+				List<Education> resources = new ArrayList<Education>();
+				for (Object object : entitylist) {
+					Education education = (Education) object;
+					resources.add(education);
+				}
+				if(entitylist.size()==0){
+					return resourcePage.getTotalPages();
+				}
+
+				importDataOperate4update(resources,primaryCategory);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				LOG.error(e.getMessage());
+			}
+			if(resourcePage == null){
+				return null;
+			}
+			setStatisticParam(primaryCategory, resourcePage.getTotalPages(),page);
+
+			return resourcePage.getTotalPages();
+		}
+
+		private boolean isWeek(){
+			int week = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+			if(week == 1 || week == 7){
+				return true;
+			}
+
+			return false;
+		}
+
+		private boolean isScheduleTime(){
+			int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+			if(hour <5 || hour >20){
+				return true;
+			}
+			return false;
+		}
+	}
+
+	private void importDataOperate4update(List<Education> resources , String primaryCategory){
+		for(Education education : resources){
+			Set<String> uuids = new HashSet<>();
+			uuids.add(education.getIdentifier());
+
+			List<ResCoverage> resCoverageList =getResCoverage(
+					coverageDao.queryCoverageByResource(primaryCategory, uuids));
+
+			List<String> resourceTypes = new ArrayList<String>();
+			resourceTypes.add(primaryCategory);
+			List<ResourceCategory> categories = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+
+			Set<String> paths = new HashSet<>();
+			Set<String> categoryCodes = new HashSet<>();
+			for(ResourceCategory category : categories){
+				String path = category.getTaxonpath();
+				String categoryCode = category.getTaxoncode();
+				if(path !=null && !path.equals("")){
+					paths.add(path);
+				}
+				if(categoryCode!=null && !categoryCode.equals("")){
+					categoryCodes.add(categoryCode);
+				}
+			}
+
+			Set<String> resCoverages = new HashSet<>();
+			for(ResCoverage resCoverage : resCoverageList){
+				String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
+				String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
+				String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
+				String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
+				resCoverages.add(setValue1);
+				resCoverages.add(setValue2);
+				resCoverages.add(setValue3);
+				resCoverages.add(setValue4);
+			}
+
+			StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
+			Map<String, Object> param = new HashMap<>();
+			param.put("primaryCategory",primaryCategory);
+			param.put("identifier",education.getIdentifier());
+
+			addSetProperty("search_coverage",resCoverages,script,param);
+			addSetProperty("search_code",categoryCodes,script,param);
+			addSetProperty("search_path",paths,script,param);
+
+			try {
+				titanCommonRepository.executeScript(script.toString(),param);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
+
+	}
+
+	private void addSetProperty(String fieldName,
+								Set<String> values ,StringBuffer script ,Map<String, Object> param) {
+		if(values == null || values.size() == 0){
+			return;
+		}
+		int index = 0;
+		for (String value : values){
+			String paramKey = fieldName+index;
+			index ++ ;
+			script.append(".property(set,'").append(fieldName).append("',").append(paramKey).append(")");
+			param.put(paramKey , value);
+		}
+	}
+
+	private void setStatisticParam(String primaryCategory , Integer totalPage , Integer page){
+		s_primaryCategory = primaryCategory;
+		s_totalPage = totalPage;
+		s_page = page;
 	}
 
 }

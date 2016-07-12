@@ -13,16 +13,9 @@ public interface TitanCommonRepository {
     public String executeScriptUniqueString(String script, Map<String, Object> params) throws Exception;
     public void executeScript(String script, Map<String, Object> params) throws Exception;
     public void executeScript(String script) throws Exception;
-    public String dropEdgeSoft(String sourceType, String sourceid, String targetType, String targetid) throws Exception;
-    public void dropEdge(String sourceType, String sourceid, String targetType, String targetid) throws Exception;
-    public String addEdge(String sourceType, String sourceid, String targetType, String targetid, String edgeLabel, Object params) throws Exception;
-    public void dropVertexById(Long id) throws Exception;
-    public Long dropVertexSoftById(Long id) throws Exception;
     public Long getVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
-    public String getEdgeIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception;
     public ResultSet executeScriptResultSet(String script) throws Exception;
-    public List<Long> executeScriptListLong(String script, Map<String, Object> params) throws Exception;
     public List<Double> executeScriptListDouble(String script, Map<String, Object> params) throws Exception;
     public Double executeScriptUniqueDouble(String script, Map<String, Object> params) throws Exception;
 

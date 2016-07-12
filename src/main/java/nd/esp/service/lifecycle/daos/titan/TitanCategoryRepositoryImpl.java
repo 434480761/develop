@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.slf4j.Logger;
@@ -25,8 +26,8 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	private TitanCommonRepository titanCommonRepository;
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(TitanTechInfoRepositoryImpl.class);
-	
+			.getLogger(TitanCategoryRepositoryImpl.class);
+
 	@Autowired
 	private TitanRepositoryUtils titanRepositoryUtils;
 	/**
@@ -53,14 +54,14 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 						resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 			}
 		}
-		
+
 
 		//更新资源的冗余数据search_path\search_code
 		List<String> category = new ArrayList<>();
 		category.add(rc.getTaxoncode());
 		List<String> pathList = new ArrayList<>();
 		pathList.add(rc.getTaxonpath());
-		
+
 		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
@@ -175,13 +176,15 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 		for(String key : resourceCategoryMap.keySet()){
 			for(String path : resourceCategoryMap.get(key)){
-				String p = addPath(key,primaryCategory,path);
-				if(p != null){
-					pathList.add(p);
-				} else {
-					LOG.info("Category处理出错");
-					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-							primaryCategory,key);
+				if(StringUtils.isNotEmpty(path)){
+					String p = addPath(key,primaryCategory,path);
+					if(p != null){
+						pathList.add(p);
+					} else {
+						LOG.info("Category处理出错");
+						titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+								primaryCategory,key);
+					}
 				}
 			}
 		}

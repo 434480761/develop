@@ -175,4 +175,8 @@ public class TitanResourceController {
 		return titanResourceService.importKnowledgeRelation();
 	}
 
+	@RequestMapping(value = "/all/time/update_source_property", method = RequestMethod.GET)
+	public void indexAllTimeUpdate(@RequestParam Integer page , @RequestParam String type) {
+		titanResourceService.timeTaskImport4Update(page, type);
+	}
 }
