@@ -3,8 +3,10 @@ package nd.esp.service.lifecycle.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
@@ -86,6 +88,20 @@ public abstract class AssertUtils {
      */
     public static void rangeLength(String value, int min, int max, String message) {
         if (value.length()<min || value.length()>max){
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
+                    ,message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
+        }
+    }
+    
+    /**
+     * 断言  字符串最小长度范围
+     * @param value
+     * @param min
+     * @param message
+     * @author lianggz
+     */
+    public static void gtLength(String value, int min, String message) {
+        if (value.length() < min){
             throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
                     ,message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
         }
@@ -217,5 +233,18 @@ public abstract class AssertUtils {
             }
         }
     }
-
+    
+    /**
+     * 校验UUID
+     * @param str
+     * @param message
+     * @author lianggz
+     */
+    public static void isUuidPattern(String str, String message){
+        String uuidPattern = "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}";
+        if (!str.matches(uuidPattern)){
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode()
+                    ,message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
+        }
+    }
 }
