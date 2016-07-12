@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.support.enums;
 
+import nd.esp.service.lifecycle.utils.StringUtils;
+
 /**
  * @title 生命周期资源枚举类
  * @desc
@@ -64,8 +66,25 @@ public enum LifecycleStatus {
      */
     public static LifecycleStatus[] getSpecialConverseStatus(){
 
-    return  new LifecycleStatus[]{CREATED,AUDITING,AUDITED,ONLINE,OFFLINE,AUDIT_REJECT};
+    	return  new LifecycleStatus[]{CREATED,AUDITING,AUDITED,ONLINE,OFFLINE,AUDIT_REJECT};
     }
     
-
+    /**
+     * 判断是否是合法的LC状态码
+     * @author xiezy
+     * @date 2016年7月11日
+     * @param status
+     * @return
+     */
+    public static boolean isLegalStatus(String status){
+    	if(StringUtils.hasText(status)){
+    		for(LifecycleStatus ls : LifecycleStatus.values()){
+    			if(ls.getCode().equals(status)){
+    				return true;
+    			}
+    		}
+    	}
+    	
+    	return false;
+    }
 }

@@ -2487,7 +2487,6 @@ public class NDResourceDaoImpl implements NDResourceDao{
 		BigInteger num = (BigInteger)query.getSingleResult();
 		return num.intValue();
 	}
-	
 
 	/**
 	 * 先加上enable=1的限制，主要为了解决前端由于误删除之类造成无法重新创建相同code的问题  by xuzy
@@ -2500,7 +2499,6 @@ public class NDResourceDaoImpl implements NDResourceDao{
 		BigInteger num = (BigInteger)query.getSingleResult();
 		return num.intValue();
 	}
-
 
 	@Override
 	public int queryCodeCountByResId4QuestionDb(String resType, String identifier,String code){

@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
@@ -92,6 +91,7 @@ import nd.esp.service.lifecycle.utils.JDomUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+import nd.esp.service.lifecycle.vos.assets.v06.AssetViewModel;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResRepositoryConstant;
 
@@ -113,6 +113,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import com.nd.gaea.WafException;
 import com.nd.gaea.client.WafResourceAccessException;
@@ -3010,8 +3011,9 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
+    @Transactional(value="transactionManager")
 	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
-		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC,IncludesConstant.INCLUDE_EDU,IncludesConstant.INCLUDE_CR));
 		//1、判断是否可以创建版本
 		if(rm.getmIdentifier() != null && !rm.getIdentifier().equals(rm.getmIdentifier())){
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已是版本分支，不允许创建新版本");
@@ -3042,6 +3044,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		education.setCreator(vvm.getLifeCycle().getCreator());
 		education.setCreateTime(ts);
 		education.setLastUpdate(ts);
+		
 		try {
 			education = (Education) resourceRepository.add(education);
 		} catch (EspStoreException e) {
@@ -3058,11 +3061,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		erm.setRelationType(RelationType.VERSION.getName());
 		erm.setTags(vvm.getRelations().get("tags"));
 		educationRelationModels.add(erm);
-		if(CommonServiceHelper.isQuestionDb(resType)){
-			educationRelationService4QuestionDB.createRelation(educationRelationModels, false);
-		}else{
-			educationRelationService.createRelation(educationRelationModels, false);
-		}
+		educationRelationService.createRelation(educationRelationModels, true);
 		
 		//5、创建资源生命周期
         LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
@@ -3090,14 +3089,108 @@ public class NDResourceServiceImpl implements NDResourceService{
         service.addLifecycleStep(resType, newUuid, contributeModel);
         ResourceModel resourceModel = new ResourceModel();
         updateBasicInModel(resourceModel,education);
-		ResourceViewModel resourceViewModel = BeanMapperUtils.beanMapper(resourceModel, ResourceViewModel.class);
+        String type = "res_type";
+        if(IndexSourceType.AssetType.getName().equals(resType)){
+        	type = "assets_type";
+        }
+        ResourceViewModel resourceViewModel = CommonHelper.convertViewModelOut(resourceModel,ResourceViewModel.class,type);
 		return resourceViewModel;
 	}
 	
+	@Override
+	@Transactional(value="questionTransactionManager")
+	public ResourceViewModel createNewVersion4Question(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
+		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC,IncludesConstant.INCLUDE_EDU,IncludesConstant.INCLUDE_CR));
+		//1、判断是否可以创建版本
+		if(rm.getmIdentifier() != null && !rm.getIdentifier().equals(rm.getmIdentifier())){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已是版本分支，不允许创建新版本");
+		}
+		
+		//2、判断版本号是否重复
+		String version = vvm.getLifeCycle().getVersion();
+		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, uuid);
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String v = (String)map.get("version");
+				if(version.equals(v)){
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CREATE_NEW_VERSION_ERROR","已存在此版本号");
+				}
+			}
+		}
+		
+		//3、创建新资源
+		long time = System.currentTimeMillis();
+		Timestamp ts = new Timestamp(time);
+		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resType);
+		Education education = changeModelToBean(resType, rm);
+		String newUuid = UUID.randomUUID().toString();
+		education.setIdentifier(newUuid);
+		education.setmIdentifier(uuid);
+		education.setVersion(version);
+		education.setStatus(vvm.getLifeCycle().getStatus());
+		education.setCreator(vvm.getLifeCycle().getCreator());
+		education.setCreateTime(ts);
+		education.setLastUpdate(ts);
+		
+		try {
+			education = (Education) resourceRepository.add(education);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+		
+		//4、建立资源关系
+		List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
+		EducationRelationModel erm = new EducationRelationModel();
+		erm.setResType(resType);
+		erm.setResourceTargetType(resType);
+		erm.setSource(uuid);
+		erm.setTarget(newUuid);
+		erm.setRelationType(RelationType.VERSION.getName());
+		erm.setTags(vvm.getRelations().get("tags"));
+		educationRelationModels.add(erm);
+		educationRelationService4QuestionDB.createRelation(educationRelationModels, true);
+		
+		//5、创建资源生命周期
+        LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
+        ResContributeModel contributeModel = new ResContributeModel();
+        contributeModel.setLifecycleStatus(vvm.getLifeCycle().getStatus());
+        contributeModel.setMessage("新版本创建，来源id:"+uuid);
+        contributeModel.setTitle("version");
+        if(userInfo != null){
+        	try {
+        		contributeModel.setTargetType(userInfo.getUserType());
+            	contributeModel.setTargetId(userInfo.getUserId());
+            	contributeModel.setTargetName(userInfo.getUserName());
+            	
+            	List<UserCenterRoleDetails> userRoleList = userInfo.getUserRoles();
+            	if(CollectionUtils.isNotEmpty(userRoleList)){
+            		UserCenterRoleDetails ur = userRoleList.get(0);
+            		contributeModel.setRoleId(ur.getRoleId());
+            		contributeModel.setRoleName(ur.getRoleName());
+            	}
+			} catch (Exception e) {
+				LOG.error("获取UC用户信息出错",e);
+			}
+        	
+        }
+        service.addLifecycleStep(resType, newUuid, contributeModel);
+        ResourceModel resourceModel = new ResourceModel();
+        updateBasicInModel(resourceModel,education);
+        String type = "res_type";
+        if(IndexSourceType.AssetType.getName().equals(resType)){
+        	type = "assets_type";
+        }
+        ResourceViewModel resourceViewModel = CommonHelper.convertViewModelOut(resourceModel,ResourceViewModel.class,type);
+		return resourceViewModel;
+	}
 	
+	@Override
 	public Map<String, Map<String, Object>> versionCheck(String resType,String uuid){
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC));
 		String mid = rm.getmIdentifier();
+		if(mid == null){
+			mid = rm.getIdentifier();
+		}
 		List<Map<String,Object>> list = ndResourceDao.queryResourceByMid(resType, mid);
 		Map<String, Map<String, Object>> returnMap = new HashMap<String, Map<String,Object>>();
 		
