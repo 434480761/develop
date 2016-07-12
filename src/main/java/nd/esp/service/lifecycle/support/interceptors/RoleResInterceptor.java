@@ -175,8 +175,12 @@ public class RoleResInterceptor implements HandlerInterceptor {
             Pattern pattern = Pattern.compile(entry.getKey(), Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(request.getRequestURI() + "/" + request.getMethod());
             if(matcher.find()){
-                // 进行resType权限验证
-                this.isResTypeMatch(matcher.group(1), userId);
+				//匹配 /v0.6/{res_type}/...类型的接口，获取res_type参数
+				String[] resTypes = StringUtils.split(request.getRequestURI(),"/");
+				if(resTypes.length >=2){
+					// 进行resType权限验证
+					this.isResTypeMatch(resTypes[2], userId);
+				}
                 // 进行coverage权限验证
                 this.isCoverageMatch(request.getMethod(), userId, request);
                 break;
@@ -196,8 +200,12 @@ public class RoleResInterceptor implements HandlerInterceptor {
             Pattern pattern = Pattern.compile(entry.getKey(), Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(request.getRequestURI() + "/" + request.getMethod());
             if(matcher.find()){
-                // 进行resType权限验证
-                this.isResTypeMatch(matcher.group(1), userId);
+				//匹配 /v0.6/{res_type}/...类型的接口，获取res_type参数
+				String[] resTypes = StringUtils.split(request.getRequestURI(),"/");
+				if(resTypes.length >=2){
+					// 进行resType权限验证
+					this.isResTypeMatch(resTypes[2], userId);
+				}
                 // 进行coverage权限验证
                 this.isCoverageMatch(request.getMethod(), userId, request);
                 break;
