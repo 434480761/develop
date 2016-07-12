@@ -4,11 +4,13 @@ import java.util.*;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.repository.Education;
-
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -26,53 +28,36 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
     @Autowired
     private CoverageDao coverageDao;
 
+    @Autowired
+    private TitanRepositoryUtils titanRepositoryUtils;
 
     @Override
     public M add(M model) {
-        if(model == null){
+    	if(model == null){
             return null;
         }
-
-        Long oldNodeId = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
-
-        if(oldNodeId != null){
-            update(model);
-        } else {
-            StringBuffer scriptBuffer = new StringBuffer("graph.addVertex(T.label, type");
-            Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,model);
-            scriptBuffer.append(" ).id()");
-            graphParams.put("type", model.getPrimaryCategory());
-
-            Long id = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
-
-            if(id != null){
-                return model;
-            }
-            //增加冗余字段
-            updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
+        M modelNew = addResource(model);
+        if(modelNew == null){
+            LOG.info("resource保存出错");
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+                    model.getPrimaryCategory(), model.getIdentifier());
         }
-        return null;
+        return modelNew;
     }
 
     @Override
     public M update(M model) {
-        if (model == null) {
+    	if (model == null) {
             return null;
         }
 
-        Long id = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
-        if (id == null) {
-            return null;
+        M modelNew = updateResource(model);
+        if(modelNew == null){
+            LOG.info("resource保存出错");
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+                    model.getPrimaryCategory(), model.getIdentifier());
         }
-
-        StringBuffer scriptBuffer = new StringBuffer("g.V(" + id + ")");
-        Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
-                model);
-        titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
-
-        //增加冗余字段
-        updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
-        return model;
+        return modelNew;
     }
 
     @Override
@@ -87,14 +72,14 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
     @Override
     public boolean delete(String primaryCategory, String identifier) {
-        //软删除
-        String script = "g.V().has(primaryCategory,'identifier',identifier)" +
-                ".property('lc_enable','false').id()";
-        Map<String,Object> param = new HashMap<>();
-        param.put("identifier", primaryCategory);
-        param.put("primaryCategory", primaryCategory);
-
-        Long id = titanCommonRepository.executeScriptUniqueLong(script, param);
+    	 //真删除
+        try {
+            titanCommonRepository.deleteVertexByLabelAndIdentifier(primaryCategory, identifier);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan sync
+            return false;
+        }
         return true;
     }
 
@@ -121,7 +106,87 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
     @Override
     public ResultSet search(String script, Map<String, Object> scriptParamMap) {
         // FIXME
-        return titanCommonRepository.executeScriptResultSet(script, scriptParamMap);
+    	try {
+            return titanCommonRepository.executeScriptResultSet(script, scriptParamMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    	
+    	return null;
+    }
+    
+    private M addResource(M model){
+        Long oldNodeId = null;
+        try {
+            oldNodeId = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan sync
+            return null;
+        }
+
+        if(oldNodeId != null){
+            return updateResource(model);
+        } else {
+            Long nodeId ;
+            StringBuffer scriptBuffer = new StringBuffer("graph.addVertex(T.label, type");
+            Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,model);
+            scriptBuffer.append(").id()");
+            graphParams.put("type", model.getPrimaryCategory());
+
+            try {
+                nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
+            } catch (Exception e) {
+                LOG.error("资源保存到titan失败");
+                e.printStackTrace();
+                //TODO titan sync
+                return null;
+            }
+
+            if (nodeId == null){
+                LOG.error("资源保存到titan失败");
+                //TODO titan sync
+                return null;
+            }
+            
+            updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
+        }
+
+        return model;
+    }
+    
+    private M updateResource(M model){
+        Long id;
+        try {
+            id = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.error("资源更新到titan失败");
+            //TODO titan sync
+            return null;
+        }
+        if (id == null) {
+            return null;
+        }
+
+        StringBuffer scriptBuffer = new StringBuffer("g.V(" + id + ")");
+        Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
+                model);
+        scriptBuffer.append(";g.V(" + id + ").id()");
+        Long nodeId ;
+        try {
+            nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan sync
+            return null;
+        }
+        if(nodeId == null){
+            return null;
+        }
+        updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
+        
+        return model;
     }
 
     private void updateResourceCoverage(String primaryCategory, String identifier, String status){
@@ -138,12 +203,22 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory" ,primaryCategory);
         param.put("identifier" ,identifier);
-        titanCommonRepository.executeScript(script.toString(), param);
+        try {
+			titanCommonRepository.executeScript(script.toString(), param);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 
         script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
         TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);
-        titanCommonRepository.executeScript(script.toString(), param);
+        try {
+			titanCommonRepository.executeScript(script.toString(), param);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     private List<String> getAllResourceCoverage(ResCoverage resCoverage, String status){

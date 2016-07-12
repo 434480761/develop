@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.models.v06.KnowledgePathViewModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanDirection;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
+
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,14 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
         StringBuffer script = new StringBuffer("g.V().hasLabel('knowledges').has('identifier','");
         script.append(id);
         script.append("').valueMap()");
-        ResultSet result = titanCommonRepository.executeScriptResultSet(script.toString());
+        ResultSet result;
+		try {
+			result = titanCommonRepository.executeScriptResultSet(script.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
         Iterator<Result> iterator = result.iterator();
 
         while (iterator.hasNext()) {
@@ -107,7 +115,14 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
         System.out.println("script:" + script);
 
         List<List<Map<String, String>>> paths = new ArrayList<>();
-        ResultSet result = titanCommonRepository.executeScriptResultSet(script.toString());
+        ResultSet result;
+		try {
+			result = titanCommonRepository.executeScriptResultSet(script.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
         Iterator<Result> iterator = result.iterator();
         while (iterator.hasNext()) {
             String line = iterator.next().getString();
@@ -136,7 +151,14 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
         script.append(")");
         System.out.println("script:" + script);
 
-        ResultSet result = titanCommonRepository.executeScriptResultSet(script.toString());
+        ResultSet result;
+		try {
+			result = titanCommonRepository.executeScriptResultSet(script.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
         Iterator<Result> iterator = result.iterator();
 
         while (iterator.hasNext()) {
@@ -174,7 +196,14 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
         script.append(")");
         System.out.println("script:" + script);
 
-        ResultSet result = titanCommonRepository.executeScriptResultSet(script.toString());
+        ResultSet result;
+		try {
+			result = titanCommonRepository.executeScriptResultSet(script.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
         Iterator<Result> iterator = result.iterator();
 
         while (iterator.hasNext()) {

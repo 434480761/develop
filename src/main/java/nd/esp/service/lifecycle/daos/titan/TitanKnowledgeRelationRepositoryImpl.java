@@ -40,12 +40,22 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
             queryParent = "g.V().has('cg_taxoncode',taxoncode).next().id()";
             queryParentParam = new HashMap<>();
             queryParentParam.put("taxoncode", knowledge.getParent());
-            parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
+            try {
+                parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO titan 异常处理
+            }
         } else if (isUuid(knowledge.getParent())) {
             queryParent = "g.V().has('knowledges','identifier',identifier).next().id()";
             queryParentParam = new HashMap<>();
             queryParentParam.put("identifier", knowledge.getParent());
-            parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
+            try {
+                parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO titan 异常处理
+            }
         }
         if (parentId == null) {
             return false;
@@ -54,7 +64,12 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         String queryChild = "g.V().has('knowledges','identifier',identifier).next().id()";
         Map<String, Object> queryChildParam = new HashMap<>();
         queryChildParam.put("identifier", knowledge.getIdentifier());
-        childId = titanCommonRepository.executeScriptUniqueLong(queryChild, queryChildParam);
+        try {
+            childId = titanCommonRepository.executeScriptUniqueLong(queryChild, queryChildParam);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
 
         if (childId == null) {
             return false;
@@ -66,7 +81,12 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         createScriptParams.put("parentId", parentId);
         createScriptParams.put("childId", childId);
         createScriptParams.put("leftValue", leftValue);
-        titanCommonRepository.executeScript(createScript, createScriptParams);
+        try {
+            titanCommonRepository.executeScript(createScript, createScriptParams);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
 
         return true;
     }
@@ -92,16 +112,6 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         if(knowledgeRelation == null){
             return null;
         }
-        //TODO 去掉对资源的检查
-        Long nodeid = titanCommonRepository.getVertexIdByLabelAndId("knowledges",knowledgeRelation.getSource());
-        if(nodeid == null){
-            return null;
-        }
-        //TODO 去掉对资源的检查
-        nodeid = titanCommonRepository.getVertexIdByLabelAndId("knowledges",knowledgeRelation.getTarget());
-        if(nodeid == null){
-            return null;
-        }
 
         StringBuffer script = new StringBuffer("g.V().has(sourcePrimaryCategory , 'identifier',sourceIdentifier).next()" +
                 ".addEdge('has_knowledge_relation',g.V().has(targetPrimaryCategory ,'identifier',targetIdentifier).next()");
@@ -112,10 +122,15 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         params.put("targetIdentifier",knowledgeRelation.getTarget());
         script.append(").id()");
 
-        String id = titanCommonRepository.executeScriptUniqueString(script.toString(),params);
-        if(id != null){
-            Log.info(id);
+        String id = null;
+        try {
+            id = titanCommonRepository.executeScriptUniqueString(script.toString(),params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+            //TODO titan 异常处理
         }
+
         return knowledgeRelation;
     }
 

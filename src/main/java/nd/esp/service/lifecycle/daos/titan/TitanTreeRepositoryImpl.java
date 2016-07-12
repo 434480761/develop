@@ -28,7 +28,12 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         paramMap.put("identifier", identifier);
         paramMap.put("relationType", titanTreeType.relation());
 
-        titanCommonRepository.executeScript(script, paramMap);
+        try {
+            titanCommonRepository.executeScript(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
     }
 
     @Override
@@ -40,7 +45,12 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         paramMap.put("relationType", treeType.relation());
         paramMap.put("order",order);
 
-        titanCommonRepository.executeScript(script, paramMap);
+        try {
+            titanCommonRepository.executeScript(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
     }
 
     @Override
@@ -49,7 +59,14 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
         paramMap.put("relationType",treeType.relation());
-        return titanCommonRepository.executeScriptListDouble(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptListDouble(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+
+        return null;
     }
 
     @Override
@@ -61,12 +78,25 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         paramMap.put("relationType", treeType.relation());
         paramMap.put("primaryCategory", treeType.primaryCategory());
         paramMap.put("identifier", identifier);
-        return titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+        return null;
     }
 
     @Override
     public Long getNodeId(String primaryCategory, String identifier) {
-        return titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+        try {
+            return titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+
+        return null;
     }
 
     @Override
@@ -75,7 +105,13 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("primaryCategory", treeType.primaryCategory());
         paramMap.put("identifier",identifier);
-        return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+        return null;
     }
 
     @Override
@@ -83,7 +119,13 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         String script = "g.V().has('cg_taxoncode',taxoncode).next().id()";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("taxoncode", taxoncode);
-        return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+        return null;
     }
 
     @Override
@@ -93,7 +135,13 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         paramMap.put("identifier", identifier);
         paramMap.put("nodeType",treeType.primaryCategory());
         paramMap.put("relationType",treeType.relation());
-        return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+        return null;
     }
 
     @Override
@@ -103,7 +151,14 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
                 ".outE().hasLabel('has_category_code').inV().has('cg_taxoncode',textRegex('\\\\$S.*')).id()";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("identifier", identifier);
-        return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+
+        return null;
     }
 
     @Override
@@ -113,7 +168,13 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
                 ".outE().hasLabel('has_category_code').inV().has('cg_taxoncode',textRegex('\\\\$S.*')).values('cg_taxoncode')";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("identifier", identifier);
-        return titanCommonRepository.executeScriptUniqueString(script, paramMap);
+        try {
+            return titanCommonRepository.executeScriptUniqueString(script, paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+        return null;
     }
 
 }

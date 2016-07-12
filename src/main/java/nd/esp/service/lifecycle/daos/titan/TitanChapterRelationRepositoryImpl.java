@@ -49,7 +49,12 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         scriptParams.put("leftValue",leftValue);
 
 //        client.submit(createScript,scriptParams);
-        titanCommonRepository.executeScript(createScript , scriptParams);
+        try {
+            titanCommonRepository.executeScript(createScript , scriptParams);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
 
         return true;
     }
@@ -89,7 +94,13 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             params.put("identifier", chapter.getIdentifier());
             params.put("edgelabe", edgelabe);
 
-            Long left = titanCommonRepository.executeScriptUniqueLong(scriptLeft, params);
+            Long left = null;
+            try {
+                left = titanCommonRepository.executeScriptUniqueLong(scriptLeft, params);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO titan 异常处理
+            }
 
             if(left == null){
                 continue;
@@ -104,7 +115,12 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             paramOrder.put("edgelabe", edgelabe);
             paramOrder.put("order", order);
 
-            titanCommonRepository.executeScript(scriptOrder, paramOrder);
+            try {
+                titanCommonRepository.executeScript(scriptOrder, paramOrder);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO titan 异常处理
+            }
         }
     }
 
@@ -119,7 +135,14 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         queryParam.put("nodeId",nodeId);
 
 
-        return titanCommonRepository.executeScriptUniqueLong(queryScript, queryParam);
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(queryScript, queryParam);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //TODO titan 异常处理
+        }
+
+        return null;
     }
 
 }

@@ -23,8 +23,13 @@ public class TitanCommonServiceImpl implements TitanCommonService {
 
     @Override
     public void delete(String type, String id) {
-        if(type==EDGE){
-            titanCoverageRepository.delete(id);
+        if(EDGE.equals(type)){
+            try {
+                titanCommonRepository.deleteEdgeById(id);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO 出现异常处理方式，重新执行这条sql语句
+            }
         } else if(type==VERTEX){
 
         }
@@ -33,8 +38,13 @@ public class TitanCommonServiceImpl implements TitanCommonService {
 
     @Override
     public void batchDelete(String type, List<String> ids) {
-        if(type==EDGE){
-            titanCommonRepository.butchDeleteEdgeById(ids);
+        if(EDGE.equals(type)){
+            try {
+                titanCommonRepository.butchDeleteEdgeById(ids);
+            } catch (Exception e) {
+                e.printStackTrace();
+                //TODO 出现异常处理方式，重新执行这条sql语句
+            }
         } else if(type==VERTEX){
 
         }

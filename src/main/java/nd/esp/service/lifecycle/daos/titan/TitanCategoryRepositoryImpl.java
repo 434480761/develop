@@ -2,8 +2,13 @@ package nd.esp.service.lifecycle.daos.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -19,6 +24,11 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
 
+	private static final Logger LOG = LoggerFactory
+			.getLogger(TitanTechInfoRepositoryImpl.class);
+	
+	@Autowired
+	private TitanRepositoryUtils titanRepositoryUtils;
 	/**
 	 * 1、添加维度数据；2、添加资源冗余数据
 	 * */
@@ -27,15 +37,30 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if(resourceCategory == null){
 			return null;
 		}
-		//添加维度数据
 		ResourceCategory rc = addResourceCategory(resourceCategory);
-		addPath(rc.getResource(), rc.getPrimaryCategory(), rc.getTaxonpath());
+		if(rc == null){
+			LOG.info("Category处理出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
+		}
+
+		String path = resourceCategory.getTaxonpath();
+		if(path !=null && !path.equals("")){
+			String resultPath = addPath(resourceCategory.getResource(), resourceCategory.getPrimaryCategory(), path);
+			if(resultPath == null){
+				LOG.info("Category处理出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+						resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
+			}
+		}
+		
 
 		//更新资源的冗余数据search_path\search_code
 		List<String> category = new ArrayList<>();
 		category.add(rc.getTaxoncode());
 		List<String> pathList = new ArrayList<>();
 		pathList.add(rc.getTaxonpath());
+		
 		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
@@ -71,6 +96,11 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 			categoryList.add(resourceCategory.getTaxoncode());
 		}
+		if(list.size()!=resourceCategories.size()){
+			LOG.info("Category处理出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					category.getPrimaryCategory(),category.getResource());
+		}
 
 		updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
 		return list;
@@ -105,9 +135,16 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory", primaryCategory);
 		param.put("identifier", identifier);
-
-		titanCommonRepository.executeScript(deleteScript, param);
-		titanCommonRepository.executeScript(deleteScript2, param);
+		try {
+			titanCommonRepository.executeScript(deleteScript, param);
+			titanCommonRepository.executeScript(deleteScript2, param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			//TODO titan sync
+			LOG.info("Category处理出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					primaryCategory, identifier);
+		}
 	}
 
 
@@ -137,6 +174,10 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				String p = addPath(key,primaryCategory,path);
 				if(p != null){
 					pathList.add(p);
+				} else {
+					LOG.info("Category处理出错");
+					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+							primaryCategory,key);
 				}
 			}
 		}
@@ -146,10 +187,12 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	private ResourceCategory addResourceCategory(ResourceCategory resourceCategory){
 		StringBuffer script;
 		Map<String, Object> graphParams;
+		//检查code在数据库中是否已经存在
 		Long categoryCodeNodeId = getCategoryCodeId(resourceCategory);
+		String edgeId ;
 		if (categoryCodeNodeId != null) {
 			script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).next()" +
-					".addEdge('has_category_code',g.V(categoryCodeNodeId).next(),'identifier',edgeIdentifier)");
+					".addEdge('has_category_code',g.V(categoryCodeNodeId).next(),'identifier',edgeIdentifier).id()");
 			graphParams = new HashMap<String, Object>();
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
@@ -157,21 +200,37 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			graphParams.put("categoryCodeNodeId", categoryCodeNodeId);
 			graphParams.put("edgeIdentifier",resourceCategory.getIdentifier());
 
-			titanCommonRepository.executeScript(script.toString(), graphParams);
+			try {
+				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
+			} catch (Exception e) {
+				e.printStackTrace();
+				//TODO titan sync
+				return null;
+			}
 		} else {
 			script = new StringBuffer(
 					"category_code = graph.addVertex(T.label,'category_code'");
 			graphParams = TitanScritpUtils.getParamAndChangeScript(script, resourceCategory);
 			script.append(");");
 			script.append("g.V().hasLabel(primaryCategory).has('identifier',identifier).next()" +
-					".addEdge('has_category_code',category_code,'identifier',edgeIdentifier)");
+					".addEdge('has_category_code',category_code,'identifier',edgeIdentifier).id()");
 
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
 			graphParams.put("identifier", resourceCategory.getResource());
 			graphParams.put("edgeIdentifier",resourceCategory.getIdentifier());
 
-			titanCommonRepository.executeScript(script.toString(), graphParams);
+			try {
+				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
+			} catch (Exception e) {
+				e.printStackTrace();
+				//TODO titan sync
+				return null;
+			}
+		}
+
+		if(edgeId == null){
+			return null;
 		}
 
 		return resourceCategory;
@@ -179,38 +238,56 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 	//TODO path没有加入
 	private String addPath(String resource ,String resourcePrimaryCategory,String path ){
-		if(path==null||path.equals("")){
-			return null;
-		}
-		String queryVScript = "g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).id()";
-		Map<String,Object> queryVParams = new HashMap<>();
-		queryVParams.put("source_primaryCategory",resourcePrimaryCategory);
-		queryVParams.put("source_identifier",resource);
-		Long sourceNodeId = titanCommonRepository.executeScriptUniqueLong(queryVScript,queryVParams);
-		if(sourceNodeId == null){
-			return null;
-		}
-
 		String queryPathScript = "g.V().has('categories_path','cg_taxonpath',taxonpath).id()";
 		Map<String,Object> queryPathParams = new HashMap<>();
 		queryPathParams.put("taxonpath",path);
-		Long sourcePathId = titanCommonRepository.executeScriptUniqueLong(queryPathScript,queryPathParams);
+		Long sourcePathId = null;
+		try {
+			sourcePathId = titanCommonRepository.executeScriptUniqueLong(queryPathScript,queryPathParams);
+		} catch (Exception e) {
+			e.printStackTrace();
+			//TODO titan sync
+			//获取ID不成功后直接返回，不进行后续的操作
+			return null;
+		}
 
 		Map<String,Object> addScriptParams = new HashMap<>();
 		StringBuilder addPathScript;
+		String edgeId;
 		if(sourcePathId == null){
 			addPathScript = new StringBuilder("categories_path = graph.addVertex(T.label,'categories_path','cg_taxonpath',taxonpath);");
-			addPathScript.append("g.V(sourceNodeId).next().addEdge('has_categories_path',categories_path)");
+			addPathScript.append("g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
+					".addEdge('has_categories_path',categories_path).id()");
 			addScriptParams.put("taxonpath",path);
-			addScriptParams.put("sourceNodeId",sourceNodeId);
+			addScriptParams.put("source_primaryCategory",resourcePrimaryCategory);
+			addScriptParams.put("source_identifier",resource);
 
-			titanCommonRepository.executeScript(addPathScript.toString(), addScriptParams);
+			try {
+				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
+			} catch (Exception e) {
+				e.printStackTrace();
+				//TODO titan sync
+				return null;
+			}
 		} else {
-			addPathScript = new StringBuilder("g.V(sourceNodeId).next().addEdge('has_categories_path',g.V(sourcePathId).next())");
-			addScriptParams.put("sourceNodeId",sourceNodeId);
+			addPathScript = new StringBuilder("g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
+					".addEdge('has_categories_path',g.V(sourcePathId).next()).id()");
 			addScriptParams.put("sourcePathId",sourcePathId);
-			titanCommonRepository.executeScript(addPathScript.toString(), addScriptParams);
+			addScriptParams.put("source_primaryCategory",resourcePrimaryCategory);
+			addScriptParams.put("source_identifier",resource);
+			try {
+				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
+			} catch (Exception e) {
+				e.printStackTrace();
+				//TODO titan sync
+				return null;
+			}
 		}
+
+		if(edgeId == null){
+			return null;
+		}
+
 
 		return path;
 	}
@@ -222,7 +299,12 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			String scriptString = "g.V().hasLabel('category_code').has('cg_taxoncode',taxoncode).id()";
 			Map<String, Object> graphParams = new HashMap<String, Object>();
 			graphParams.put("taxoncode",resCoverage.getTaxoncode());
-			taxoncodeId = titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
+			try {
+				taxoncodeId = titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
+			} catch (Exception e) {
+				e.printStackTrace();
+				//FIXME 这个地方的代码应该做
+			}
 
 			if(tanxoncodeCacheMap.size() < 2000){
 				tanxoncodeCacheMap.put(resCoverage.getTaxoncode(), taxoncodeId);
@@ -239,7 +321,13 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeList);
 
 		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathList);
-		titanCommonRepository.executeScript(script.toString(), param);
+		try {
+			titanCommonRepository.executeScript(script.toString(), param);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//TODO titan sync
+			e.printStackTrace();
+		}
 	}
 
 }

@@ -2,7 +2,9 @@ package nd.esp.service.lifecycle.daos.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.slf4j.Logger;
@@ -17,9 +19,8 @@ import java.util.Map;
 
 @Repository
 public class TitanRelationRepositoryImpl implements TitanRelationRepository {
-
 	@Autowired
-	private Client client;
+	private TitanRepositoryUtils titanRepositoryUtils;
 
 	@Autowired
 	private TitanCommonRepository titanCommonRepository;
@@ -33,7 +34,88 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		if(resourceRelation == null){
 			return null;
 		}
+		ResourceRelation result = addRelation(resourceRelation);
+		if(result == null){
+			LOG.info("resourceRelation出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+		}
+		return result;
+	}
 
+	@Override
+	public List<ResourceRelation> batchAdd(
+			List<ResourceRelation> resourceRelations) {
+		List<ResourceRelation> resourceRelationList = new ArrayList<>();
+		for (ResourceRelation resourceRelation : resourceRelations) {
+			ResourceRelation rr = addRelation(resourceRelation);
+			if(rr != null){
+				resourceRelationList.add(rr);
+			} else {
+				LOG.info("resourceRelation出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			}
+		}
+		return resourceRelationList;
+	}
+
+	@Override
+	public ResourceRelation update(ResourceRelation resourceRelation) {
+		if(resourceRelation ==null ){
+			return null;
+		}
+
+		ResourceRelation result = updateRelation(resourceRelation);
+		if(result == null){
+			LOG.info("resourceRelation出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+		}
+		return result;
+	}
+
+	@Override
+	public List<ResourceRelation> batchUpdate(List<ResourceRelation> entityList) {
+		List<ResourceRelation> resourceRelationList = new ArrayList<>();
+		for (ResourceRelation resourceRelation : entityList){
+			ResourceRelation result = updateRelation(resourceRelation);
+			if(result != null){
+				resourceRelationList.add(result);
+			} else {
+				LOG.info("resourceRelation出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			}
+		}
+		return resourceRelationList;
+	}
+
+	@Override
+	public void deleteRelationSoft(String primaryCategory, String identifier) {
+		String script = "g.V().has(primaryCategory,'identifier',identifier).bothE().hasLabel('has_relation').property('enable','false')";
+		Map<String,Object> paramMap = new HashMap<>();
+		paramMap.put("primaryCategory", primaryCategory);
+		paramMap.put("identifier", identifier);
+		paramMap.put("primaryCategory", primaryCategory);
+
+		try {
+			titanCommonRepository.executeScript(script, paramMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOG.info("resourceRelation出错");
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					primaryCategory,identifier);
+		}
+	}
+
+	@Override
+	public boolean delete(String identifier) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	private ResourceRelation addRelation(ResourceRelation resourceRelation){
 		StringBuffer scriptBuffer = new StringBuffer(
 				"g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
 						".addEdge('has_relation'," +
@@ -50,62 +132,38 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		createRelationParams.put("target_identifier", resourceRelation.getTarget());
 		createRelationParams.put("edgeIdentifier", resourceRelation.getIdentifier());
 
-		titanCommonRepository.executeScript(scriptBuffer.toString(), createRelationParams);
-
-		return null;
-	}
-
-	@Override
-	public List<ResourceRelation> batchAdd(
-			List<ResourceRelation> resourceRelations) {
-		List<ResourceRelation> resourceRelationList = new ArrayList<>();
-		for (ResourceRelation resourceRelation : resourceRelations) {
-			ResourceRelation rr = add(resourceRelation);
-			if(rr != null){
-				resourceRelationList.add(rr);
-			}
+		String edgeId;
+		try {
+			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), createRelationParams);
+		} catch (Exception e) {
+			e.printStackTrace();
+			//TODO titan sync
+			return null;
 		}
-		return resourceRelationList;
-	}
-
-	@Override
-	public ResourceRelation update(ResourceRelation resourceRelation) {
-		if(resourceRelation ==null ){
+		if(edgeId == null){
 			return null;
 		}
 
-		String id = titanCommonRepository.getEdgeIdByLabelAndId("has_relation", resourceRelation.getIdentifier());
-		if (id == null) {
-			return null;
-		}
+		return resourceRelation;
+	}
 
-		StringBuffer scriptBuffer = new StringBuffer("g.E('" + id + "')");
+	private ResourceRelation updateRelation(ResourceRelation resourceRelation){
+		StringBuffer scriptBuffer = new StringBuffer("g.E().has(primaryCategory,'identifier',identifier)");
 		Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
 				resourceRelation);
-		titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
-		return null;
-	}
+		String edgeId;
+		try {
+			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() ,graphParams);
+		} catch (Exception e) {
+			e.printStackTrace();
+			//TODO titan sync
+			return null;
+		}
 
-	@Override
-	public List<ResourceRelation> batchUpdate(List<ResourceRelation> entityList) {
-		return null;
-	}
-
-	@Override
-	public void deleteRelationSoft(String primaryCategory, String identifier) {
-		String script = "g.V().has(primaryCategory,'identifier',identifier).bothE().hasLabel('has_relation').property('enable','false')";
-		Map<String,Object> paramMap = new HashMap<>();
-		paramMap.put("primaryCategory", primaryCategory);
-		paramMap.put("identifier", identifier);
-		paramMap.put("primaryCategory", primaryCategory);
-
-		titanCommonRepository.executeScript(script, paramMap);
-	}
-
-	@Override
-	public boolean delete(String identifier) {
-		// TODO Auto-generated method stub
-		return false;
+		if(edgeId == null){
+			return null;
+		}
+		return resourceRelation;
 	}
 
 }
