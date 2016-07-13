@@ -93,28 +93,6 @@ public class TitanResourceController {
 		titanResourceService.importAllRelation();
 	}
 
-	/**
-	 * 导入数据
-	 * 
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/edge/cover/actions/count", method = RequestMethod.GET)
-	public long countEdgeCover() {
-		return titanCoverageRepository.countCover();
-
-	}
-
-	/**
-	 * 导入数据
-	 * 
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/vertex/coverage/actions/count", method = RequestMethod.GET)
-	public long countVertexCoverage() {
-
-		return titanCoverageRepository.countCoverage();
-
-	}
 
 	@RequestMapping(value = "update/{resourceType}", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
