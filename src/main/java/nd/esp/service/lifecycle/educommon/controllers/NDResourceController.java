@@ -274,6 +274,63 @@ public class NDResourceController {
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.DeleteResourceSuccess);
     }
 
+    /**
+     * 教学目标删除接口
+     *
+     * @param resourceType 资源类型，这里必须是：instructionalobjectives（教学目标）
+     * @param objectiveId  教学目标uuid
+     * @param parentNode   父节点uuid（可能是章节也可能是课时，由node_type指定），必填
+     * @param nodeType     节点类型（chapters or lessions）,可选，默认为chapters
+     * @return
+     */
+    @MarkAspect4OfflineJsonToCS
+    @RequestMapping(value = "/business/{objective_id}", method = RequestMethod.DELETE, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public @ResponseBody Map<String, String> deleteInstructionalObjective(
+            @PathVariable("res_type") String resourceType,
+            @PathVariable("objective_id") String objectiveId,
+            @RequestParam(value = "parent_node", required = true) String parentNode,
+            @RequestParam(value = "node_type", defaultValue = "chapters") String nodeType) {
+        // 该方法只删除教学目标
+        if (!IndexSourceType.InstructionalObjectiveType.getName().equals(resourceType)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getMessage());
+        }
+
+        if (!IndexSourceType.ChapterType.getName().equals(nodeType) &&
+                !IndexSourceType.LessonType.getName().equals(nodeType)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getMessage());
+        }
+
+        // 教学目标，章节/课时 UUID校验
+        if (!CommonHelper.checkUuidPattern(objectiveId) ||
+                !CommonHelper.checkUuidPattern(parentNode)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+        }
+
+        //add by xiezy - 2016.04.15
+        List<NotifyInstructionalobjectivesRelationModel> relateRelations = new ArrayList<NotifyInstructionalobjectivesRelationModel>();
+        String nowStatus = "";
+        nowStatus = notifyService.getResourceStatus(objectiveId);
+        if (nowStatus.equals(LifecycleStatus.ONLINE.getCode())) {
+            relateRelations = notifyService.resourceBelongToRelations(objectiveId);
+        }
+
+        ndResourceService.deleteInstructionalObjectives(objectiveId, parentNode, nodeType);
+
+        //add by xiezy - 2016.04.15
+        //异步通知智能出题，这里都是教学目标
+        if (nowStatus.equals(nowStatus.equals(LifecycleStatus.ONLINE.getCode()))) {
+            notifyService.asynNotify4Resource(objectiveId, nowStatus, null, relateRelations, OperationType.DELETE);
+        }
+
+        return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.DeleteResourceSuccess);
+    }
+
 	/**
 	 * 资源检索 -- 通过solr检索,数据存在延时性
 	 * 

@@ -582,11 +582,12 @@ public class ChapterServiceImpl implements ChapterService{
     public ChapterModel findChapterByIdAndType(String id, String type) {
         Chapter chapter = null;
         try {
-            if ("chapter".equals(type)) {
+            if (IndexSourceType.ChapterType.getName().equals(type)) {
                 chapter = chapterRepository.get(id);
-            } else if ("lesson".equals(type)) {
+            } else if (IndexSourceType.LessonType.getName().equals(type)) {
                 List<ResourceRelation> relationList = resourceRelationService.getByResTypeAndTargetTypeAndTargetId(
                         IndexSourceType.ChapterType.getName(), IndexSourceType.LessonType.getName(), id);
+
                 if (relationList != null && relationList.size() > 0) {
                     chapter = chapterRepository.get(relationList.get(0).getSourceUuid());
                 }

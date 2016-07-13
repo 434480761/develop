@@ -2188,7 +2188,7 @@ public class NDResourceServiceImpl implements NDResourceService{
                 // 只删除教学目标与该章节关联
                 Set<String> relationIds = new HashSet<>();
                 // 获得交集对应的关联Id
-                for (String id : relationIds) {
+                for (String id : idSet) {
                     relationIds.add(relationsMap.get(id));
                 }
                 // 根据id删除关系
