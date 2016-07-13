@@ -5,19 +5,14 @@ package nd.esp.service.lifecycle.support.enums;
  * <p>Description: </p>
  * <p>Copyright: Copyright (c) 2016  </p>
  * <p>Company:ND Co., Ltd.  </p>
- * <p>Create Time: 2016/6/29 </p>
+ * <p>Create Time: 2016/7/12 </p>
  *
  * @author lanyl
  */
-public enum RoleEnum {
+public enum CoverageStrategyEnum {
 
-	SUPERADMIN("SuperAdmin"),
-	COVERAGEADMIN("CoverageAdmin"),
-	RESCREATOR("ResCreator"),
-	CATEGORYDATAADMIN("CategoryDataAdmin"),
-	RESCONSUMER("ResConsumer"),
-	BEARERTOKEN("role_biz_server")
-	;
+	//个人库
+	USER("User");
 
 	private String value;
 
@@ -25,7 +20,7 @@ public enum RoleEnum {
 		return value;
 	}
 
-	private RoleEnum(String value) {
+	private CoverageStrategyEnum(String value) {
 		this.value = value;
 	}
 }

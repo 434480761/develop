@@ -13,6 +13,7 @@ import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappi
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.RoleResFilterUrlMap;
+import nd.esp.service.lifecycle.support.enums.CoverageStrategyEnum;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,10 +107,6 @@ public class RoleResInterceptor implements HandlerInterceptor {
 							else if( UcRoleClient.RESCONSUMER.equals(userCenterRoleDetails.getRoleId()) ){
 								// 过滤访问的URL
 								isResconsumerMatcher(request, userInfo.getUserId());
-							}
-							// 游客角色
-							else if( UcRoleClient.GUEST.equals(userCenterRoleDetails.getRoleId()) ){
-
 							}
 							// 其他情况，视为异常。这个分支是不会进入的，如果进入即存在异常。
 							else{
@@ -261,11 +258,23 @@ public class RoleResInterceptor implements HandlerInterceptor {
 							String target = coverage.getString("target");
 							// 获取coverageStr
 							String coverageStr  = targetType + "/" + target;
-							// 获取用户的覆盖范围列表, 如果不存在, 则没有权限 报错
-							if(!userCoverageList.contains(coverageStr)){
-								throw new LifeCircleException(HttpStatus.FORBIDDEN,
-										LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+							// 个人库 策略处理
+							if(CoverageStrategyEnum.USER.getValue().equals(targetType)){
+								if(!userId.equals(target)){
+									throw new LifeCircleException(HttpStatus.FORBIDDEN,
+											LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+								}
 							}
+							// 其他 策略处理
+							else{
+								// 获取用户的覆盖范围列表, 如果不存在, 则没有权限 报错
+								if(!isContainsAndStartsWith(userCoverageList,coverageStr)){
+									throw new LifeCircleException(HttpStatus.FORBIDDEN,
+											LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+								}
+							}
+
+
 						}
 					}
 				}
@@ -279,11 +288,46 @@ public class RoleResInterceptor implements HandlerInterceptor {
             if(StringUtils.isNotBlank(coverage)){
                 // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
                 List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
-                if(!userCoverageList.contains(coverage)){
-                    throw new LifeCircleException(HttpStatus.FORBIDDEN,
-                            LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
-                }
+				// 个人库 策略处理
+				if(StringUtils.startsWith(coverage,CoverageStrategyEnum.USER.getValue())){
+					String[] coverages = StringUtils.split(coverage, "/");
+					String target = "";
+					try{
+						target = coverages[1];
+					}catch (Exception e){
+						target = "";
+					}
+					if(!userId.equals(target) && !userCoverageList.contains(coverage)){
+						throw new LifeCircleException(HttpStatus.FORBIDDEN,
+								LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+					}
+				}
+				// 其他 策略处理
+				else{
+					if(!isContainsAndStartsWith(userCoverageList,coverage)){
+						throw new LifeCircleException(HttpStatus.FORBIDDEN,
+								LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
+					}
+				}
             }
         }
     }
+
+	/**
+	 * 集合是否包含并且以该内容开头
+	 * @param list
+	 * @param value
+	 * @return
+	 * @author lianggz
+	 */
+	private static boolean isContainsAndStartsWith(List<String> list, String value){
+		boolean flag = false;
+		for (String str : list) {
+			if(StringUtils.startsWithIgnoreCase(value, str)){
+				flag = true;
+				break;
+			}
+		}
+		return flag;
+	}
 }

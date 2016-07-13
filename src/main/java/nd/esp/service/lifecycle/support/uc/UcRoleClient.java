@@ -33,8 +33,6 @@ public class UcRoleClient {
     public static String CATEGORYDATAADMIN = LifeCircleApplicationInitializer.properties.getProperty("esp_category_data_admin");
     /** 资源消费者角色*/
     public static String RESCONSUMER = LifeCircleApplicationInitializer.properties.getProperty("esp_res_consumer");
-    /** 游客角色*/
-    public static String GUEST = LifeCircleApplicationInitializer.properties.getProperty("esp_guest");
     
     /**
      * 校验roleid参数是否合法
@@ -47,8 +45,7 @@ public class UcRoleClient {
         || UcRoleClient.COVERAGEADMIN.equals(roleId) 
         || UcRoleClient.RESCREATOR.equals(roleId) 
         || UcRoleClient.CATEGORYDATAADMIN.equals(roleId) 
-        || UcRoleClient.RESCONSUMER.equals(roleId) 
-        || UcRoleClient.GUEST.equals(roleId))){
+        || UcRoleClient.RESCONSUMER.equals(roleId))){
             throw new LifeCircleException(HttpStatus.BAD_REQUEST,
                 LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode(), 
                 message + LifeCircleErrorMessageMapper.InvalidArgumentsError.getMessage());
@@ -90,12 +87,6 @@ public class UcRoleClient {
         for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
             // 资源消费者角色
             if(RESCONSUMER.equals(userCenterRoleDetail.getRoleId())){
-                return userCenterRoleDetail;
-            }
-        }
-        for(UserCenterRoleDetails userCenterRoleDetail: userCenterRoleDetailList){
-            // 游客角色
-            if(GUEST.equals(userCenterRoleDetail.getRoleId())){
                 return userCenterRoleDetail;
             }
         }

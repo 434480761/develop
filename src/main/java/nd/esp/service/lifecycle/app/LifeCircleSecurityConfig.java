@@ -48,15 +48,8 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	        // 权限角色配置接口 【超级管理员（SuperAdmin）跟库管理员（CoverageAdmin）】
 	        http.authorizeRequests().antMatchers("/v*/users/**").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 
-	        // 游客角色 （Guest）
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets/*").permitAll();
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets").permitAll();
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/relations").permitAll();
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/ralations").permitAll();
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/*").permitAll();
-//	      http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*").permitAll();
-
 			//维度管理者角色--[CategoryDataAdmin]
+			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
