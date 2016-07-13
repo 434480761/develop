@@ -42,6 +42,7 @@ public final class StringUtils {
      * @return
      */
     public static Date strTimeStampToDate(String timeStr) {
+        if(timeStr==null) return null;
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Long time = Long.parseLong(timeStr);
         String d = format.format(time);
