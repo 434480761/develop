@@ -30,7 +30,7 @@ import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
-import nd.esp.service.lifecycle.educommon.support.RelationType;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
@@ -903,22 +903,7 @@ public class NDResourceController {
          * 入参处理 + 校验
          */
         // 0.res_type
-        if(resType.equals("chapters")){
-            
-            LOG.error("resType不能为chapters");
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                    "resType不能为chapters");
-        }else if(resType.equals(Constant.RESTYPE_EDURESOURCE)){
-            if(StringUtils.isEmpty(resCodes)){
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                        "resType为" + Constant.RESTYPE_EDURESOURCE + "时,rescode不能为空");
-            }
-        }else{
-            commonServiceHelper.getRepository(resType);
-        }
+        verificateResType(resType, resCodes);
         
         // 1.includes
         List<String> includesList = IncludesConstant.getValidIncludes(includes);
@@ -957,37 +942,7 @@ public class NDResourceController {
             relationsMap = null;
         }else{
             for(String relation : relations){
-                Map<String,String> map = new HashMap<String, String>();
-                //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
-                relation = relation + " ";
-                List<String> elements = Arrays.asList(relation.split("/"));
-                //格式错误判断
-                if(elements.size() != 3){
-                   
-                    LOG.error(relation + "--relation格式错误");
-                    
-                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                            LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                            relation + "--relation格式错误");
-                }
-                
-                String resourceType = elements.get(0).trim();
-                String resourceUuid = elements.get(1).trim();
-                String relationType = elements.get(2).trim();
-                 
-                //判断源资源是否存在,stype + suuid
-                if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
-                    CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
-                }
-                //r_type的特殊处理
-                if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){
-                    relationType = RelationType.ASSOCIATE.getName();
-                }
-                
-                map.put("stype", resourceType);
-                map.put("suuid", resourceUuid);
-                map.put("rtype", relationType);
-                
+                Map<String,String> map = ParameterVerificationHelper.relationVerification(relation);
                 relationsMap.add(map);
             }
         }
@@ -1236,6 +1191,34 @@ public class NDResourceController {
         paramMap.put("limit", limit);
         
         return paramMap;
+    }
+    
+    /**
+     * 验证resType
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param resCodes
+     */
+    private void verificateResType(String resType, String resCodes){
+		if (resType.equals(IndexSourceType.ChapterType.getName())) {
+
+			LOG.error("resType不能为chapters");
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError
+							.getCode(), "resType不能为chapters");
+		} else if (resType.equals(Constant.RESTYPE_EDURESOURCE)) {
+			if (StringUtils.isEmpty(resCodes)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CommonSearchParamError
+								.getCode(), "resType为"
+								+ Constant.RESTYPE_EDURESOURCE
+								+ "时,rescode不能为空");
+			}
+		} else {
+			commonServiceHelper.getRepository(resType);
+		}
     }
     
     /**
@@ -1688,7 +1671,7 @@ public class NDResourceController {
     	Map<String,List<String>> tagMap = versionViewModel.getRelations();
     	if(tagMap != null && tagMap.containsKey("tags") && tagMap.get("tags") != null && CollectionUtils.isNotEmpty(tagMap.get("tags"))){
     		ResourceViewModel newResource = null;
-    		if(commonServiceHelper.isQuestionDb(resourceType)){
+    		if(CommonServiceHelper.isQuestionDb(resourceType)){
     			newResource = ndResourceService.createNewVersion4Question(resourceType, uuid, versionViewModel,userInfo);
     		}else{
     			newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel,userInfo);
@@ -1806,5 +1789,62 @@ public class NDResourceController {
     	}else{
     		statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
     	}
+    }
+    
+    /**
+     * 统计教材章节下的资源数量
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param tmId
+     * @param chapterIds
+     * @param coverages
+     * @param categories
+     * @param isAll
+     * @return
+     */
+    @RequestMapping(value = "/statistics/counts", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "tmid"})
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			@PathVariable(value="res_type") String resType,
+            @RequestParam(value="tmid") String tmId,
+            @RequestParam(required=false,value="chapterid") Set<String> chapterIds,
+            @RequestParam(required=false,value="coverage") Set<String> coverages,
+            @RequestParam(required=false,value="category") Set<String> categories,
+            @RequestParam(required=false,value="is_all",defaultValue="false") boolean isAll){
+    	
+    	//参数校验
+    	verificateResType(resType, "");
+    	if(resType.equals(IndexSourceType.QuestionType.getName()) ||
+    			resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())){
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+					"暂不支持questions和coursewareobjects资源类型的查询！");
+    	}
+    	
+    	categories = CollectionUtils.removeEmptyDeep(categories);
+    	coverages = CollectionUtils.removeEmptyDeep(coverages);
+    	chapterIds = CollectionUtils.removeEmptyDeep(chapterIds);
+    	
+    	if(StringUtils.isEmpty(tmId)){
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+					"教材id不能为空");
+    	}else if(tmId.equals("none")){
+    		if(CollectionUtils.isEmpty(chapterIds)){
+    			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+    					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+    					"tmid=none时,chapterid不允许为空");
+    		}
+    	}
+    	
+    	List<String> coverageList = new ArrayList<String>();
+    	if(CollectionUtils.isNotEmpty(coverages)){
+    		for(String cv : coverages){
+    			String coverage = ParameterVerificationHelper.coverageVerification(cv);
+    			coverageList.add(coverage);
+    		}
+    	}
+    	
+    	return ndResourceService.statisticsCountsByChapters(resType, tmId, chapterIds, coverageList, categories, isAll);
     }
 }

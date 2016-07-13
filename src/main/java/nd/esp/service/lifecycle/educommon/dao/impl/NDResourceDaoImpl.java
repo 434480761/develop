@@ -36,6 +36,7 @@ import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.QueryResultModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
@@ -1885,6 +1886,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
         return result;
     }
     
+    /**
+     * 需要排除的维度分类sql参数拼接
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param categoryExclude
+     * @param paramHead
+     * @return
+     */
     private String categoryExcludeParam4Sql(String resType,Set<String> categoryExclude, String paramHead){
         String result = "";
         
@@ -2525,6 +2535,265 @@ public class NDResourceDaoImpl implements NDResourceDao{
 			questionJdbcTemplate.batchUpdate(sqls);
 		}
 		defaultJdbcTemplate.batchUpdate(sqls);
+	}
+
+	@Override
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			String resType, String tmId, Set<String> chapterIds,
+			List<String> coverages, Set<String> categories, boolean isAll) {
+		StringBuilder sql = new StringBuilder("");
+		sql.append("SELECT rr.source_uuid AS chapterid,COUNT(DISTINCT a.identifier) AS counts ");
+		sql.append("FROM ndresource a INNER JOIN resource_relations rr ON a.identifier=rr.target ");
+		//coverages
+        if(CollectionUtils.isNotEmpty(coverages)){
+        	sql.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	sql.append(resType);
+        	sql.append("'");
+        	sql.append(" AND (");
+            if(!isAll){
+            	sql.append(coverageParam4Sql4DealOnline(coverages,""));
+            }else{
+            	sql.append(coverageParam4Sql(coverages,""));
+            }
+            sql.append(")");
+        }else{
+        	sql.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	sql.append(resType);
+            sql.append("'");
+        }
+        
+        //categories
+        Map<String,Object> dealCategoriesMap = dealAndCategories(categories);
+        //带有and 的category的拆解集合
+        @SuppressWarnings("unchecked")
+		List<List<String>> andCategories = (List<List<String>>)dealCategoriesMap.get("allAndCategories");
+        //去掉带有 and 之后的categories
+        @SuppressWarnings("unchecked")
+		Set<String> noAndcategories = (Set<String>)dealCategoriesMap.get("afterRemoveAllAndCategories");
+        
+        //categories & andCategories
+        if(CollectionUtils.isNotEmpty(noAndcategories) || CollectionUtils.isNotEmpty(andCategories)){
+            boolean havePath = false;
+            boolean haveCode = false;
+            
+            if(CollectionUtils.isNotEmpty(noAndcategories)){
+                for(String str4Join : noAndcategories){//目的是减少Join表
+                    if(StringUtils.isNotEmpty(str4Join)){
+                        if(str4Join.contains("/")){
+                            havePath = true;
+                        }else{
+                            haveCode = true;
+                        }
+                    }
+                }
+            }
+            
+            if(havePath){
+            	sql.append(" INNER JOIN resource_categories rc ON rc.primary_category='" + resType + "' AND a.identifier=rc.resource");
+            }
+            if(haveCode || CollectionUtils.isNotEmpty(andCategories)){
+                //至少join一次
+            	sql.append(" INNER JOIN resource_categories rcc0 ON rcc0.primary_category='" + resType + "' AND a.identifier=rcc0.resource");
+                
+                if(CollectionUtils.isNotEmpty(andCategories)){//注意这里的i是从1开始,使join的次数为andCategories的【maxsize-1】
+                    for(int i=1;i<getMaxCount(andCategories);i++){
+                    	sql.append(" INNER JOIN resource_categories rcc");
+                    	sql.append(i);
+                    	sql.append(" ON rcc");
+                    	sql.append(i);
+                    	sql.append(".primary_category='");
+                    	sql.append(resType);
+                    	sql.append("' AND a.identifier=rcc");
+                        sql.append(i);
+                        sql.append(".resource");
+                    }
+                }
+            }
+        }
+        
+        //WHERE
+        String baseWhere = " WHERE a.enable=1 AND a.primary_category='" + resType + "'";
+        if(CollectionUtils.isEmpty(coverages)){//当覆盖范围为空时
+        	baseWhere = " WHERE a.enable=1 AND a.primary_category='" + resType + "'"
+                    + " AND (rcv.target_type='" + CoverageConstant.TargetType.TARGET_TYPE_PB.getCode() + "'"
+                    + " AND rcv.target='" + CoverageConstant.TARGET_PUBLIC + "'"
+                    + " AND rcv.strategy='" + CoverageConstant.Strategy.STRATEGY_SHAREING.getCode() + "'"
+                    + ")";
+        }
+        String categoryParamSql = "";
+        if(CollectionUtils.isNotEmpty(categories) || CollectionUtils.isNotEmpty(andCategories)){
+            categoryParamSql = categoryParam4Sql(categories,andCategories,"");
+        }
+        //关系where参数
+        String relationParamSql = getRelationParamSql(resType, tmId, chapterIds);
+        
+        List<String> sqlWhereList = new ArrayList<String>();
+        sqlWhereList.add(baseWhere);
+        if(StringUtils.isNotEmpty(categoryParamSql)){
+            sqlWhereList.add(categoryParamSql);
+        }
+        if(StringUtils.isNotEmpty(relationParamSql)){
+            sqlWhereList.add(relationParamSql);
+        }
+        String sqlWhere = StringUtils.join(sqlWhereList, " AND ");
+        
+        sql.append(" ");
+        sql.append(sqlWhere);
+        
+        //GROUP BY
+        sql.append(" GROUP BY rr.source_uuid");
+        
+        //参数处理
+        Map<String, Object> params = sqlParamDeal4Statistics(tmId, chapterIds, coverages, noAndcategories, andCategories);
+        
+        //最终查询sql语句LOG输出
+        LOG.info("教材章节统计执行的SQL语句:" + sql.toString());
+        //参数处理LOG输出
+        LOG.info("教材章节统计执行的SQL的参数为:" + ObjectUtils.toJson(params));
+        
+        final Map<String, ChapterStatisticsViewModel> resultMap = new HashMap<String, ChapterStatisticsViewModel>();
+        //查询
+        NamedParameterJdbcTemplate npdt = new NamedParameterJdbcTemplate(defaultJdbcTemplate);
+        npdt.query(sql.toString(), params, new RowMapper<String>(){
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				ChapterStatisticsViewModel cs = new ChapterStatisticsViewModel();
+				cs.setCounts(rs.getInt("counts"));
+				
+				resultMap.put(rs.getString("chapterid"), cs);
+				return null;
+			}
+        });
+        
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	try {
+				List<Chapter> chapters = chapterRepository.getAll(new ArrayList<String>(resultMap.keySet()));
+				if(CollectionUtils.isNotEmpty(chapters)){
+					for(Chapter chapter : chapters){
+						if(resultMap.containsKey(chapter.getIdentifier())){
+							ChapterStatisticsViewModel cs = resultMap.get(chapter.getIdentifier());
+							cs.setChapterTitle(chapter.getTitle());
+							if(chapter.getParent().equals(chapter.getTeachingMaterial())){
+								cs.setParent("ROOT");
+							}else{
+								cs.setParent(chapter.getParent());
+							}
+							resultMap.put(chapter.getIdentifier(), cs);
+						}
+					}
+				}
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+    					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), "获取章节详细出错！");
+			}
+        }
+        
+		return resultMap;
+	}
+	
+	/**
+	 * 关系相关参数处理
+	 * @author xiezy
+	 * @date 2016年7月13日
+	 * @param resType
+	 * @param tmId
+	 * @param chapterIds
+	 * @return
+	 */
+	private String getRelationParamSql(String resType,String tmId,Set<String> chapterIds){
+		String innerSql = "";
+		if(CollectionUtils.isNotEmpty(chapterIds)){
+			innerSql = "SELECT c.identifier FROM chapters c INNER JOIN ndresource ndr";
+			innerSql += " ON c.identifier=ndr.identifier";
+			innerSql += " WHERE ndr.enable=1 AND ndr.primary_category='chapters' AND ndr.identifier IN (:cids)";
+		}else{
+			innerSql = "SELECT c.identifier FROM chapters c INNER JOIN ndresource ndr";
+			innerSql += " ON c.teaching_material=ndr.identifier";
+			innerSql += " WHERE ndr.enable=1 AND ndr.primary_category='teachingmaterials' AND ndr.identifier=:tmid";
+		}
+		
+		String sql = "rr.enable=1 AND rr.res_type='chapters' AND rr.resource_target_type='"+resType+"'";
+		sql += " AND rr.source_uuid IN (" + innerSql + ")";
+		
+		return sql;
+	}
+	
+	/**
+	 * sql参数赋值处理
+	 * @author xiezy
+	 * @date 2016年7月13日
+	 * @param tmId
+	 * @param chapterIds
+	 * @param coverages
+	 * @param noAndcategories
+	 * @param andCategories
+	 * @return
+	 */
+	private Map<String, Object> sqlParamDeal4Statistics(String tmId,Set<String> chapterIds,
+			List<String> coverages,Set<String> noAndcategories,List<List<String>> andCategories){
+		Map<String,Object> params = new HashMap<String, Object>();
+		//coverage的参数处理
+        if(CollectionUtils.isNotEmpty(coverages)){
+            int i = 1;
+            
+            for(String cv : coverages){
+                List<String> coverageElemnt = Arrays.asList(cv.split("/"));
+                params.put("cvty" + i, coverageElemnt.get(0));
+                params.put("cvt" + i, coverageElemnt.get(1));
+                if(!coverageElemnt.get(2).equals("*")){
+                    params.put("cvs" + i, coverageElemnt.get(2));
+                }
+                
+                i++;
+            }
+        }
+        //noAndcategories的参数处理
+        if(CollectionUtils.isNotEmpty(noAndcategories)){
+            int i = 1;
+            for(String cg : noAndcategories){
+                if(cg.contains("/")){
+                    if(cg.contains("*")){
+                        params.put("cgpathlike" + i, cg.replaceAll("\\*", "\\%"));
+                    }else{
+                        params.put("cgpath" + i, cg);
+                    }
+                }else{
+                    if(cg.contains("*")){
+                        params.put("cgcodelike" + i, cg.replaceAll("\\*", "\\%"));  
+                    }else{
+                        params.put("cgcode" + i, cg);
+                    }
+                }
+                
+                i++;
+            }
+        }
+        //andCategories的参数处理
+        if(CollectionUtils.isNotEmpty(andCategories)){
+            int k = 1;
+            for(List<String> andCategory : andCategories){
+                int j = 0;//rcc0以0开始
+                for(String ac : andCategory){
+                    if(ac.contains("*")){//使用通配符
+                        params.put("andcgcodelike" + j + k, ac.replaceAll("\\*", "\\%"));  
+                    }else{
+                        params.put("andcgcode" + j + k, ac);
+                    }
+                    
+                    j++;
+                }
+                
+                k++;
+            }
+        }
+        
+        if(CollectionUtils.isNotEmpty(chapterIds)){
+        	params.put("cids", chapterIds);
+        }else{
+        	params.put("tmid", tmId);
+        }
+        
+        return params;
 	}
 	
 	//********************************通用资源删除DAO模块********************************\\

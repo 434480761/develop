@@ -37,6 +37,7 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.support.RelationType;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResEducationalViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResLifeCycleViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResRightViewModel;
@@ -3282,5 +3283,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 	
 	private String updateStatusSql(String resType,String uuid,String status){
 		return "update ndresource set estatus='"+status+"',last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
+	}
+
+	@Override
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			String resType, String tmId, Set<String> chapterIds,
+			List<String> coverages, Set<String> categories, boolean isAll) {
+		
+		return ndResourceDao.statisticsCountsByChapters(resType, tmId, chapterIds, coverages, categories, isAll);
 	}
 }
