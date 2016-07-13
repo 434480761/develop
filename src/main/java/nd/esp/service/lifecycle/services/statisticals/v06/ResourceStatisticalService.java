@@ -14,4 +14,6 @@ public interface ResourceStatisticalService {
     public Map<String, List<ResourceStatisticalModel>> getList(List<String> key, List<String> rid);
     
     public void addDownloadStatistical(String bsyskey,String resType,String id);
+    
+    public void resourceTop(String resType,String uuid,boolean effect);
 }
