@@ -1,31 +1,30 @@
 package nd.esp.service.lifecycle.daos.titan;
 
-import nd.esp.service.lifecycle.daos.titan.inter.TitanSyncTimerTask;
-import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TitanSync;
 import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 /**
  * Created by liuran on 2016/7/11.
  */
-@Repository
-public class TitanSyncTimerTaskImpl implements TitanSyncTimerTask {
-    private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTaskImpl.class);
+@Component
+public class TitanSyncTimerTask {
+    private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
     public static int MAX_REPORT_TIMES = 1000;
+    public static boolean LOCKED = false;
 
     @Autowired
     private TitanSyncService titanSyncService;
@@ -37,18 +36,22 @@ public class TitanSyncTimerTaskImpl implements TitanSyncTimerTask {
     @Qualifier(value = "defaultJdbcTemplate")
     private JdbcTemplate jdbcTemplate;
 
-    public void sync(){
-        while (true){
-            if (checkHaveData()){
-                LOG.info("titan sync start");
+
+//    @Scheduled(fixedRate=60000)
+    public void syncTask(){
+        if(LOCKED){
+            LOG.info("正在同步数据....");
+            return;
+        }
+        if (checkHaveData()){
+            LOCKED = true;
+            LOG.info("titan sync start");
+            try{
                 syncData();
-            } else {
-                LOG.info("titan sync sleeping...");
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            } catch (Exception e){
+                e.printStackTrace();
+            } finally {
+                LOCKED = false;
             }
         }
     }
