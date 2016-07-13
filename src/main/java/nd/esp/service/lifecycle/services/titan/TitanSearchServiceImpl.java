@@ -274,8 +274,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
 
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
-        builder.setIndex("mixed_ndresource");
-        builder.setLimit("10");
         builder.setWords(words);
         builder.setParams(params);
 
