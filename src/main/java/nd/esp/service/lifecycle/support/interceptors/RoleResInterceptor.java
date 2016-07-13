@@ -13,8 +13,8 @@ import nd.esp.service.lifecycle.services.userrestypemapping.v06.UserRestypeMappi
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.RoleResFilterUrlMap;
-import nd.esp.service.lifecycle.support.enums.CoverageStrategyEnum;
 import nd.esp.service.lifecycle.support.uc.UcRoleClient;
+import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -259,7 +259,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
 							// 获取coverageStr
 							String coverageStr  = targetType + "/" + target;
 							// 个人库 策略处理
-							if(CoverageStrategyEnum.USER.getValue().equals(targetType)){
+							if(CoverageConstant.TargetType.TARGET_TYPE_USER.getCode().equals(targetType)){
 								if(!userId.equals(target)){
 									throw new LifeCircleException(HttpStatus.FORBIDDEN,
 											LifeCircleErrorMessageMapper.Forbidden.getCode(), LifeCircleErrorMessageMapper.Forbidden.getMessage());
@@ -289,7 +289,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
                 // 获取用户的覆盖范围列表,如果不存在, 则没有权限 报错
                 List<String> userCoverageList = this.userCoverageMappingService.findUserCoverageList(userId);
 				// 个人库 策略处理
-				if(StringUtils.startsWith(coverage,CoverageStrategyEnum.USER.getValue())){
+				if(StringUtils.startsWith(coverage,CoverageConstant.TargetType.TARGET_TYPE_USER.getCode())){
 					String[] coverages = StringUtils.split(coverage, "/");
 					String target = "";
 					try{

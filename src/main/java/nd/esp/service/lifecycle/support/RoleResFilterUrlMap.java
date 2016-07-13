@@ -46,6 +46,8 @@ public class RoleResFilterUrlMap {
 		for (ResTypeEnum e : ResTypeEnum.values()){
 			// /v0.3/{res_type} POST
 			m.put("/"+ e.getValue() + "/POST", "");
+			// /v0.3/{res_type}/* POST
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/POST", "");
 			// /v0.3/{res_type}/* PUT
 			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/PUT", "");
 			// /v0.3/{res_type}/* GET

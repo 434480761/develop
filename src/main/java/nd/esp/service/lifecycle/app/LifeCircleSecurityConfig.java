@@ -67,7 +67,8 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
+			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
+			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 	        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/uploadurl").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
 
