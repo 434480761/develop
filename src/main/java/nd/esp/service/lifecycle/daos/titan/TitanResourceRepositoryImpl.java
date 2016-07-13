@@ -148,8 +148,6 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
                 //TODO titan sync
                 return null;
             }
-            
-            updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
         }
 
         return model;
@@ -169,19 +167,16 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             return null;
         }
 
-        StringBuffer scriptBuffer = new StringBuffer("g.V(" + id + ")");
+        StringBuffer scriptBuffer = new StringBuffer("v=g.V(" + id + ")");
         Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
                 model);
-        scriptBuffer.append(";g.V(" + id + ").id()");
+        //TODO 更新操作需要返回ID进行判断更新的过程是否出现异常
         Long nodeId ;
         try {
             nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
         } catch (Exception e) {
             e.printStackTrace();
             //TODO titan sync
-            return null;
-        }
-        if(nodeId == null){
             return null;
         }
         updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
