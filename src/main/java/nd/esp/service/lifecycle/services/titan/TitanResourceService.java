@@ -4,8 +4,6 @@ public interface TitanResourceService {
 	
 	
 	long importData(String primaryCategory);
-	
-	long count(String primaryCategory);
 
 	long updateData(String primaryCategory);
 

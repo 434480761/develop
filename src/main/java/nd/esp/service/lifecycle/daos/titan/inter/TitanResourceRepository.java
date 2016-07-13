@@ -11,7 +11,6 @@ public interface TitanResourceRepository<M extends Education> extends TitanEspRe
 	
 	boolean delete(String primaryCategory, String identifier);
 	
-	long count(String primaryCategory);
 	
 	Vertex get(String primaryCategory,String identifier);
 	

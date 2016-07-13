@@ -51,21 +51,6 @@ public class TitanResourceController {
 	}
 
 	/**
-	 * 统计资源总数
-	 * 
-	 * @param resourceType
-	 *            资源类型
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/{resourceType}/actions/count", method = RequestMethod.GET,
-			produces = { MediaType.APPLICATION_JSON_VALUE })
-	public long count(@PathVariable String resourceType) {
-		// check type
-		ResourceTypeSupport.checkType(resourceType);
-		return titanResourceService.count(resourceType);
-	}
-
-	/**
 	 * 导入数据
 	 * G
 	 * @author linsm
