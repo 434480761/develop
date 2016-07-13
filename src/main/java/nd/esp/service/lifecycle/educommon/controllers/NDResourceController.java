@@ -1,6 +1,8 @@
 package nd.esp.service.lifecycle.educommon.controllers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,10 +21,14 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.daos.resourcesecuritykey.v06.ResourceSecurityKeyDao;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
@@ -33,6 +39,7 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.models.AccessModel;
+import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
@@ -61,7 +68,7 @@ import nd.esp.service.lifecycle.vos.offlinemetadata.v06.OfflineMetadataViewModel
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,6 +161,9 @@ public class NDResourceController {
     @Autowired
     @Qualifier(value = "StatisticalService4QuestionDBImpl")
     private ResourceStatisticalService statisticalService4QuestionDB;
+
+    @Autowired
+    ResourceSecurityKeyDao resourceSecurityKeyDao;
 
 
     /**
@@ -1476,7 +1486,7 @@ public class NDResourceController {
      * @since
      */
     @RequestMapping(value = "/{uuid}/actions/init", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE })
-    public void createOfflineMetadata(@Valid @RequestBody OfflineMetadataViewModel viewModel,
+    public String createOfflineMetadata(@Valid @RequestBody OfflineMetadataViewModel viewModel,
                                       BindingResult validResult,
                                       @PathVariable(value = "res_type") String resType,
                                       @PathVariable String uuid) throws Exception {
@@ -1516,9 +1526,9 @@ public class NDResourceController {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "取不到session，路径:" + path);
         }
 
-        String url = csInstanceInfo.getUrl() + "/download?path=" + path + "/metadata.json";
+        String url = csInstanceInfo.getUrl() + "/download?path=" + path + "/metadata";
 
-        String metaDataJson = DownloadFile(url, csSession.getSession());
+        String metaDataJson = DownloadFile(url, csSession.getSession(), uuid);
 
         if (StringUtils.isEmpty(metaDataJson)) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "下载文件：" + url
@@ -1539,6 +1549,8 @@ public class NDResourceController {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_CREATE_FAIL", "创建资源metadata失败");
 
         }
+
+        return result;
     }
 
     private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
@@ -1555,7 +1567,7 @@ public class NDResourceController {
      *
      * @return
      */
-    private String DownloadFile(String url, String session) throws Exception {
+    private String DownloadFile(String url, String session, String uuid) throws Exception {
         HttpURLConnection connection = (HttpURLConnection)new URL(url+"&session="+session).openConnection();
         connection.setRequestMethod("GET");
         connection.connect();
@@ -1576,13 +1588,23 @@ public class NDResourceController {
         }
         
         InputStream input = connection.getInputStream();
-        String rt = null;
-        try {
-            rt = IOUtils.toString(input, "utf-8");
-        } finally {
-            if (input != null)
-                input.close();
+        ResourceSecurityKeyModel keyModel = resourceSecurityKeyDao.findSecurityKeyInfo(uuid);
+        byte[] des = Base64.decodeBase64(keyModel.getSecurityKey());
+        SecretKeySpec desKey = new SecretKeySpec(des, "DES");
+
+        Cipher desCipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+        desCipher.init(Cipher.DECRYPT_MODE, desKey);
+
+        ByteArrayOutputStream baos = new   ByteArrayOutputStream();
+        OutputStream os = new CipherOutputStream(baos, desCipher);
+        int i;
+        byte[] b = new byte[1024];
+        while ((i = input.read(b)) != -1) {
+            os.write(b, 0, i);
         }
+        os.close();
+        String rt = baos.toString("utf-8");
+        baos.close();
         
         return rt;
     }

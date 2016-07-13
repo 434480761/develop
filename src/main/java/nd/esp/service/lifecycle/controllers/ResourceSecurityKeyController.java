@@ -3,7 +3,7 @@ package nd.esp.service.lifecycle.controllers;
 import java.util.HashMap;
 import java.util.Map;
 
-import nd.esp.service.lifecycle.services.resourcesecuritykey.ResourceSecurityKeyService;
+import nd.esp.service.lifecycle.services.resourcesecuritykey.v06.ResourceSecurityKeyService;
 import nd.esp.service.lifecycle.utils.AssertUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;

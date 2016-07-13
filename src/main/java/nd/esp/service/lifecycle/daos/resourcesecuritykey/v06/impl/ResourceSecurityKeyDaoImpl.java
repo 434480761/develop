@@ -1,10 +1,10 @@
-package nd.esp.service.lifecycle.daos.resourcesecuritykey.impl;
+package nd.esp.service.lifecycle.daos.resourcesecuritykey.v06.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import nd.esp.service.lifecycle.daos.common.BaseDao;
-import nd.esp.service.lifecycle.daos.resourcesecuritykey.ResourceSecurityKeyDao;
+import nd.esp.service.lifecycle.daos.resourcesecuritykey.v06.ResourceSecurityKeyDao;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,6 @@ public class ResourceSecurityKeyDaoImpl implements ResourceSecurityKeyDao {
     /**
      * 查询资源文件密钥信息      
      * @param uuid
-     * @param publicKey
      * @return
      * @author lianggz
      */
