@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -186,6 +187,22 @@ public interface NDResourceDao {
      * @return
      */
     public void batchUpdateSql(String resType,String[] sqls);
+    
+    /**
+     * 统计教材章节下的资源数量
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param tmId
+     * @param chapterIds
+     * @param coverages
+     * @param categories
+     * @param isAll
+     * @return
+     */
+    public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+    		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
+    		Set<String> categories,boolean isAll);
     
 //    /**
 //     * 删除章节相关的资源关系

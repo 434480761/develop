@@ -37,6 +37,7 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.support.RelationType;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResEducationalViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResLifeCycleViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResRightViewModel;
@@ -2504,35 +2505,40 @@ public class NDResourceServiceImpl implements NDResourceService{
 		List<ResTechInfoModel> returnList = new ArrayList<ResTechInfoModel>();
 		if (CollectionUtils.isNotEmpty(techInfoList)) {
 			for (ResTechInfoModel rtim : techInfoList) {
+				if(StringUtils.isEmpty(rtim.getOperation())) {
+					rtim.setOperation("add");
+				}
 				TechInfo ti = new TechInfo();
-				if ("add".equals(rtim.getOperation())) {
-					ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
-					ti.setResource(uuid);
-					ti.setResType(resourceType);
-					ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
-					ti.setIdentifier(UUID.randomUUID().toString());
-					list.add(ti);
-				} else {
-					ti.setResource(uuid);
-					ti.setResType(resourceType);
-					ti.setTitle(rtim.getTitle());
-					try {
-						TechInfo target = (TechInfo)repository.getByExample(ti);
-						if(target!=null) {
-							if("update".equals(rtim.getOperation())) {
-								ti.setIdentifier(target.getIdentifier());
-								list.add(ti);
-							} else if("delete".equals(rtim.getOperation())) {
-								repository.del(target.getIdentifier());
-							}
+				ti.setResource(uuid);
+				ti.setResType(resourceType);
+				ti.setTitle(rtim.getTitle());
+				try {
+					TechInfo target = (TechInfo)repository.getByExample(ti);
+					if(target!=null) {
+						if("update".equals(rtim.getOperation()) || "add".equals(rtim.getOperation())) {
+							ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
+							ti.setResource(uuid);
+							ti.setResType(resourceType);
+							ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
+							ti.setIdentifier(target.getIdentifier());
+							list.add(ti);
+						} else if("delete".equals(rtim.getOperation())) {
+							repository.del(target.getIdentifier());
 						}
-					} catch (EspStoreException e) {
-						LOG.error("技术属性创建操作出错了", e);
-
-						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-								LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-								e.getLocalizedMessage());
+					} else if ("add".equals(rtim.getOperation())) {
+						ti = BeanMapperUtils.beanMapper(rtim, TechInfo.class);
+						ti.setResource(uuid);
+						ti.setResType(resourceType);
+						ti.setRequirements(ObjectUtils.toJson(rtim.getRequirements()));
+						ti.setIdentifier(UUID.randomUUID().toString());
+						list.add(ti);
 					}
+				} catch (EspStoreException e) {
+					LOG.error("技术属性创建操作出错了", e);
+
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+							e.getLocalizedMessage());
 				}
 			}
 		}
@@ -2616,36 +2622,38 @@ public class NDResourceServiceImpl implements NDResourceService{
 						//资源分类维度
 						resourceCategory.setPrimaryCategory(resourceType);
 
-						if(StringUtils.isNotEmpty(resClassificationModel.getOperation())) {
-							switch (resClassificationModel.getOperation()) {
-								case "add":
-									resourceCategory.setIdentifier(UUID.randomUUID().toString());
-									resourceCategories.add(resourceCategory);
-									break;
-								case "update":
-									if (resourceCategory.getIdentifier() != null) {
-										resourceCategories.add(resourceCategory);
-									}
-									break;
-								case "delete":
-									try {
-										if (resourceCategory.getIdentifier() != null) {
-											repository.del(resourceCategory.getIdentifier());
-										} else {
-											ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
-											if (null != bean) {
-												repository.del(bean.getIdentifier());
-											}
-										}
-									} catch (EspStoreException e) {
-										LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+						if(StringUtils.isEmpty(resClassificationModel.getOperation())) {
+							resClassificationModel.setOperation("add");
+						}
 
-										throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-												LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-												e.getLocalizedMessage());
+						switch (resClassificationModel.getOperation()) {
+							case "add":
+								resourceCategory.setIdentifier(UUID.randomUUID().toString());
+								resourceCategories.add(resourceCategory);
+								break;
+							case "update":
+								if (resourceCategory.getIdentifier() != null) {
+									resourceCategories.add(resourceCategory);
+								}
+								break;
+							case "delete":
+								try {
+									if (resourceCategory.getIdentifier() != null) {
+										repository.del(resourceCategory.getIdentifier());
+									} else {
+										ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
+										if (null != bean) {
+											repository.del(bean.getIdentifier());
+										}
 									}
-									break;
-							}
+								} catch (EspStoreException e) {
+									LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+									throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+											LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+											e.getLocalizedMessage());
+								}
+								break;
 						}
 					}
 				}
@@ -2681,7 +2689,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 		Set<String> ignoreSet = Sets.newHashSet("serialVersionUID", "PROP_CREATETIME", "PROP_LASTUPDATE", "PROP_CATEGORYS", "PROP_RELATIONS", "PROP_TAGS", "PROP_KEYWORDS", "mIdentifier",
 				"enable", "createTime", "dbcreateTime", "primaryCategory");
 
-		boolean bBasicInfoChanged = false;
 		try {
 			Field[] fs = Education.class.getDeclaredFields();
 
@@ -2694,7 +2701,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 					Object initValue = m.invoke(initEdu);
 					if (o != null && !o.equals(initValue)) {
 						if(!"creator".equals(name) || StringUtils.isNotEmpty((String)o)) {
-							bBasicInfoChanged = true;
 							String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
 							m = Education.class.getMethod(setterName, fs[i].getType());
 							m.invoke(oldBean, o);
@@ -2714,18 +2720,16 @@ public class NDResourceServiceImpl implements NDResourceService{
 			oldBean.setDescription(education.getDescription());
 		}
 
-		if(bBasicInfoChanged) {
-			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-			try {
-				education = (Education) resourceRepository.update(oldBean);
-			} catch (EspStoreException e) {
+		oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		try {
+			education = (Education) resourceRepository.update(oldBean);
+		} catch (EspStoreException e) {
 
-				LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
 
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-						e.getMessage());
-			}
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 	}
 
@@ -3279,5 +3283,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 	
 	private String updateStatusSql(String resType,String uuid,String status){
 		return "update ndresource set estatus='"+status+"',last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
+	}
+
+	@Override
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			String resType, String tmId, Set<String> chapterIds,
+			List<String> coverages, Set<String> categories, boolean isAll) {
+		
+		return ndResourceDao.statisticsCountsByChapters(resType, tmId, chapterIds, coverages, categories, isAll);
 	}
 }
