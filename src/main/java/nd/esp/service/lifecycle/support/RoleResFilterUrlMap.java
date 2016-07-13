@@ -51,7 +51,7 @@ public class RoleResFilterUrlMap {
 			// /v0.3/{res_type}/* PUT
 			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/PUT", "");
 			// /v0.3/{res_type}/* GET
-			//m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/GET", "");
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)" + "/GET", "");
 			// /v0.3/{res_type}/list GET
 			m.put("/"+ e.getValue() + "/list" + "/GET", "");
 			// /v0.3/{res_type}/*/archive POST
@@ -71,9 +71,11 @@ public class RoleResFilterUrlMap {
 			// /v0.3/{res_type}/*/relations/* DELETE
 			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations/([a-zA-Z0-9-]+)" + "/DELETE", "");
 			// /v0.3/{res_type}/*/relations GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/relations" + "/GET", "");
 			// /v0.3/{res_type}/*/targets GET
 			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/targets" + "/GET", "");
 			// /v0.3/{res_type}/*/targets/* GET
+			m.put("/"+ e.getValue() + "/([a-zA-Z0-9-]+)/targets/([a-zA-Z0-9-]+)" + "/GET", "");
 		}
 		return m;
 	}
@@ -119,6 +121,8 @@ public class RoleResFilterUrlMap {
     public static final Map<String,String> getResConsumerMap(){
         Map<String,String> m = new LinkedHashMap<String,String>();
 		for (ResTypeEnum e : ResTypeEnum.values()){
+			// /v0.3/{res_type}/{uuid}
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)" + "/GET", "");
 			// /v0.3/{res_type}/list
 			m.put("/"+ e.getValue() +"/list" + "/GET", "");
 			// /v0.3/{res_type}/*/archive POST
@@ -129,6 +133,10 @@ public class RoleResFilterUrlMap {
 			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/downloadurl" + "/GET", "");
 			// /v0.3/{res_type}/*/targets GET
 			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/targets" + "/GET", "");
+			// /v0.3/{res_type}/*/relations GET
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/relations" + "/GET", "");
+			// /v0.6/{res_type}/*/targets/* GET
+			m.put("/"+ e.getValue() +"/([a-zA-Z0-9-]+)/relations/([a-zA-Z0-9-]+)" + "/GET", "");
 		}
         return m;
     }   
