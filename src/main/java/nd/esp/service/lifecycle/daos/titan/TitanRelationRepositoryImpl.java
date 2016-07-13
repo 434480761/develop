@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.slf4j.Logger;
@@ -46,6 +47,9 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 	@Override
 	public List<ResourceRelation> batchAdd(
 			List<ResourceRelation> resourceRelations) {
+		if(CollectionUtils.isEmpty(resourceRelations)){
+			return new ArrayList<>();
+		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : resourceRelations) {
 			ResourceRelation rr = addRelation(resourceRelation);
@@ -77,6 +81,9 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 
 	@Override
 	public List<ResourceRelation> batchUpdate(List<ResourceRelation> entityList) {
+		if(CollectionUtils.isEmpty(entityList)){
+			return new ArrayList<>();
+		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : entityList){
 			ResourceRelation result = updateRelation(resourceRelation);

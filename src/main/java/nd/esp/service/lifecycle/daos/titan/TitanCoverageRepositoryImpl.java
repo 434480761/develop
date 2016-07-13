@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.Result;
@@ -68,6 +69,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	 * */
 	@Override
 	public List<ResCoverage> batchAdd(List<ResCoverage> resCoverages) {
+		if(CollectionUtils.isEmpty(resCoverages)){
+			return new ArrayList<>();
+		}
 		List<ResCoverage> list = new ArrayList<>();
 		Map<String, String> sourceMap = new HashMap<>();
 		for (ResCoverage resCoverage : resCoverages) {
@@ -103,6 +107,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	 * */
 	@Override
 	public List<ResCoverage> batchUpdate(List<ResCoverage> resCoverageSet) {
+		if(CollectionUtils.isEmpty(resCoverageSet)){
+			return new ArrayList<>();
+		}
 		Map<String, String> sourceMap = new HashMap<>();
 		for (ResCoverage resCoverage : resCoverageSet) {
 			updateCoverage(resCoverage);

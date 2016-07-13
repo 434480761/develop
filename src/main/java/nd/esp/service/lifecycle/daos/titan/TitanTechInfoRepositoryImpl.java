@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,8 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
 
     @Override
     public List<TechInfo> batchAdd(List<TechInfo> techInfos) {
-        if(techInfos == null || techInfos.size() == 0){
-            return null;
+        if(CollectionUtils.isEmpty(techInfos)){
+            return new ArrayList<>();
         }
 
         //FIXME 不是所有的添加都需要删除
@@ -78,6 +79,10 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
 
     @Override
     public List<TechInfo> batchUpdate(List<TechInfo> techInfos) {
+        if(CollectionUtils.isEmpty(techInfos)){
+            return new ArrayList<>();
+        }
+        //FIXME batchUpdate
         batchAdd(techInfos);
         return null;
     }

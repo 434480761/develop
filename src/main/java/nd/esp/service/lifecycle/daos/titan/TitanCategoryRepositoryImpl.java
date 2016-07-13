@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.text.CollationElementIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,8 +77,8 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	@Override
 	public List<ResourceCategory> batchAdd(
 			List<ResourceCategory> resourceCategories) {
-		if(resourceCategories == null || resourceCategories.size() == 0){
-			return null;
+		if(CollectionUtils.isEmpty(resourceCategories)){
+			return new ArrayList<>();
 		}
 
 		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<String, List<ResourceCategory>>();
