@@ -1119,7 +1119,7 @@ public class NDResourceController {
                 String relationType = elements.get(2).trim();
                  
                 //判断源资源是否存在,stype + suuid
-                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
+                if(!elements.get(1).trim().endsWith("$")&&queryType==QueryType.DB){//不为递归查询时才校验
                     CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
                 }else{
                 	// "relation参数进行递归查询时,目前仅支持:chapters,knowledges"
