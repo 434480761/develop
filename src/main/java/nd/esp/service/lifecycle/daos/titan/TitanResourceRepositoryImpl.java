@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -204,6 +205,11 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
         script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
         TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);
+
+        String searchCoverageString = StringUtils.join(searchCoverages,",");
+        script.append(".property('search_coverage_string',searchCoverageString)");
+        param.put("searchCoverageString", searchCoverageString);
+
         try {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
