@@ -14,9 +14,11 @@ import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
+import nd.esp.service.lifecycle.repository.v02.ResourceRelationApiService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -62,6 +64,8 @@ public class ChapterServiceImpl implements ChapterService{
     private ChapterDao chapterDao;
     @Autowired
     private NotifyReportService nrs;
+    @Autowired
+    private ResourceRelationApiService resourceRelationService;
     
     @Override
     public ChapterModel createChapter(String resourceType,String mid, ChapterModel chapterModel) {
@@ -564,4 +568,41 @@ public class ChapterServiceImpl implements ChapterService{
         
         return chapterModel;
     }
+
+    /**
+     * id有可能是章节id也有可能是课时id
+     * 1、如果是章节id，则直接查询章节对象
+     * 2、如果是课时id，则从关系表中查询对应关系的章节id，再根据章节id查询章节对象
+     *
+     * @param id
+     * @param type
+     * @return
+     */
+    @Override
+    public ChapterModel findChapterByIdAndType(String id, String type) {
+        Chapter chapter = null;
+        try {
+            if ("chapter".equals(type)) {
+                chapter = chapterRepository.get(id);
+            } else if ("lesson".equals(type)) {
+                List<ResourceRelation> relationList = resourceRelationService.getByResTypeAndTargetTypeAndTargetId(
+                        IndexSourceType.ChapterType.getName(), IndexSourceType.LessonType.getName(), id);
+                if (relationList != null && relationList.size() > 0) {
+                    chapter = chapterRepository.get(relationList.get(0).getSourceUuid());
+                }
+            }
+        } catch (EspStoreException e) {
+            LOG.error("根据id类型获取章节数据出错！", e);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getLocalizedMessage());
+        }
+        // FIXME 后期需要考虑是否处理成一致的，直接抛出异常（但可能会影响其它系统）
+        if (chapter == null || chapter.getEnable() == null || !chapter.getEnable()
+                || !ResourceNdCode.chapters.toString().equals(chapter.getPrimaryCategory())) {
+            return null;
+        }
+        return changeChapterToChapterModel(chapter);
+    }
+
 }

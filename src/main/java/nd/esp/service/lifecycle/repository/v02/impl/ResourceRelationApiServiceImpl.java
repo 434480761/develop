@@ -357,4 +357,38 @@ public class ResourceRelationApiServiceImpl extends BaseStoreApiImpl<ResourceRel
 		}
 		return null;
 	}
+
+	/**
+	 * 根据关联关系和子id获取ResourceRelation列表
+	 *
+	 * @param resType（chapters、lessons、instructionalobjectives）
+	 * @param targetType（chapters、lessons、instructionalobjectives）
+	 * @param targetId
+	 * @return
+	 * @throws EspStoreException
+	 */
+	@Override
+	public List<ResourceRelation> getByResTypeAndTargetTypeAndTargetId(String resType, String targetType,
+																	   String targetId) throws EspStoreException {
+		List<ResourceRelation> resourceRelationList = resourceRelationRepository.findByResTypeAndTargetTypeAndTargetId(resType, targetType, targetId);
+		return resourceRelationList;
+	}
+
+	/**
+	 * 根据关联关系和父id获取ResourceRelation列表
+	 *
+	 * @param resType（chapters、lessons、instructionalobjectives）
+	 * @param targetType（chapters、lessons、instructionalobjectives）
+	 * @param sourceId
+	 * @return
+	 * @throws EspStoreException
+	 */
+
+	@Override
+	public List<ResourceRelation> getByResTypeAndTargetTypeAndSourceId(String resType, String targetType,
+																	   String sourceId) throws EspStoreException {
+		List<ResourceRelation> resourceRelationList = resourceRelationRepository.findByResTypeAndTargetTypeAndSourceId(resType, targetType, sourceId);
+		return resourceRelationList;
+	}
+
 }

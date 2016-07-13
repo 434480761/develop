@@ -239,4 +239,6 @@ public interface NDResourceService {
     Map<String, Object> getResPreviewByHref(String resType,String location);
     
     public TreeTrargetAndParentModel getTreeTargetAndParent(KnowledgeModel knowledgeModel, Chapter knowledge);
+
+    void deleteInstructionalObjectives(String objectsId, String nodeId, String nodeType);
 }

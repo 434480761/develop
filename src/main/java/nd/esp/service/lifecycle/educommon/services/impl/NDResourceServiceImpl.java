@@ -5,16 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +34,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.models.AccessModel;
+import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
@@ -52,18 +44,16 @@ import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.CategoryData;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.ResRepoInfo;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
+import nd.esp.service.lifecycle.repository.v02.ResourceRelationApiService;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
+import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -194,6 +184,11 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Autowired
     private NotifyReportService nds;
+
+    @Autowired
+    private ChapterService chapterService;
+    @Autowired
+    private ResourceRelationApiService resourceRelationApiService;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -2140,6 +2135,71 @@ public class NDResourceServiceImpl implements NDResourceService{
                                LifeCircleErrorMessageMapper.KnowledgeCheckParamFail.getMessage());
       }
         return model;
+    }
+
+    @Override
+    public void deleteInstructionalObjectives(String objectsId, String nodeId, String nodeType) {
+        try {
+            // 查找对应章节Id
+            ChapterModel chapterModel = chapterService.findChapterByIdAndType(nodeId, nodeType);
+            // 查找章节挂载的课时，需要处理找不到章节情况
+            List<ResourceRelation> chapterRelation = null;
+            // 章节及挂载的课时Id集合
+            Set<String> idSet = new HashSet<>();
+
+            if (null == chapterModel) {
+                chapterRelation = Collections.emptyList();
+                idSet.add(nodeId);
+            } else {
+                chapterRelation = resourceRelationApiService.getByResTypeAndTargetTypeAndSourceId(
+                        IndexSourceType.ChapterType.getName(),
+                        IndexSourceType.LessonType.getName(),
+                        chapterModel.getIdentifier());
+                idSet.add(chapterModel.getIdentifier());
+            }
+            // 章节及挂载的课时Id集合
+            for (ResourceRelation rr : chapterRelation) {
+                idSet.add(rr.getTarget());
+            }
+            // 查找教学目标与章节&课时关系
+            List<ResourceRelation> relations = new ArrayList<>();
+            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                    IndexSourceType.ChapterType.getName(),
+                    IndexSourceType.InstructionalObjectiveType.getName(),
+                    objectsId
+            ));
+            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                    IndexSourceType.LessonType.getName(),
+                    IndexSourceType.InstructionalObjectiveType.getName(),
+                    objectsId
+            ));
+            // 教学目标挂载的章节/课时id集合
+            Map<String, String> relationsMap = new HashMap<>();
+            for (ResourceRelation rr : relations) {
+                relationsMap.put(rr.getSourceUuid(), rr.getIdentifier());
+            }
+            // 求章节及其课时和教学目标挂在的章节/课时的交集
+            idSet.retainAll(relationsMap.keySet());
+            // 如果此教学目标只挂载到本章节下，则删除教学目标本身
+            if (idSet.size() == relationsMap.size()) {
+                // 同时会删除关联
+                this.delete(IndexSourceType.InstructionalObjectiveType.getName(), objectsId);
+            } else {
+                // 只删除教学目标与该章节关联
+                Set<String> relationIds = new HashSet<>();
+                // 获得交集对应的关联Id
+                for (String id : relationIds) {
+                    relationIds.add(relationsMap.get(id));
+                }
+                // 根据id删除关系
+                commonServiceHelper.deleteRelationById(relationIds);
+            }
+        } catch (EspStoreException e) {
+            LOG.error("删除教学目标数据出错！", e);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getLocalizedMessage());
+        }
     }
 
     /**

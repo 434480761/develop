@@ -9,10 +9,7 @@
 
 package nd.esp.service.lifecycle.educommon.services.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
@@ -656,6 +653,22 @@ public class CommonServiceHelper {
                 + "' AND target='" + uuid + "') OR (res_type = '" + resourceType + "' AND source_uuid='" + uuid + "')";
         Query query = em.createNativeQuery(sql);
         query.executeUpdate();
+    }
+
+    @Transactional(value = "transactionManager")
+    public void deleteRelationById(Collection<String> ids) {
+        if (ids.size() > 0) {
+            String idStr = "";
+            for (String id : ids) {
+                idStr += "'" + id + "',";
+            }
+            idStr = idStr.substring(0, idStr.lastIndexOf(","));
+            String sql = "UPDATE resource_relations SET enable = 0 where identifier in(" + idStr + ")";
+            Query query = em.createNativeQuery(sql);
+            query.executeUpdate();
+        } else {
+            return;
+        }
     }
     
     /**
