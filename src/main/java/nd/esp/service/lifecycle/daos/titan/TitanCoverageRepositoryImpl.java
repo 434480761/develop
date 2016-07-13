@@ -292,7 +292,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		if (education == null) {
 			return;
 		}
-		List<String> searchCoverages = new ArrayList<>();
+		Set<String> searchCoverages = new HashSet<>();
 		Set<String> uuids = new HashSet<>();
 		uuids.add(identifier);
 		List<ResCoverage> resCoverageList = coverageDao
@@ -338,7 +338,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		if (education == null) {
 			return;
 		}
-		List<String> searchCoverages = getAllResourceCoverage(resCoverage,
+		Set<String> searchCoverages = getAllResourceCoverage(resCoverage,
 				education.getStatus());
 
 		StringBuffer addScript = new StringBuffer(
@@ -357,9 +357,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		}
 	}
 
-	private List<String> getAllResourceCoverage(ResCoverage resCoverage,
+	private Set<String> getAllResourceCoverage(ResCoverage resCoverage,
 			String status) {
-		List<String> searchCoverages = new ArrayList<>();
+		Set<String> searchCoverages = new HashSet<>();
 		String value1 = resCoverage.getTargetType() + "/"
 				+ resCoverage.getTarget() + "/" + resCoverage.getStrategy()
 				+ "/" + status;

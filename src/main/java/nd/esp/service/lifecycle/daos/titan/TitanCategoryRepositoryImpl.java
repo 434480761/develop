@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.text.CollationElementIterator;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
@@ -57,14 +54,16 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 		}
 
-
+		if(rc == null){
+			return null;
+		}
 		//更新资源的冗余数据search_path\search_code
-		List<String> category = new ArrayList<>();
+		Set<String> category = new HashSet<>();
 		category.add(rc.getTaxoncode());
-		List<String> pathList = new ArrayList<>();
-		pathList.add(rc.getTaxonpath());
+		Set<String> pathSet = new HashSet<>();
+		pathSet.add(rc.getTaxonpath());
 
-		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
+		updateResourceProperty(pathSet,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
 
@@ -99,17 +98,17 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 			//批量保存PATH
 			List<String> pathList = batchAddPath(entryValueCategories);
-
+			Set<String> pathSet = new HashSet<>(pathList);
 			//批量保存维度数据
-			List<String> categoryList = new ArrayList<>();
+			Set<String> categorySet = new HashSet<>();
 			for (ResourceCategory resourceCategory : entryValueCategories) {
 				ResourceCategory rc = addResourceCategory(resourceCategory);
 				if(rc!=null){
 					list.add(rc);
 				}
-				categoryList.add(resourceCategory.getTaxoncode());
+				categorySet.add(resourceCategory.getTaxoncode());
 			}
-			updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
+			updateResourceProperty(pathSet, categorySet, category.getPrimaryCategory() ,category.getResource());
 		}
 		return list;
 	}
@@ -322,14 +321,14 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return taxoncodeId;
 	}
 
-	private void updateResourceProperty(List<String> pathList , List<String> codeList , String primaryCategory, String identifier){
+	private void updateResourceProperty(Set<String> pathSet , Set<String> codeSet , String primaryCategory, String identifier){
 		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory" ,primaryCategory);
 		param.put("identifier" ,identifier);
-		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeList);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeSet);
 
-		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathList);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathSet);
 		try {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {

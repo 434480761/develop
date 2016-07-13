@@ -182,7 +182,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
     private void updateResourceCoverage(String primaryCategory, String identifier, String status){
 
-        List<String> searchCoverages = new ArrayList<>();
+        Set<String> searchCoverages = new HashSet<>();
         Set<String> uuids = new HashSet<>();
         uuids.add(identifier);
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
