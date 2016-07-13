@@ -172,15 +172,6 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return false;
 	}
 
-	@Override
-	public long countCoverage() {
-		return 0;
-	}
-
-	@Override
-	public long countCover() {
-		return 0;
-	}
 	
 	private Long getCoverageNodeId(ResCoverage resCoverage) {
 

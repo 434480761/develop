@@ -91,10 +91,6 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         return null;
     }
 
-    @Override
-    public long count(String primaryCategory) {
-        return 0;
-    }
 
     @Override
     public Vertex get(String primaryCategory, String identifier) {

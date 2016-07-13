@@ -208,10 +208,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 	}
 
-	@Override
-	public long count(String primaryCategory) {
-		return titanResourceRepository.count(primaryCategory);
-	}
 
 	@Override
 	public void timeTaskImport4Update(Integer page, String type) {

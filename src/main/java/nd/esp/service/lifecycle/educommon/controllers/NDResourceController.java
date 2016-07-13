@@ -722,7 +722,7 @@ public class NDResourceController {
 					isNotManagement, reverseBoolean,printable,printableKey);
 			break;
 		case TITAN:
-			rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+			rListViewModel = resourceQueryByTitanRealTime(resType,
 					includesList, categories, categoryExclude, relationsMap,
 					coveragesList, propsMap, orderMap, words, limit,
 					isNotManagement, reverseBoolean,printable,printableKey);
@@ -752,6 +752,40 @@ public class NDResourceController {
 		}
         
         return result;
+    }
+    
+    /**
+     * 实现实时检索titan方案
+     * @param resType
+     * @param includes
+     * @param categories
+     * @param categoryExclude
+     * @param relations
+     * @param coverages
+     * @param propsMap
+     * @param orderMap
+     * @param words
+     * @param limit
+     * @param isNotManagement
+     * @param reverse
+     * @param printable
+     * @param printableKey
+     * @return
+     */
+    private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
+    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
+            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey){
+    	
+    	//FIXME 实现实时检索titan方案
+    	
+//    	ndResourceService.resourceQueryByDB(resType,
+//				resCodes, includesList, categories, categoryExclude,
+//				relationsMap, coveragesList, propsMap, orderMap, words,
+//				limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
+    	return ndResourceService.resourceQueryByTitan(resType,
+    			includes, categories, categoryExclude, relations,
+    			coverages, propsMap, orderMap, words, limit,
+				isNotManagement, reverse,printable,printableKey);
     }
     
     /**

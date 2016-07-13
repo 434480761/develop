@@ -47,9 +47,12 @@ public class GremlinClientFactory {
 		clusterBuilder = Cluster.build(address);
 		clusterBuilder.port(port);
 		clusterBuilder.serializer(serializerClass);
+		
 		clusterBuilder.minConnectionPoolSize(200);
-		clusterBuilder.maxConnectionPoolSize(800);
-		clusterBuilder.nioPoolSize(50);
+        clusterBuilder.maxConnectionPoolSize(200);
+        clusterBuilder.nioPoolSize(48);
+        clusterBuilder.workerPoolSize(48);
+        clusterBuilder.resultIterationBatchSize(20);
 
 		// create a cluster instance
 		cluster = clusterBuilder.create();
