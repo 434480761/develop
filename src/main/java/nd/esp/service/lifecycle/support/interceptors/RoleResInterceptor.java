@@ -282,7 +282,7 @@ public class RoleResInterceptor implements HandlerInterceptor {
         }
         // get请求，获取coverage参数值
         else if(ImmutableList.<String>of("GET", "DELETE").contains(method)){
-            // 从Request中获取请求的parameter
+            // 从Request中获取请求的parameter 目前只支持单个coverage
             String coverage = request.getParameter("coverage");
             // 如果coverage不空的情况下，进行判断
             if(StringUtils.isNotBlank(coverage)){
