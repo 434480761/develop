@@ -14,6 +14,7 @@ import nd.esp.service.lifecycle.models.v06.EbookModel;
 import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
 import nd.esp.service.lifecycle.support.busi.titan.TitanDirection;
 import nd.esp.service.lifecycle.support.busi.titan.TitanEdgeExpression;
 import nd.esp.service.lifecycle.support.busi.titan.TitanExpression;
@@ -271,163 +272,42 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                List<String> includes,
                                                Map<String, Map<String, List<String>>> params,
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-    	//FIXME to do the es search
-        // words:title, description, keywords, tags, edu_description, cr_description
-        // cg_taxonpath={eq=[K12/$ON030000/$ON030200/$SB0500/$E004000/$E004001]}
-        // cg_taxoncode={ne=[$F050006], eq=[$F050004 and  $RA0100, $RT0206]}
-        // coverages={in=[User/89/OWNER]
+
+        EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
+        builder.setIndex("mixed_ndresource");
+        builder.setLimit("6");
+        builder.setWords(words);
+        builder.setParams(params);
+
+        String script=builder.generateScript();
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-        StringBuffer query = new StringBuffer("it = graph.indexQuery(\"mixed_ndresource\",\"");
-        query.append(dealWithWords(words));
-        //query.append(dealWithWords(words,scriptParamMap));
-       // query.append(dealWithParams(params,scriptParamMap));
-        query.append("\").limit(10).vertices()*.getElement().iterator(); List<Object> resultList= new ArrayList<Object>();while(it.hasNext()) {resultList<<(it.next().properties().toList())};resultList");
-
-        System.out.println("script:"+query.toString());
+        System.out.println("script:"+script);
         System.out.println("scriptParamMap:"+scriptParamMap);
 
-        /*GremlinClientFactory factory=new GremlinClientFactory();
-        factory.init();
-        Client client= factory.getGremlinClient();
-
-        ResultSet resultSet = client.submit(query.toString(),scriptParamMap);*/
-        ResultSet resultSet = titanResourceRepository.search(query.toString(), scriptParamMap);
+        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
+        List<ResourceModel> items = new ArrayList<ResourceModel>();
+        ResultSet resultSet = titanResourceRepository.search(script, scriptParamMap);
         Iterator<Result> iterator = resultSet.iterator();
         while (iterator.hasNext()) {
-            System.out.println(iterator.next().getString());
-        }
-        return null;
-    }
-
-    private String dealWithWords(String words,Map<String, Object> scriptParamMap){
-        StringBuffer query=new StringBuffer();
-        for(TitanQueryVertexWithWords.WordsCover field:TitanQueryVertexWithWords.WordsCover.values()){
-            String key=TitanUtils.generateKey(scriptParamMap, "words");
-            query.append("v.\\\"");
-            query.append(field);
-            query.append("\\\":(");
-            query.append(key);
-            query.append(") ");
-            scriptParamMap.put(key,words.replaceAll(",",""));
-        }
-        return query.toString();
-    }
-    private String dealWithWords(String words){
-        StringBuffer query=new StringBuffer();
-        for(TitanQueryVertexWithWords.WordsCover field:TitanQueryVertexWithWords.WordsCover.values()){
-            query.append("v.\\\"");
-            query.append(field);
-            query.append("\\\":(");
-            query.append(words.replaceAll(",",""));
-            query.append(") ");
-        }
-        return query.toString();
-    }
-
-    private String dealWithParams(Map<String, Map<String, List<String>>> params) {
-        // cg_taxonpath={eq=[K12/$ON030000/$ON030200/$SB0500/$E004000/$E004001]}
-        // cg_taxoncode={ne=[$F050006], eq=[$F050004 and  $RA0100, $RT0206]}
-        // coverages={in=[User/89/OWNER]
-        StringBuffer query = new StringBuffer();
-        Map<String, List<String>> searchCodeString = params.get(ES_SearchField.cg_taxoncode.toString());
-        String codeStr=dealWithSingleParam("search_code_string",searchCodeString);
-        //System.out.println(codeStr);
-        Map<String, List<String>> searchPathString = params.get(ES_SearchField.cg_taxonpath.toString());
-        String pathStr=dealWithSingleParam("search_path_string",searchPathString);
-        // System.out.println(pathStr);
-        Map<String, List<String>> searchCoverageString = params.get(ES_SearchField.coverages.toString());
-        String coverageStr=dealWithSingleParam("search_coverage_string",searchCoverageString);
-        //System.out.println(coverageStr);
-        query.append(codeStr).append(pathStr).append(coverageStr);
-        return query.toString();
-    }
-
-    private String dealWithParams(Map<String, Map<String, List<String>>> params, Map<String, Object> scriptParamMap) {
-        // cg_taxonpath={eq=[K12/$ON030000/$ON030200/$SB0500/$E004000/$E004001]}
-        // cg_taxoncode={ne=[$F050006], eq=[$F050004 and  $RA0100, $RT0206]}
-        // coverages={in=[User/89/OWNER]
-        StringBuffer query = new StringBuffer();
-        Map<String, List<String>> searchCodeString = params.get(ES_SearchField.cg_taxoncode.toString());
-        String codeStr=dealWithSingleParam("search_code_string",searchCodeString,scriptParamMap);
-        //System.out.println(codeStr);
-        Map<String, List<String>> searchPathString = params.get(ES_SearchField.cg_taxonpath.toString());
-        String pathStr=dealWithSingleParam("search_path_string",searchPathString,scriptParamMap);
-        // System.out.println(pathStr);
-        Map<String, List<String>> searchCoverageString = params.get(ES_SearchField.coverages.toString());
-        String coverageStr=dealWithSingleParam("search_coverage_string",searchCoverageString,scriptParamMap);
-        //System.out.println(coverageStr);
-        query.append(codeStr).append(pathStr).append(coverageStr);
-        return query.toString();
-    }
-
-    private String dealWithSingleParam(String property, Map<String, List<String>> searchList) {
-        StringBuffer query = new StringBuffer();
-        if (CollectionUtils.isNotEmpty(searchList)) {
-            query.append("v.\\\"");
-            query.append(property);
-            query.append("\\\":(");
-            StringBuffer queryCondition = new StringBuffer();
-            for (Map.Entry<String, List<String>> entry : searchList.entrySet()) {
-                List<String> codes = entry.getValue();
-                String codeKey = entry.getKey();
-                if (CollectionUtils.isEmpty(codes)) continue;
-                for (String code : codes) {
-                    // FIXME $ 需要转义?
-                    if (ES_OP.eq.toString().equals(codeKey)||ES_OP.in.toString().equals(codeKey)) {
-                        if (code.contains(PropOperationConstant.OP_AND)) {
-                            code = "("+code.replaceAll(PropOperationConstant.OP_AND, "AND").trim()+")";
-                        }
-                        queryCondition.append(code.trim()).append(" ");
-
-                    } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append(code.trim()).append(" ");
-                    }
-                }
+            ResourceModel item=new ResourceModel();
+            String r=iterator.next().getString();
+            System.out.println(r);
+            if(r.contains("COUNT:")){
+                viewModels.setTotal(Long.parseLong(r.split(":")[1]));
+                continue;
             }
-
-            query.append(queryCondition.toString());
-            query.append(") ");
-
-
+            TitanResultParse.dealMainResult(item,TitanResultParse.toMapForSearchES(r));
+            //TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(r));
+            List<ResClassificationModel> categoryList = new ArrayList<>();
+            categoryList.add(TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(r)));
+            item.setCategoryList(categoryList);
+            items.add(item);
         }
-        return query.toString();
+        viewModels.setItems(items);
+        return viewModels;
     }
 
-    private String dealWithSingleParam(String property, Map<String, List<String>> searchList, Map<String, Object> scriptParamMap) {
-        StringBuffer query = new StringBuffer();
-        if (CollectionUtils.isNotEmpty(searchList)) {
-            String key = TitanUtils.generateKey(scriptParamMap, property);
-            query.append("v.\\\"");
-            query.append(property);
-            query.append("\\\":(");
-            StringBuffer queryCondition = new StringBuffer();
-            for (Map.Entry<String, List<String>> entry : searchList.entrySet()) {
-                List<String> codes = entry.getValue();
-                String codeKey = entry.getKey();
-                if (CollectionUtils.isEmpty(codes)) continue;
-                for (String code : codes) {
-                    // FIXME $ 需要转义?
-                    if (ES_OP.eq.toString().equals(codeKey)||ES_OP.in.toString().equals(codeKey)) {
-                        if (code.contains(PropOperationConstant.OP_AND)) {
-                            code = "("+code.replaceAll(PropOperationConstant.OP_AND, "AND").trim()+")";
-                        }
-                        queryCondition.append(code.trim()).append(" ");
-
-                    } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append(code.trim()).append(" ");
-                    }
-                }
-            }
-
-            query.append(key);
-            query.append(") ");
-            scriptParamMap.put(key, queryCondition.toString());
-
-
-        }
-        return query.toString();
-    }
 
 
     private void dealWithSearchCoverage(
@@ -1193,7 +1073,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         resourceQueryVertex.getPropertiesMap().put("22222", c);
         System.out.println(resourceQueryVertex);*/
 
-        System.out.println(CollectionUtils.isNotEmpty(new ArrayList<>()));
+        //System.out.println(CollectionUtils.isNotEmpty(new ArrayList<>()));
+        String str="[vp[identifier->2a22f833-0102-4faa-8], vp[primary_category->assets], vp[lc_enable->false], vp[search_code->$E026000], vp[search_code->$E026002], vp[search_code->$F050003], vp[search_code->$ON020000], vp[search_code->$ON020100], vp[search_code->$RA0100], vp[search_code->$RA0101], vp[search_code->$SB0100], vp[search_path->K12/$ON020000/$ON020], vp[search_coverage->Org/nd//REMOVED], vp[search_coverage->Org/nd/OWNER/REMOVED], vp[search_coverage->Org/nd/OWNER/], vp[search_coverage->Org/nd//], vp[description->多媒体,图片\n" +
+                "学科,语文], vp[title->怎样读诗 古代诗人], vp[lc_create_time->1450064769679], vp[lc_last_update->1450064830605], vp[tags->[\"怎样读诗 古代诗人\"]], vp[keywords->[\"怎样读诗 古代诗人\"]], vp[language->zh_CN], vp[lc_provider_source->测试], vp[lc_version->V0.1.0.2825], vp[lc_status->REMOVED], vp[lc_creator->2107163931], vp[lc_provider->测试], vp[lc_publisher->NetDragon], vp[cr_right->NetDragon], vp[cr_description->多媒体,图片\n" +
+                "学科,语文], vp[cr_author->测试]]";
+        TitanResultParse.toMapForSearchES(str);
 
     }
 
