@@ -275,7 +275,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
         builder.setIndex("mixed_ndresource");
-        builder.setLimit("6");
+        builder.setLimit("10");
         builder.setWords(words);
         builder.setParams(params);
 

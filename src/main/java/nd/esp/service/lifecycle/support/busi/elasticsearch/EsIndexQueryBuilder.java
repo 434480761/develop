@@ -69,7 +69,7 @@ public class EsIndexQueryBuilder {
         StringBuffer result=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
         baseQuery.append(dealWithWords(this.words));
-        //baseQuery.append(dealWithParams(this.params));
+        baseQuery.append(dealWithParams(this.params));
         baseQuery.append("\")");
         count.append("COUNT = ").append(baseQuery).append(".vertices()*.getElement()").append(".size();");
         baseQuery.append(this.limit);
@@ -97,6 +97,8 @@ public class EsIndexQueryBuilder {
     }
 
     private String dealWithWords(String words) {
+        if (words == null) return "";
+        if ("".equals(words.trim())||",".equals(words.trim())) return "";
         StringBuffer query = new StringBuffer();
         for (WordsCover field : WordsCover.values()) {
             query.append("v.\\\"");
@@ -105,23 +107,18 @@ public class EsIndexQueryBuilder {
             query.append(words.replaceAll(",", ""));
             query.append(") ");
         }
+
         return query.toString();
     }
 
     private String dealWithParams(Map<String, Map<String, List<String>>> params) {
-        // cg_taxonpath={eq=[K12/$ON030000/$ON030200/$SB0500/$E004000/$E004001]}
-        // cg_taxoncode={ne=[$F050006], eq=[$F050004 and  $RA0100, $RT0206]}
-        // coverages={in=[User/89/OWNER]
         StringBuffer query = new StringBuffer();
         Map<String, List<String>> searchCodeString = params.get(ES_SearchField.cg_taxoncode.toString());
         String codeStr = dealWithSingleParam("search_code_string", searchCodeString);
-        //System.out.println(codeStr);
         Map<String, List<String>> searchPathString = params.get(ES_SearchField.cg_taxonpath.toString());
         String pathStr = dealWithSingleParam("search_path_string", searchPathString);
-        // System.out.println(pathStr);
         Map<String, List<String>> searchCoverageString = params.get(ES_SearchField.coverages.toString());
         String coverageStr = dealWithSingleParam("search_coverage_string", searchCoverageString);
-        //System.out.println(coverageStr);
         query.append(codeStr).append(pathStr).append(coverageStr);
         return query.toString();
     }
@@ -156,15 +153,15 @@ public class EsIndexQueryBuilder {
                 String codeKey = entry.getKey();
                 if (CollectionUtils.isEmpty(codes)) continue;
                 for (String code : codes) {
-                    // FIXME $ 需要转义?
+                    // FIXME $ 需要转义
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (code.contains(PropOperationConstant.OP_AND)) {
                             code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
                         }
-                        queryCondition.append(code.trim()).append(" ");
+                        queryCondition.append(code.trim().replace("$", "\\$")).append(" ");
 
                     } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append(code.trim()).append(" ");
+                        queryCondition.append("-").append(code.trim().replace("$", "\\$")).append(" ");
                     }
                 }
             }
