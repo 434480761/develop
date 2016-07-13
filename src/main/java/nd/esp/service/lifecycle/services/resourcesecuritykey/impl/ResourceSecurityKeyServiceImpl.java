@@ -3,7 +3,7 @@ package nd.esp.service.lifecycle.services.resourcesecuritykey.impl;
 import nd.esp.service.lifecycle.daos.resourcesecuritykey.ResourceSecurityKeyDao;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
 import nd.esp.service.lifecycle.services.resourcesecuritykey.ResourceSecurityKeyService;
-import nd.esp.service.lifecycle.utils.encrypt.DigestUtil;
+import nd.esp.service.lifecycle.utils.encrypt.DESUtils;
 import nd.esp.service.lifecycle.utils.encrypt.RSAUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ public class ResourceSecurityKeyServiceImpl implements ResourceSecurityKeyServic
         }
         // 不存在密钥信息，则重新生成后保存。
         else{
-            securityKey = DigestUtil.getSecurityKey(uuid);
+            securityKey = DESUtils.getSecurityKey();
             desKey = RSAUtil.encoder(securityKey, publicKey);
             resourceSecurityKeyModel = new ResourceSecurityKeyModel();
             resourceSecurityKeyModel.setIdentifier(uuid);
