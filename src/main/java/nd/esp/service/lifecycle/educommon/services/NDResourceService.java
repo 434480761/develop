@@ -240,5 +240,5 @@ public interface NDResourceService {
     
     public TreeTrargetAndParentModel getTreeTargetAndParent(KnowledgeModel knowledgeModel, Chapter knowledge);
 
-    void deleteInstructionalObjectives(String objectsId, String nodeId, String nodeType);
+    void deleteInstructionalObjectives(String objectsId, List<String> parentNodes, String resType);
 }

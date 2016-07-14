@@ -288,7 +288,7 @@ public class NDResourceController {
     public @ResponseBody Map<String, String> deleteInstructionalObjective(
             @PathVariable("res_type") String resourceType,
             @PathVariable("objective_id") String objectiveId,
-            @RequestParam(value = "parent_node", required = true) String parentNode,
+            @RequestParam(value = "parent_node", required = true) List<String> parentNodes,
             @RequestParam(value = "node_type", defaultValue = "chapters") String nodeType) {
         // 该方法只删除教学目标
         if (!IndexSourceType.InstructionalObjectiveType.getName().equals(resourceType)) {
@@ -304,12 +304,14 @@ public class NDResourceController {
                     LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getMessage());
         }
 
-        // 教学目标，章节/课时 UUID校验
-        if (!CommonHelper.checkUuidPattern(objectiveId) ||
-                !CommonHelper.checkUuidPattern(parentNode)) {
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
-                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+        for (String parentNode : parentNodes) {
+            // 教学目标，章节/课时 UUID校验
+            if (!CommonHelper.checkUuidPattern(objectiveId) ||
+                    !CommonHelper.checkUuidPattern(parentNode)) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                        LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+            }
         }
 
         //add by xiezy - 2016.04.15
@@ -320,7 +322,7 @@ public class NDResourceController {
             relateRelations = notifyService.resourceBelongToRelations(objectiveId);
         }
 
-        ndResourceService.deleteInstructionalObjectives(objectiveId, parentNode, nodeType);
+        ndResourceService.deleteInstructionalObjectives(objectiveId, parentNodes, nodeType);
 
         //add by xiezy - 2016.04.15
         //异步通知智能出题，这里都是教学目标
@@ -516,7 +518,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,null, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, null, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, firstKnLevel);
     }
     
     /**

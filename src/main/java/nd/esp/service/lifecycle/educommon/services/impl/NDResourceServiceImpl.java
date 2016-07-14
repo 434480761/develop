@@ -2138,54 +2138,53 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
     @Override
-    public void deleteInstructionalObjectives(String objectsId, String nodeId, String nodeType) {
+    public void deleteInstructionalObjectives(String objectsId, List<String> parentNodes, String resType) {
         try {
-            // 查找对应章节Id
-            ChapterModel chapterModel = chapterService.findChapterByIdAndType(nodeId, nodeType);
-            // 查找章节挂载的课时，需要处理找不到章节情况
-            List<ResourceRelation> chapterRelation = null;
             // 章节及挂载的课时Id集合
             Set<String> idSet = new HashSet<>();
+            //
+            idSet.addAll(parentNodes);
+            // 如果是章节，需要同时删除与该章节下课时关联
+            if (resType.equals(IndexSourceType.ChapterType.getName())) {
+                for (String parentNode : parentNodes) {
+                    // 查找章节挂载的课时
+                    List<ResourceRelation> chapterRelation = resourceRelationApiService.getByResTypeAndTargetTypeAndSourceId(
+                            IndexSourceType.ChapterType.getName(),
+                            IndexSourceType.LessonType.getName(),
+                            parentNode);
 
-            if (null == chapterModel) {
-                chapterRelation = Collections.emptyList();
-                idSet.add(nodeId);
-            } else {
-                chapterRelation = resourceRelationApiService.getByResTypeAndTargetTypeAndSourceId(
-                        IndexSourceType.ChapterType.getName(),
-                        IndexSourceType.LessonType.getName(),
-                        chapterModel.getIdentifier());
-                idSet.add(chapterModel.getIdentifier());
-            }
-            // 章节及挂载的课时Id集合
-            for (ResourceRelation rr : chapterRelation) {
-                idSet.add(rr.getTarget());
+                    for (ResourceRelation rr : chapterRelation) {
+                        idSet.add(rr.getTarget());
+                    }
+                }
             }
             // 查找教学目标与章节&课时关系
             List<ResourceRelation> relations = new ArrayList<>();
-            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
-                    IndexSourceType.ChapterType.getName(),
-                    IndexSourceType.InstructionalObjectiveType.getName(),
-                    objectsId
-            ));
             relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
                     IndexSourceType.LessonType.getName(),
                     IndexSourceType.InstructionalObjectiveType.getName(),
                     objectsId
             ));
+            if (resType.equals(IndexSourceType.ChapterType.getName())) {
+                relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                        IndexSourceType.ChapterType.getName(),
+                        IndexSourceType.InstructionalObjectiveType.getName(),
+                        objectsId
+                ));
+            }
             // 教学目标挂载的章节/课时id集合
             Map<String, String> relationsMap = new HashMap<>();
             for (ResourceRelation rr : relations) {
                 relationsMap.put(rr.getSourceUuid(), rr.getIdentifier());
             }
-            // 求章节及其课时和教学目标挂在的章节/课时的交集
+            // 求章节及其课时和教学目标挂载的章节/课时的交集
             idSet.retainAll(relationsMap.keySet());
-            // 如果此教学目标只挂载到本章节下，则删除教学目标本身
+            // 如果传入的章节/课时集合与教学目标所关联的章节/课时相等，则删除教学目标
             if (idSet.size() == relationsMap.size()) {
-                // 同时会删除关联
+                // 删除教学目标，同时会删除关联
                 this.delete(IndexSourceType.InstructionalObjectiveType.getName(), objectsId);
             } else {
-                // 只删除教学目标与该章节关联
+                // 只删除教学目标与章节/课时关联
                 Set<String> relationIds = new HashSet<>();
                 // 获得交集对应的关联Id
                 for (String id : idSet) {
