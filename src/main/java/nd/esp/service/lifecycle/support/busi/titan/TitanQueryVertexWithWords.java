@@ -8,8 +8,7 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 
 public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
-    private String stringWords;
-    private String textWords;
+    private String words;
     private Map<String, Object> searchCodesConditions;
     private Map<String, Object> searchPathsConditions;
 
@@ -23,16 +22,20 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
     // FIXME 暂时放在一起
     public void setWords(String words) {
-        String[] chunks = words.split("\\$");
-        if (!"null".equals(chunks[0])) {
-            stringWords = chunks[0].trim();
-        }
-
-        //System.out.println(stringWords);
-
-        if (!"null".equals(chunks[1])) {
-            textWords = chunks[1].trim();
-        }
+//        String[] chunks = words.split("\\$");
+//        if (!"null".equals(chunks[0])) {
+//            words = chunks[0].trim();
+//        }
+//
+//        //System.out.println(stringWords);
+//
+//        if (!"null".equals(chunks[1])) {
+//            textWords = chunks[1].trim();
+//        }
+    	if(StringUtils.isNotEmpty(words)){
+    		this.words = words.trim();
+    	}
+    	
 
         //System.out.println(textWords);
     }
@@ -42,11 +45,11 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
         StringBuffer scriptBuffer = new StringBuffer(
                 super.generateScript(scriptParamMap));
-        if (StringUtils.isNotEmpty(stringWords)) {
+        if (StringUtils.isNotEmpty(words)) {
             scriptBuffer.append(".").append(TitanKeyWords.or.toString())
                     .append("(");
             List<Object> values = new ArrayList<Object>();
-            values.add(stringWords);
+            values.add(words);
             for (WordsCover wordsCover : WordsCover.values()) {
 
                 // remove the "."
@@ -59,22 +62,22 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
             scriptBuffer.append(")");
         }
 
-        if (StringUtils.isNotEmpty(textWords)) {
-            scriptBuffer.append(".").append(TitanKeyWords.or.toString())
-                    .append("(");
-            List<Object> values = new ArrayList<Object>();
-            values.add(textWords);
-            for (WordsCover wordsCover : WordsCover.values()) {
-
-                // remove the "."
-                scriptBuffer.append(Titan_OP.fulltextlike.generateScipt(
-                        wordsCover.toString(), values, scriptParamMap)
-                        .substring(1));
-                scriptBuffer.append(",");
-            }
-            scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
-            scriptBuffer.append(")");
-        }
+//        if (StringUtils.isNotEmpty(textWords)) {
+//            scriptBuffer.append(".").append(TitanKeyWords.or.toString())
+//                    .append("(");
+//            List<Object> values = new ArrayList<Object>();
+//            values.add(textWords);
+//            for (WordsCover wordsCover : WordsCover.values()) {
+//
+//                // remove the "."
+//                scriptBuffer.append(Titan_OP.fulltextlike.generateScipt(
+//                        wordsCover.toString(), values, scriptParamMap)
+//                        .substring(1));
+//                scriptBuffer.append(",");
+//            }
+//            scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
+//            scriptBuffer.append(")");
+//        }
 
         if (CollectionUtils.isNotEmpty(searchCodesConditions)) {
             scriptBuffer.append(".").append(TitanKeyWords.or.toString()).append("(");
