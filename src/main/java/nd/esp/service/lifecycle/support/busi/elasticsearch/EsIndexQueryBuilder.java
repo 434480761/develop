@@ -69,6 +69,7 @@ public class EsIndexQueryBuilder {
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
         baseQuery.append(dealWithWords(this.words));
         baseQuery.append(dealWithParams(this.params));
+        baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
         count.append("COUNT = ").append(baseQuery).append(".vertices()*.getElement()").append(".size();");
         result.append("RESULT = ").append(baseQuery).append(this.limit).append(".vertices()*.getElement()").append(".iterator();");
@@ -118,23 +119,32 @@ public class EsIndexQueryBuilder {
                 String codeKey = entry.getKey();
                 if (CollectionUtils.isEmpty(codes)) continue;
                 for (String code : codes) {
+                    if (code.contains("$")) {
+                        code = code.replace("$", "\\$");
+                    }
+                    if (code.contains("/")) {
+                        code = code.replace("/", "\\\\/");
+                    }
+                    if (TitanKeyWords.search_path_string.toString().equals(property)) {
+                        code = "'" + code.trim() + "'";
+                    }
+
                     // FIXME $ 需要转义
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (code.contains(PropOperationConstant.OP_AND)) {
                             code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
                         }
-                        queryCondition.append(code.trim().replace("$", "\\$")).append(" ");
+                        queryCondition.append(code.trim()).append(" ");
 
                     } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append(code.trim().replace("$", "\\$")).append(" ");
+                        queryCondition.append("-").append(code.trim()).append(" ");
                     }
                 }
             }
 
             query.append(queryCondition.toString());
+            query.deleteCharAt(query.length()-1);
             query.append(") ");
-
-
         }
         return query.toString();
     }
