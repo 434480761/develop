@@ -276,30 +276,25 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
         builder.setWords(words);
         builder.setParams(params);
-
         String script=builder.generateScript();
-
-        Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-        System.out.println("script:"+script);
-        System.out.println("scriptParamMap:"+scriptParamMap);
+        LOG.info("script:"+script);
 
         ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
         List<ResourceModel> items = new ArrayList<ResourceModel>();
-        ResultSet resultSet = titanResourceRepository.search(script, scriptParamMap);
+        ResultSet resultSet = titanResourceRepository.search(script, null);
         Iterator<Result> iterator = resultSet.iterator();
         while (iterator.hasNext()) {
-            ResourceModel item=new ResourceModel();
-            String r=iterator.next().getString();
-            System.out.println(r);
-            if(r.contains("COUNT:")){
-                viewModels.setTotal(Long.parseLong(r.split(":")[1]));
+            String resource=iterator.next().getString();
+            LOG.info(resource);
+            if(resource.contains("COUNT:")){
+                viewModels.setTotal(Long.parseLong(resource.split(":")[1]));
                 continue;
             }
-            TitanResultParse.dealMainResult(item,TitanResultParse.toMapForSearchES(r));
-            //TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(r));
-            List<ResClassificationModel> categoryList = new ArrayList<>();
-            categoryList.add(TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(r)));
-            item.setCategoryList(categoryList);
+            ResourceModel item=new ResourceModel();
+            TitanResultParse.dealMainResult(item,TitanResultParse.toMapForSearchES(resource));
+            //List<ResClassificationModel> categoryList = new ArrayList<>();
+            //categoryList.add(TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(resource)));
+            //item.setCategoryList(categoryList);
             items.add(item);
         }
         viewModels.setItems(items);
