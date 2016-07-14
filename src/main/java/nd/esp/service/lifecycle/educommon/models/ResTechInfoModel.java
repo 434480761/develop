@@ -32,6 +32,8 @@ public class ResTechInfoModel {
 	
 	private Boolean printable;
 
+	private String operation;
+
 	public ResTechInfoModel(){
 
 	}
@@ -124,4 +126,11 @@ public class ResTechInfoModel {
 		this.printable = printable;
 	}
 
+	public String getOperation() {
+		return operation;
+	}
+
+	public void setOperation(String operation) {
+		this.operation = operation;
+	}
 }

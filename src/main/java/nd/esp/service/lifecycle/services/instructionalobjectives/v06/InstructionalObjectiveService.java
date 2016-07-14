@@ -22,5 +22,6 @@ public interface InstructionalObjectiveService{
 	 * @return
 	 */
 	public InstructionalObjectiveModel updateInstructionalObjective(InstructionalObjectiveModel am);
-	
+
+	InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel);
 }

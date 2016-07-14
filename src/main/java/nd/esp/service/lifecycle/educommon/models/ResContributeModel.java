@@ -10,6 +10,8 @@ import nd.esp.service.lifecycle.support.annotation.Reg;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 /**
  * 生命周期的管理过程中，对资源有所操作的所有的相关记录 什么人在什么时间，以什么角色对资源做了什么操作
@@ -20,6 +22,8 @@ import org.hibernate.validator.constraints.NotBlank;
 public class ResContributeModel {
 
 	private String identifier;
+	@JsonIgnore
+	private String title;
 	private String roleName;
 	private String roleId;
 	private ResLifeCycleModel lifeCycle;
@@ -151,4 +155,12 @@ public class ResContributeModel {
     public void setResources(List<String> resources) {
         this.resources = resources;
     }
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
 }

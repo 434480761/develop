@@ -297,4 +297,93 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
 		}
 	}
 
+	@Override
+	public void resourceTop(String resType, String uuid, boolean effect) {
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
+        /**
+         * 检查资源resType和UUID
+         * */
+        EspRepository<?> espRepository = ServicesManager.get(resType);
+        try {
+            EspEntity entity = espRepository.get(uuid);
+            if (entity == null
+                    || ((entity instanceof Education) && ((Education) entity).getEnable() != null && !((Education) entity)
+                            .getEnable())) {
+            	LOG.warn("置顶接口资源未找到！资源类型：{}，资源id：{}",resType,uuid);
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
+                        LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()
+                                + " resourceType:" + resType + " uuid:" + uuid);
+            }
+        } catch (EspStoreException e1) {
+        	LOG.error("资源置顶接口异常！资源类型：{}，资源id：{}",resType,uuid);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e1.getMessage());
+        }
+        
+    	//取出资源的置顶数值
+        ResourceStatistical example = new ResourceStatistical();
+        example.setKeyTitle("top");
+        example.setResource(uuid);
+        ResourceStatistical dbStatistical = null;
+        try {
+            dbStatistical = statisticalRepository.getByExample(example);
+        } catch (EspStoreException e) {
+            LOG.error("资源统计指标操作--检查资源失败");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+        }
+
+        if(effect){
+        	//置顶
+        	//获取当前最大值
+        	double max = resourceStatisticalsDao.getMaxTopValue(resType);
+            if(dbStatistical != null){
+            	if(dbStatistical.getKeyValue().doubleValue() < max){
+            		dbStatistical.setKeyValue(max+0.01);
+            		dbStatistical.setUpdateTime(ts);
+            		try {
+						statisticalRepository.add(dbStatistical);
+					} catch (EspStoreException e) {
+			            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+			                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+			                    e.getMessage());
+					}
+            	}
+            }else{
+            	ResourceStatistical rs = new ResourceStatistical();
+            	rs.setIdentifier(UUID.randomUUID().toString());
+            	rs.setDataFrom("TOTAL");
+            	rs.setKeyTitle("top");
+            	rs.setKeyValue(max+0.01);
+            	rs.setResource(uuid);
+            	rs.setResType(resType);
+            	rs.setUpdateTime(ts);
+            	try {
+					statisticalRepository.add(rs);
+				} catch (EspStoreException e) {
+		            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+		                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+		                    e.getMessage());
+				}
+            }
+        }else{
+        	//取消置顶
+        	if(dbStatistical != null){
+        		try {
+					statisticalRepository.del(dbStatistical.getIdentifier());
+				} catch (EspStoreException e) {
+					 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+			                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+			                    e.getMessage());
+				}
+        	}else{
+        		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+	                    "LC/RESOURCE_TOP_ERROR","资源未置顶过");
+        	}
+        }
+	}
+
 }

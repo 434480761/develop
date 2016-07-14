@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.educommon.vos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import nd.esp.service.lifecycle.vos.valid.CoveragesDefault;
 
 import org.hibernate.validator.constraints.Length;
@@ -37,8 +38,11 @@ public class ResCoverageViewModel {
 	@NotBlank(message="{resourceViewModel.coverages.strategy.notBlank.validmsg}",groups={CoveragesDefault.class})
 	private String strategy;
 
-	public ResCoverageViewModel(){
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String operation;
 
+	public ResCoverageViewModel(){
+		operation = null;
 	}
 
 
@@ -72,6 +76,14 @@ public class ResCoverageViewModel {
 
 	public void setStrategy(String strategy) {
 		this.strategy = strategy;
+	}
+
+	public String getOperation() {
+		return operation;
+	}
+
+	public void setOperation(String operation) {
+		this.operation = operation;
 	}
 
 }

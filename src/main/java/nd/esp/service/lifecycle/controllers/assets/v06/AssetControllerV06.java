@@ -6,9 +6,12 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.educommon.vos.ResClassificationViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResTechInfoViewModel;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.AssetModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
@@ -16,6 +19,7 @@ import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.transcode.TransCodeManager;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -30,11 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 素材V0.6API
@@ -50,6 +50,11 @@ public class AssetControllerV06 {
 	
 	@Autowired
 	private TransCodeUtil transCodeUtil;
+
+	@Autowired
+	private OfflineService offlineService;
+	@Autowired
+	private AsynEsResourceService esResourceOperation;
 	
 	/**
 	 * 创建素材对象
@@ -128,6 +133,51 @@ public class AssetControllerV06 {
 		
 		//model转换
 		avm = CommonHelper.convertViewModelOut(am,AssetViewModel.class,"assets_type");
+		return avm;
+	}
+
+	/**
+	 * 修改素材对象
+	 * @param avm		素材对象
+	 * @return
+	 */
+	@MarkAspect4Format2Category
+	@RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public AssetViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody AssetViewModel avm,BindingResult validResult,@PathVariable String id,
+								@RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+		//入参合法性校验
+//		ValidResultHelper.valid(validResult, "LC/UPDATE_ASSET_PARAM_VALID_FAIL", "AssetControllerV06", "update");
+		avm.setIdentifier(id);
+
+		//业务校验
+//		CommonHelper.inputParamValid(avm,"10111",OperationType.UPDATE);
+
+		//课件模板需要转码tech_info单独作校验
+//		Map<String,? extends ResTechInfoViewModel> techInfoMap = avm.getTechInfo();
+//		if(!checkTechInfoData(avm)){
+//			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.ChecTechInfoHrefOrSourceFail);
+//		}
+
+		//tech_info属性特殊处理
+//		CommonHelper.copyTechInfoValue(techInfoMap);
+
+		//model入参转换，部分数据初始化
+		AssetModel am = CommonHelper.convertViewModelIn(avm, AssetModel.class,ResourceNdCode.assets,true);
+
+		//修改素材
+		am = assetService.patchAsset(am);
+
+		//model转换
+		avm = CommonHelper.convertViewModelOut(am, AssetViewModel.class, "assets_type");
+
+		if(notice) {
+			offlineService.writeToCsAsync(ResourceNdCode.assets.toString(), id);
+			// offline metadata(coverage) to elasticsearch
+			if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.assets.toString())) {
+				esResourceOperation.asynAdd(
+						new Resource(ResourceNdCode.assets.toString(), id));
+			}
+		}
 		return avm;
 	}
 	

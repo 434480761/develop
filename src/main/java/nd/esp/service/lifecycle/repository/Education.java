@@ -32,7 +32,10 @@ public class Education extends EspEntity implements Serializable,
 	public static final String PROP_RELATIONS = "relations";
 	public static final String PROP_TAGS = "tags";
 	public static final String PROP_KEYWORDS = "keywords";
-
+	
+	@Column(name="m_identifier")
+	protected String mIdentifier;
+	
 	/** The create time. */
 	@Transient
 	protected Timestamp createTime;
@@ -172,7 +175,15 @@ public class Education extends EspEntity implements Serializable,
 	
 	@Column(name="primary_category")
 	private String primaryCategory;
-	
+
+	public String getmIdentifier() {
+		return mIdentifier;
+	}
+
+	public void setmIdentifier(String mIdentifier) {
+		this.mIdentifier = mIdentifier;
+	}
+
 	public String getPrimaryCategory() {
 		return primaryCategory;
 	}

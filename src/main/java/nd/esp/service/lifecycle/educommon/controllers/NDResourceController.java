@@ -12,9 +12,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -28,18 +30,23 @@ import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
@@ -50,6 +57,7 @@ import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.aop.ServiceAuthorAspect;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -60,6 +68,7 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.offlinemetadata.v06.OfflineMetadataViewModel;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
+import nd.esp.service.lifecycle.vos.valid.LifecycleDefault;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -73,6 +82,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -154,6 +164,12 @@ public class NDResourceController {
     @Autowired
     @Qualifier(value = "StatisticalService4QuestionDBImpl")
     private ResourceStatisticalService statisticalService4QuestionDB;
+    
+	@Autowired
+    private AsynEsResourceService esResourceOperation;
+	
+	@Autowired
+	private OfflineService offlineService;
 
 
     /**
@@ -320,9 +336,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
             @RequestParam(required=false,value="tags") List<String> tags,
+            @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags, showVersion);
     }
 	
 	/**
@@ -375,7 +392,7 @@ public class NDResourceController {
 			/* @RequestParam String words, */@RequestParam String limit) {
 		return requestQuering(resType, resCodes, includes, categories,
 				categoryExclude, null, coverages, props, orderBy, null, limit,
-				false, !isAll, "false", printable, printableKey, null,null,false,null);
+				false, !isAll, "false", printable, printableKey, null,null,false,null,false);
 	}
 	
 	/**
@@ -419,9 +436,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="tags") List<String> tags,
+            @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags);
+    	return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags, showVersion);
     }
     
     /**
@@ -468,9 +486,10 @@ public class NDResourceController {
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
             @RequestParam(required=false,value="tags") List<String> tags,
+            @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
         
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags);
+    	return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus, tags, showVersion);
     }
     
     /**
@@ -527,7 +546,8 @@ public class NDResourceController {
 	private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
             List<String> orderBy, String words, String limit, boolean isByDB, boolean isNotManagement, String reverse, 
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags) {
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,
+            boolean showVersion) {
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1 
                 && coverages.iterator().next().equals(CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE)){
@@ -589,7 +609,7 @@ public class NDResourceController {
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         if(isByDB){
         	if(StaticDatas.QUERY_BY_ES_FIRST && 
-        			canQueryByEla(resType, relationsMap, orderMap, words, coveragesList, isNotManagement,forceStatus,tags)){//数据库走ES查询判断
+        			canQueryByEla(resType, relationsMap, orderMap, words, coveragesList, isNotManagement,forceStatus,tags,showVersion)){//数据库走ES查询判断
         		try {
         			Map<String, Object> changeMap = changeKey(propsMap, orderMap, false);
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
@@ -602,11 +622,11 @@ public class NDResourceController {
         			propsMap = (Map<String,Set<String>>)changeMap.get("propsMapNew");
         			orderMap = (Map<String,String>)changeMap.get("orderMapNew");
 					rListViewModel = 
-	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags);
+	                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
 				}
         	}else{
         		rListViewModel = 
-                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags);
+                        ndResourceService.resourceQueryByDB(resType, resCodes, includesList, categories, categoryExclude, relationsMap, coveragesList, propsMap,orderMap, words, limit,isNotManagement,reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         	}
         }else{
             rListViewModel = 
@@ -640,7 +660,7 @@ public class NDResourceController {
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,
     		Map<String, String>orderMap, String words, List<String> coveragesList, boolean isNotManagement,
-    		boolean forceStatus,List<String> tags){
+    		boolean forceStatus,List<String> tags,boolean showVersion){
 		boolean haveUserCoverage = false;
     	if(CollectionUtils.isNotEmpty(coveragesList)){
 			for(String coverage : coveragesList){
@@ -655,6 +675,7 @@ public class NDResourceController {
     	
     	if(isNotManagement &&
     	   !forceStatus &&
+		   !showVersion &&
     	   !haveUserCoverage && 
     	   CollectionUtils.isEmpty(tags) &&
 		   !resType.equals(Constant.RESTYPE_EDURESOURCE) &&
@@ -662,8 +683,10 @@ public class NDResourceController {
 		   StringUtils.isEmpty(words) && 
 		   (CollectionUtils.isEmpty(orderMap) ||
 				   (CollectionUtils.isNotEmpty(orderMap) && 
-						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") 
-								   || orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))))){
+						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") ||
+								   orderMap.containsKey("top") || orderMap.containsKey("scores") ||
+								   orderMap.containsKey("votes") || orderMap.containsKey("views") ||
+								   orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))))){
 			
 			return true;
 		}
@@ -886,22 +909,7 @@ public class NDResourceController {
          * 入参处理 + 校验
          */
         // 0.res_type
-        if(resType.equals("chapters")){
-            
-            LOG.error("resType不能为chapters");
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                    "resType不能为chapters");
-        }else if(resType.equals(Constant.RESTYPE_EDURESOURCE)){
-            if(StringUtils.isEmpty(resCodes)){
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                        "resType为" + Constant.RESTYPE_EDURESOURCE + "时,rescode不能为空");
-            }
-        }else{
-            commonServiceHelper.getRepository(resType);
-        }
+        verificateResType(resType, resCodes);
         
         // 1.includes
         List<String> includesList = IncludesConstant.getValidIncludes(includes);
@@ -940,31 +948,7 @@ public class NDResourceController {
             relationsMap = null;
         }else{
             for(String relation : relations){
-                Map<String,String> map = new HashMap<String, String>();
-                //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
-                relation = relation + " ";
-                List<String> elements = Arrays.asList(relation.split("/"));
-                //格式错误判断
-                if(elements.size() != 3){
-                   
-                    LOG.error(relation + "--relation格式错误");
-                    
-                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                            LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                            relation + "--relation格式错误");
-                }
-                //判断源资源是否存在,stype + suuid
-                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
-                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
-                }
-                //r_type的特殊处理
-                if(StringUtils.isEmpty(elements.get(2).trim())){
-                    elements.set(2, null);
-                }
-                map.put("stype", elements.get(0).trim());
-                map.put("suuid", elements.get(1).trim());
-                map.put("rtype", elements.get(2));
-                
+                Map<String,String> map = ParameterVerificationHelper.relationVerification(relation);
                 relationsMap.add(map);
             }
         }
@@ -1216,6 +1200,34 @@ public class NDResourceController {
     }
     
     /**
+     * 验证resType
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param resCodes
+     */
+    private void verificateResType(String resType, String resCodes){
+		if (resType.equals(IndexSourceType.ChapterType.getName())) {
+
+			LOG.error("resType不能为chapters");
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError
+							.getCode(), "resType不能为chapters");
+		} else if (resType.equals(Constant.RESTYPE_EDURESOURCE)) {
+			if (StringUtils.isEmpty(resCodes)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CommonSearchParamError
+								.getCode(), "resType为"
+								+ Constant.RESTYPE_EDURESOURCE
+								+ "时,rescode不能为空");
+			}
+		} else {
+			commonServiceHelper.getRepository(resType);
+		}
+    }
+    
+    /**
      * 时间的校验和格式化
      * <p>Create Time: 2015年9月30日   </p>
      * <p>Create author: xiezy   </p>
@@ -1346,6 +1358,17 @@ public class NDResourceController {
         }
     }
     
+    /**
+     * 通用查询-时间参数带and的处理
+     * @author xiezy
+     * @date 2016年7月11日
+     * @param resType
+     * @param prop
+     * @param properties
+     * @param propsMap
+     * @param op1
+     * @param op2
+     */
     private void dealTimeParam4HaveAndOp(String resType,String prop,Properties properties,Map<String,Set<String>> propsMap,String op1,String op2){
     	List<String> elements = Arrays.asList(prop.split(" and "));
         // 格式错误判断
@@ -1549,8 +1572,173 @@ public class NDResourceController {
         }
     }
 
-    private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
+    /**
+     * 离线版资源同步入库，具体流程是：
+     * 1.同步上传离线版的元数据。
+     * 2.上传结束后，提交元数据的存储相对地址信息。
+     * 3.解析离线元数据进行入库。
+     * http://wiki.sdp.nd/index.php?title=LCMS_API_RA00110
+     * @param viewModel 元数据的存储相对地址信息
+     * @param validResult BindingResult
+     * @param resType 资源类型
+     * @param uuid 资源id
+     * @since
+     */
+    @RequestMapping(value = "/{uuid}/actions/refresh", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE })
+    public void refreshOfflineMetadata(@Valid @RequestBody OfflineMetadataViewModel viewModel,
+                                      BindingResult validResult,
+                                      @PathVariable(value = "res_type") String resType,
+                                      @PathVariable String uuid) throws Exception {
+        ValidResultHelper.valid(validResult,
+                "LC/CREATE_OFFLINE_METADATA_PARAM_VALID_FAIL",
+                "NDResourceController",
+                "createOfflineMetadata");
 
+        commonServiceHelper.assertDownloadable(resType);
+
+        if (!CommonHelper.checkUuidPattern(uuid)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+        }
+
+        if(!CommonHelper.resourceExistNoException(resType, uuid, ResourceType.RESOURCE_SOURCE)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/RESOURCE_NOT_EXIST", "资源不存在");
+        }
+
+        if (viewModel.getTechInfo() == null || !viewModel.getTechInfo().containsKey("href")) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.ChecTechInfoFail);
+        }
+
+        String rootPath = NDResourceServiceImpl.getRootPathFromLocation(viewModel.getTechInfo()
+                .get("href")
+                .getLocation());
+
+        CSInstanceInfo csInstanceInfo = NDResourceServiceImpl.getCsInstanceAccordingRootPath(rootPath);
+
+        String path = NDResourceServiceImpl.producePath(rootPath, resType, uuid);
+
+        CsSession csSession = contentService.getAssignSession(path, csInstanceInfo.getServiceId());
+
+        if (csSession == null) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "取不到session，路径:" + path);
+        }
+
+        String url = csInstanceInfo.getUrl() + "/download?path=" + path + "/metadata.json";
+
+        String metaDataJson = DownloadFile(url, csSession.getSession());
+
+        if (StringUtils.isEmpty(metaDataJson)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "下载文件：" + url
+                    + "失败");
+        }
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<String>(metaDataJson, httpHeaders);
+
+        String result = wafSecurityHttpClient.executeForObject(Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + resType
+                + "/" + uuid, HttpMethod.PUT, entity, String.class);
+
+        if (null == result) {
+
+            LOG.warn("创建资源metadata失败");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_CREATE_FAIL", "创建资源metadata失败");
+
+        }
+    }
+
+    /**
+     * 新增版本资源
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param versionViewModel
+     * @param validResult
+     * @param resourceType
+     * @param uuid
+     * @param userInfo
+     * @return
+     */
+    @RequestMapping(value = "/{uuid}/newversion", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE },produces={MediaType.APPLICATION_JSON_VALUE})
+	public ResourceViewModel createNewVersion(
+			@Validated(LifecycleDefault.class) @RequestBody VersionViewModel versionViewModel,
+			BindingResult validResult,
+			@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid,
+			@AuthenticationPrincipal UserInfo userInfo) {
+    	//1、参数校验
+        ValidResultHelper.valid(validResult,
+                "LC/CREATE_RESOURCE_NEW_VERSION",
+                "NDResourceController",
+                "createNewVersion");
+        
+    	Map<String,List<String>> tagMap = versionViewModel.getRelations();
+    	if(tagMap != null && tagMap.containsKey("tags") && tagMap.get("tags") != null && CollectionUtils.isNotEmpty(tagMap.get("tags"))){
+    		ResourceViewModel newResource = null;
+    		if(CommonServiceHelper.isQuestionDb(resourceType)){
+    			newResource = ndResourceService.createNewVersion4Question(resourceType, uuid, versionViewModel,userInfo);
+    		}else{
+    			newResource = ndResourceService.createNewVersion(resourceType, uuid, versionViewModel,userInfo);
+    		}
+    		if (ResourceTypeSupport.isValidEsResourceType(resourceType)
+    				&& StringUtils.isNotEmpty(newResource.getIdentifier())) {
+    			esResourceOperation.asynAdd(new Resource(resourceType, newResource.getIdentifier()));
+    		}
+    		//由于tech_info数据没有拷贝，不异步上传离线文件
+//    		offlineService.writeToCsAsync(resourceType, newResource.getIdentifier());
+    		return newResource;
+    	}else{
+    		//参数校验不通过
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "relations.tags不能为空");
+    	}
+    }
+    
+    /**
+     * 资源版本检测接口
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param resourceType
+     * @param uuid
+     * @return
+     */
+    @RequestMapping(value = "/{uuid}/version/check", method = RequestMethod.GET, produces={MediaType.APPLICATION_JSON_VALUE})
+	public Map<String, Map<String, Object>> versionCheck(
+			@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid) {
+    	return ndResourceService.versionCheck(resourceType, uuid);
+    }
+    
+    /**
+     * 资源版本发布接口
+     * @author xuzy
+     * @date 2016年7月11日
+     * @param resourceType
+     * @param uuid
+     * @param paramMap
+     * @return
+     */
+    @RequestMapping(value = "/{uuid}/release", method = RequestMethod.PUT, produces={MediaType.APPLICATION_JSON_VALUE})
+    public Map<String, Object> versionRelease(@PathVariable("res_type") String resourceType,
+			@PathVariable String uuid,@RequestBody Map<String,String> paramMap){
+    	if(CollectionUtils.isNotEmpty(paramMap)){
+    		Iterator<Map.Entry<String,String>> it = paramMap.entrySet().iterator();
+    		if(it.hasNext()){
+    			Entry<String,String> entry = it.next();
+    			boolean flag = LifecycleStatus.isLegalStatus(entry.getValue());
+    			if(!flag){
+    				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/CHECK_PARAM_FAIL", "status参数不正确！值："+entry.getValue());
+    			}
+    		}
+    	}
+    	return ndResourceService.versionRelease(resourceType, uuid, paramMap);
+    }
+    
+    /**
+     * 由Model转为ViewModel
+     */
+    private ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes) {
 
         return  CommonHelper.changeToView(model,resourceType,includes,commonServiceHelper);
     }
@@ -1607,5 +1795,62 @@ public class NDResourceController {
     	}else{
     		statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
     	}
+    }
+    
+    /**
+     * 统计教材章节下的资源数量
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param tmId
+     * @param chapterIds
+     * @param coverages
+     * @param categories
+     * @param isAll
+     * @return
+     */
+    @RequestMapping(value = "/statistics/counts", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "tmid"})
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			@PathVariable(value="res_type") String resType,
+            @RequestParam(value="tmid") String tmId,
+            @RequestParam(required=false,value="chapterid") Set<String> chapterIds,
+            @RequestParam(required=false,value="coverage") Set<String> coverages,
+            @RequestParam(required=false,value="category") Set<String> categories,
+            @RequestParam(required=false,value="is_all",defaultValue="false") boolean isAll){
+    	
+    	//参数校验
+    	verificateResType(resType, "");
+    	if(resType.equals(IndexSourceType.QuestionType.getName()) ||
+    			resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())){
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+					"暂不支持questions和coursewareobjects资源类型的查询！");
+    	}
+    	
+    	categories = CollectionUtils.removeEmptyDeep(categories);
+    	coverages = CollectionUtils.removeEmptyDeep(coverages);
+    	chapterIds = CollectionUtils.removeEmptyDeep(chapterIds);
+    	
+    	if(StringUtils.isEmpty(tmId)){
+    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+					"教材id不能为空");
+    	}else if(tmId.equals("none")){
+    		if(CollectionUtils.isEmpty(chapterIds)){
+    			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+    					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), 
+    					"tmid=none时,chapterid不允许为空");
+    		}
+    	}
+    	
+    	List<String> coverageList = new ArrayList<String>();
+    	if(CollectionUtils.isNotEmpty(coverages)){
+    		for(String cv : coverages){
+    			String coverage = ParameterVerificationHelper.coverageVerification(cv);
+    			coverageList.add(coverage);
+    		}
+    	}
+    	
+    	return ndResourceService.statisticsCountsByChapters(resType, tmId, chapterIds, coverageList, categories, isAll);
     }
 }

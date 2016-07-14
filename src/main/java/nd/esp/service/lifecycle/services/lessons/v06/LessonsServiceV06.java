@@ -8,4 +8,5 @@ public interface LessonsServiceV06 {
 
 	public LessonModel update(LessonModel lessonPlansViewModel);
 
+	LessonModel patch(LessonModel model);
 }

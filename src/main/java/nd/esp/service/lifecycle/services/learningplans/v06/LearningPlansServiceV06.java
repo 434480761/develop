@@ -20,4 +20,5 @@ public interface LearningPlansServiceV06 {
 
     public abstract LearningPlanModel update(LearningPlanModel learningPlansModel);
 
+    LearningPlanModel patch(LearningPlanModel learningPlansModel);
 }

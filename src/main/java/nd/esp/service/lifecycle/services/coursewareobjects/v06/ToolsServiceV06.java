@@ -25,5 +25,6 @@ public interface ToolsServiceV06 {
 	 * @return CourseWareObjectModel
 	 */
 	public CourseWareObjectModel updateTools(CourseWareObjectModel cwom);
-	
+
+	CourseWareObjectModel patchTools(CourseWareObjectModel model);
 }

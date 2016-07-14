@@ -22,4 +22,6 @@ public interface HomeworkServiceV06{
 	 * @return
 	 */
 	public HomeworkModel updateHomework(HomeworkModel am);
+
+	HomeworkModel patchHomework(HomeworkModel hm);
 }

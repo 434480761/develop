@@ -2,9 +2,12 @@ package nd.esp.service.lifecycle.controllers.lessonplans.v06;
 
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.LessonPlanModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.Lessonplans.v06.LessonPlansServiceV06;
+import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
+import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
@@ -12,6 +15,7 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ModelPropertiesValidUitl;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.transcode.TransCodeManager;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
@@ -27,11 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v0.6/lessonplans")
@@ -45,6 +45,11 @@ public class LessonPlansControllerV06 {
     
     @Autowired
     private TransCodeUtil transCodeUtil;
+
+    @Autowired
+    private OfflineService offlineService;
+    @Autowired
+    private AsynEsResourceService esResourceOperation;
     
     @MarkAspect4Format2Category
     @MarkAspect4OfflineJsonToCS
@@ -97,6 +102,36 @@ public class LessonPlansControllerV06 {
         // model出参转换
         lpvm = CommonHelper.convertViewModelOut(model, LessonPlanViewModel.class);
         
+        return lpvm;
+    }
+
+    @MarkAspect4Format2Category
+    @RequestMapping(value = "{uuid}", method = RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public LessonPlanViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody LessonPlanViewModel lpvm,
+                                      BindingResult validResult, @PathVariable String uuid,
+                                      @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+//        checkParams(lpvm, validResult, uuid, CONTROLLER_UPDATE_TYPE);
+
+        // model入参转换
+        LessonPlanModel model = CommonHelper.convertViewModelIn(lpvm, LessonPlanModel.class, ResourceNdCode.lessonplans, true);
+
+        LOG.info("教案V06---更新教案操作，业务逻辑处理");
+
+        // 修改教案
+        model = lessonPlansServiceV06.patch(model);
+
+        // model出参转换
+        lpvm = CommonHelper.convertViewModelOut(model, LessonPlanViewModel.class);
+
+        if(notice) {
+            offlineService.writeToCsAsync(ResourceNdCode.lessonplans.toString(), uuid);
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.lessonplans.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.lessonplans.toString(), uuid));
+            }
+        }
+
         return lpvm;
     }
 

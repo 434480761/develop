@@ -4,14 +4,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.nd.gaea.rest.security.authens.UserInfo;
+
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
+import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeTrargetAndParentModel;
 import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.repository.model.Chapter;
 
 /**
  * 教育资源通用接口的Service
@@ -72,7 +76,7 @@ public interface NDResourceService {
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,
-            boolean forceStatus,List<String> tags);
+            boolean forceStatus,List<String> tags,boolean showVersion);
     
     /**
      * 获取智能出题
@@ -200,6 +204,18 @@ public interface NDResourceService {
      * @since
      */
     public ResourceModel update(String resourceType, ResourceModel resourceModel,DbName dbName);
+
+    void patch(String resourceType, ResourceModel resourceModel);
+
+    /**
+     * 部分更新资源(支持分库)
+     * @author qil
+     * @param resourceType
+     * @param resourceModel
+     * @return
+     * @since
+     */
+    public void patch(String resourceType, ResourceModel resourceModel, DbName dbName);
     
     /**
      * CS文件上传
@@ -240,4 +256,53 @@ public interface NDResourceService {
     Map<String, Object> getResPreviewByHref(String resType,String location);
     
     public TreeTrargetAndParentModel getTreeTargetAndParent(KnowledgeModel knowledgeModel, Chapter knowledge);
+    
+    /**
+     * 创建资源新版本
+     * @param uuid
+     * @param vvm
+     * @return
+     */
+    public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo);
+    
+    /**
+     * 创建资源新版本(习题库)
+     * @param uuid
+     * @param vvm
+     * @return
+     */
+    public ResourceViewModel createNewVersion4Question(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo);
+    
+    /**
+     * 版本检查
+     * @param resType
+     * @param uuid
+     * @return
+     */
+    public Map<String, Map<String, Object>> versionCheck(String resType,String uuid);
+    
+    /**
+     * 版本发布接口
+     * @param resType
+     * @param uuid
+     * @param paramMap
+     * @return
+     */
+    public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap);
+    
+    /**
+     * 统计教材章节下的资源数量
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param tmId
+     * @param chapterIds
+     * @param coverages
+     * @param categories
+     * @param isAll
+     * @return
+     */
+    public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+    		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
+    		Set<String> categories,boolean isAll);
 }

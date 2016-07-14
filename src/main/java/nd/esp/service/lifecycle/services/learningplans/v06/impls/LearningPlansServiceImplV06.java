@@ -10,6 +10,7 @@
 package nd.esp.service.lifecycle.services.learningplans.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.LearningPlanModel;
 import nd.esp.service.lifecycle.services.learningplans.v06.LearningPlansServiceV06;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -35,6 +36,12 @@ public class LearningPlansServiceImplV06 implements LearningPlansServiceV06 {
     @Override
     public LearningPlanModel update(LearningPlanModel learningPlansModel) {
         return (LearningPlanModel)ndResourceService.update(ResourceNdCode.learningplans.toString(), learningPlansModel);
+    }
+
+    @Override
+    public LearningPlanModel patch(LearningPlanModel learningPlansModel) {
+        ndResourceService.patch(ResourceNdCode.learningplans.toString(), learningPlansModel);
+        return (LearningPlanModel)ndResourceService.getDetail(ResourceNdCode.learningplans.toString(), learningPlansModel.getIdentifier(), IncludesConstant.getIncludesList());
     }
 
 }

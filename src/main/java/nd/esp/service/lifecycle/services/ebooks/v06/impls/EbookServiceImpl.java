@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.ebooks.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
 import nd.esp.service.lifecycle.services.ebooks.v06.EbookService;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -27,6 +28,12 @@ public class EbookServiceImpl implements EbookService {
     @Override
     public EbookModel update(EbookModel ebookModel) {
         return (EbookModel) ndResourceService.update(ResourceNdCode.ebooks.toString(), ebookModel);
+    }
+
+    @Override
+    public EbookModel patch(EbookModel ebookModel) {
+        ndResourceService.patch(ResourceNdCode.ebooks.toString(), ebookModel);
+        return (EbookModel)ndResourceService.getDetail(ResourceNdCode.ebooks.toString(), ebookModel.getIdentifier(), IncludesConstant.getIncludesList());
     }
 
 }

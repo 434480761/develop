@@ -22,4 +22,7 @@ public interface TeachingMaterialServiceV06{
 	 * @return
 	 */
 	public TeachingMaterialModel updateTeachingMaterial(String resType,TeachingMaterialModel tmm);
+
+	TeachingMaterialModel patchTeachingMaterial(String resType,
+												TeachingMaterialModel tmm);
 }

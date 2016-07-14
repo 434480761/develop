@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewareobjects.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.ToolsServiceV06;
@@ -41,5 +42,9 @@ public class ToolsServiceImplV06 implements ToolsServiceV06 {
         return rtModel;
     }
 
-    
+    @Override
+    public CourseWareObjectModel patchTools(CourseWareObjectModel model) {
+        ndResourceService.patch(ResourceNdCode.tools.toString(), model);
+        return (CourseWareObjectModel)ndResourceService.getDetail(ResourceNdCode.tools.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
+    }
 }

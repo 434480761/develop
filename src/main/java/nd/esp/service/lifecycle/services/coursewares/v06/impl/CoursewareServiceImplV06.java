@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewares.v06.impl;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.courseware.v06.CoursewareModel;
 import nd.esp.service.lifecycle.services.coursewares.v06.CoursewareServiceV06;
 
@@ -26,5 +27,11 @@ public class CoursewareServiceImplV06 implements CoursewareServiceV06 {
 	@Override
 	public CoursewareModel updateCourseware(String resType,CoursewareModel cm) {
 		return (CoursewareModel)ndResourceService.update(resType, cm);
+	}
+
+	@Override
+	public CoursewareModel patchCourseware(String resType, CoursewareModel cm) {
+		ndResourceService.patch(resType, cm);
+		return (CoursewareModel)ndResourceService.getDetail(resType, cm.getIdentifier(), IncludesConstant.getIncludesList());
 	}
 }

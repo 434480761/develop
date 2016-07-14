@@ -21,4 +21,6 @@ public interface CoursewareServiceV06{
 	 * @return
 	 */
 	public CoursewareModel updateCourseware(String resType,CoursewareModel cm);
+
+	CoursewareModel patchCourseware(String resType, CoursewareModel cm);
 }

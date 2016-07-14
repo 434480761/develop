@@ -232,6 +232,10 @@ public class CommonHelper {
 		}
 		return true;
 	}
+
+	public static List<ResClassificationModel> map2List4Categories(Map<String, List<? extends ResClassificationViewModel>> map,String resourceId,ResourceNdCode rc){
+		return map2List4Categories(map, resourceId, rc, false);
+	}
 	
 	/**
 	 * 用于categories的model转换,map->list	
@@ -241,7 +245,7 @@ public class CommonHelper {
 	 * @param resourceId       资源的id
 	 * @return
 	 */
-	public static List<ResClassificationModel> map2List4Categories(Map<String, List<? extends ResClassificationViewModel>> map,String resourceId,ResourceNdCode rc){
+	public static List<ResClassificationModel> map2List4Categories(Map<String, List<? extends ResClassificationViewModel>> map,String resourceId,ResourceNdCode rc,boolean patchMode){
         List<ResClassificationModel> resultList = new ArrayList<ResClassificationModel>();
         //用于判断是否有资源类型的ND_CODE
         boolean defaultResCode = false;
@@ -267,10 +271,15 @@ public class CommonHelper {
                 for(ResClassificationViewModel rcvm : rcvmList){
                     if(!StringUtils.isEmpty(rcvm.getTaxonpath())){//taxonpath不为空
                     	resClassificationModel = new ResClassificationModel();
-                        resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						if(!patchMode) {
+							resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						} else {
+							resClassificationModel.setIdentifier(rcvm.getIdentifier());
+						}
                         resClassificationModel.setResourceId(resourceId);
                         resClassificationModel.setTaxonpath(rcvm.getTaxonpath());
                         resClassificationModel.setTaxoncode(Arrays.asList(rcvm.getTaxonpath().split("/")).get(index));
+						resClassificationModel.setOperation(rcvm.getOperation());
 
                         //如果taxonCode为空就不加入到resultList中
                         if(!StringUtils.isEmpty(Arrays.asList(rcvm.getTaxonpath().split("/")).get(index))){
@@ -278,9 +287,14 @@ public class CommonHelper {
                         }
                     }else if(StringUtils.hasText(rcvm.getTaxoncode())){
 						resClassificationModel = new ResClassificationModel();
-						resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						if(!patchMode) {
+							resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						} else {
+							resClassificationModel.setIdentifier(rcvm.getIdentifier());
+						}
 						resClassificationModel.setResourceId(resourceId);
 						resClassificationModel.setTaxoncode(rcvm.getTaxoncode());
+						resClassificationModel.setOperation(rcvm.getOperation());
 						resultList.add(resClassificationModel);
 					}
                 }
@@ -292,7 +306,11 @@ public class CommonHelper {
                     		categoryPattern = rcvm.getTaxonpath().split("/")[0];
                     	}
                         resClassificationModel = new ResClassificationModel();
-                        resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						if(!patchMode) {
+							resClassificationModel.setIdentifier(UUID.randomUUID().toString());
+						} else {
+							resClassificationModel.setIdentifier(rcvm.getIdentifier());
+						}
                         resClassificationModel.setResourceId(resourceId);
                         //因为此时taxonpath没有任何作用，还会造成taxoncode重复数据，所以将taxonpath置为null.  modify by xuzy  20150201
                         //resClassificationModel.setTaxonpath(null);
@@ -303,6 +321,7 @@ public class CommonHelper {
                         }
                         
                         resClassificationModel.setTaxoncode(rcvm.getTaxoncode());
+						resClassificationModel.setOperation(rcvm.getOperation());
                         resultList.add(resClassificationModel);
 
                         if (rcvm.getTaxoncode() != null && rcvm.getTaxoncode().equals(rc.getNdCode())) {
@@ -913,6 +932,11 @@ public class CommonHelper {
 	    return instanceInfo;
 	}
 
+
+	public static <T extends ResourceModel> T convertViewModelIn(ResourceViewModel viewModel,Class<T> t,ResourceNdCode rc){
+		return convertViewModelIn(viewModel, t, rc, false);
+	}
+
 	/**
 	 * 
 	 * V06入参数据转换viewModel-->model
@@ -922,7 +946,7 @@ public class CommonHelper {
 	 * @param t					model对应的class
 	 * @return
 	 */
-	public static <T extends ResourceModel> T convertViewModelIn(ResourceViewModel viewModel,Class<T> t,ResourceNdCode rc){
+	public static <T extends ResourceModel> T convertViewModelIn(ResourceViewModel viewModel,Class<T> t,ResourceNdCode rc, boolean patchMode){
 		T m = null;
 		if(viewModel==null){
             throw new NullPointerException("对象不能为空");
@@ -944,7 +968,7 @@ public class CommonHelper {
         }
         m = BeanMapperUtils.beanMapper(viewModel, t);
         if (viewModel.getCategories() != null) {
-            m.setCategoryList(map2List4Categories(viewModel.getCategories(), viewModel.getIdentifier(), rc));
+            m.setCategoryList(map2List4Categories(viewModel.getCategories(), viewModel.getIdentifier(), rc, patchMode));
         }
         if (viewModel.getTechInfo() != null) {
             m.setTechInfoList(map2List4TechInfo(viewModel.getTechInfo()));
