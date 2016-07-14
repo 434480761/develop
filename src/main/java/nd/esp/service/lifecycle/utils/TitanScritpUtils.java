@@ -153,7 +153,7 @@ public class TitanScritpUtils {
     }
 
     public static void getSetScriptAndParam(StringBuffer scriptBuffer,Map<String, Object> params,
-                                            String fieldName, List<String> values){
+                                            String fieldName, Set<String> values){
         if(values == null){
             return;
         }
