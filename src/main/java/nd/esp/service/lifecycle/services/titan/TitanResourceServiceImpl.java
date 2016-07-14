@@ -869,7 +869,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			try {
 				resourcePage = espRepository.findByItems(items, pageable);
 				if (resourcePage == null) {
-					return null;
+					return 0;
 				}
 				entitylist = resourcePage.getContent();
 				if (entitylist == null) {
@@ -891,7 +891,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				LOG.error(e.getMessage());
 			}
 			if(resourcePage == null){
-				return null;
+				return 0;
 			}
 			setStatisticParam(primaryCategory, resourcePage.getTotalPages(),page);
 
@@ -904,7 +904,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				return true;
 			}
 
-			return false;
+			return true;
 		}
 
 		private boolean isScheduleTime(){

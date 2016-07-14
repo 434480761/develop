@@ -170,7 +170,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         //TODO 更新操作需要返回ID进行判断更新的过程是否出现异常
         Long nodeId ;
         try {
-            nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
+            titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
         } catch (Exception e) {
             e.printStackTrace();
             //TODO titan sync
