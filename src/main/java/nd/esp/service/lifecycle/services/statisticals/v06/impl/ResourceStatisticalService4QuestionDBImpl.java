@@ -355,7 +355,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
             }else{
             	ResourceStatistical rs = new ResourceStatistical();
             	rs.setIdentifier(UUID.randomUUID().toString());
-            	rs.setDataFrom("NDR计算");
+            	rs.setDataFrom("TOTAL");
             	rs.setKeyTitle("top");
             	rs.setKeyValue(max+0.01);
             	rs.setResource(uuid);
