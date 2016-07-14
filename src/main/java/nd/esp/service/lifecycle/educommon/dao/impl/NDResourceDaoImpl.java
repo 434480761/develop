@@ -2655,8 +2655,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     + ")";
         }
         String categoryParamSql = "";
-        if(CollectionUtils.isNotEmpty(categories) || CollectionUtils.isNotEmpty(andCategories)){
-            categoryParamSql = categoryParam4Sql(categories,andCategories,"");
+        if(CollectionUtils.isNotEmpty(noAndcategories) || CollectionUtils.isNotEmpty(andCategories)){
+            categoryParamSql = categoryParam4Sql(noAndcategories,andCategories,"");
         }
         //关系where参数
         String relationParamSql = getRelationParamSql(resType, tmId, chapterIds);
