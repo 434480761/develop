@@ -679,8 +679,10 @@ public class NDResourceController {
 		   StringUtils.isEmpty(words) && 
 		   (CollectionUtils.isEmpty(orderMap) ||
 				   (CollectionUtils.isNotEmpty(orderMap) && 
-						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") 
-								   || orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))))){
+						   !(orderMap.containsKey("size") || orderMap.containsKey("key_value") ||
+								   orderMap.containsKey("top") || orderMap.containsKey("scores") ||
+								   orderMap.containsKey("votes") || orderMap.containsKey("views") ||
+								   orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))))){
 			
 			return true;
 		}

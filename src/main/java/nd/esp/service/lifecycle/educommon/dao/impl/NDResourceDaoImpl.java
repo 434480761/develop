@@ -158,6 +158,10 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean haveSumSort = false;
         boolean haveSortNum = false;
         boolean haveVipLevel = false;
+        boolean haveTopSort = false;
+        boolean haveScoreSort = false;
+        boolean haveVoteSort = false;
+        boolean haveViewSort = false;
         if(CollectionUtils.isNotEmpty(orderMap)){
             List<String> ordersql = new ArrayList<String>();
             
@@ -171,6 +175,26 @@ public class NDResourceDaoImpl implements NDResourceDao{
                 	if(!showVersion){
                 		haveSumSort = true;
                         ordersql.add("rs." + key + " " + orderMap.get(key));
+                	}
+                }else if(key.equals("top")){
+                	if(!showVersion){
+                		haveTopSort = true;
+                        ordersql.add("rs1.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("scores")){
+                	if(!showVersion){
+                		haveScoreSort = true;
+                		ordersql.add("rs2.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("votes")){
+                	if(!showVersion){
+                		haveVoteSort = true;
+                		ordersql.add("rs3.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("views")){
+                	if(!showVersion){
+                		haveViewSort = true;
+                		ordersql.add("rs4.key_value " + orderMap.get(key));
                 	}
                 }else if(key.equals("sort_num")){
                 	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
@@ -283,9 +307,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
         String sql = "";
         if(onlyOneType){//只查一种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
+                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveTopSort ? "(" : "") + (haveScoreSort ? "(" : "") + (haveVoteSort ? "(" : "") 
+                    + (haveViewSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type= '" + resTypes.get(0) + "' AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type='" + resTypes.get(0) + "' AND rs.key_title=:st AND rs.data_from=:sp) " : "")
+                    + (haveTopSort ? "LEFT JOIN resource_statisticals rs1 ON ndr.identifier=rs1.resource AND rs1.res_type='" + resTypes.get(0) + "' AND rs1.key_title='top') " : "")
+                    + (haveScoreSort ? "LEFT JOIN resource_statisticals rs2 ON ndr.identifier=rs2.resource AND rs2.res_type='" + resTypes.get(0) + "' AND rs2.key_title='scores') " : "")
+                    + (haveVoteSort ? "LEFT JOIN resource_statisticals rs3 ON ndr.identifier=rs3.resource AND rs3.res_type='" + resTypes.get(0) + "' AND rs3.key_title='votes') " : "")
+                    + (haveViewSort ? "LEFT JOIN resource_statisticals rs4 ON ndr.identifier=rs4.resource AND rs4.res_type='" + resTypes.get(0) + "' AND rs4.key_title='views') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type='" + resTypes.get(0) + "' AND rer.source_uuid='" 
                     + relations.get(0).get("suuid") + "' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category='" + resTypes.get(0) + "' AND rco.taxOnCode LIKE 'RL%')" : "")
@@ -295,9 +324,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     + " " + sqlOrderBy + " " ;
         }else{//查询多种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") + "ndresource ndr " 
+            		+ (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveTopSort ? "(" : "") + (haveScoreSort ? "(" : "") + (haveVoteSort ? "(" : "") 
+                    + (haveViewSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs.key_title=:st AND rs.data_from=:sp) " : "")
+                    + (haveTopSort ? "LEFT JOIN resource_statisticals rs1 ON ndr.identifier=rs1.resource AND rs1.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs1.key_title='top') " : "")
+                    + (haveScoreSort ? "LEFT JOIN resource_statisticals rs2 ON ndr.identifier=rs2.resource AND rs2.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs2.key_title='scores') " : "")
+                    + (haveVoteSort ? "LEFT JOIN resource_statisticals rs3 ON ndr.identifier=rs3.resource AND rs3.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs3.key_title='votes') " : "")
+                    + (haveViewSort ? "LEFT JOIN resource_statisticals rs4 ON ndr.identifier=rs4.resource AND rs4.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs4.key_title='views') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rer.source_uuid='"
                     + relations.get(0).get("suuid") +"' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category IN (" + StringUtils.join(resTypes, "','") + ") AND rco.taxOnCode LIKE 'RL%')" : "")
