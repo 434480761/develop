@@ -52,7 +52,7 @@ public class EsIndexQueryForTitanSearch {
         baseQuery.append(dealWithWords(this.words));
         baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
-        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};");
+        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};vertexList = ids.toArray();if (vertexList.size()==0){return};");
 
         return baseQuery.toString();
     }

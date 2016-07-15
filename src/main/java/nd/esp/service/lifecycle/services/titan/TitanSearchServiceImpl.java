@@ -309,6 +309,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             Map<String, Map<String, List<String>>> params,
             Map<String, String> orderMap, int from, int size, boolean reverse,
             String words) {
+        if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
+         return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
+
         System.out.println("params:" + params);
         System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
         System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
@@ -338,7 +341,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         params.remove(ES_SearchField.coverages.toString());
 
         //resourceQueryVertex.setWords(words);
-       // resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
+        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
         resourceVertexPropertyMap
                 .put(ES_SearchField.lc_enable.toString(),
                         generateFieldCondtion(
@@ -354,7 +357,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         EsIndexQueryForTitanSearch esIndexQueryForTitanSearch=new EsIndexQueryForTitanSearch();
         esIndexQueryForTitanSearch.setWords(words);
         String forIndexQuery=esIndexQueryForTitanSearch.generateScript();
-        scriptForResultAndCount=scriptForResultAndCount.replaceAll("g.V\\(\\)","g.V(ids.toArray())");
+        scriptForResultAndCount=scriptForResultAndCount.replaceAll("g.V\\(\\)","g.V(vertexList)");
 
         LOG.info("titan generate script consume times:"
                 + (System.currentTimeMillis() - generateScriptBegin));
