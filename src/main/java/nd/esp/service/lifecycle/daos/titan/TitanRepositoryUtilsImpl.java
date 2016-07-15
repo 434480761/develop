@@ -1,15 +1,23 @@
 package nd.esp.service.lifecycle.daos.titan;
 
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
+import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.EspEntity;
+import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TitanSync;
 import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
+import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +30,10 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
     private final static Logger LOG = LoggerFactory.getLogger(TitanRepositoryUtilsImpl.class);
     @Autowired
     private TitanSyncRepository titanSyncRepository;
+
+    @Autowired
+    private TitanCommonRepository titanCommonRepository;
+
     @Override
     public void titanSync4MysqlAdd(TitanSyncType errorType, String primaryCategory, String source) {
         TitanSync example = new TitanSync();
@@ -78,6 +90,16 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 1、特殊情况：关系的目标资源或源资源在mysql数据库中不存在，属于异常数据需要进行判断，当源资源和目标资源都存在的时候才把关系的对应数据都加入到mysql中
+     * */
+    @Override
+    public void titanSync4MysqlAdd(TitanSyncType errorType, ResourceRelation resourceRelation) {
+        if(checkEducationExistInTitan(resourceRelation.getResourceTargetType(), resourceRelation.getTarget())){
+            titanSync4MysqlAdd(errorType, resourceRelation.getResourceTargetType(), resourceRelation.getTarget());
+        }
+    }
+
     public void titanSync4MysqlDelete(TitanSyncType errorType, String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -105,6 +127,65 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             e.printStackTrace();
             LOG.error("titan数据同步,删除所有异常数据失败 primaryCategory：{}  source:{}",primaryCategory,source);
         }
+    }
 
+    @Override
+    public boolean checkRelationExistInMysql(ResourceRelation resourceRelation) {
+        if(checkEducationExistInMySql(resourceRelation.getResType(), resourceRelation.getSourceUuid())
+                && checkEducationExistInMySql(resourceRelation.getResourceTargetType(), resourceRelation.getTarget())){
+           return true;
+        }
+        return false;
+    }
+
+    private boolean checkEducationExistInMySql(String primaryCategory, String identifier){
+        String pc = primaryCategory;
+        if ("guidancebooks".equals(primaryCategory)) {
+            pc = "teachingmaterials";
+        }
+
+        EspRepository<?> espRepository = ServicesManager.get(pc);
+        List<Education> educations = null;
+        Education example = new Education();
+        example.setIdentifier(identifier);
+        example.setPrimaryCategory(primaryCategory);
+        try {
+            List<String> ids = new ArrayList<>();
+            ids.add(identifier);
+            //TODO 以后方法的改造可能对功能有影响
+            educations = (List<Education>) espRepository.getAll(ids);
+        } catch (EspStoreException e) {
+            e.printStackTrace();
+            //抛出异常默认资源存在
+            return true;
+        }
+        if(CollectionUtils.isNotEmpty(educations)){
+            for (Education education : educations){
+                if(primaryCategory.equals(education.getPrimaryCategory())){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 当且仅当ID>0的时候返回true
+     * */
+    private boolean checkEducationExistInTitan(String primaryCategory, String identifier){
+        Long id;
+        try {
+           id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if(id != null && id > 0){
+            return true;
+        }
+
+        return false;
     }
 }

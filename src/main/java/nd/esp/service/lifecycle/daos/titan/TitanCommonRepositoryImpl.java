@@ -155,7 +155,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return 0D;
+            return -1D;
         }
         Double id = null;
         try {
@@ -230,7 +230,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      */
     private Long submitUniqueLong(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return 0L;
+            return -1L;
         }
         Long id = null;
         try {

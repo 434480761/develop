@@ -12,7 +12,9 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
 
+    @Autowired
+    private TitanChapterRelationRepository titanChapterRelationRepository;
+
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -69,6 +74,10 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Override
     public boolean reportResource(String primaryCategory, String identifier) {
+        if(ResourceNdCode.fromString(primaryCategory)==null){
+            return true;
+        }
+
         delete(primaryCategory, identifier);
 
         EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
