@@ -362,7 +362,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         System.out.println(forIndexQuery+scriptForResultAndCount);
         System.out.println(scriptParamMap);
         long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
+        ResultSet resultSet = titanResourceRepository.search(forIndexQuery+scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
