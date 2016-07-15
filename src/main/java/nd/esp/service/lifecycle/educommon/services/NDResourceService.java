@@ -76,7 +76,7 @@ public interface NDResourceService {
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,
-            boolean forceStatus,boolean showVersion);
+            boolean forceStatus,List<String> tags,boolean showVersion);
     
     /**
      * 获取智能出题

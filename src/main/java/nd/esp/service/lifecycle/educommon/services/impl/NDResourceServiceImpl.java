@@ -92,7 +92,6 @@ import nd.esp.service.lifecycle.utils.JDomUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
-import nd.esp.service.lifecycle.vos.assets.v06.AssetViewModel;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResRepositoryConstant;
 
@@ -454,21 +453,22 @@ public class NDResourceServiceImpl implements NDResourceService{
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion) {
-        ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion) {
+    	
+    	ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         rListViewModel.setLimit(limit);
         
         //判断使用IN还是EXISTS
-        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,showVersion);
+        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,tags,showVersion);
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,showVersion);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -529,6 +529,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private String statisticsType;
         private String statisticsPlatform;
         private boolean forceStatus;
+        private List<String> tags;
         private boolean showVersion;
         
         //返回值
@@ -550,7 +551,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion){
+            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion){
             this.isCount = isCount;
             this.resType = resType;
             this.resCodes = resCodes;
@@ -571,15 +572,16 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.statisticsType = statisticsType;
             this.statisticsPlatform = statisticsPlatform;
             this.forceStatus = forceStatus;
+            this.tags = tags;
             this.showVersion = showVersion;
         }
         
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus,showVersion);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus,tags,showVersion);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,showVersion);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
             }
             
             return this;
