@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.controllers.instructionalobjectives.v06;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
@@ -20,11 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 教学目标V0.6API
@@ -118,5 +116,22 @@ public class InstructionalObjectiveControllerV06 {
         avm = CommonHelper.convertViewModelOut(am, InstructionalObjectiveViewModel.class);
         avm.setTechInfo(null); // 没有这个属性
         return avm;
+    }
+
+
+    /**
+     * 根据教学目标id查询出与之相关联的教材章节。
+     * 分两种情况：
+     * 1.教学目标与章节直接关联
+     * 2.教学目标与课时关联，课时与章节关联
+     * @param objectiveId
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping(value = "/business/{objective_id}/chapters/paths", method = RequestMethod.GET, consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public List<Map<String, Object>> getPaths(@PathVariable("objective_id") String objectiveId) {
+
+        List<Map<String, Object>> result = instructionalObjectiveService.getChapterRelationById(objectiveId);
+        return result;
     }
 }
