@@ -18,6 +18,11 @@ public interface TitanSearchService {
 			List<String> includes,
 			Map<String, Map<String, List<String>>> params,
 			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
+
+	public ListViewModel<ResourceModel> searchWithAdditionPropertiesUseES(String resType,
+																	 List<String> includes,
+																	 Map<String, Map<String, List<String>>> params,
+																	 Map<String, String> orderMap, int from, int size, boolean reverse,String words);
 	
 	public ListViewModel<ResourceModel> searchUseES(String resType,
 			List<String> includes,
