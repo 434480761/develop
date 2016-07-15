@@ -93,7 +93,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     }
 
     private boolean delete(String primaryCategory, String identifier){
-        LOG.info("titan sync : delete resource start");
+        LOG.info("titan sync : delete resource start primaryCategory：{}  identifier:{}",primaryCategory,identifier);
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
         LOG.info("titan sync : delete resource success");
@@ -104,11 +104,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
      *
      * */
     private boolean report(Education education){
-        LOG.info("titan sync : report resource start");
         if(education == null){
             return true;
         }
-
+        LOG.info("titan sync : report resource start primaryCategory：{}  identifier:{}",
+                education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
         Set<String> uuids = new HashSet<>();
