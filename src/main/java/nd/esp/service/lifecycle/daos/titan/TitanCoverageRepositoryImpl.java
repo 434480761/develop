@@ -144,10 +144,16 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		}
 
 		Iterator<Result> iterator = resultSet.iterator();
-		String result = "";
+		String result = null;
 		if (iterator.hasNext()) {
 			result = iterator.next().getString();
 		}
+
+		if(StringUtils.isEmpty(result)){
+			LOG.info("coverage delete error");
+			return false;
+		}
+
 		Map<String, String> valueMap = TitanResultParse.toMap(result);
 		String resourceIdentifier = valueMap.get("identifier");
 		String primaryCategory = valueMap.get("primary_category");

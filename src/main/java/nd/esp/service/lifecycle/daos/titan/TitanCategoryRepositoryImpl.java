@@ -105,6 +105,10 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				ResourceCategory rc = addResourceCategory(resourceCategory);
 				if(rc!=null){
 					list.add(rc);
+				} else {
+					LOG.info("Category处理出错");
+					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+							resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 				}
 				categorySet.add(resourceCategory.getTaxoncode());
 			}

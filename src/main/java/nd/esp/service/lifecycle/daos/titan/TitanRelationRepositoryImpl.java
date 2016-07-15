@@ -40,6 +40,8 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 			LOG.info("resourceRelation出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					resourceRelation.getResourceTargetType(),resourceRelation.getTarget());
 		}
 		return result;
 	}
@@ -59,6 +61,8 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 				LOG.info("resourceRelation出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+						resourceRelation.getResourceTargetType(),resourceRelation.getTarget());
 			}
 		}
 		return resourceRelationList;
@@ -75,6 +79,8 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 			LOG.info("resourceRelation出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+					resourceRelation.getResourceTargetType(),resourceRelation.getTarget());
 		}
 		return result;
 	}
@@ -93,6 +99,9 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 				LOG.info("resourceRelation出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+						resourceRelation.getResourceTargetType(),resourceRelation.getTarget());
 			}
 		}
 		return resourceRelationList;
