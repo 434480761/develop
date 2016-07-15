@@ -61,6 +61,7 @@ public class EsIndexQueryForTitanSearch {
     private String dealWithWords(String words) {
         if (words == null) return "";
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
+        words=words.replaceAll(","," ");
         StringBuffer query = new StringBuffer();
         for (WordsCover field : WordsCover.values()) {
             query.append("v.\\\"");
