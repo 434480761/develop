@@ -51,7 +51,13 @@ public class TitanResultParse {
         item.setTitle(fieldMap.get(ES_SearchField.title.toString()));
         item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
         item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
-        item.setCustomProperties(fieldMap.get(ES_SearchField.custom_properties.toString()));
+
+        String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
+        if (customProperties != null) {
+            if (customProperties.startsWith("{\"") && customProperties.endsWith("\"}")) {
+                item.setCustomProperties(customProperties);
+            }
+        }
         String preview = fieldMap.get(ES_SearchField.preview.toString());
         if (preview != null) {
             if (preview.startsWith("{\"") && preview.endsWith("\"}")) {
@@ -102,9 +108,13 @@ public class TitanResultParse {
         String description = tmpMap.get(ES_SearchField.edu_description.toString());
         if (description != null) {
             if (!"".equals(description.trim()) && !"null".equals(description.trim())) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> map = ObjectUtils.fromJson(description, Map.class);
-                edu.setDescription(map);
+
+                if (description.startsWith("{\"") && description.endsWith("\"}")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> map = ObjectUtils.fromJson(description, Map.class);
+                    edu.setDescription(map);
+                }
+
             }
         }
 
@@ -231,9 +241,9 @@ public class TitanResultParse {
 
     public static Map<String, String> toMapForSearchES(String str) {
         Map<String, String> tmpMap = new HashMap<>();
-        str = str.replaceAll("==>", "").replaceAll("vp\\[","");
-        str = str.substring(1,str.length()-2);
-        String[] fields=str.split("], ");
+        str = str.replaceAll("==>", "").replaceAll("vp\\[", "");
+        str = str.substring(1, str.length() - 2);
+        String[] fields = str.split("], ");
 
         for (String s : fields) {
             String[] kv = s.split("->");

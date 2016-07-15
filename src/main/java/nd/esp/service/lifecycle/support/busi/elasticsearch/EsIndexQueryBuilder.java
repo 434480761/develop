@@ -42,9 +42,11 @@ public class EsIndexQueryBuilder {
     private String index="mixed_ndresource";
     private String words;
     private Map<String, Map<String, List<String>>> params;
+    private int from;
+    private int end;
     private String limit=".limit(10)";
-    public static final String SCRIPT=" List<Object> resultList= new ArrayList<Object>();while(RESULT.hasNext()) {resultList<<(RESULT.next().properties().toList())};resultList << 'COUNT:'+COUNT;resultList";
-
+    public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>()";
+    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'COUNT:' + count;resultList";
     public void setIndex(String index) {
         this.index = index;
     }
@@ -57,23 +59,35 @@ public class EsIndexQueryBuilder {
         this.params = params;
     }
 
+    public void setRange(int from, int size) {
+        this.from = from;
+        this.end = size + from;
+    }
+
     public void setLimit(String limit) {
         this.limit = ".limit(" + limit + ")";
     }
 
-
+    /**
+     * :> List<String> ids = new ArrayList<String>();
+     * graph.indexQuery("mixed_ndresource","v.\"search_coverage_string\":(Org/nd/* ) ").vertices().collect{ids.add(it.getElement().id())};
+     * results=g.V(ids.toArray()).range(0,10).valueMap();
+     * List<Object> resultList = results.toList();
+     * count =ids.size();resultList << 'COUNT:'+count;
+     * resultList
+     * @return
+     */
     public String generateScript() {
         StringBuffer query=new StringBuffer();
-        StringBuffer count=new StringBuffer();
-        StringBuffer result=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
         baseQuery.append(dealWithWords(this.words));
-        baseQuery.append(dealWithParams(this.params));
+        //baseQuery.append(dealWithParams(this.params));
         baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
-        count.append("COUNT = ").append(baseQuery).append(".vertices()*.getElement()").append(".size();");
-        result.append("RESULT = ").append(baseQuery).append(this.limit).append(".vertices()*.getElement()").append(".iterator();");
-        query.append(count).append(result).append(SCRIPT);
+        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};");
+        baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(").valueMap();");
+
+        query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
 
         return query.toString();
     }
@@ -125,11 +139,10 @@ public class EsIndexQueryBuilder {
                     if (code.contains("/")) {
                         code = code.replace("/", "\\\\/");
                     }
-                    if (TitanKeyWords.search_path_string.toString().equals(property)) {
+                    /*if (TitanKeyWords.search_path_string.toString().equals(property)) {
                         code = "'" + code.trim() + "'";
-                    }
+                    }*/
 
-                    // FIXME $ 需要转义
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (code.contains(PropOperationConstant.OP_AND)) {
                             code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
