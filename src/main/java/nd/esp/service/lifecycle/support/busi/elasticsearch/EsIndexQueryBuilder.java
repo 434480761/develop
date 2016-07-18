@@ -42,10 +42,10 @@ public class EsIndexQueryBuilder {
     private String index="mixed_ndresource";
     private String words;
     private Map<String, Map<String, List<String>>> params;
-    private int from;
-    private int end;
+    private int from = 0;
+    private int end = 10;
     private String limit=".limit(10)";
-    public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>()";
+    public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'COUNT:' + count;resultList";
     public void setIndex(String index) {
         this.index = index;
@@ -81,11 +81,13 @@ public class EsIndexQueryBuilder {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
         baseQuery.append(dealWithWords(this.words));
-        //baseQuery.append(dealWithParams(this.params));
+        baseQuery.append(dealWithParams(this.params));
         baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};");
-        baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(").valueMap();");
+        baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
+        baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
+        //baseQuery.append(".valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
 
@@ -139,18 +141,24 @@ public class EsIndexQueryBuilder {
                     if (code.contains("/")) {
                         code = code.replace("/", "\\\\/");
                     }
+                    code = code.toLowerCase();
                     /*if (TitanKeyWords.search_path_string.toString().equals(property)) {
                         code = "'" + code.trim() + "'";
                     }*/
 
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (code.contains(PropOperationConstant.OP_AND)) {
-                            code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
+                            String[] strs=code.split(PropOperationConstant.OP_AND);
+                            code = "(*" + strs[0].trim() + "*" + " AND " + "*" + strs[1].trim() + "*)";
+                            //code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
+
+                        }else{
+                            code = "*" + code.trim() + "*";
                         }
-                        queryCondition.append(code.trim()).append(" ");
+                        queryCondition.append(code).append(" ");
 
                     } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append(code.trim()).append(" ");
+                        queryCondition.append("-").append("*").append(code.trim()).append("*").append(" ");
                     }
                 }
             }
