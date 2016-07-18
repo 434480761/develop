@@ -432,7 +432,6 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam String limit) {
-        // FIXME 暂时先共用一个参数 (by lsm)
         return requestQuering(resType, resCodes, includes, categories,
                 categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.TITAN, !isAll,
                 reverse,printable, printableKey,null,null,false,null,false);
