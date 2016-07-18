@@ -84,7 +84,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(dealWithParams(this.params));
         baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
-        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};");
+        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
         baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
         //baseQuery.append(".valueMap();");
@@ -98,16 +98,27 @@ public class EsIndexQueryBuilder {
     private String dealWithWords(String words) {
         if (words == null) return "";
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
+        if(words.contains(",")) words=words.replaceAll(","," ");
         StringBuffer query = new StringBuffer();
-        for (WordsCover field : WordsCover.values()) {
+        WordsCover[] covers=WordsCover.values();
+        int coversLength=covers.length;
+        for (int i = 0; i < coversLength; i++) {
+            query.append("v.\\\"");
+            query.append(covers[i]);
+            query.append("\\\":(");
+            query.append(words.replaceAll(",", ""));
+            query.append(")");
+            if (i != coversLength - 1) query.append(" OR ");
+        }
+      /*  for (WordsCover field : WordsCover.values()) {
             query.append("v.\\\"");
             query.append(field);
             query.append("\\\":(");
             query.append(words.replaceAll(",", ""));
             query.append(") ");
-        }
+        }*/
 
-        return query.toString();
+        return "("+query.toString()+")";
     }
 
     private String dealWithParams(Map<String, Map<String, List<String>>> params) {
@@ -118,7 +129,17 @@ public class EsIndexQueryBuilder {
         String pathStr = dealWithSingleParam(TitanKeyWords.search_path_string.toString(), searchPathString);
         Map<String, List<String>> searchCoverageString = params.get(ES_SearchField.coverages.toString());
         String coverageStr = dealWithSingleParam(TitanKeyWords.search_coverage_string.toString(), searchCoverageString);
-        query.append(codeStr).append(pathStr).append(coverageStr);
+
+        if(!"".equals(codeStr)){
+            query.append(" AND ").append(codeStr);
+        }
+        if(!"".equals(pathStr)){
+            query.append("AND ").append(pathStr);
+        }
+        if(!"".equals(coverageStr)){
+            query.append("AND ").append(coverageStr);
+        }
+        //query.append(codeStr).append(pathStr).append(coverageStr);
         return query.toString();
     }
 
