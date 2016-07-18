@@ -7,6 +7,7 @@ import java.util.Set;
 import com.nd.gaea.rest.security.authens.UserInfo;
 
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.models.AccessModel;
@@ -83,7 +84,7 @@ public interface NDResourceService {
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,
-            boolean forceStatus,boolean showVersion);
+            boolean forceStatus,List<String> tags,boolean showVersion);
     
     /**
      * 获取智能出题
@@ -296,4 +297,20 @@ public interface NDResourceService {
      * @return
      */
     public Map<String, Object> versionRelease(String resType,String uuid,Map<String,String> paramMap);
+    
+    /**
+     * 统计教材章节下的资源数量
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param tmId
+     * @param chapterIds
+     * @param coverages
+     * @param categories
+     * @param isAll
+     * @return
+     */
+    public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+    		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
+    		Set<String> categories,boolean isAll);
 }

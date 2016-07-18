@@ -204,6 +204,21 @@ public class ResourceStatisticalController {
 
         return svmMap;
     }
+    
+    /**
+     * 资源置顶/取消置顶
+     * @param resType	资源类型
+     * @param uuid		资源id
+     * @param effect	是否置顶
+     */
+    @RequestMapping(value = "/{uuid}/top", method = RequestMethod.PUT, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public void resourceTop(@PathVariable("res_type") String resType,@PathVariable("uuid") String uuid,@RequestParam(value="effect",required=false) boolean effect){
+    	if(CommonServiceHelper.isQuestionDb(resType)){
+    		statisticalService4QuestionDB.resourceTop(resType, uuid, effect);
+    	}else{
+    		statisticalService.resourceTop(resType, uuid, effect);
+    	}
+    }
 
     /**
      * 验证

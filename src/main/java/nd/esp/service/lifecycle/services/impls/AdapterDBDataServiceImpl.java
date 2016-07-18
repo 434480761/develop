@@ -1092,11 +1092,8 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 		
 		//1.查询语句
 		String queryUrl = lcDomain + "/assets/management/actions/query?";
-		queryUrl += "words&coverage=Org/nd/&category=$RA0101,$RA0102,$RA0103,$RA0104";
-		queryUrl += "&prop=provider eq 中央电教馆&prop=provider eq 中央电化教育馆";
+		queryUrl += "words&coverage=Org/nd/&category=$RA0106";
 		queryUrl += "&include=TI,CG,LC,EDU,CR";
-		queryUrl += "&prop=status eq AUDITED";
-		queryUrl += "&prop=create_time ge 2016-01-01 00:00:00";
 		
 		//分页参数
 		int offset = 0;
@@ -1112,17 +1109,42 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 				// 循环修改
 				List<Map<String, Object>> avmList = list.getItems();
 				for (Map<String, Object> avm : avmList) {
-					if(avm != null && avm.containsKey("life_cycle")){
-						Map<String , Object> lc = (Map<String, Object>)avm.get("life_cycle");
-						if(CollectionUtils.isNotEmpty(lc)){
-							lc.put("status", LifecycleStatus.ONLINE.getCode());
-
-							String updateUrl = lcDomain + "/assets/" + avm.get("identifier");
-							
-							HttpHeaders httpHeaders = new HttpHeaders();
-							httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-							HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(avm, httpHeaders);
-							wafSecurityHttpClient.executeForObject(updateUrl, HttpMethod.PUT, entity, Map.class);
+					if(avm != null && avm.containsKey("categories")){
+						Map<String , Object> categories = (Map<String, Object>)avm.get("categories");
+						if(CollectionUtils.isNotEmpty(categories) && categories.containsKey("resources_category")){
+							List<Map<String , Object>> resourcesCategory = (List<Map<String , Object>>)categories.get("resources_category");
+							if(CollectionUtils.isNotEmpty(resourcesCategory)){
+								Set<String> ukTags = new HashSet<String>();
+								for(Map<String, Object> codeMap : resourcesCategory){
+									if(CollectionUtils.isNotEmpty(codeMap) && codeMap.containsKey("taxonname")){
+										ukTags.add((String)codeMap.get("taxonname"));
+									}
+								}
+								
+								if(CollectionUtils.isEmpty(ukTags)){
+									continue;
+								}
+								
+								//获取原先的tags
+								List<String> oldTags = (List<String>)avm.get("tags");
+								if(CollectionUtils.isNotEmpty(oldTags)){
+									ukTags.addAll(oldTags);
+								}
+								avm.put("tags", ukTags);
+								
+								//更新
+								String updateUrl = lcDomain + "/assets/" + avm.get("identifier");
+								HttpHeaders httpHeaders = new HttpHeaders();
+								httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+								HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(avm, httpHeaders);
+								try {
+									wafSecurityHttpClient.executeForObject(updateUrl, HttpMethod.PUT, entity, Map.class);
+								} catch (Exception e) {
+									LOG.error(avm.get("identifier") + "--更新出错", e.getMessage());
+									LOG.error("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+									continue;
+								}
+							}
 						}
 					}
 				}
