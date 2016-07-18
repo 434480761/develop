@@ -97,9 +97,11 @@ public class EsIndexQueryBuilder {
         String[] keywords=words.split(",");
         StringBuffer wordScript=new StringBuffer();
         for(String keyword:keywords){
-            if(keyword.contains("and")){
-                keyword=keyword.replaceAll("and","AND");
-                keyword="("+keyword+")";
+            if (keyword.contains("and")) {
+                keyword = keyword.replaceAll(" and ", " AND ");
+                keyword = "(" + keyword.trim() + ")";
+            } else if (keyword.contains(" AND ")) {
+                keyword = "(" + keyword.trim() + ")";
             }
             wordScript.append(keyword).append(" ");
         }
