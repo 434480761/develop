@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
@@ -13,10 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.CollationElementIterator;
+import java.util.*;
 
 @Repository
 public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
@@ -55,14 +54,16 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 		}
 
-
+		if(rc == null){
+			return null;
+		}
 		//更新资源的冗余数据search_path\search_code
-		List<String> category = new ArrayList<>();
+		Set<String> category = new HashSet<>();
 		category.add(rc.getTaxoncode());
-		List<String> pathList = new ArrayList<>();
-		pathList.add(rc.getTaxonpath());
+		Set<String> pathSet = new HashSet<>();
+		pathSet.add(rc.getTaxonpath());
 
-		updateResourceProperty(pathList,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
+		updateResourceProperty(pathSet,category ,resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
 		return  rc;
 	}
 
@@ -75,8 +76,8 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	@Override
 	public List<ResourceCategory> batchAdd(
 			List<ResourceCategory> resourceCategories) {
-		if(resourceCategories == null || resourceCategories.size() == 0){
-			return null;
+		if(CollectionUtils.isEmpty(resourceCategories)){
+			return new ArrayList<>();
 		}
 
 		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<String, List<ResourceCategory>>();
@@ -97,17 +98,21 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 			//批量保存PATH
 			List<String> pathList = batchAddPath(entryValueCategories);
-
+			Set<String> pathSet = new HashSet<>(pathList);
 			//批量保存维度数据
-			List<String> categoryList = new ArrayList<>();
+			Set<String> categorySet = new HashSet<>();
 			for (ResourceCategory resourceCategory : entryValueCategories) {
 				ResourceCategory rc = addResourceCategory(resourceCategory);
 				if(rc!=null){
 					list.add(rc);
+				} else {
+					LOG.info("Category处理出错");
+					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+							resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 				}
-				categoryList.add(resourceCategory.getTaxoncode());
+				categorySet.add(resourceCategory.getTaxoncode());
 			}
-			updateResourceProperty(pathList, categoryList, category.getPrimaryCategory() ,category.getResource());
+			updateResourceProperty(pathSet, categorySet, category.getPrimaryCategory() ,category.getResource());
 		}
 		return list;
 	}
@@ -320,14 +325,26 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return taxoncodeId;
 	}
 
-	private void updateResourceProperty(List<String> pathList , List<String> codeList , String primaryCategory, String identifier){
+	private void updateResourceProperty(Set<String> pathSet , Set<String> codeSet , String primaryCategory, String identifier){
 		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
 		Map<String, Object> param = new HashMap<>();
 		param.put("primaryCategory" ,primaryCategory);
 		param.put("identifier" ,identifier);
-		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeList);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_code",codeSet);
 
-		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathList);
+		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathSet);
+
+		if(CollectionUtils.isNotEmpty(pathSet)){
+			String searchPathString = StringUtils.join(pathSet, ",").toLowerCase();
+			script.append(".property('search_path_string',searchPathString)");
+			param.put("searchPathString", searchPathString);
+
+		}
+		if(CollectionUtils.isNotEmpty(codeSet)){
+			String searchCodeString = StringUtils.join(codeSet, ",").toLowerCase();
+			script.append(".property('search_code_string',searchCodeString)");
+			param.put("searchCodeString", searchCodeString);
+		}
 		try {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {

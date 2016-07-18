@@ -12,6 +12,8 @@ import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.Result;
@@ -58,7 +60,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 					resCoverage.getResType(),resCoverage.getResource());
 		}
 		// 添加冗余数据
-		addResourceCoverage(resCoverage);
+		updateResourceCoverage(resCoverage.getResType(), resCoverage.getResource());
 
 		return resCoverage;
 	}
@@ -68,6 +70,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	 * */
 	@Override
 	public List<ResCoverage> batchAdd(List<ResCoverage> resCoverages) {
+		if(CollectionUtils.isEmpty(resCoverages)){
+			return new ArrayList<>();
+		}
 		List<ResCoverage> list = new ArrayList<>();
 		Map<String, String> sourceMap = new HashMap<>();
 		for (ResCoverage resCoverage : resCoverages) {
@@ -103,6 +108,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	 * */
 	@Override
 	public List<ResCoverage> batchUpdate(List<ResCoverage> resCoverageSet) {
+		if(CollectionUtils.isEmpty(resCoverageSet)){
+			return new ArrayList<>();
+		}
 		Map<String, String> sourceMap = new HashMap<>();
 		for (ResCoverage resCoverage : resCoverageSet) {
 			updateCoverage(resCoverage);
@@ -136,10 +144,16 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		}
 
 		Iterator<Result> iterator = resultSet.iterator();
-		String result = "";
+		String result = null;
 		if (iterator.hasNext()) {
 			result = iterator.next().getString();
 		}
+
+		if(StringUtils.isEmpty(result)){
+			LOG.info("coverage delete error");
+			return false;
+		}
+
 		Map<String, String> valueMap = TitanResultParse.toMap(result);
 		String resourceIdentifier = valueMap.get("identifier");
 		String primaryCategory = valueMap.get("primary_category");
@@ -172,15 +186,6 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return false;
 	}
 
-	@Override
-	public long countCoverage() {
-		return 0;
-	}
-
-	@Override
-	public long countCover() {
-		return 0;
-	}
 	
 	private Long getCoverageNodeId(ResCoverage resCoverage) {
 
@@ -294,11 +299,14 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		if (education == null) {
 			return;
 		}
-		List<String> searchCoverages = new ArrayList<>();
+		Set<String> searchCoverages = new HashSet<>();
 		Set<String> uuids = new HashSet<>();
 		uuids.add(identifier);
 		List<ResCoverage> resCoverageList = coverageDao
 				.queryCoverageByResource(primaryCategory, uuids);
+		if(CollectionUtils.isEmpty(resCoverageList)){
+			return;
+		}
 		for (ResCoverage resCoverage : resCoverageList) {
 			searchCoverages.addAll(getAllResourceCoverage(resCoverage,
 					education.getStatus()));
@@ -320,6 +328,10 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		TitanScritpUtils.getSetScriptAndParam(addScript, param,
 				"search_coverage", searchCoverages);
 
+		String searchCoverageString = StringUtils.join(searchCoverages,",").toLowerCase();
+		addScript.append(".property('search_coverage_string',searchCoverageString)");
+		param.put("searchCoverageString", searchCoverageString);
+
 		try {
 			titanCommonRepository.executeScript(addScript.toString(), param);
 		} catch (Exception e) {
@@ -329,39 +341,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 	}
 
-	private void addResourceCoverage(ResCoverage resCoverage) {
-
-		if (resCoverage == null) {
-			return;
-		}
-
-		Education education = getEducation(resCoverage.getResType(),
-				resCoverage.getResource());
-		if (education == null) {
-			return;
-		}
-		List<String> searchCoverages = getAllResourceCoverage(resCoverage,
-				education.getStatus());
-
-		StringBuffer addScript = new StringBuffer(
-				"g.V().has(primaryCategory,'identifier',identifier)");
-		Map<String, Object> param = new HashMap<>();
-		param.put("primaryCategory", resCoverage.getResType());
-		param.put("identifier", resCoverage.getResource());
-		TitanScritpUtils.getSetScriptAndParam(addScript, param,
-				"search_coverage", searchCoverages);
-
-		try {
-			titanCommonRepository.executeScript(addScript.toString(), param);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private List<String> getAllResourceCoverage(ResCoverage resCoverage,
+	private Set<String> getAllResourceCoverage(ResCoverage resCoverage,
 			String status) {
-		List<String> searchCoverages = new ArrayList<>();
+		Set<String> searchCoverages = new HashSet<>();
 		String value1 = resCoverage.getTargetType() + "/"
 				+ resCoverage.getTarget() + "/" + resCoverage.getStrategy()
 				+ "/" + status;
@@ -397,5 +379,4 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 		return education;
 	}
-
 }

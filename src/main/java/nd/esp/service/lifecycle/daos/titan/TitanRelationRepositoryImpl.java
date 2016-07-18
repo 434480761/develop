@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.slf4j.Logger;
@@ -36,9 +37,12 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 		ResourceRelation result = addRelation(resourceRelation);
 		if(result == null){
-			LOG.info("resourceRelation出错");
-			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
+				LOG.info("resourceRelation出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
+			} else {
+				return resourceRelation;
+			}
 		}
 		return result;
 	}
@@ -46,15 +50,21 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 	@Override
 	public List<ResourceRelation> batchAdd(
 			List<ResourceRelation> resourceRelations) {
+		if(CollectionUtils.isEmpty(resourceRelations)){
+			return new ArrayList<>();
+		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : resourceRelations) {
 			ResourceRelation rr = addRelation(resourceRelation);
 			if(rr != null){
 				resourceRelationList.add(rr);
 			} else {
-				LOG.info("resourceRelation出错");
-				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+				if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
+					LOG.info("resourceRelation出错");
+					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
+				} else {
+					resourceRelationList.add(resourceRelation);
+				}
 			}
 		}
 		return resourceRelationList;
@@ -68,24 +78,33 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 
 		ResourceRelation result = updateRelation(resourceRelation);
 		if(result == null){
-			LOG.info("resourceRelation出错");
-			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-					resourceRelation.getResType(),resourceRelation.getSourceUuid());
+			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
+				LOG.info("resourceRelation出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
+			} else {
+				return resourceRelation;
+			}
 		}
 		return result;
 	}
 
 	@Override
 	public List<ResourceRelation> batchUpdate(List<ResourceRelation> entityList) {
+		if(CollectionUtils.isEmpty(entityList)){
+			return new ArrayList<>();
+		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : entityList){
 			ResourceRelation result = updateRelation(resourceRelation);
 			if(result != null){
 				resourceRelationList.add(result);
 			} else {
-				LOG.info("resourceRelation出错");
-				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
-						resourceRelation.getResType(),resourceRelation.getSourceUuid());
+				if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
+					LOG.info("resourceRelation出错");
+					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
+				} else {
+					resourceRelationList.add(resourceRelation);
+				}
 			}
 		}
 		return resourceRelationList;

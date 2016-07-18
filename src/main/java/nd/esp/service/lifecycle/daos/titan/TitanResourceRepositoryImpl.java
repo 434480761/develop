@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -91,10 +92,6 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         return null;
     }
 
-    @Override
-    public long count(String primaryCategory) {
-        return 0;
-    }
 
     @Override
     public Vertex get(String primaryCategory, String identifier) {
@@ -148,8 +145,6 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
                 //TODO titan sync
                 return null;
             }
-            
-            updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
         }
 
         return model;
@@ -169,19 +164,16 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             return null;
         }
 
-        StringBuffer scriptBuffer = new StringBuffer("g.V(" + id + ")");
+        StringBuffer scriptBuffer = new StringBuffer("v=g.V(" + id + ")");
         Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
                 model);
-        scriptBuffer.append(";g.V(" + id + ").id()");
+        //TODO 更新操作需要返回ID进行判断更新的过程是否出现异常
         Long nodeId ;
         try {
-            nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
+            titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
         } catch (Exception e) {
             e.printStackTrace();
             //TODO titan sync
-            return null;
-        }
-        if(nodeId == null){
             return null;
         }
         updateResourceCoverage(model.getPrimaryCategory(), model.getIdentifier(), model.getStatus());
@@ -191,7 +183,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
     private void updateResourceCoverage(String primaryCategory, String identifier, String status){
 
-        List<String> searchCoverages = new ArrayList<>();
+        Set<String> searchCoverages = new HashSet<>();
         Set<String> uuids = new HashSet<>();
         uuids.add(identifier);
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
@@ -213,6 +205,11 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
         script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
         TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);
+
+        String searchCoverageString = StringUtils.join(searchCoverages,",").toLowerCase();
+        script.append(".property('search_coverage_string',searchCoverageString)");
+        param.put("searchCoverageString", searchCoverageString);
+
         try {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {

@@ -14,6 +14,8 @@ import nd.esp.service.lifecycle.models.v06.EbookModel;
 import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
 import nd.esp.service.lifecycle.support.busi.titan.TitanDirection;
 import nd.esp.service.lifecycle.support.busi.titan.TitanEdgeExpression;
 import nd.esp.service.lifecycle.support.busi.titan.TitanExpression;
@@ -264,6 +266,157 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return viewModels;
 
     }
+
+
+    @Override
+    public ListViewModel<ResourceModel> searchUseES(String resType,
+                                               List<String> includes,
+                                               Map<String, Map<String, List<String>>> params,
+                                               Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
+
+        EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
+        builder.setWords(words);
+        builder.setParams(params);
+        builder.setRange(from,size);
+        String script=builder.generateScript();
+        LOG.info("script:"+script);
+
+        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
+        List<ResourceModel> items = new ArrayList<ResourceModel>();
+        ResultSet resultSet = titanResourceRepository.search(script, null);
+        Iterator<Result> iterator = resultSet.iterator();
+        while (iterator.hasNext()) {
+            String resource=iterator.next().getString();
+            LOG.info(resource);
+            if(resource.contains("COUNT:")){
+                viewModels.setTotal(Long.parseLong(resource.split(":")[1]));
+                continue;
+            }
+            ResourceModel item=new ResourceModel();
+            TitanResultParse.dealMainResult(item,TitanResultParse.toMapForSearchES(resource));
+            //List<ResClassificationModel> categoryList = new ArrayList<>();
+            //categoryList.add(TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(resource)));
+            //item.setCategoryList(categoryList);
+            items.add(item);
+        }
+        viewModels.setItems(items);
+        return viewModels;
+    }
+
+    @Override
+    public ListViewModel<ResourceModel> searchWithAdditionPropertiesUseES(
+            String resType, List<String> includes,
+            Map<String, Map<String, List<String>>> params,
+            Map<String, String> orderMap, int from, int size, boolean reverse,
+            String words) {
+        if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
+         return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
+
+        System.out.println("params:" + params);
+        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
+        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        long generateScriptBegin = System.currentTimeMillis();
+        TitanExpression titanExpression = new TitanExpression();
+
+        Map<String, Object> scriptParamMap = new HashMap<String, Object>();
+
+        dealWithOrderAndRange(titanExpression, orderMap, from, size);
+
+        TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+
+        Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
+        resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
+        // for now only deal with code
+        dealWithSearchCode(resourceQueryVertex,
+                params.get(ES_SearchField.cg_taxoncode.toString()));
+        params.remove(ES_SearchField.cg_taxoncode.toString());
+
+        dealWithSearchPath(resourceQueryVertex,
+                params.get(ES_SearchField.cg_taxonpath.toString()));
+        params.remove(ES_SearchField.cg_taxonpath.toString());
+
+        dealWithSearchCoverage(resourceVertexPropertyMap,
+                params.get(ES_SearchField.coverages.toString()));
+        params.remove(ES_SearchField.coverages.toString());
+
+        //resourceQueryVertex.setWords(words);
+        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
+        resourceVertexPropertyMap
+                .put(ES_SearchField.lc_enable.toString(),
+                        generateFieldCondtion(
+                                ES_SearchField.lc_enable.toString(), true));
+        dealWithResource(resourceQueryVertex, params);
+        titanExpression.addCondition(resourceQueryVertex);
+
+        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
+        List<ResourceModel> items = new ArrayList<ResourceModel>();
+
+        // for count and result
+        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
+        EsIndexQueryForTitanSearch esIndexQueryForTitanSearch=new EsIndexQueryForTitanSearch();
+        esIndexQueryForTitanSearch.setWords(words);
+        String forIndexQuery=esIndexQueryForTitanSearch.generateScript();
+        scriptForResultAndCount=scriptForResultAndCount.replaceAll("g.V\\(\\)","g.V(vertexList)");
+
+        LOG.info("titan generate script consume times:"
+                + (System.currentTimeMillis() - generateScriptBegin));
+
+        System.out.println(forIndexQuery+scriptForResultAndCount);
+        System.out.println(scriptParamMap);
+        long searchBegin = System.currentTimeMillis();
+        ResultSet resultSet = titanResourceRepository.search(forIndexQuery+scriptForResultAndCount, scriptParamMap);
+        LOG.info("titan search consume times:"
+                + (System.currentTimeMillis() - searchBegin));
+
+        List<String> resultStr = new ArrayList<>();
+        long getResultBegin = System.currentTimeMillis();
+        Iterator<Result> iterator = resultSet.iterator();
+        while (iterator.hasNext()) {
+            resultStr.add(iterator.next().getString());
+        }
+        //System.out.println(resultStr);
+        LOG.info("get resultset consume times:"
+                + (System.currentTimeMillis() - getResultBegin));
+
+        long parseBegin = System.currentTimeMillis();
+        List<String> otherLines = new ArrayList<>();
+        String taxOnPath = null;
+        String mainResult = null;
+        int count = 0;
+        for (String line : resultStr) {
+            if (count > 0
+                    && (line.contains(ES_SearchField.lc_create_time.toString()) || line
+                    .startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
+                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
+                otherLines.clear();
+                taxOnPath = null;
+            }
+
+            if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
+                line = line.split("=")[1];
+                int length = line.length();
+                if (length > 2) {
+                    taxOnPath = line.substring(1, length - 2);
+                }
+            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
+                mainResult = line;
+            } else {
+                otherLines.add(line);
+            }
+            count++;
+        }
+        LOG.info("parse consume times:"
+                + (System.currentTimeMillis() - parseBegin));
+
+        viewModels.setItems(items);
+        return viewModels;
+
+    }
+
+
 
     private void dealWithSearchCoverage(
             Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
@@ -1028,7 +1181,19 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         resourceQueryVertex.getPropertiesMap().put("22222", c);
         System.out.println(resourceQueryVertex);*/
 
-        System.out.println(CollectionUtils.isNotEmpty(new ArrayList<>()));
+        //System.out.println(CollectionUtils.isNotEmpty(new ArrayList<>()));
+        /*String str="[vp[identifier->2a22f833-0102-4faa-8], vp[primary_category->assets], vp[lc_enable->false], vp[search_code->$E026000], vp[search_code->$E026002], vp[search_code->$F050003], vp[search_code->$ON020000], vp[search_code->$ON020100], vp[search_code->$RA0100], vp[search_code->$RA0101], vp[search_code->$SB0100], vp[search_path->K12/$ON020000/$ON020], vp[search_coverage->Org/nd//REMOVED], vp[search_coverage->Org/nd/OWNER/REMOVED], vp[search_coverage->Org/nd/OWNER/], vp[search_coverage->Org/nd//], vp[description->多媒体,图片\n" +
+                "学科,语文], vp[title->怎样读诗 古代诗人], vp[lc_create_time->1450064769679], vp[lc_last_update->1450064830605], vp[tags->[\"怎样读诗 古代诗人\"]], vp[keywords->[\"怎样读诗 古代诗人\"]], vp[language->zh_CN], vp[lc_provider_source->测试], vp[lc_version->V0.1.0.2825], vp[lc_status->REMOVED], vp[lc_creator->2107163931], vp[lc_provider->测试], vp[lc_publisher->NetDragon], vp[cr_right->NetDragon], vp[cr_description->多媒体,图片\n" +
+                "学科,语文], vp[cr_author->测试]]";
+        TitanResultParse.toMapForSearchES(str);*/
+
+        String test="TOTALCOUNT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).inV().has('search_code',without(search_code0)).has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).or(has('search_code',textRegex(search_code1)),has('search_code',textRegex(search_code2)).has('search_code',search_code3),has('search_code',search_code4),has('search_code',search_code5)).or(has('search_path',search_path0)).as('x').select('x').count();RESULT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).inV().has('search_code',without(search_code0)).has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).or(has('search_code',textRegex(search_code1)),has('search_code',textRegex(search_code2)).has('search_code',search_code3),has('search_code',search_code4),has('search_code',search_code5)).or(has('search_path',search_path0)).as('x').select('x').order().by('lc_create_time',decr).range(0,10).as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();List<Object> resultList=RESULT.toList();List<Object> countsList=TOTALCOUNT.toList();resultList << 'TOTALCOUNT:'+countsList[0];";
+
+        test=test.replaceAll("g.V\\(\\)","g.V(ids.toArray())");
+        System.out.println(test);
+
+
+
 
     }
 

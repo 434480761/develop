@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.controllers.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanSyncTimerTask;
 import nd.esp.service.lifecycle.services.titan.TitanResourceService;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -28,15 +27,6 @@ public class TitanResourceController {
 	@Autowired
 	private TitanCoverageRepository titanCoverageRepository;
 
-	@Autowired
-	private TitanSyncTimerTask titanSyncTimerTask;
-
-	@RequestMapping(value = "/sync", method = RequestMethod.GET,
-			produces = { MediaType.APPLICATION_JSON_VALUE })
-	public void titanSyncTest(){
-		titanSyncTimerTask.sync();
-	}
-
 	/**
 	 * 导入数据
 	 * 
@@ -48,21 +38,6 @@ public class TitanResourceController {
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long index(@PathVariable String resourceType) {
 		return titanResourceService.importData(resourceType);
-	}
-
-	/**
-	 * 统计资源总数
-	 * 
-	 * @param resourceType
-	 *            资源类型
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/{resourceType}/actions/count", method = RequestMethod.GET,
-			produces = { MediaType.APPLICATION_JSON_VALUE })
-	public long count(@PathVariable String resourceType) {
-		// check type
-		ResourceTypeSupport.checkType(resourceType);
-		return titanResourceService.count(resourceType);
 	}
 
 	/**
@@ -108,28 +83,6 @@ public class TitanResourceController {
 		titanResourceService.importAllRelation();
 	}
 
-	/**
-	 * 导入数据
-	 * 
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/edge/cover/actions/count", method = RequestMethod.GET)
-	public long countEdgeCover() {
-		return titanCoverageRepository.countCover();
-
-	}
-
-	/**
-	 * 导入数据
-	 * 
-	 * @author linsm
-	 */
-	@RequestMapping(value = "/vertex/coverage/actions/count", method = RequestMethod.GET)
-	public long countVertexCoverage() {
-
-		return titanCoverageRepository.countCoverage();
-
-	}
 
 	@RequestMapping(value = "update/{resourceType}", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })

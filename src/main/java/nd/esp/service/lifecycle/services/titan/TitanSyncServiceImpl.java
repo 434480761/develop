@@ -12,7 +12,9 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
 
+    @Autowired
+    private TitanChapterRelationRepository titanChapterRelationRepository;
+
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -69,6 +74,10 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Override
     public boolean reportResource(String primaryCategory, String identifier) {
+        if(ResourceNdCode.fromString(primaryCategory)==null){
+            return true;
+        }
+
         delete(primaryCategory, identifier);
 
         EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
@@ -93,7 +102,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     }
 
     private boolean delete(String primaryCategory, String identifier){
-        LOG.info("titan sync : delete resource start");
+        LOG.info("titan sync : delete resource start primaryCategory：{}  identifier:{}",primaryCategory,identifier);
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
         LOG.info("titan sync : delete resource success");
@@ -104,11 +113,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
      *
      * */
     private boolean report(Education education){
-        LOG.info("titan sync : report resource start");
         if(education == null){
             return true;
         }
-
+        LOG.info("titan sync : report resource start primaryCategory：{}  identifier:{}",
+                education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
         Set<String> uuids = new HashSet<>();
