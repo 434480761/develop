@@ -458,10 +458,17 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	StoreSdkFail("LC/STORE_SDK_FAIL",getPropertyValue("store.sdk.fail")),
 	InvokingCSFail("CS/INVOKING_CS_FAIL",getPropertyValue("invoking.cs.fail")),
 	InvokingUCFail("UC/INVOKING_UC_FAIL",getPropertyValue("invoking.uc.fail")),
+
 	//copy
-	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail");
+	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
-
+	//说明 add by @author lanyl
+	//角色权限控制相关错误配置
+	//====Start=====
+	CheckParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
+	CoverageAdminDenied("LC/COVERAGE_ADMIN_DENIED",getPropertyValue("coverage.admin.denied")),
+	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
+	//====End=====
 
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);
 

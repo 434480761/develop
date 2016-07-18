@@ -1,29 +1,23 @@
 package nd.esp.service.lifecycle.app;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.nd.gaea.client.http.BearerAuthorizationProvider;
+import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
+import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.config.ApplicationConfig;
+import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthResolver;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
 import nd.esp.service.lifecycle.utils.JDomUtils;
-
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
@@ -36,9 +30,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
-import com.nd.gaea.client.http.BearerAuthorizationProvider;
-import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
-import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @EnableWebMvc
@@ -57,7 +50,9 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 	 //private String driver;
 	 @Autowired
 	 private Environment env;
-	 
+
+	@Autowired
+	private RoleResInterceptor roleResInterceptor;
 	/**
 	 * 加载配置属性文件
 	 * @return
@@ -221,7 +216,8 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-
+		registry.addInterceptor(roleResInterceptor);
+		super.addInterceptors(registry);
 		//registry.addWebRequestInterceptor()
 	}
 
