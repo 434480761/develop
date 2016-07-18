@@ -128,7 +128,7 @@ public class InstructionalObjectiveControllerV06 {
      * @return
      */
     @ResponseBody
-    @RequestMapping(value = "/business/{objective_id}/chapters/paths", method = RequestMethod.GET, consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    @RequestMapping(value = "/business/{objective_id}/chapters/paths", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE})
     public List<Map<String, Object>> getPaths(@PathVariable("objective_id") String objectiveId) {
 
         List<Map<String, Object>> result = instructionalObjectiveService.getChapterRelationById(objectiveId);
