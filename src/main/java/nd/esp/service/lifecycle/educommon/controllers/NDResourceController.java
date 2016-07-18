@@ -1759,7 +1759,7 @@ public class NDResourceController {
 
         String url = csInstanceInfo.getUrl() + "/download?path=" + path + "/metadata.json";
 
-        String metaDataJson = DownloadFile(url, csSession.getSession());
+        String metaDataJson = DownloadFile(url, csSession.getSession(),uuid);
 
         if (StringUtils.isEmpty(metaDataJson)) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/MEDIA_DOWNLOAD_FAIL", "下载文件：" + url
