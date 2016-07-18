@@ -37,7 +37,7 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-//    @Scheduled(fixedRate=60000)
+    @Scheduled(fixedRate=60000)
     public void syncTask(){
         if(LOCKED){
             LOG.info("正在同步数据....");

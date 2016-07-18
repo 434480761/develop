@@ -95,7 +95,10 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
      * */
     @Override
     public void titanSync4MysqlAdd(TitanSyncType errorType, ResourceRelation resourceRelation) {
-        if(checkEducationExistInTitan(resourceRelation.getResourceTargetType(), resourceRelation.getTarget())){
+        if(!checkEducationExistInTitan(resourceRelation.getResourceTargetType(), resourceRelation.getTarget())){
+            titanSync4MysqlAdd(errorType, resourceRelation.getResourceTargetType(), resourceRelation.getTarget());
+        }
+        if(!checkEducationExistInTitan(resourceRelation.getResType(), resourceRelation.getSourceUuid())){
             titanSync4MysqlAdd(errorType, resourceRelation.getResourceTargetType(), resourceRelation.getTarget());
         }
     }
