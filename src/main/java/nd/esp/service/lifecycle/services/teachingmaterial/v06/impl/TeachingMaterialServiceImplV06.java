@@ -68,7 +68,9 @@ public class TeachingMaterialServiceImplV06 implements
 	public TeachingMaterialModel patchTeachingMaterial(String resType,
 													   TeachingMaterialModel tmm) {
 		//1、校验资源是否存在
-		checkTeachingMaterial(resType,tmm,UPDATE_TYPE);
+		if(CollectionUtils.isNotEmpty(tmm.getCategoryList())) {
+			checkTeachingMaterial(resType, tmm, UPDATE_TYPE);
+		}
 
 
 		//2、调用通用创建接口

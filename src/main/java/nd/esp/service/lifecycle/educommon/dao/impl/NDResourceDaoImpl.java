@@ -36,6 +36,7 @@ import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.QueryResultModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
@@ -136,14 +137,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
             Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
             boolean isNotManagement, boolean reverse, boolean useIn, Boolean printable, String printableKey,
-            String statisticsType,String statisticsPlatform,boolean forceStatus,boolean showVersion) {
+            String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>();
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey, orderMap,statisticsType, statisticsPlatform,forceStatus,showVersion,querySqls, params);
+        		printable, printableKey, orderMap,statisticsType, statisticsPlatform,forceStatus,tags,showVersion,querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -157,6 +158,10 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean haveSumSort = false;
         boolean haveSortNum = false;
         boolean haveVipLevel = false;
+        boolean haveTopSort = false;
+        boolean haveScoreSort = false;
+        boolean haveVoteSort = false;
+        boolean haveViewSort = false;
         if(CollectionUtils.isNotEmpty(orderMap)){
             List<String> ordersql = new ArrayList<String>();
             
@@ -170,6 +175,26 @@ public class NDResourceDaoImpl implements NDResourceDao{
                 	if(!showVersion){
                 		haveSumSort = true;
                         ordersql.add("rs." + key + " " + orderMap.get(key));
+                	}
+                }else if(key.equals("top")){
+                	if(!showVersion){
+                		haveTopSort = true;
+                        ordersql.add("rs1.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("scores")){
+                	if(!showVersion){
+                		haveScoreSort = true;
+                		ordersql.add("rs2.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("votes")){
+                	if(!showVersion){
+                		haveVoteSort = true;
+                		ordersql.add("rs3.key_value " + orderMap.get(key));
+                	}
+                }else if(key.equals("views")){
+                	if(!showVersion){
+                		haveViewSort = true;
+                		ordersql.add("rs4.key_value " + orderMap.get(key));
                 	}
                 }else if(key.equals("sort_num")){
                 	if(CollectionUtils.isNotEmpty(relations) && relations.size()==1 
@@ -282,9 +307,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
         String sql = "";
         if(onlyOneType){//只查一种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
+                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveTopSort ? "(" : "") + (haveScoreSort ? "(" : "") + (haveVoteSort ? "(" : "") 
+                    + (haveViewSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type= '" + resTypes.get(0) + "' AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type='" + resTypes.get(0) + "' AND rs.key_title=:st AND rs.data_from=:sp) " : "")
+                    + (haveTopSort ? "LEFT JOIN resource_statisticals rs1 ON ndr.identifier=rs1.resource AND rs1.res_type='" + resTypes.get(0) + "' AND rs1.key_title='top') " : "")
+                    + (haveScoreSort ? "LEFT JOIN resource_statisticals rs2 ON ndr.identifier=rs2.resource AND rs2.res_type='" + resTypes.get(0) + "' AND rs2.key_title='scores') " : "")
+                    + (haveVoteSort ? "LEFT JOIN resource_statisticals rs3 ON ndr.identifier=rs3.resource AND rs3.res_type='" + resTypes.get(0) + "' AND rs3.key_title='votes') " : "")
+                    + (haveViewSort ? "LEFT JOIN resource_statisticals rs4 ON ndr.identifier=rs4.resource AND rs4.res_type='" + resTypes.get(0) + "' AND rs4.key_title='views') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type='" + resTypes.get(0) + "' AND rer.source_uuid='" 
                     + relations.get(0).get("suuid") + "' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category='" + resTypes.get(0) + "' AND rco.taxOnCode LIKE 'RL%')" : "")
@@ -294,9 +324,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     + " " + sqlOrderBy + " " ;
         }else{//查询多种资源时的sql语句
             sql = sqlSelect + " FROM " 
-                    + (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") + "ndresource ndr " 
+            		+ (haveSortNum ? "(" : "") + (haveSumSort ? "(" : "") + (haveTopSort ? "(" : "") + (haveScoreSort ? "(" : "") + (haveVoteSort ? "(" : "") 
+                    + (haveViewSort ? "(" : "") + (haveSizeSort ? "(" : "") + (haveVipLevel ? "(" : "") +  "ndresource ndr " 
                     + (haveSizeSort ? "LEFT JOIN tech_infos ti ON ndr.identifier=ti.resource AND ti.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND ti.title='href') " : "")
                     + (haveSumSort ? "LEFT JOIN resource_statisticals rs ON ndr.identifier=rs.resource AND rs.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs.key_title=:st AND rs.data_from=:sp) " : "")
+                    + (haveTopSort ? "LEFT JOIN resource_statisticals rs1 ON ndr.identifier=rs1.resource AND rs1.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs1.key_title='top') " : "")
+                    + (haveScoreSort ? "LEFT JOIN resource_statisticals rs2 ON ndr.identifier=rs2.resource AND rs2.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs2.key_title='scores') " : "")
+                    + (haveVoteSort ? "LEFT JOIN resource_statisticals rs3 ON ndr.identifier=rs3.resource AND rs3.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs3.key_title='votes') " : "")
+                    + (haveViewSort ? "LEFT JOIN resource_statisticals rs4 ON ndr.identifier=rs4.resource AND rs4.res_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rs4.key_title='views') " : "")
                     + (haveSortNum ? "LEFT JOIN resource_relations rer ON ndr.identifier=rer.target AND rer.enable=1 AND rer.resource_target_type IN ('" + StringUtils.join(resTypes, "','") + "') AND rer.source_uuid='"
                     + relations.get(0).get("suuid") +"' AND rer.res_type='" + relations.get(0).get("stype") + "') " : "")
                     + (haveVipLevel ? "LEFT JOIN resource_categories rco ON ndr.identifier=rco.resource AND rco.primary_category IN (" + StringUtils.join(resTypes, "','") + ") AND rco.taxOnCode LIKE 'RL%')" : "")
@@ -657,14 +692,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
     public long commomQueryCount(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, String limit, boolean isNotManagement, boolean reverse, boolean useIn,
-            Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
+            Boolean printable, String printableKey,boolean forceStatus,List<String> tags,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, useIn,
-        		printable, printableKey,null,null,null,forceStatus,showVersion, querySqls, params);
+        		printable, printableKey,null,null,null,forceStatus,tags,showVersion, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
         boolean onlyOneType = (boolean)map.get("onlyOneType");
@@ -701,7 +736,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
-        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null,null, null,null,false,false, querySqls, params);
+        Map<String, Object> map = this.getQuerySqlsAndParams(false, resType, null, categories, null, null, coverages, propsMap, null, isNotManagement, false, true, null, null,null, null,null,false,null,false, querySqls, params);
         @SuppressWarnings("unchecked")
 		List<String> resTypes = (List<String>)map.get("resTypes");
     	
@@ -813,12 +848,13 @@ public class NDResourceDaoImpl implements NDResourceDao{
      */
     public boolean judgeUseInOrExists(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
-            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
+            String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,
+            boolean forceStatus,List<String> tags,boolean showVersion) {
         //返回值
         boolean useIn = false;
         
         //查询上次total值--start
-        Map<String, Object> map4count = getCommomQueryCountSql(resType,resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,showVersion);
+        Map<String, Object> map4count = getCommomQueryCountSql(resType,resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,tags,showVersion);
         int lastCount = getPreSqlCount((String)map4count.get("sql"), (Map<String,Object>)map4count.get("params"));
         //查询上次total值--end
         
@@ -869,14 +905,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private Map<String, Object> getCommomQueryCountSql(String resType, String resCodes, Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, boolean reverse, Boolean printable, String printableKey,
-            boolean forceStatus,boolean showVersion) {
+            boolean forceStatus,List<String> tags,boolean showVersion) {
         //需要用到的变量
         List<String> querySqls = new ArrayList<String>();
         Map<String,Object> params = new HashMap<String, Object>(); 
         
         //获取querySqls和params,并把resTypes和onlyOneType返回
         Map<String, Object> map = this.getQuerySqlsAndParams(true, resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, true,
-        		printable, printableKey,null,null,null,forceStatus, showVersion, querySqls, params);
+        		printable, printableKey,null,null,null,forceStatus,tags,showVersion, querySqls, params);
         boolean onlyOneType = (boolean)map.get("onlyOneType");
         
         //最终sql
@@ -907,7 +943,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             Set<String> categories, Set<String> categoryExclude,
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement,boolean reverse,boolean useIn, Boolean printable, String printableKey,
-            Map<String, String> orderMap, String statisticsType, String statisticsPlatform,boolean forceStatus,boolean showVersion,
+            Map<String, String> orderMap, String statisticsType, String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion,
             List<String> querySqls,Map<String,Object> params){
         //判断是否需要交集
         Map<String,Object> dealCategoriesMap = dealAndCategories(categories);
@@ -935,13 +971,13 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
             // 查询的sql
             querySql = completeQuerySql(isCount, type, resTypes, noAndcategories, andCategories, categoryExclude, relations, coverages, propsMap,
-                    words, isNotManagement, reverse, paramHead, useIn, onlyOneType, printable, printableKey,forceStatus,showVersion);
+                    words, isNotManagement, reverse, paramHead, useIn, onlyOneType, printable, printableKey,forceStatus,tags,showVersion);
             querySqls.add(querySql);
 
             // 参数处理
             Map<String, Object> subParams = sqlParamsDeal(isCount, type, resTypes, noAndcategories, andCategories, categoryExclude, relations,
                     coverages, propsMap, words, isNotManagement, paramHead, onlyOneType, reverse, printable, printableKey,
-                    orderMap, statisticsType, statisticsPlatform);
+                    orderMap, statisticsType, statisticsPlatform,tags);
             params.putAll(subParams);
             
             j++;
@@ -1062,7 +1098,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             List<Map<String, String>> relations, List<String> coverages,
             Map<String, Set<String>> propsMap, String words, boolean isNotManagement, boolean reverse,
             String paramHead, boolean useIn, boolean onlyOneType,
-            Boolean printable, String printableKey,boolean forceStatus,boolean showVersion) {
+            Boolean printable, String printableKey,boolean forceStatus,List<String> tags,boolean showVersion) {
         String sqlSelect = "SELECT a.identifier";
         if(isCount && onlyOneType){
             sqlSelect = "SELECT COUNT(DISTINCT a.identifier)";
@@ -1070,7 +1106,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             
         //sql的sql的FROM,JOIN,ON  WhERE ORDER BY
         String querySqlCondition = commonQuerySql(isCount, resType, resTypes, categories, andCategories, categoryExclude, 
-        		relations, coverages, propsMap, words, isNotManagement, reverse, paramHead,useIn,onlyOneType,printable,printableKey,forceStatus,showVersion);
+        		relations, coverages, propsMap, words, isNotManagement, reverse, paramHead,useIn,onlyOneType,printable,printableKey,forceStatus,tags,showVersion);
 
         //查询的sql
         String querySql = sqlSelect + " " + querySqlCondition;
@@ -1090,7 +1126,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private String commonQuerySql(Boolean isCount, String resType, List<String> resTypes, Set<String> categories, List<List<String>> andCategories,
             Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, boolean reverse, String paramHead, boolean useIn, boolean onlyOneType,
-            Boolean printable, String printableKey, boolean forceStatus, boolean showVersion) {
+            Boolean printable, String printableKey, boolean forceStatus, List<String> tags, boolean showVersion) {
         //ndresource表
         String tableName = "ndresource a";
         
@@ -1304,6 +1340,12 @@ public class NDResourceDaoImpl implements NDResourceDao{
         	printableParamSql = printableParam4Sql(printable, printableKey, paramHead);
         }
         
+        //FIXME 临时方案
+        String tagsParamSql = "";
+        if(CollectionUtils.isNotEmpty(tags)){
+        	tagsParamSql = tagsParam4Sql(tags, paramHead);
+        }
+        
         String wordsParamSql = "";
         if(!StringUtils.isEmpty(words)){
             if(IndexSourceType.LessonType.getName().equals(resType) || 
@@ -1332,6 +1374,9 @@ public class NDResourceDaoImpl implements NDResourceDao{
         }
         if(StringUtils.isNotEmpty(printableParamSql)){
         	sqlWhereList.add(printableParamSql);
+        }
+        if(StringUtils.isNotEmpty(tagsParamSql)){
+        	sqlWhereList.add(tagsParamSql);
         }
         if(StringUtils.isNotEmpty(wordsParamSql)){
             sqlWhereList.add(wordsParamSql);
@@ -1885,6 +1930,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
         return result;
     }
     
+    /**
+     * 需要排除的维度分类sql参数拼接
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param resType
+     * @param categoryExclude
+     * @param paramHead
+     * @return
+     */
     private String categoryExcludeParam4Sql(String resType,Set<String> categoryExclude, String paramHead){
         String result = "";
         
@@ -2007,6 +2061,51 @@ public class NDResourceDaoImpl implements NDResourceDao{
     }
     
     /**
+     * tags参数处理
+     * @author xiezy
+     * @date 2016年7月7日
+     * @param tags
+     * @param paramHead
+     * @return
+     */
+    private String tagsParam4Sql(List<String> tags,String paramHead){
+    	String result = "";
+    	List<String> tagsSqlList = new ArrayList<String>();
+    	if(CollectionUtils.isNotEmpty(tags)){
+    		int i = 1;
+    		for(String tag : tags){
+    			if(StringUtils.hasText(tag)){
+    				List<String> tagAndOp = Arrays.asList(tag.split(" and "));
+    				if(CollectionUtils.isNotEmpty(tagAndOp)){
+    					List<String> tagAndList = new ArrayList<String>();
+    					int j = 1;
+    					for(String tagAnd : tagAndOp){
+    						if(StringUtils.hasText(tagAnd)){
+    							String tagSql = "a.tags LIKE :" + paramHead + "tag" + i + j;
+    							tagAndList.add(tagSql);
+    							
+    							j++;
+    						}
+    					}
+    					
+    					if(CollectionUtils.isNotEmpty(tagAndList)){
+    						tagsSqlList.add("(" + StringUtils.join(tagAndList, " AND ") + ")");
+    					}
+    				}
+    				
+        			i++;
+    			}
+    		}
+    		
+    		if(CollectionUtils.isNotEmpty(tagsSqlList)){
+    			result = "(" + StringUtils.join(tagsSqlList, " OR ") + ")";
+        	}
+    	}
+    	
+		return result;
+    }
+    
+    /**
      * 判断是否需要preview
      * <p>Create Time: 2015年8月18日   </p>
      * <p>Create author: xiezy   </p>
@@ -2040,7 +2139,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
             List<Map<String, String>> relations, List<String> coverages, Map<String, Set<String>> propsMap,
             String words, boolean isNotManagement, String paramHead, boolean onlyOneType, boolean reverse,
             Boolean printable, String printableKey,Map<String, String> orderMap, 
-            String statisticsType, String statisticsPlatform) {
+            String statisticsType, String statisticsPlatform,List<String> tags) {
         
         Map<String,Object> params = new HashMap<String, Object>();
         //1.relation的参数处理
@@ -2190,6 +2289,28 @@ public class NDResourceDaoImpl implements NDResourceDao{
         	if(CollectionUtils.isNotEmpty(orderMap) && orderMap.containsKey("key_value")){
         		params.put("st", statisticsType);
         		params.put("sp", statisticsPlatform);
+        	}
+        }
+        
+        //8.tags
+        if(CollectionUtils.isNotEmpty(tags)){
+        	int i = 1;
+        	for(String tag : tags){
+        		if(StringUtils.hasText(tag)){
+        			List<String> tagAndOp = Arrays.asList(tag.split(" and "));
+        			if(CollectionUtils.isNotEmpty(tagAndOp)){
+        				int j = 1;
+        				for(String tagAnd : tagAndOp){
+        					if(StringUtils.hasText(tagAnd)){
+        						params.put(paramHead + "tag" + i + j, "%\"" + tagAnd + "\"%");
+        						
+        						j++;
+        					}
+        				}
+        			}
+        			
+        			i++;
+        		}
         	}
         }
         
@@ -2525,6 +2646,265 @@ public class NDResourceDaoImpl implements NDResourceDao{
 			questionJdbcTemplate.batchUpdate(sqls);
 		}
 		defaultJdbcTemplate.batchUpdate(sqls);
+	}
+
+	@Override
+	public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
+			String resType, String tmId, Set<String> chapterIds,
+			List<String> coverages, Set<String> categories, boolean isAll) {
+		StringBuilder sql = new StringBuilder("");
+		sql.append("SELECT rr.source_uuid AS chapterid,COUNT(DISTINCT a.identifier) AS counts ");
+		sql.append("FROM ndresource a INNER JOIN resource_relations rr ON a.identifier=rr.target ");
+		//coverages
+        if(CollectionUtils.isNotEmpty(coverages)){
+        	sql.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	sql.append(resType);
+        	sql.append("'");
+        	sql.append(" AND (");
+            if(!isAll){
+            	sql.append(coverageParam4Sql4DealOnline(coverages,""));
+            }else{
+            	sql.append(coverageParam4Sql(coverages,""));
+            }
+            sql.append(")");
+        }else{
+        	sql.append(" INNER JOIN res_coverages rcv ON a.identifier=rcv.resource AND rcv.res_type='");
+        	sql.append(resType);
+            sql.append("'");
+        }
+        
+        //categories
+        Map<String,Object> dealCategoriesMap = dealAndCategories(categories);
+        //带有and 的category的拆解集合
+        @SuppressWarnings("unchecked")
+		List<List<String>> andCategories = (List<List<String>>)dealCategoriesMap.get("allAndCategories");
+        //去掉带有 and 之后的categories
+        @SuppressWarnings("unchecked")
+		Set<String> noAndcategories = (Set<String>)dealCategoriesMap.get("afterRemoveAllAndCategories");
+        
+        //categories & andCategories
+        if(CollectionUtils.isNotEmpty(noAndcategories) || CollectionUtils.isNotEmpty(andCategories)){
+            boolean havePath = false;
+            boolean haveCode = false;
+            
+            if(CollectionUtils.isNotEmpty(noAndcategories)){
+                for(String str4Join : noAndcategories){//目的是减少Join表
+                    if(StringUtils.isNotEmpty(str4Join)){
+                        if(str4Join.contains("/")){
+                            havePath = true;
+                        }else{
+                            haveCode = true;
+                        }
+                    }
+                }
+            }
+            
+            if(havePath){
+            	sql.append(" INNER JOIN resource_categories rc ON rc.primary_category='" + resType + "' AND a.identifier=rc.resource");
+            }
+            if(haveCode || CollectionUtils.isNotEmpty(andCategories)){
+                //至少join一次
+            	sql.append(" INNER JOIN resource_categories rcc0 ON rcc0.primary_category='" + resType + "' AND a.identifier=rcc0.resource");
+                
+                if(CollectionUtils.isNotEmpty(andCategories)){//注意这里的i是从1开始,使join的次数为andCategories的【maxsize-1】
+                    for(int i=1;i<getMaxCount(andCategories);i++){
+                    	sql.append(" INNER JOIN resource_categories rcc");
+                    	sql.append(i);
+                    	sql.append(" ON rcc");
+                    	sql.append(i);
+                    	sql.append(".primary_category='");
+                    	sql.append(resType);
+                    	sql.append("' AND a.identifier=rcc");
+                        sql.append(i);
+                        sql.append(".resource");
+                    }
+                }
+            }
+        }
+        
+        //WHERE
+        String baseWhere = " WHERE a.enable=1 AND a.primary_category='" + resType + "'";
+        if(CollectionUtils.isEmpty(coverages)){//当覆盖范围为空时
+        	baseWhere = " WHERE a.enable=1 AND a.primary_category='" + resType + "'"
+                    + " AND (rcv.target_type='" + CoverageConstant.TargetType.TARGET_TYPE_PB.getCode() + "'"
+                    + " AND rcv.target='" + CoverageConstant.TARGET_PUBLIC + "'"
+                    + " AND rcv.strategy='" + CoverageConstant.Strategy.STRATEGY_SHAREING.getCode() + "'"
+                    + ")";
+        }
+        String categoryParamSql = "";
+        if(CollectionUtils.isNotEmpty(noAndcategories) || CollectionUtils.isNotEmpty(andCategories)){
+            categoryParamSql = categoryParam4Sql(noAndcategories,andCategories,"");
+        }
+        //关系where参数
+        String relationParamSql = getRelationParamSql(resType, tmId, chapterIds);
+        
+        List<String> sqlWhereList = new ArrayList<String>();
+        sqlWhereList.add(baseWhere);
+        if(StringUtils.isNotEmpty(categoryParamSql)){
+            sqlWhereList.add(categoryParamSql);
+        }
+        if(StringUtils.isNotEmpty(relationParamSql)){
+            sqlWhereList.add(relationParamSql);
+        }
+        String sqlWhere = StringUtils.join(sqlWhereList, " AND ");
+        
+        sql.append(" ");
+        sql.append(sqlWhere);
+        
+        //GROUP BY
+        sql.append(" GROUP BY rr.source_uuid");
+        
+        //参数处理
+        Map<String, Object> params = sqlParamDeal4Statistics(tmId, chapterIds, coverages, noAndcategories, andCategories);
+        
+        //最终查询sql语句LOG输出
+        LOG.info("教材章节统计执行的SQL语句:" + sql.toString());
+        //参数处理LOG输出
+        LOG.info("教材章节统计执行的SQL的参数为:" + ObjectUtils.toJson(params));
+        
+        final Map<String, ChapterStatisticsViewModel> resultMap = new HashMap<String, ChapterStatisticsViewModel>();
+        //查询
+        NamedParameterJdbcTemplate npdt = new NamedParameterJdbcTemplate(defaultJdbcTemplate);
+        npdt.query(sql.toString(), params, new RowMapper<String>(){
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				ChapterStatisticsViewModel cs = new ChapterStatisticsViewModel();
+				cs.setCounts(rs.getInt("counts"));
+				
+				resultMap.put(rs.getString("chapterid"), cs);
+				return null;
+			}
+        });
+        
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	try {
+				List<Chapter> chapters = chapterRepository.getAll(new ArrayList<String>(resultMap.keySet()));
+				if(CollectionUtils.isNotEmpty(chapters)){
+					for(Chapter chapter : chapters){
+						if(resultMap.containsKey(chapter.getIdentifier())){
+							ChapterStatisticsViewModel cs = resultMap.get(chapter.getIdentifier());
+							cs.setChapterTitle(chapter.getTitle());
+							if(chapter.getParent().equals(chapter.getTeachingMaterial())){
+								cs.setParent("ROOT");
+							}else{
+								cs.setParent(chapter.getParent());
+							}
+							resultMap.put(chapter.getIdentifier(), cs);
+						}
+					}
+				}
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+    					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), "获取章节详细出错！");
+			}
+        }
+        
+		return resultMap;
+	}
+	
+	/**
+	 * 关系相关参数处理
+	 * @author xiezy
+	 * @date 2016年7月13日
+	 * @param resType
+	 * @param tmId
+	 * @param chapterIds
+	 * @return
+	 */
+	private String getRelationParamSql(String resType,String tmId,Set<String> chapterIds){
+		String innerSql = "";
+		if(CollectionUtils.isNotEmpty(chapterIds)){
+			innerSql = "SELECT c.identifier FROM chapters c INNER JOIN ndresource ndr";
+			innerSql += " ON c.identifier=ndr.identifier";
+			innerSql += " WHERE ndr.enable=1 AND ndr.primary_category='chapters' AND ndr.identifier IN (:cids)";
+		}else{
+			innerSql = "SELECT c.identifier FROM chapters c INNER JOIN ndresource ndr";
+			innerSql += " ON c.teaching_material=ndr.identifier";
+			innerSql += " WHERE ndr.enable=1 AND ndr.primary_category='teachingmaterials' AND ndr.identifier=:tmid";
+		}
+		
+		String sql = "rr.enable=1 AND rr.res_type='chapters' AND rr.resource_target_type='"+resType+"'";
+		sql += " AND rr.source_uuid IN (" + innerSql + ")";
+		
+		return sql;
+	}
+	
+	/**
+	 * sql参数赋值处理
+	 * @author xiezy
+	 * @date 2016年7月13日
+	 * @param tmId
+	 * @param chapterIds
+	 * @param coverages
+	 * @param noAndcategories
+	 * @param andCategories
+	 * @return
+	 */
+	private Map<String, Object> sqlParamDeal4Statistics(String tmId,Set<String> chapterIds,
+			List<String> coverages,Set<String> noAndcategories,List<List<String>> andCategories){
+		Map<String,Object> params = new HashMap<String, Object>();
+		//coverage的参数处理
+        if(CollectionUtils.isNotEmpty(coverages)){
+            int i = 1;
+            
+            for(String cv : coverages){
+                List<String> coverageElemnt = Arrays.asList(cv.split("/"));
+                params.put("cvty" + i, coverageElemnt.get(0));
+                params.put("cvt" + i, coverageElemnt.get(1));
+                if(!coverageElemnt.get(2).equals("*")){
+                    params.put("cvs" + i, coverageElemnt.get(2));
+                }
+                
+                i++;
+            }
+        }
+        //noAndcategories的参数处理
+        if(CollectionUtils.isNotEmpty(noAndcategories)){
+            int i = 1;
+            for(String cg : noAndcategories){
+                if(cg.contains("/")){
+                    if(cg.contains("*")){
+                        params.put("cgpathlike" + i, cg.replaceAll("\\*", "\\%"));
+                    }else{
+                        params.put("cgpath" + i, cg);
+                    }
+                }else{
+                    if(cg.contains("*")){
+                        params.put("cgcodelike" + i, cg.replaceAll("\\*", "\\%"));  
+                    }else{
+                        params.put("cgcode" + i, cg);
+                    }
+                }
+                
+                i++;
+            }
+        }
+        //andCategories的参数处理
+        if(CollectionUtils.isNotEmpty(andCategories)){
+            int k = 1;
+            for(List<String> andCategory : andCategories){
+                int j = 0;//rcc0以0开始
+                for(String ac : andCategory){
+                    if(ac.contains("*")){//使用通配符
+                        params.put("andcgcodelike" + j + k, ac.replaceAll("\\*", "\\%"));  
+                    }else{
+                        params.put("andcgcode" + j + k, ac);
+                    }
+                    
+                    j++;
+                }
+                
+                k++;
+            }
+        }
+        
+        if(CollectionUtils.isNotEmpty(chapterIds)){
+        	params.put("cids", chapterIds);
+        }else{
+        	params.put("tmid", tmId);
+        }
+        
+        return params;
 	}
 	
 	//********************************通用资源删除DAO模块********************************\\

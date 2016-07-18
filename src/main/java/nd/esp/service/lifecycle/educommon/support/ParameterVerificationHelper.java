@@ -1,13 +1,19 @@
 package nd.esp.service.lifecycle.educommon.support;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import nd.esp.service.lifecycle.educommon.controllers.NDResourceController;
 import nd.esp.service.lifecycle.educommon.vos.ResCoverageViewModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
+import nd.esp.service.lifecycle.vos.statics.ResourceType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +74,59 @@ public class ParameterVerificationHelper {
         }
         
         return ctType + "/" + cTarget + "/" + ct;
+    }
+    
+    /**
+     * 关系参数校验
+     * @author xiezy
+     * @date 2016年7月13日
+     * @param relation
+     * @return
+     */
+    public static Map<String, String> relationVerification(String relation, NDResourceController.QueryType queryType){
+    	Map<String,String> map = new HashMap<String, String>();
+        //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
+        relation = relation + " ";
+        List<String> elements = Arrays.asList(relation.split("/"));
+        //格式错误判断
+        if(elements.size() != 3){
+           
+            LOG.error(relation + "--relation格式错误");
+            
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                    relation + "--relation格式错误");
+        }
+        
+        String resourceType = elements.get(0).trim();
+        String resourceUuid = elements.get(1).trim();
+        String relationType = elements.get(2).trim();
+         
+        //判断源资源是否存在,stype + suuid
+        if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
+            if(queryType == NDResourceController.QueryType.DB) {
+                CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
+            }
+        }else{
+            // "relation参数进行递归查询时,目前仅支持:chapters,knowledges"
+            if (!ResourceNdCode.chapters.toString().equals(elements.get(0)) &&
+                    !ResourceNdCode.knowledges.toString().equals(elements.get(0))) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                        "relation参数进行递归查询时,目前仅支持:chapters,knowledges");
+            }
+
+        }
+        //r_type的特殊处理
+        if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){
+            relationType = RelationType.ASSOCIATE.getName();
+        }
+        
+        map.put("stype", resourceType);
+        map.put("suuid", resourceUuid);
+        map.put("rtype", relationType);
+        
+        return map;
     }
 
     /**
