@@ -190,7 +190,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 params.get(ES_SearchField.coverages.toString()));
         params.remove(ES_SearchField.coverages.toString());
 
-        resourceQueryVertex.setWords(words);
+        //resourceQueryVertex.setWords(words);
         // FIXME
         // resourceQueryVertex.setVertexLabel(resType);
 
@@ -284,21 +284,48 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
         List<ResourceModel> items = new ArrayList<ResourceModel>();
         ResultSet resultSet = titanResourceRepository.search(script, null);
+
+
+        List<String> resultStr = new ArrayList<>();
+        long getResultBegin = System.currentTimeMillis();
         Iterator<Result> iterator = resultSet.iterator();
         while (iterator.hasNext()) {
-            String resource=iterator.next().getString();
-            LOG.info(resource);
-            if(resource.contains("COUNT:")){
-                viewModels.setTotal(Long.parseLong(resource.split(":")[1]));
-                continue;
-            }
-            ResourceModel item=new ResourceModel();
-            TitanResultParse.dealMainResult(item,TitanResultParse.toMapForSearchES(resource));
-            //List<ResClassificationModel> categoryList = new ArrayList<>();
-            //categoryList.add(TitanResultParse.dealCG(TitanResultParse.toMapForSearchES(resource)));
-            //item.setCategoryList(categoryList);
-            items.add(item);
+            resultStr.add(iterator.next().getString());
         }
+        System.out.println(resultStr);
+        LOG.info("get resultset consume times:"
+                + (System.currentTimeMillis() - getResultBegin));
+
+        long parseBegin = System.currentTimeMillis();
+        List<String> otherLines = new ArrayList<>();
+        String taxOnPath = null;
+        String mainResult = null;
+        int count = 0;
+        for (String line : resultStr) {
+            System.out.println(line);
+            if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.contains("COUNT:"))) {
+                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
+                otherLines.clear();
+                taxOnPath = null;
+            }
+
+            if (line.contains("COUNT:")) {
+                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
+                line = line.split("=")[1];
+                int length = line.length();
+                if (length > 2) {
+                    taxOnPath = line.substring(1, length - 2);
+                }
+            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
+                mainResult = line;
+            } else {
+                otherLines.add(line);
+            }
+            count++;
+        }
+        LOG.info("parse consume times:"+ (System.currentTimeMillis() - parseBegin));
+
         viewModels.setItems(items);
         return viewModels;
     }
