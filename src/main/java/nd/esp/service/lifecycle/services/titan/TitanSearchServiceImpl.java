@@ -292,9 +292,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         while (iterator.hasNext()) {
             resultStr.add(iterator.next().getString());
         }
-        System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
+        //System.out.println(resultStr);
+        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
         long parseBegin = System.currentTimeMillis();
         List<String> otherLines = new ArrayList<>();

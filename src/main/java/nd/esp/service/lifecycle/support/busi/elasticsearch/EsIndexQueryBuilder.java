@@ -126,12 +126,9 @@ public class EsIndexQueryBuilder {
     private String dealWithParams() {
         if (CollectionUtils.isEmpty(this.params)) return "";
         StringBuffer query = new StringBuffer();
-        Map<String, List<String>> searchCodeString = this.params.get(ES_SearchField.cg_taxoncode.toString());
-        String codeStr = dealWithSingleParam(TitanKeyWords.search_code_string.toString(), searchCodeString);
-        Map<String, List<String>> searchPathString = this.params.get(ES_SearchField.cg_taxonpath.toString());
-        String pathStr = dealWithSingleParam(TitanKeyWords.search_path_string.toString(), searchPathString);
-        Map<String, List<String>> searchCoverageString = this.params.get(ES_SearchField.coverages.toString());
-        String coverageStr = dealWithSingleParam(TitanKeyWords.search_coverage_string.toString(), searchCoverageString);
+        String codeStr = dealWithSingleParam(TitanKeyWords.search_code_string.toString(), this.params.get(ES_SearchField.cg_taxoncode.toString()));
+        String pathStr = dealWithSingleParam(TitanKeyWords.search_path_string.toString(), this.params.get(ES_SearchField.cg_taxonpath.toString()));
+        String coverageStr = dealWithSingleParam(TitanKeyWords.search_coverage_string.toString(), this.params.get(ES_SearchField.coverages.toString()));
 
         if(!"".equals(codeStr)){
             query.append(" AND ").append(codeStr);
