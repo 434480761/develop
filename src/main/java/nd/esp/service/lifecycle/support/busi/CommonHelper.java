@@ -1495,6 +1495,11 @@ public class CommonHelper {
 	public static String checkWordSegmentation(String words) {
 
 		String check = words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
+		if (check.contains(",")) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+					words + "--words格式错误,不支持多个words");
+		}
 		if (check.endsWith(" AND") || check.endsWith(" OR") || check.endsWith(" and") || check.endsWith(" or")) {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
