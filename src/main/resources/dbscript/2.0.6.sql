@@ -1,0 +1,1 @@
+ALTER TABLE `category_datas` ADD `preview` VARCHAR(255) NULL COMMENT '预览图' ;
