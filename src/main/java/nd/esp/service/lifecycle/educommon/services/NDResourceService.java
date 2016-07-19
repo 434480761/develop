@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeTrargetAndParentModel;
@@ -224,6 +225,16 @@ public interface NDResourceService {
      * @since
      */
     public void patch(String resourceType, ResourceModel resourceModel, DbName dbName);
+    
+    /**
+     * 判断资源是否存在
+     * @author xiezy
+     * @date 2016年7月19日
+     * @param resourceType
+     * @param identifier
+     * @return
+     */
+    public Education checkResourceExist(String resourceType, String identifier);
     
     /**
      * CS文件上传
