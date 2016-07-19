@@ -219,13 +219,13 @@ public class TitanScritpUtils {
             param.putAll(buildCategoryScript(script, categoryList));
         }
 
-//        if(CollectionUtils.isNotEmpty(techInfoList)){
-//            buildTechInfoScript(script, techInfoList);
-//        }
-//
-//        if(CollectionUtils.isNotEmpty(categoryList) ||CollectionUtils.isNotEmpty(coverageList)){
-//            buildSearchPropertyScript(script,categoryList,coverageList,education);
-//        }
+        if(CollectionUtils.isNotEmpty(techInfoList)){
+            param.putAll(buildTechInfoScript(script, techInfoList));
+        }
+
+        if(CollectionUtils.isNotEmpty(categoryList) ||CollectionUtils.isNotEmpty(coverageList)){
+            param.putAll(buildSearchPropertyScript(script,categoryList,coverageList,education));
+        }
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
@@ -257,14 +257,15 @@ public class TitanScritpUtils {
         StringBuffer techInfoScript = null;
         for(TechInfo techInfo : techInfos){
             String suffix = "_ti"+orderNumber;
+            String techInfoNode = "techinfo"+suffix;
             Map<String, Object> techInfoParam = getParam4NotNull(techInfo);
-            techInfoScript  = new StringBuffer("techinfo").append(suffix).append(" = graph.addVertex(T.label, techInfoLabel");
+            techInfoScript  = new StringBuffer(techInfoNode + " = graph.addVertex(T.label, 'tech_info'");
             for (String key : techInfoParam.keySet()) {
                 techInfoScript.append(", '").append(key).append("', ").append(key).append(suffix);
                 resultParam.put(key + suffix, techInfoParam.get(key));
             }
-            techInfoScript.append(").id();");
-            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier").append(suffix).append(")");
+            techInfoScript.append(");");
+            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',"+techInfoNode+" ,'identifier',edgeIdentifier").append(suffix).append(");");
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
 
             script.append(techInfoScript);
@@ -286,10 +287,11 @@ public class TitanScritpUtils {
         for(ResourceCategory category : categories){
             String suffix = "_cg"+orderNumber;
             String categoryNode = "categoryNode"+suffix;
+            String categoryNodeAll = "categoryNodeAll"+suffix;
             String taxoncodeName = "taxoncode"+suffix;
             String edgeIdentifierName = "edgeIdentifier" + suffix;
             Map<String, Object> techInfoParam = getParam4NotNull(category);
-            categorieScript = new StringBuffer(categoryNode+"=g.V().hasLabel('category_code').has('cg_taxoncode',"+taxoncodeName+");");
+            categorieScript = new StringBuffer(categoryNodeAll+"=g.V().hasLabel('category_code').has('cg_taxoncode',"+taxoncodeName+");");
             StringBuilder addNodeScript = new StringBuilder(categoryNode+"=graph.addVertex(T.label,'category_code'");
             Map<String, Object> categoryNodeParam = getParam4NotNull(category);
             for (String key : categoryNodeParam.keySet()) {
@@ -298,13 +300,15 @@ public class TitanScritpUtils {
             }
             addNodeScript.append(");");
 
-            String ifScript = "if(!"+categoryNode+".iterator().hasNext()){"+addNodeScript.toString()+"};";
+            String ifScript = "if(!"+categoryNodeAll+".iterator().hasNext()){"+addNodeScript.toString()+
+                    "}else{"+categoryNode+"="+categoryNodeAll+".next()};";
 
-            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_category_code',"+categoryNode+".next(),'identifier',"+edgeIdentifierName+");");
+            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_category_code',"
+                    +categoryNode+",'identifier',"+edgeIdentifierName+");");
 
             categorieScript.append(ifScript).append(addEdgeScript);
 
-            resultParam.put(taxoncodeName, category.getTaxonname());
+            resultParam.put(taxoncodeName, category.getTaxoncode());
             resultParam.put(edgeIdentifierName, category.getIdentifier());
 
             script.append(categorieScript);
@@ -315,26 +319,27 @@ public class TitanScritpUtils {
             orderNumber ++ ;
         }
 
-//        orderNumber = 0;
-//        for (String path : categoryPathSet){
-//            String suffix = "_cgp"+orderNumber;
-//            String categoryPathNode = "categoryNode"+suffix;
-//            String taxonpathName = "taxonpath"+suffix;
-//            StringBuffer categroyPath = new StringBuffer(categoryPathNode+"=g.V().has('categories_path','cg_taxonpath',"+taxonpathName+");");
-//
-//            String addNodeScript = categoryPathNode+"=graph.addVertex(T.label,'categories_path','cg_taxonpath',"+taxonpathName+");";
-//            String ifScript = "if(!"+categoryPathNode+".iterator().hasNext()){"+addNodeScript+"};";
-//
-//            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_categories_path',"+categoryPathNode+".next());");
-//            categroyPath.append(ifScript).append(addEdgeScript);
-//
-//            script.append(categroyPath);
-//
-//            resultParam.put(taxonpathName, path);
-//            orderNumber ++ ;
-//        }
+        orderNumber = 0;
+        for (String path : categoryPathSet){
+            String suffix = "_cgp"+orderNumber;
+            String categoryPathNode = "categoryNode"+suffix;
+            String categoryPathNodeAll = "categoryNodeAll"+suffix;
+            String taxonpathName = "taxonpath"+suffix;
+            StringBuilder categroyPath = new StringBuilder(categoryPathNodeAll+
+                    "=g.V().has('categories_path','cg_taxonpath',"+taxonpathName+");");
 
+            String addNodeScript = categoryPathNode+"=graph.addVertex(T.label,'categories_path','cg_taxonpath',"+taxonpathName+");";
+            String ifScript = "if(!"+categoryPathNodeAll+".iterator().hasNext()){"+addNodeScript+"" +
+                    "}else{"+categoryPathNode+"="+categoryPathNodeAll+".next()};";
 
+            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_categories_path',"+categoryPathNode+");");
+            categroyPath.append(ifScript).append(addEdgeScript);
+
+            script.append(categroyPath);
+
+            resultParam.put(taxonpathName, path);
+            orderNumber ++ ;
+        }
         return resultParam;
     }
 
@@ -351,13 +356,20 @@ public class TitanScritpUtils {
             String targetTypeName = "target_type" +suffix;
             String targetName = "target" +suffix;
             String strategyName = "strategy" +suffix;
+            String coverageNodeNameAll = "coverageNodeAll"+suffix;
             String coverageNodeName = "coverageNode"+suffix;
             String edgeIdentifierName = "edgeIdentifier"+suffix;
-            coverageScript = new StringBuffer(coverageNodeName+"=g.V().hasLabel('coverage').has('target_type',"+targetTypeName+").has('target',"+targetName+").has('strategy',"+strategyName+");");
-            StringBuilder addCoverageNodeScript = new StringBuilder(coverageNodeName+ "= graph.addVertex(T.label,'coverage','target_type',"+targetTypeName+",'strategy',"+strategyName+",'target',"+targetName+");");
-            String ifScript = "if(!"+coverageNodeName+".iterator().hasNext()){"+addCoverageNodeScript+"};";
-            String addEdgeScript = "g.V().has('identifier',identifier_edu).next().addEdge('has_coverage',"+coverageNodeName+".next(),'identifier',"+edgeIdentifierName+").id();";
-//            addEdgeScript = "";
+            coverageScript = new StringBuffer(coverageNodeNameAll+"=g.V().hasLabel('coverage')" +
+                    ".has('target_type',"+targetTypeName+").has('target',"+targetName+")" +
+                    ".has('strategy',"+strategyName+");");
+            StringBuilder addCoverageNodeScript = new StringBuilder(coverageNodeName+
+                    "= graph.addVertex(T.label,'coverage','target_type',"+targetTypeName+
+                    ",'strategy',"+strategyName+",'target',"+targetName+");");
+            String ifScript = "if(!"+coverageNodeNameAll+".iterator().hasNext()){"+addCoverageNodeScript+"" +
+                    "}else{"+coverageNodeName+"="+coverageNodeNameAll+".next()};";
+            String addEdgeScript = "g.V().has('identifier',identifier_edu).next()" +
+                    ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+").id();";
+
             coverageScript.append(ifScript).append(addEdgeScript);
 
             script.append(coverageScript);
@@ -442,7 +454,23 @@ public class TitanScritpUtils {
         addSetProperty("search_code",categoryCodes,searchPropertyScript,param);
         addSetProperty("search_path",paths,searchPropertyScript,param);
 
-        script.append(searchPropertyScript);
+        String searchCoverageString = StringUtils.join(resCoverages,",").toLowerCase();
+        searchPropertyScript.append(".property('search_coverage_string',searchCoverageString)");
+        param.put("searchCoverageString", searchCoverageString);
+
+        if(CollectionUtils.isNotEmpty(paths)){
+            String searchPathString = StringUtils.join(paths, ",").toLowerCase();
+            searchPropertyScript.append(".property('search_path_string',searchPathString)");
+            param.put("searchPathString", searchPathString);
+
+        }
+        if(CollectionUtils.isNotEmpty(categoryCodes)){
+            String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
+            searchPropertyScript.append(".property('search_code_string',searchCodeString)");
+            param.put("searchCodeString", searchCodeString);
+        }
+
+        script.append(searchPropertyScript).append(";");
         return param;
     }
 
