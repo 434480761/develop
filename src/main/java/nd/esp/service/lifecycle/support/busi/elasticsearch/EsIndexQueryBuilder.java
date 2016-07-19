@@ -94,7 +94,7 @@ public class EsIndexQueryBuilder {
     private String dealWithWords(String words) {
         if (words == null) return "";
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
-        String[] keywords=words.split(",");
+       /* String[] keywords=words.split(",");
         StringBuffer wordScript=new StringBuffer();
         for(String keyword:keywords){
             if (keyword.contains("and")) {
@@ -105,7 +105,7 @@ public class EsIndexQueryBuilder {
             }
             wordScript.append(keyword).append(" ");
         }
-        wordScript.deleteCharAt(wordScript.length()-1);
+        wordScript.deleteCharAt(wordScript.length()-1);*/
 
         StringBuffer query = new StringBuffer();
         WordsCover[] covers=WordsCover.values();
@@ -114,17 +114,10 @@ public class EsIndexQueryBuilder {
             query.append("v.\\\"");
             query.append(covers[i]);
             query.append("\\\":(");
-            query.append(wordScript);
+            query.append(words);
             query.append(")");
             if (i != coversLength - 1) query.append(" OR ");
         }
-      /*  for (WordsCover field : WordsCover.values()) {
-            query.append("v.\\\"");
-            query.append(field);
-            query.append("\\\":(");
-            query.append(words.replaceAll(",", ""));
-            query.append(") ");
-        }*/
 
         return "("+query.toString()+")";
     }

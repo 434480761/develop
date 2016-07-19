@@ -437,7 +437,7 @@ public class NDResourceController {
                 reverse,printable, printableKey,null,null,false,null,false);
     }
 
-    @RequestMapping(value = "/actions/titan_es", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
+    @RequestMapping(value = "/actions/retrieve", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
     public ListViewModel<ResourceViewModel> requestQueringByTitanES(
             @PathVariable(value = "res_type") String resType,
             @RequestParam(required = false, value = "rescode") String resCodes,
@@ -646,7 +646,7 @@ public class NDResourceController {
         //参数校验和处理
         Map<String, Object> paramMap =
                 requestParamVerifyAndHandle(resType, resCodes, includes, categories, categoryExclude,
-                        relations, coverages, props, orderBy, limit, queryType, reverse);
+                        relations, coverages, props, orderBy,words, limit, queryType, reverse);
 
         // include
         List<String> includesList = (List<String>)paramMap.get("include");
@@ -674,6 +674,7 @@ public class NDResourceController {
 
         //limit
         limit = (String)paramMap.get("limit");
+
 
         //调用service,获取到业务模型的list
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
@@ -727,6 +728,7 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN_ES:
+                words = (String)paramMap.get("words");
                 rListViewModel = ndResourceService.resourceQueryByTitanES(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
@@ -912,7 +914,7 @@ public class NDResourceController {
         //参数校验和处理
         Map<String, Object> paramMap =
                 requestParamVerifyAndHandle(resType, null, null, categories, null, null,
-                        coverages, props, null, "(0,1)", QueryType.DB, null);
+                        coverages, props, null,null, "(0,1)", QueryType.DB, null);
 
         //categories
         categories = (Set<String>)paramMap.get("category");
@@ -994,6 +996,7 @@ public class NDResourceController {
         return rListViewModel;
     }
 
+
     /**
      * 参数校验和处理
      * <p>Create Time: 2016年3月28日   </p>
@@ -1001,7 +1004,7 @@ public class NDResourceController {
      */
     private Map<String, Object> requestParamVerifyAndHandle(String resType, String resCodes, String includes,
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
-                                                            List<String> orderBy, String limit, QueryType queryType, String reverse){
+                                                            List<String> orderBy,String words, String limit, QueryType queryType, String reverse){
         //reverse,默认为false
         boolean reverseBoolean = false;
         if(StringUtils.isNotEmpty(reverse) && reverse.equals("true")){
@@ -1334,6 +1337,15 @@ public class NDResourceController {
         //7. limit
         limit = CommonHelper.checkLimitMaxSize(limit);
 
+        switch (queryType) {
+
+            case TITAN_ES:
+                words = CommonHelper.checkWordSegmentation(words);
+                break;
+            default:
+                break;
+        }
+
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("include", includesList);
         paramMap.put("category", categories);
@@ -1344,6 +1356,7 @@ public class NDResourceController {
         paramMap.put("orderby", orderMap);
         paramMap.put("reverse", reverseBoolean);
         paramMap.put("limit", limit);
+        paramMap.put("words", words);
 
         return paramMap;
     }
