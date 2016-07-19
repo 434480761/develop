@@ -248,7 +248,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
 		Map<String, Object> result = TitanScritpUtils.buildScript(education,resCoverageList,resourceCategoryList,techInfos);
 		try {
-//			titanCommonRepository.executeScript(result.get("script").toString(),(Map<String, Object>) result.get("param"));
+			titanCommonRepository.executeScript(result.get("script").toString(),(Map<String, Object>) result.get("param"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
