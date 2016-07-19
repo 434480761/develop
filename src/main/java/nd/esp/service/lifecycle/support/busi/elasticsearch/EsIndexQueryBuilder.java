@@ -70,6 +70,7 @@ public class EsIndexQueryBuilder {
 
 
     /**
+     * 构建indexQuery查询脚本
      * :> List<String> ids = new ArrayList<String>();
      * graph.indexQuery("mixed_ndresource","v.\"search_coverage_string\":(Org/nd/* ) ").vertices().collect{ids.add(it.getElement().id())};
      * results=g.V(ids.toArray()).range(0,10).valueMap();
@@ -96,6 +97,10 @@ public class EsIndexQueryBuilder {
         return query.toString();
     }
 
+    /**
+     * 处理可用资源（primary_category、lc_enable）
+     * @return
+     */
     private String dealWithResType() {
         StringBuffer query = new StringBuffer();
         query.append("AND v.\\\"primary_category\\\":(").append(this.resType).append(") ");
@@ -104,6 +109,11 @@ public class EsIndexQueryBuilder {
         return query.toString();
     }
 
+    /**
+     * 处理分词
+     * @param words
+     * @return
+     */
     private String dealWithWords(String words) {
         if (words == null) return "";
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
@@ -123,6 +133,10 @@ public class EsIndexQueryBuilder {
         return "("+query.toString()+")";
     }
 
+    /**
+     * 处理 category（code、path）、coverage 参数
+     * @return
+     */
     private String dealWithParams() {
         if (CollectionUtils.isEmpty(this.params)) return "";
         StringBuffer query = new StringBuffer();
@@ -141,6 +155,7 @@ public class EsIndexQueryBuilder {
         }
         return query.toString();
     }
+
 
 
     private String dealWithSingleParam(String property, Map<String, List<String>> searchList) {
