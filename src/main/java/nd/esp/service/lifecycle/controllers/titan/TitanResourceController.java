@@ -132,4 +132,11 @@ public class TitanResourceController {
 	public void indexAllTimeUpdate(@RequestParam Integer page , @RequestParam String type) {
 		titanResourceService.timeTaskImport4Update(page, type);
 	}
+
+	@RequestMapping(value = "/{resourceType}/{id}/script", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long importOneData4Script(@PathVariable String resourceType, @PathVariable String id) {
+		titanResourceService.importOneData4Script(resourceType,id);
+		return 0;
+	}
 }
