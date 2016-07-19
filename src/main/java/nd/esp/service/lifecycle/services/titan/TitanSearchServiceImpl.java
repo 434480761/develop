@@ -247,11 +247,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                line = line.split("=")[1];
+               Map <String,String> map= TitanResultParse.toMap(line);
+                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
+               /* line = line.split("=")[1];
                 int length = line.length();
                 if (length > 2) {
                     taxOnPath = line.substring(1, length - 2);
-                }
+                }*/
             } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
                 mainResult = line;
             } else {
