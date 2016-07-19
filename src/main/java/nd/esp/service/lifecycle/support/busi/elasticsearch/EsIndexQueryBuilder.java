@@ -44,7 +44,6 @@ public class EsIndexQueryBuilder {
     private Map<String, Map<String, List<String>>> params;
     private int from = 0;
     private int end = 10;
-    private String limit=".limit(10)";
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'COUNT:' + count;resultList";
     public void setIndex(String index) {
@@ -64,9 +63,6 @@ public class EsIndexQueryBuilder {
         this.end = size + from;
     }
 
-    public void setLimit(String limit) {
-        this.limit = ".limit(" + limit + ")";
-    }
 
     /**
      * :> List<String> ids = new ArrayList<String>();
@@ -98,7 +94,19 @@ public class EsIndexQueryBuilder {
     private String dealWithWords(String words) {
         if (words == null) return "";
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
-        if(words.contains(",")) words=words.replaceAll(","," ");
+       /* String[] keywords=words.split(",");
+        StringBuffer wordScript=new StringBuffer();
+        for(String keyword:keywords){
+            if (keyword.contains("and")) {
+                keyword = keyword.replaceAll(" and ", " AND ");
+                keyword = "(" + keyword.trim() + ")";
+            } else if (keyword.contains(" AND ")) {
+                keyword = "(" + keyword.trim() + ")";
+            }
+            wordScript.append(keyword).append(" ");
+        }
+        wordScript.deleteCharAt(wordScript.length()-1);*/
+
         StringBuffer query = new StringBuffer();
         WordsCover[] covers=WordsCover.values();
         int coversLength=covers.length;
@@ -106,17 +114,10 @@ public class EsIndexQueryBuilder {
             query.append("v.\\\"");
             query.append(covers[i]);
             query.append("\\\":(");
-            query.append(words.replaceAll(",", ""));
+            query.append(words);
             query.append(")");
             if (i != coversLength - 1) query.append(" OR ");
         }
-      /*  for (WordsCover field : WordsCover.values()) {
-            query.append("v.\\\"");
-            query.append(field);
-            query.append("\\\":(");
-            query.append(words.replaceAll(",", ""));
-            query.append(") ");
-        }*/
 
         return "("+query.toString()+")";
     }

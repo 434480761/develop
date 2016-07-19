@@ -45,8 +45,7 @@ public class CourseWareObjectServiceImplV06 implements CourseWareObjectServiceV0
 
     @Override
     public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model) {
-        ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model,DbName.QUESTION);
-        return (CourseWareObjectModel)ndResourceService.getDetail(ResourceNdCode.coursewareobjects.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
+        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION);
     }
 
 }

@@ -114,11 +114,12 @@ public class CourseWareObjectControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.coursewareobjects.toString(), id);
-            // offline metadata(coverage) to elasticsearch
-            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewareobjects.toString())) {
-                esResourceOperation.asynAdd(
-                        new Resource(ResourceNdCode.coursewareobjects.toString(), id));
-            }
+        }
+
+        // offline metadata(coverage) to elasticsearch
+        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewareobjects.toString())) {
+            esResourceOperation.asynAdd(
+                    new Resource(ResourceNdCode.coursewareobjects.toString(), id));
         }
 
         return viewModel;
