@@ -190,7 +190,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 params.get(ES_SearchField.coverages.toString()));
         params.remove(ES_SearchField.coverages.toString());
 
-        //resourceQueryVertex.setWords(words);
+        resourceQueryVertex.setWords(words);
         // FIXME
         // resourceQueryVertex.setVertexLabel(resType);
 
