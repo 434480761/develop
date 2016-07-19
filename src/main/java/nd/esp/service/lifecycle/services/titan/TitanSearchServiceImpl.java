@@ -301,7 +301,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String mainResult = null;
         int count = 0;
         for (String line : resultStr) {
-            System.out.println(line);
+            //System.out.println(line);
             if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.contains("COUNT:"))) {
                 items.add(getItem(resType, mainResult, otherLines, taxOnPath));
                 otherLines.clear();
