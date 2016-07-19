@@ -276,6 +276,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
         builder.setWords(words);
         builder.setParams(params);
+        builder.setResType(resType);
         builder.setRange(from,size);
         String script=builder.generateScript();
         LOG.info("script:"+script);
