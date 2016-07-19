@@ -75,8 +75,7 @@ public class TeachingMaterialServiceImplV06 implements
 
 		//2、调用通用创建接口
 		tmm.setTechInfoList(null);
-		ndResourceService.patch(resType, tmm);
-		return (TeachingMaterialModel)ndResourceService.getDetail(resType, tmm.getIdentifier(), IncludesConstant.getIncludesList());
+		return (TeachingMaterialModel)ndResourceService.patch(resType, tmm);
 	}
 
 	/**

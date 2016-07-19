@@ -138,11 +138,11 @@ public class LearningPlansControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.learningplans.toString(), uuid);
-            // offline metadata(coverage) to elasticsearch
-            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.learningplans.toString())) {
-                esResourceOperation.asynAdd(
-                        new Resource(ResourceNdCode.learningplans.toString(), uuid));
-            }
+        }
+        // offline metadata(coverage) to elasticsearch
+        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.learningplans.toString())) {
+            esResourceOperation.asynAdd(
+                    new Resource(ResourceNdCode.learningplans.toString(), uuid));
         }
 
         return lpvm;

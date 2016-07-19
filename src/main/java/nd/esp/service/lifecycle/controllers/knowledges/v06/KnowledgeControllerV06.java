@@ -233,11 +233,11 @@ public class KnowledgeControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.knowledges.toString(), uuid);
-            // offline metadata(coverage) to elasticsearch
-            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.knowledges.toString())) {
-                esResourceOperation.asynAdd(
-                        new Resource(ResourceNdCode.knowledges.toString(), uuid));
-            }
+        }
+        // offline metadata(coverage) to elasticsearch
+        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.knowledges.toString())) {
+            esResourceOperation.asynAdd(
+                    new Resource(ResourceNdCode.knowledges.toString(), uuid));
         }
 
         return viewModelOut;

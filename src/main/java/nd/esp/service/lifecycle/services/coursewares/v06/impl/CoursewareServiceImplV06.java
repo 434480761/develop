@@ -31,7 +31,6 @@ public class CoursewareServiceImplV06 implements CoursewareServiceV06 {
 
 	@Override
 	public CoursewareModel patchCourseware(String resType, CoursewareModel cm) {
-		ndResourceService.patch(resType, cm);
-		return (CoursewareModel)ndResourceService.getDetail(resType, cm.getIdentifier(), IncludesConstant.getIncludesList());
+		return (CoursewareModel)ndResourceService.patch(resType, cm);
 	}
 }

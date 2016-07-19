@@ -32,8 +32,7 @@ public class LessonsServiceImplV06 implements LessonsServiceV06 {
 
     @Override
     public LessonModel patch(LessonModel model) {
-        ndResourceService.patch(ResourceNdCode.lessons.toString(), model);
-        return (LessonModel)ndResourceService.getDetail(ResourceNdCode.lessons.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
+        return (LessonModel)ndResourceService.patch(ResourceNdCode.lessons.toString(), model);
     }
 
 }

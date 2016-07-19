@@ -1274,7 +1274,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     	commonServiceHelper.deleteRelation4QuestionDB(resourceType, uuid);
     	
     	//TODO delete relation for titan
-        titanRelationRepository.deleteRelationSoft(resourceType,uuid);
+        titanRelationRepository.deleteRelationSoft(resourceType, uuid);
     }
     
 
@@ -2525,12 +2525,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel) {
-		patch(resourceType, resourceModel,DbName.DEFAULT);
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
+		return patch(resourceType, resourceModel,DbName.DEFAULT);
 	}
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2542,26 +2542,23 @@ public class NDResourceServiceImpl implements NDResourceService{
 			}
 		}
 
-		List<String> includeList = new ArrayList<>();
-
 		// 2、基本属性的处理
 		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
 
 		// 3、categories属性处理
 		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
 			dealCategoryPatch(resourceType, resourceModel);
-			includeList.add(IncludesConstant.INCLUDE_CG);
 		}
 
 		// 4、tech_info属性处理
 		if(resourceModel.getTechInfoList()!=null && CollectionUtils.isNotEmpty(resourceModel.getTechInfoList())){
 			dealTechInfoPatch(resourceType, resourceModel, dbName);
-			includeList.add(IncludesConstant.INCLUDE_TI);
 		}
 
 		// 5、同步推送至报表系统
-		nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
-
+		ResourceModel rtModel = getDetail(resourceType, resourceModel.getIdentifier(), IncludesConstant.getIncludesList());
+		nds.notifyReport4Resource(resourceType,rtModel,OperationType.UPDATE);
+		return  rtModel;
 	}
 
 	private boolean dealTechInfoPatch(String resourceType, ResourceModel resourceModel, DbName dbName) {
