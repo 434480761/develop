@@ -231,10 +231,9 @@ public class TitanResultParse {
         String[] fields = str.split("], ");
         Map<String, String> tmpMap = new HashMap<>();
         for (String s : fields) {
-            String[] t = s.replaceAll("]", "").split("=");
-            if (t.length == 2) {
-                tmpMap.put(t[0].trim(), t[1].trim());
-            }
+            String kv = s.replaceAll("]", "");
+            int begin = kv.indexOf("=");
+            tmpMap.put(kv.substring(0, begin), kv.substring(begin + 1, kv.length()));
         }
         return tmpMap;
     }

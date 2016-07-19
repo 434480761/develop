@@ -61,10 +61,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                List<String> includes,
                                                Map<String, Map<String, List<String>>> params,
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-        System.out.println("params:" + params);
+       /* System.out.println("params:" + params);
         System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
         System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -134,11 +134,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                line = line.split("=")[1];
-                int length = line.length();
-                if (length > 2) {
-                    taxOnPath = line.substring(1, length - 2);
-                }
+                Map <String,String> map= TitanResultParse.toMap(line);
+                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
             } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
                 mainResult = line;
             } else {
@@ -160,10 +157,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             Map<String, Map<String, List<String>>> params,
             Map<String, String> orderMap, int from, int size, boolean reverse,
             String words) {
-        System.out.println("params:" + params);
+        /*System.out.println("params:" + params);
         System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
         System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -190,7 +187,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 params.get(ES_SearchField.coverages.toString()));
         params.remove(ES_SearchField.coverages.toString());
 
-        //resourceQueryVertex.setWords(words);
+        resourceQueryVertex.setWords(words);
         // FIXME
         // resourceQueryVertex.setVertexLabel(resType);
 
@@ -247,11 +244,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                line = line.split("=")[1];
+               Map <String,String> map= TitanResultParse.toMap(line);
+                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
+               /* line = line.split("=")[1];
                 int length = line.length();
                 if (length > 2) {
                     taxOnPath = line.substring(1, length - 2);
-                }
+                }*/
             } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
                 mainResult = line;
             } else {
@@ -277,6 +276,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
         builder.setWords(words);
         builder.setParams(params);
+        builder.setResType(resType);
         builder.setRange(from,size);
         String script=builder.generateScript();
         LOG.info("script:"+script);
@@ -292,9 +292,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         while (iterator.hasNext()) {
             resultStr.add(iterator.next().getString());
         }
-        System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
+        //System.out.println(resultStr);
+        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
         long parseBegin = System.currentTimeMillis();
         List<String> otherLines = new ArrayList<>();
@@ -302,7 +301,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String mainResult = null;
         int count = 0;
         for (String line : resultStr) {
-            System.out.println(line);
+            //System.out.println(line);
             if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.contains("COUNT:"))) {
                 items.add(getItem(resType, mainResult, otherLines, taxOnPath));
                 otherLines.clear();
@@ -312,11 +311,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (line.contains("COUNT:")) {
                 viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                line = line.split("=")[1];
-                int length = line.length();
-                if (length > 2) {
-                    taxOnPath = line.substring(1, length - 2);
-                }
+                Map <String,String> map= TitanResultParse.toMap(line);
+                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
             } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
                 mainResult = line;
             } else {

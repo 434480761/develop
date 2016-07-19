@@ -215,6 +215,45 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		timeTaskPageQuery4Update.schedule();
 	}
 
+	@Override
+	public void importOneData4Script(String primaryCategory, String id) {
+		EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+		Education education = null;
+		try {
+			education = (Education) espRepository.get(id);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+
+		if (education == null){
+			return;
+		}
+		Set<String> uuids = new HashSet<>();
+		uuids.add(education.getIdentifier());
+
+		List<ResCoverage> resCoverageList =getResCoverage(
+				coverageDao.queryCoverageByResource(primaryCategory, uuids));
+
+
+		List<String> resourceTypes = new ArrayList<String>();
+		resourceTypes.add(primaryCategory);
+		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+
+
+		List<ResourceRelation> resourceRelations =  getResourceRelation(
+				educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
+
+		List<String> primaryCategorys = new ArrayList<>();
+		primaryCategorys.add(primaryCategory);
+		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+		Map<String, Object> result = TitanScritpUtils.buildScript(education,resCoverageList,resourceCategoryList,techInfos);
+		try {
+			titanCommonRepository.executeScript(result.get("script").toString(),(Map<String, Object>) result.get("param"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private List<ResCoverage> getResCoverage(List<ResCoverage> resCoverageList ){
 		if(CollectionUtils.isEmpty(resCoverageList)){
 			return new ArrayList<>();

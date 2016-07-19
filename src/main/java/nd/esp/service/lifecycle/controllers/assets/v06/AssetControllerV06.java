@@ -172,11 +172,11 @@ public class AssetControllerV06 {
 
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.assets.toString(), id);
-			// offline metadata(coverage) to elasticsearch
-			if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.assets.toString())) {
-				esResourceOperation.asynAdd(
-						new Resource(ResourceNdCode.assets.toString(), id));
-			}
+		}
+		// offline metadata(coverage) to elasticsearch
+		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.assets.toString())) {
+			esResourceOperation.asynAdd(
+					new Resource(ResourceNdCode.assets.toString(), id));
 		}
 		return avm;
 	}

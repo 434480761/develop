@@ -1274,7 +1274,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     	commonServiceHelper.deleteRelation4QuestionDB(resourceType, uuid);
     	
     	//TODO delete relation for titan
-        titanRelationRepository.deleteRelationSoft(resourceType,uuid);
+        titanRelationRepository.deleteRelationSoft(resourceType, uuid);
     }
     
 
@@ -2523,14 +2523,57 @@ public class NDResourceServiceImpl implements NDResourceService{
         nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
         return resourceModel;
     }
+    
+    /**
+     * @author linsm
+     * @param resourceType
+     * @param identifier
+     * @return
+     * @since
+     */
+    @Override
+    public Education checkResourceExist(String resourceType, String identifier) {
+        // 后期是否可以结合取详情一起来处理
+        // 判断资源是否存在
+        Education oldBean = null;
+
+        LOG.debug("调用sdk方法：get");
+
+        try {
+            oldBean = (Education) commonServiceHelper.getRepository(resourceType).get(identifier);
+        } catch (EspStoreException e) {
+
+            LOG.error("调用存储SDK出错了", e);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                                          e.getLocalizedMessage());
+        }
+        if (oldBean == null || !resourceType.equals(oldBean.getPrimaryCategory())) {
+
+            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
+        }
+        // 资源是否被删除过
+        if (!oldBean.getEnable()) {
+
+            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
+        }
+        return oldBean;
+    }
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel) {
-		patch(resourceType, resourceModel,DbName.DEFAULT);
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
+		return patch(resourceType, resourceModel,DbName.DEFAULT);
 	}
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2542,26 +2585,23 @@ public class NDResourceServiceImpl implements NDResourceService{
 			}
 		}
 
-		List<String> includeList = new ArrayList<>();
-
 		// 2、基本属性的处理
 		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
 
 		// 3、categories属性处理
 		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
 			dealCategoryPatch(resourceType, resourceModel);
-			includeList.add(IncludesConstant.INCLUDE_CG);
 		}
 
 		// 4、tech_info属性处理
 		if(resourceModel.getTechInfoList()!=null && CollectionUtils.isNotEmpty(resourceModel.getTechInfoList())){
 			dealTechInfoPatch(resourceType, resourceModel, dbName);
-			includeList.add(IncludesConstant.INCLUDE_TI);
 		}
 
 		// 5、同步推送至报表系统
-		nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
-
+		ResourceModel rtModel = getDetail(resourceType, resourceModel.getIdentifier(), IncludesConstant.getIncludesList());
+		nds.notifyReport4Resource(resourceType,rtModel,OperationType.UPDATE);
+		return  rtModel;
 	}
 
 	private boolean dealTechInfoPatch(String resourceType, ResourceModel resourceModel, DbName dbName) {
@@ -3042,48 +3082,6 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
         return true;
 
-    }
-
-    /**
-     * @author linsm
-     * @param resourceType
-     * @param identifier
-     * @return
-     * @since
-     */
-    private Education checkResourceExist(String resourceType, String identifier) {
-        // 后期是否可以结合取详情一起来处理
-        // 判断资源是否存在
-        Education oldBean = null;
-
-        LOG.debug("调用sdk方法：get");
-
-        try {
-            oldBean = (Education) commonServiceHelper.getRepository(resourceType).get(identifier);
-        } catch (EspStoreException e) {
-
-            LOG.error("调用存储SDK出错了", e);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getLocalizedMessage());
-        }
-        if (oldBean == null || !resourceType.equals(oldBean.getPrimaryCategory())) {
-
-            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
-        }
-        // 资源是否被删除过
-        if (!oldBean.getEnable()) {
-
-            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
-        }
-        return oldBean;
     }
 
 	@Override

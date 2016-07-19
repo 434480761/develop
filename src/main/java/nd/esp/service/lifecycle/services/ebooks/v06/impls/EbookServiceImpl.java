@@ -32,8 +32,7 @@ public class EbookServiceImpl implements EbookService {
 
     @Override
     public EbookModel patch(EbookModel ebookModel) {
-        ndResourceService.patch(ResourceNdCode.ebooks.toString(), ebookModel);
-        return (EbookModel)ndResourceService.getDetail(ResourceNdCode.ebooks.toString(), ebookModel.getIdentifier(), IncludesConstant.getIncludesList());
+        return (EbookModel)ndResourceService.patch(ResourceNdCode.ebooks.toString(), ebookModel);
     }
 
 }
