@@ -52,6 +52,10 @@ public class CategoryData extends EspEntity {
 	@Column(name="short_name")
  	private String shortName; 
 	
+	/**
+	 * 预览图
+	 */
+	private String preview;
 
 	public void setCategory(String category) {
 		this.category = category;
@@ -109,4 +113,13 @@ public class CategoryData extends EspEntity {
 	public IndexSourceType getIndexType() {
 		return IndexSourceType.CategoryDataType;
 	}
+
+	public String getPreview() {
+		return preview;
+	}
+
+	public void setPreview(String preview) {
+		this.preview = preview;
+	}
+	
 }
