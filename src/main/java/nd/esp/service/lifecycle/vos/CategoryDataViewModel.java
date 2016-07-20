@@ -62,11 +62,6 @@ public class CategoryDataViewModel {
 	 */
 	private String dimensionPath;
 	
-	/**
-	 * 预览图
-	 */
-	private String preview;
-	
 	public String getIdentifier() {
 		return identifier;
 	}
@@ -126,12 +121,6 @@ public class CategoryDataViewModel {
 	}
 	public void setDimensionPath(String dimensionPath) {
 		this.dimensionPath = dimensionPath;
-	}
-	public String getPreview() {
-		return preview;
-	}
-	public void setPreview(String preview) {
-		this.preview = preview;
 	}
 	
 	

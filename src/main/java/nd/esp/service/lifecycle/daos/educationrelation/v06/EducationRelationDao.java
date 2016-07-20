@@ -1,10 +1,8 @@
 package nd.esp.service.lifecycle.daos.educationrelation.v06;
 
 import java.util.List;
-import java.util.Set;
 
 import nd.esp.service.lifecycle.models.v06.ResourceRelationResultModel;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
 
@@ -67,6 +65,4 @@ public interface EducationRelationDao {
      * @since
      */
     List<ResourceRelationResultModel> getResourceRelations(String source, String resType, String resourceTargetType);
-
-    List<ResourceRelation> batchGetRelationByResourceSourceOrTarget(String primaryCategory, Set<String> uuidsSet);
 }

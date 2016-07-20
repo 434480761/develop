@@ -779,11 +779,6 @@ public class CategoryServiceImpl implements CategoryService {
 		LOG.debug("调用sdk方法:update");
 		LOG.debug("修改维度数据资源:{}",bean.getIdentifier());
 		
-		//不可改变的值  add by xuzy 20160719
-		if(StringUtils.isEmpty(bean.getPreview())){
-			bean.setPreview(testModel.getPreview());
-		}
-		
 		return changeCategoryDataFromBean(categoryDataRepository.update(bean));
 	}
 

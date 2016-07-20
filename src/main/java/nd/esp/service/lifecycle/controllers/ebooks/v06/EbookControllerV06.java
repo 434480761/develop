@@ -106,11 +106,11 @@ public class EbookControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.ebooks.toString(), id);
-        }
-        // offline metadata(coverage) to elasticsearch
-        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.ebooks.toString())) {
-            esResourceOperation.asynAdd(
-                    new Resource(ResourceNdCode.ebooks.toString(), id));
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.ebooks.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.ebooks.toString(), id));
+            }
         }
         return ebookViewModel;
 

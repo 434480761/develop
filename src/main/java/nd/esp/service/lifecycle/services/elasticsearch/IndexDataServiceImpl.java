@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.persistence.Query;
 
-import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.elasticsearch.EsResourceOperation;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
@@ -33,7 +32,11 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -60,9 +63,6 @@ public class IndexDataServiceImpl implements IndexDataService {
 
 	@Autowired
 	private SyncResourceService syncResourceService;
-	
-	@Autowired
-	private CoverageDao coverageDao;
 
 	/**
 	 * 重建索引
@@ -86,7 +86,7 @@ public class IndexDataServiceImpl implements IndexDataService {
 		int row = 500;
 		EspRepository<?> espRepository = ServicesManager.get(resourceType);
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = new PageImpl(new ArrayList());
+		Page resourcePage = new PageImpl<>(new ArrayList<>());
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 
@@ -310,9 +310,15 @@ public class IndexDataServiceImpl implements IndexDataService {
 
 	private Map<String, List<ResCoverageModel>> getCoverages(
 			String resourceType, Set<String> uuids) {
+		Query query = commonServiceHelper
+				.getResCoverageRepositoryByResType(resourceType)
+				.getEntityManager()
+				.createNamedQuery("batchGetCoverageByResource");
+		query.setParameter("rt", resourceType);
+		query.setParameter("rids", uuids);
 
 		@SuppressWarnings("unchecked")
-		List<ResCoverage> result = coverageDao.queryCoverageByResource(resourceType, uuids);
+		List<ResCoverage> result = query.getResultList();
 		Map<String, List<ResCoverageModel>> resultMap = new HashMap<String, List<ResCoverageModel>>();
 		if (CollectionUtils.isNotEmpty(result)) {
 			for (ResCoverage resCoverage : result) {

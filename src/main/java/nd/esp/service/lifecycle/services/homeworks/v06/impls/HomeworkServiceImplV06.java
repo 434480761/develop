@@ -32,6 +32,7 @@ public class HomeworkServiceImplV06 implements HomeworkServiceV06 {
 
 	@Override
 	public HomeworkModel patchHomework(HomeworkModel hm) {
-		return (HomeworkModel)ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm);
+		ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm);
+		return (HomeworkModel)ndResourceService.getDetail(ResourceNdCode.homeworks.toString(), hm.getIdentifier(), IncludesConstant.getIncludesList());
 	}
 }

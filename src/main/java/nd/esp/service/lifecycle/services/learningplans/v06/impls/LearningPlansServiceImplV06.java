@@ -40,7 +40,8 @@ public class LearningPlansServiceImplV06 implements LearningPlansServiceV06 {
 
     @Override
     public LearningPlanModel patch(LearningPlanModel learningPlansModel) {
-        return (LearningPlanModel)ndResourceService.patch(ResourceNdCode.learningplans.toString(), learningPlansModel);
+        ndResourceService.patch(ResourceNdCode.learningplans.toString(), learningPlansModel);
+        return (LearningPlanModel)ndResourceService.getDetail(ResourceNdCode.learningplans.toString(), learningPlansModel.getIdentifier(), IncludesConstant.getIncludesList());
     }
 
 }

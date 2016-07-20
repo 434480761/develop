@@ -154,11 +154,11 @@ public class TeachingMaterialControllerV06 {
 
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.teachingmaterials.toString(), id);
-		}
-		// offline metadata(coverage) to elasticsearch
-		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.teachingmaterials.toString())) {
-			esResourceOperation.asynAdd(
-					new Resource(ResourceNdCode.teachingmaterials.toString(), id));
+			// offline metadata(coverage) to elasticsearch
+			if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.teachingmaterials.toString())) {
+				esResourceOperation.asynAdd(
+						new Resource(ResourceNdCode.teachingmaterials.toString(), id));
+			}
 		}
 		return tmvm;
 	}

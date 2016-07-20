@@ -19,8 +19,6 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
-import nd.esp.service.lifecycle.services.titan.TitanCommonService;
-import nd.esp.service.lifecycle.services.titan.TitanCommonServiceImpl;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -70,9 +68,6 @@ public class CoverageController {
     
     @Autowired
     private AsynEsResourceService esResourceOperation;
-    
-    @Autowired
-    private TitanCommonService titanCommonService;
     
     /**
      * 增加资源覆盖范围	
@@ -479,9 +474,6 @@ public class CoverageController {
                     .getMessageString(LifeCircleErrorMessageMapper.DeleteCoverageFail);
         }
         
-      //TODO titan
-        titanCommonService.delete(TitanCommonServiceImpl.EDGE,rcid);
-        
 		// add by lsm offline to elasticsearch
         esResourceOperation.asynAdd(resource);
         
@@ -548,9 +540,6 @@ public class CoverageController {
             return MessageConvertUtil
                     .getMessageString(LifeCircleErrorMessageMapper.BatchDeleteCoverageFail);
         }
-        
-      //TODO titan
-        titanCommonService.batchDelete(TitanCommonServiceImpl.EDGE,rcids);
         
 		// add by lsm offline to elasticsearch
         esResourceOperation.asynBatchAdd(resources);

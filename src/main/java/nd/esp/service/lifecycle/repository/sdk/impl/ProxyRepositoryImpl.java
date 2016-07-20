@@ -18,7 +18,6 @@ import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
 import nd.esp.service.lifecycle.repository.DataConverter;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
@@ -34,7 +33,6 @@ import nd.esp.service.lifecycle.repository.index.QueryRequest;
 import nd.esp.service.lifecycle.repository.index.QueryResponse;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.sdk.DBCallBack;
-import nd.esp.service.lifecycle.utils.SpringContextUtil;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -89,8 +87,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 
 	private  TransactionTemplate transactionTemplate;
 	
-	public TitanRepository titanRepository;
-	
 	/**
 	 * Instantiates a new proxy repository impl.
 	 *
@@ -131,9 +127,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		    
         }
 		
-		//TODO titan repository code add
-				getTitanRepository().add(bean);
-		
 		return converterOut(result);
 	}
 	
@@ -173,9 +166,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		    logger.debug(">>>>>>>>>>>>>>doe update!@");
 		    
         }
-		
-		//TODO titan repository code update
-				getTitanRepository().update(bean);
 		
 		return converterOut(result);
 	}
@@ -440,9 +430,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	public List<T> batchAdd(List<T> bean) throws EspStoreException {
 		batchConverterIn(bean);
 		List<T> result = this.save(bean);
-		
-		//TODO titan repository code batchAdd
-				getTitanRepository().batchAdd(bean);
 
 		return batchConverterOut(result);
 	}
@@ -1291,14 +1278,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		Query query = entityManager.createNativeQuery("{call " + procedure + " }");
 		query.executeUpdate();
 		return null;
-	}
-	
-	public TitanRepository getTitanRepository() {
-		if(titanRepository == null){
-			titanRepository = SpringContextUtil.getApplicationContext()
-					.getBean("TitanRepositoryImpl",TitanRepository.class);
-		}
-		return titanRepository;
 	}
 
 

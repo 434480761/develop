@@ -2,7 +2,6 @@ package nd.esp.service.lifecycle.app;
 
 import nd.esp.service.lifecycle.security.LcAuthenticationProvider;
 import nd.esp.service.lifecycle.security.TokenAuthenticationProcessFilter4LC;
-import nd.esp.service.lifecycle.support.enums.RoleEnum;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -31,55 +30,11 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	
 	@Autowired
 	private PreAuthenticatedAuthenticationExtractorManager extractorManager;
-	
-	/** 权限启用开关*/
-    public static String AUTHORITY_ENABLE = LifeCircleApplicationInitializer.properties.getProperty("esp_authority_enable");
+
 
 	//waf.security.disabled=false为生效
 	@Override
 	protected void onConfigure(HttpSecurity http) throws Exception {
-	    
-	    // ===START===
-	    if(Boolean.valueOf(AUTHORITY_ENABLE)){
-	        // 说明：新增资源管理平台权限控制 @lanyl 2016-06-30
-	        // ps:多条匹配规则中若有交集，请一定要注意先后顺序
-	        // 参考waf安全访问控制wiki：http://doc.sdp.nd/index.php?title=WAF_rest_api%E4%B8%AD%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%AE%89%E5%85%A8%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6
-	        
-	        // 权限角色配置接口 【超级管理员（SuperAdmin）跟库管理员（CoverageAdmin）】
-	        http.authorizeRequests().antMatchers("/v*/users/**").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-
-			//维度管理者角色--[CategoryDataAdmin]
-			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-			http.authorizeRequests().antMatchers("/v*/categorypatterns").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-			http.authorizeRequests().antMatchers("/v*/categorypatterns/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
-
-	        // 资源消费者角色--[ResConsumer]
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/targets").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/archive").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/archiveinfo").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/downloadurl").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/list").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.RESCONSUMER.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-
-
-	        // 资源创建者角色(ResCreator)
-	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/*/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/*/*/relations").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-	        http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/*/*/uploadurl").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-
-	    }
-        // ===END=== 
-
 		// TODO Auto-generated method stub
 		//admin","role_biz_server"
 		http.authorizeRequests()
@@ -93,8 +48,6 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		 .antMatchers(HttpMethod.DELETE).authenticated()
 				//匹配"/students/**"的所有（其他）操作，需要用户拥有角色"ADMIN"
 		  .antMatchers("/**").authenticated();
-
-
 
 		//若其他的Url地址均需要加身份认证，则请添加.anyRequest().authenticated()
 
