@@ -731,15 +731,15 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
-                        includesList, categories, categoryExclude, relationsMap,
-                        coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean, printable, printableKey);
-
-//                rListViewModel = resourceQueryByTitanRealTime(resType,
+//                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
 //                        includesList, categories, categoryExclude, relationsMap,
 //                        coveragesList, propsMap, orderMap, words, limit,
-//                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+//                        isNotManagement, reverseBoolean, printable, printableKey);
+
+                rListViewModel = resourceQueryByTitanRealTime(resType,
+                        includesList, categories, categoryExclude, relationsMap,
+                        coveragesList, propsMap, orderMap, words, limit,
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
@@ -793,13 +793,13 @@ public class NDResourceController {
     private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
-//      return tmp(resType, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words,
-//                limit, isNotManagement, reverse, printable, printableKey,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+      return tmp(resType, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words,
+                limit, isNotManagement, reverse, printable, printableKey,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         
-      return ndResourceService.resourceQueryByTitan(resType,
-              includes, categories, categoryExclude, relations,
-              coverages, propsMap, orderMap, words, limit,
-              isNotManagement, reverse, printable, printableKey);
+//      return ndResourceService.resourceQueryByTitan(resType,
+//              includes, categories, categoryExclude, relations,
+//              coverages, propsMap, orderMap, words, limit,
+//              isNotManagement, reverse, printable, printableKey);
     }
 
     private ListViewModel<ResourceModel> tmp(String resType, List<String> includes, Set<String> categories,
@@ -816,7 +816,7 @@ public class NDResourceController {
         Date maxLastUpdateDateFromPorpsMap = getMaxLastUpdateDateFromPorpsMap(propsMap, lastUpdateLtKey);
         Date minDate = getMinLastUpdateDate(maxLastUpdateDateFromPorpsMap,calendar);
         modifyPropsMapLastUpdate(propsMap, lastUpdateLtKey, minDate);
-        int moreOffset = 2;
+        int moreOffset = 10;
         String[] split = limit.replace("(", "").replace(")", "").split(",");
         int begin = Integer.valueOf(split[0]).intValue();
         int size = Integer.valueOf(split[1]).intValue();
@@ -833,7 +833,7 @@ public class NDResourceController {
             beginForTitan = 0;
             subListBegin = begin;
             subListSize = size;
-            endForTitan = size;
+            endForTitan = begin + size;
         }
         String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(endForTitan).append(")").toString();
         
@@ -845,8 +845,9 @@ public class NDResourceController {
                 orderMap, true);
         propsMapForDB = (Map<String, Set<String>>) changeMap
                 .get("propsMapNew");
-//        orderMap = (Map<String, String>) changeMap
-//                .get("orderMapNew");
+        Map<String, String> orderMapForDb = new HashMap<String, String>();
+        orderMapForDb = (Map<String, String>) changeMap
+                .get("orderMapNew");
         String lastUpdateGtKey = "last_update_GT";
         Date minLastUpdateDateFromPorpsMap = getMinLastUpdateDateFromPorpsMap(propsMapForDB, lastUpdateGtKey);
         Date maxDate = getMaxLastUpdateDate(minLastUpdateDateFromPorpsMap,calendar);
@@ -854,12 +855,11 @@ public class NDResourceController {
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includes, categories, categoryExclude,
-                relations, coverages, null, words, limitForDb, isNotManagement, reverse, printable, printableKey,
+                relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         
         ListViewModel<ResourceModel> resourceQueryByTitanResult = null;
         ListViewModel<ResourceModel> resourceQueryByDBResult = null;
-        
         try {
             resourceQueryByTitanResult = titanFuture.get();
             resourceQueryByDBResult = dbFuture.get();
@@ -867,9 +867,7 @@ public class NDResourceController {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-//        int dbResultSize = resourceQueryByDBResult.getItems().size();
-//        int titanResultSize = resourceQueryByTitanResult.getItems().size();
-        
+        excetorService.shutdown();
         
         
         String field = "";
@@ -882,62 +880,106 @@ public class NDResourceController {
             }
         }
         
-        List<ResourceModel> items = null;
-        items = resourceQueryByTitanResult.getItems();
-        if (sort.equalsIgnoreCase("ASC")) {
-            insertDbResultToTitanResultAsc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
-        }
-        else if (sort.equalsIgnoreCase("DESC")){
-            insertDbResultToTitanResultDesc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
-        }
-        if (!items.isEmpty()) {
-            items = resourceQueryByTitanResult.getItems();
-            subListSize = subListSize > items.size() ? items.size() : subListSize;
-            List<ResourceModel> resourceQueryByTitanResultSubList = items.subList(subListBegin, subListSize);
-//        List<ResourceModel> resourceQueryByTitanResultSubList = resourceQueryByTitanResult.getItems().subList(end-begin-titanMoreOffset, end-begin);
-//        for (int i = 0; i < resourceQueryByTitanResult.getItems().size(); i++) {
-//            resourceQueryByTitanResult.getItems().remove(i);
-//        }
+        List<ResourceModel> queryFromTitanItems = null;
+        queryFromTitanItems = resourceQueryByTitanResult.getItems();
+        if (!queryFromTitanItems.isEmpty()) {
+            mergeAndSortTitanResultAndDbResult(resourceQueryByTitanResult, resourceQueryByDBResult, field, sort);
+            
+            List<ResourceModel> titanAndDbMergeResultItems = null;
+            titanAndDbMergeResultItems = resourceQueryByTitanResult.getItems();
+            List<ResourceModel> resourceQueryByTitanResultSubList = new ArrayList<ResourceModel>();
+            int loop = titanAndDbMergeResultItems.size() > size + begin ? size + begin : titanAndDbMergeResultItems.size();
+            if (moreOffset >= begin) {
+                for (int i = begin; i < loop; i++) {
+                    resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
+                }
+            }
+            
+            if (moreOffset < begin) {
+                for (int i = moreOffset; i < loop; i++) {
+                    resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
+                }
+            }
+            
             resourceQueryByTitanResult.setItems(resourceQueryByTitanResultSubList);
+        }else {
+            List<ResourceModel> queryFromDbItems = null;
+            queryFromDbItems = resourceQueryByDBResult.getItems();
+            resourceQueryByTitanResult.setTotal((long) queryFromDbItems.size());
+            if (queryFromDbItems.size() - 1 >= begin) {
+                List<ResourceModel> resourceQueryByDbResultSubList = new ArrayList<ResourceModel>();
+                int loop = queryFromDbItems.size() > size + begin ? size + begin : queryFromDbItems.size();
+                for (int i = begin; i < loop; i++) {
+                    resourceQueryByDbResultSubList.add(queryFromDbItems.get(i));
+                }
+                resourceQueryByTitanResult.setItems(resourceQueryByDbResultSubList);
+            }
         }
-        
-        excetorService.shutdown();
-        
 
         resourceQueryByTitanResult.setLimit(limit);
         return resourceQueryByTitanResult;
 //        return resourceQueryByDBResult;
     }
 
+    private void mergeAndSortTitanResultAndDbResult(ListViewModel<ResourceModel> resourceQueryByTitanResult,
+            ListViewModel<ResourceModel> resourceQueryByDBResult, String field, String sort) {
+        if (sort.equalsIgnoreCase("ASC")) {
+            insertDbResultToTitanResultAsc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
+        }
+        else if (sort.equalsIgnoreCase("DESC")){
+            insertDbResultToTitanResultDesc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
+        }
+    }
+
     private void insertDbResultToTitanResultDesc(ListViewModel<ResourceModel> resourceQueryByTitanResult,
             ListViewModel<ResourceModel> resourceQueryByDBResult, String field) {
-        for (int i = 0; i < resourceQueryByDBResult.getItems().size(); i++) {
+        int dbResultSize = resourceQueryByDBResult.getItems().size();
+        long totalResult = resourceQueryByTitanResult.getTotal()+resourceQueryByDBResult.getTotal();
+        for (int i = 0; i < dbResultSize; i++) {
             ResourceModel resourceModelDb = resourceQueryByDBResult.getItems().get(i);
-            for (int j = 0; j < resourceQueryByTitanResult.getItems().size(); j++) {
+            int titanResultSize = resourceQueryByTitanResult.getItems().size();
+            for (int j = 0; j < titanResultSize; j++) {
                 ResourceModel resourceModelTitan = resourceQueryByTitanResult.getItems().get(j);
                 if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
                     resourceQueryByTitanResult.getItems().remove(j);
                     resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                    --totalResult;
                 }else {
                     if (field.equals("lc_create_time")) {
                         int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
                         if (compare >= 0) {
                             resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else {
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                            }
                         }
                     }else if (field.equals("lc_last_update")){
                         int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
                         if (compare >= 0) {
                             resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else {
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                            }
                         }
                     }else if (field.equals("lc_title")){
                         int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
                         if (compare >= 0) {
                             resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else{
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                            }
                         }
                     }
                 }
             }
         }
+        resourceQueryByTitanResult.setTotal(totalResult);
     }
 
     private void insertDbResultToTitanResultAsc(ListViewModel<ResourceModel> resourceQueryByTitanResult,
@@ -947,49 +989,45 @@ public class NDResourceController {
         for (int i = 0; i < dbResultSize; i++) {
             ResourceModel resourceModelDb = resourceQueryByDBResult.getItems().get(i);
             int titanResultSize = resourceQueryByTitanResult.getItems().size();
-            if (titanResultSize != 0) {
-                for (int j = 0; j < titanResultSize; j++) {
-                    ResourceModel resourceModelTitan = resourceQueryByTitanResult.getItems().get(j);
-                    if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
-                        resourceQueryByTitanResult.getItems().remove(j);
-                        resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
-                        --totalResult;
-                    }else {
-                        if (field.equals("lc_create_time")) {
-                            int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
-                            if (compare <= 0) {
-                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
-                                break;
-                            }else {
-                                if (j == titanResultSize-1) {
-                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
-                                }
+            for (int j = 0; j < titanResultSize; j++) {
+                ResourceModel resourceModelTitan = resourceQueryByTitanResult.getItems().get(j);
+                if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
+                    resourceQueryByTitanResult.getItems().remove(j);
+                    resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                    --totalResult;
+                }else {
+                    if (field.equals("lc_create_time")) {
+                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
+                        if (compare <= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else {
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
                             }
-                        }else if (field.equals("lc_last_update")){
-                            int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
-                            if (compare <= 0) {
-                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
-                                break;
-                            }else {
-                                if (j == titanResultSize-1) {
-                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
-                                }
+                        }
+                    }else if (field.equals("lc_last_update")){
+                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
+                        if (compare <= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else {
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
                             }
-                        }else if (field.equals("lc_title")){
-                            int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
-                            if (compare <= 0) {
-                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
-                                break;
-                            }else{
-                                if (j == titanResultSize-1) {
-                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
-                                }
+                        }
+                    }else if (field.equals("lc_title")){
+                        int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
+                        if (compare <= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                            break;
+                        }else{
+                            if (j == titanResultSize-1) {
+                                resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
                             }
                         }
                     }
                 }
-            }else{
-                resourceQueryByTitanResult.getItems().add(resourceModelDb);
             }
         }
         resourceQueryByTitanResult.setTotal(totalResult);
