@@ -23,7 +23,7 @@ import java.util.*;
 @Component
 public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
-    public static int MAX_REPORT_TIMES = 20;
+    public static int MAX_REPORT_TIMES = 10;
     public static boolean LOCKED = false;
 
     @Autowired
