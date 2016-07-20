@@ -731,10 +731,15 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-                rListViewModel = resourceQueryByTitanRealTime(resType,
+                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                        isNotManagement, reverseBoolean, printable, printableKey);
+
+//                rListViewModel = resourceQueryByTitanRealTime(resType,
+//                        includesList, categories, categoryExclude, relationsMap,
+//                        coveragesList, propsMap, orderMap, words, limit,
+//                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
@@ -811,26 +816,26 @@ public class NDResourceController {
         Date maxLastUpdateDateFromPorpsMap = getMaxLastUpdateDateFromPorpsMap(propsMap, lastUpdateLtKey);
         Date minDate = getMinLastUpdateDate(maxLastUpdateDateFromPorpsMap,calendar);
         modifyPropsMapLastUpdate(propsMap, lastUpdateLtKey, minDate);
-        int titanMoreOffset = 2;
+        int moreOffset = 2;
         String[] split = limit.replace("(", "").replace(")", "").split(",");
         int begin = Integer.valueOf(split[0]).intValue();
-        int end = Integer.valueOf(split[1]).intValue();
+        int size = Integer.valueOf(split[1]).intValue();
         int beginForTitan = 0;
-//        int endForTitan = 0;
+        int endForTitan = 0;
         int subListBegin = 0;
-        int subListEnd = 0; 
-        if (begin - titanMoreOffset > 0) {
-            beginForTitan = begin - titanMoreOffset;
-            subListBegin = titanMoreOffset;
-            subListEnd = (end - begin) + titanMoreOffset;
-//            endForTitan = end + titanMoreOffset;
+        int subListSize = 0; 
+        if (begin - moreOffset >= 0) {
+            beginForTitan = begin - moreOffset;
+            endForTitan = moreOffset + size;
+            subListBegin = moreOffset;
+            subListSize = size;
         }else {
             beginForTitan = 0;
-            subListBegin = 0;
-            subListEnd = end;
-//            endForTitan = end;
+            subListBegin = begin;
+            subListSize = size;
+            endForTitan = size;
         }
-        String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(end).append(")").toString();
+        String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(endForTitan).append(")").toString();
         
         Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includes, categories,
                 categoryExclude, relations, coverages, propsMap, orderMap, words, limitForTitan, isNotManagement, reverse,
@@ -846,7 +851,7 @@ public class NDResourceController {
         Date minLastUpdateDateFromPorpsMap = getMinLastUpdateDateFromPorpsMap(propsMapForDB, lastUpdateGtKey);
         Date maxDate = getMaxLastUpdateDate(minLastUpdateDateFromPorpsMap,calendar);
         modifyPropsMapLastUpdate(propsMapForDB, lastUpdateGtKey, maxDate);
-        String limitForDb = "(0,100)";
+        String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includes, categories, categoryExclude,
                 relations, coverages, null, words, limitForDb, isNotManagement, reverse, printable, printableKey,
@@ -862,6 +867,11 @@ public class NDResourceController {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+//        int dbResultSize = resourceQueryByDBResult.getItems().size();
+//        int titanResultSize = resourceQueryByTitanResult.getItems().size();
+        
+        
+        
         String field = "";
         String sort = "";
         if (orderMap != null) {
@@ -871,32 +881,30 @@ public class NDResourceController {
                 break;
             }
         }
+        
+        List<ResourceModel> items = null;
+        items = resourceQueryByTitanResult.getItems();
         if (sort.equalsIgnoreCase("ASC")) {
             insertDbResultToTitanResultAsc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
         }
         else if (sort.equalsIgnoreCase("DESC")){
             insertDbResultToTitanResultDesc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
         }
-        
-        excetorService.shutdown();
-        
-        List<ResourceModel> items = resourceQueryByTitanResult.getItems();
-        subListEnd = subListEnd > items.size() ? items.size() : subListEnd;
-        List<ResourceModel> resourceQueryByTitanResultSubList = items.subList(subListBegin, subListEnd);
+        if (!items.isEmpty()) {
+            items = resourceQueryByTitanResult.getItems();
+            subListSize = subListSize > items.size() ? items.size() : subListSize;
+            List<ResourceModel> resourceQueryByTitanResultSubList = items.subList(subListBegin, subListSize);
 //        List<ResourceModel> resourceQueryByTitanResultSubList = resourceQueryByTitanResult.getItems().subList(end-begin-titanMoreOffset, end-begin);
 //        for (int i = 0; i < resourceQueryByTitanResult.getItems().size(); i++) {
 //            resourceQueryByTitanResult.getItems().remove(i);
 //        }
-        resourceQueryByTitanResult.setItems(resourceQueryByTitanResultSubList);
+            resourceQueryByTitanResult.setItems(resourceQueryByTitanResultSubList);
+        }
+        
+        excetorService.shutdown();
+        
 
         resourceQueryByTitanResult.setLimit(limit);
-        int size = items.size();
-//        if (size > end) {
-//            int removeIndex = end;
-//            for (int i = end; i < size; i++) {
-//                resourceQueryByTitanResult.getItems().remove(removeIndex);
-//            }
-//        }
         return resourceQueryByTitanResult;
 //        return resourceQueryByDBResult;
     }
