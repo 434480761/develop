@@ -242,6 +242,8 @@ public class Constant {
     //视频转码service id
     public  static String WORKER_VIDEO_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_video_transcode_service");
 
+    public  static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
+
     /**
      * 后门API开关
      * @see nd.esp.service.lifecycle.controllers.v06.BackDoorController
