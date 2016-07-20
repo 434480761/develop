@@ -33,10 +33,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -89,7 +86,7 @@ public class IndexDataServiceImpl implements IndexDataService {
 		int row = 500;
 		EspRepository<?> espRepository = ServicesManager.get(resourceType);
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = null;
+		Page resourcePage = new PageImpl(new ArrayList());
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 

@@ -408,7 +408,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		int page = 0;
 		int row = 500;
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = null;
+		Page resourcePage = new PageImpl(new ArrayList());
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 
@@ -456,7 +456,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		int page = 0;
 		int row = 500;
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = null;
+		Page resourcePage = new PageImpl(new ArrayList());;
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 
@@ -576,7 +576,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			int row = 300;
 			EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
 			@SuppressWarnings("rawtypes")
-			Page resourcePage = null;
+			Page resourcePage = new PageImpl(new ArrayList());
 			@SuppressWarnings("rawtypes")
 			List entitylist = null;
 
