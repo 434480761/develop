@@ -1493,7 +1493,7 @@ public class CommonHelper {
 	 * @return
      */
 	public static String checkWordSegmentation(String words) {
-
+		if (words == null || "".equals(words)) return "";
 		String check = words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
 		if (check.contains(",")) {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1532,8 +1532,9 @@ public class CommonHelper {
 	}
 
 	public static boolean checkOptNum(String words, String opt) {
+		if (words == null) return true;
 		int total = 0;
-		for (String tmp = words; tmp != null&&tmp.length()>=opt.length();){
+		for (String tmp = words;tmp.length()>=opt.length();){
 			if(tmp.indexOf(opt) == 0){
 				total ++;
 			}
