@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
@@ -201,18 +200,26 @@ public class TitanScritpUtils {
         return new Properties();
     }
 
-    public static Map<String, Object> buildScript(Education education, List<ResCoverage> coverageList, List<ResourceCategory> categoryList, List<TechInfo> techInfoList){
+    public static Map<String, Object> buildScript(Education education,
+                                                  List<ResCoverage> coverageList,
+                                                  List<ResourceCategory> categoryList,
+                                                  List<TechInfo> techInfoList ,
+                                                  List<String> categoryPathList){
         if(education == null){
             return null;
         }
 
-        StringBuffer script = new StringBuffer("education = graph.addVertex(T.label, primaryCategory_edu");
+        StringBuffer script = new StringBuffer("");
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory_edu",education.getPrimaryCategory());
-        param.putAll(buildEducationScript(script,education));
+        param.putAll(buildEducationScript(script,education,categoryList,coverageList));
 
         if(CollectionUtils.isNotEmpty(coverageList)){
            param.putAll(buildCoverageScript(script, coverageList));
+        }
+
+        if(CollectionUtils.isNotEmpty(categoryPathList)){
+            buildPathScript(script, categoryPathList);
         }
 
         if(CollectionUtils.isNotEmpty(categoryList)){
@@ -223,9 +230,12 @@ public class TitanScritpUtils {
             param.putAll(buildTechInfoScript(script, techInfoList));
         }
 
-        if(CollectionUtils.isNotEmpty(categoryList) ||CollectionUtils.isNotEmpty(coverageList)){
-            param.putAll(buildSearchPropertyScript(script,categoryList,coverageList,education));
-        }
+        script.append("educationId=createEducation();"+
+                "createCoverage(educationId);"+
+                "createCategoriesPath(educationId);"+
+                "createCategories(educationId);"+
+                "createTechInfo(educationId);"
+        );
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
@@ -233,16 +243,87 @@ public class TitanScritpUtils {
 
     }
 
-    private static Map<String, Object> buildEducationScript(StringBuffer script, Education education){
+    private static Map<String, Object> buildEducationScript(StringBuffer script, Education education ,List<ResourceCategory> categories, List<ResCoverage> coverages){
         Map<String, Object> graphParams = getParam4NotNull(education);
         String suffix = "_edu";
         Map<String, Object> result = new HashMap<>();
 
+        StringBuilder educationScript = new StringBuilder(
+                "public Long createEducation(){education=graph.addVertex(T.label, primaryCategory_edu");
         for (String key : graphParams.keySet()) {
-            script.append(", '").append(key).append("', ").append(key).append(suffix);
+            educationScript.append(",'").append(key).append("',").append(key).append(suffix);
             result.put(key+suffix, graphParams.get(key));
         }
-        script.append(").id();");
+
+        Set<String> resCoverages = new HashSet<>() ;
+        Set<String> categoryCodes = new HashSet<>();
+        Set<String> paths = new HashSet<>();
+        if(CollectionUtils.isNotEmpty(coverages)){
+            for(ResCoverage resCoverage : coverages){
+                String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
+                String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
+                String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
+                String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
+                resCoverages.add(setValue1);
+                resCoverages.add(setValue2);
+                resCoverages.add(setValue3);
+                resCoverages.add(setValue4);
+            }
+        }
+
+        if(CollectionUtils.isNotEmpty(categories)){
+            for(ResourceCategory category : categories){
+                if(StringUtils.isNotEmpty(category.getTaxonpath())){
+                    paths.add(category.getTaxonpath());
+                }
+                if(StringUtils.isNotEmpty(category.getTaxoncode())){
+                    categoryCodes.add(category.getTaxoncode());
+                }
+
+            }
+        }
+
+        int index = 0;
+        if(CollectionUtils.isNotEmpty(resCoverages)){
+            for (String coverage : resCoverages) {
+                String propertyName = "search_coverage" +index;
+                educationScript.append(",'").append("search_coverage").append("',").append(propertyName);
+                result.put(propertyName, coverage);
+                index ++;
+            }
+            String searchCoverageString = StringUtils.join(resCoverages,",").toLowerCase();
+            educationScript.append(",'").append("search_coverage_string").append("',").append("searchCoverageString");
+            result.put("searchCoverageString",searchCoverageString);
+        }
+
+        if(CollectionUtils.isNotEmpty(categoryCodes)){
+            index = 0;
+            for (String code : categoryCodes) {
+                String codeName = "search_code" +index;
+                educationScript.append(",'").append("search_code").append("',").append(codeName);
+                result.put(codeName, code);
+                index ++;
+            }
+            String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
+            educationScript.append(",'").append("search_coverage").append("',").append("searchCodeString");
+            result.put("searchCodeString",searchCodeString);
+        }
+
+        if(CollectionUtils.isNotEmpty(paths)){
+            index = 0;
+            for (String path : paths) {
+                String pathName = "search_path" +index;
+                educationScript.append(",'").append("search_path").append("',").append(pathName);
+                result.put(pathName, path);
+                index ++;
+            }
+            String searchPathString = StringUtils.join(paths, ",").toLowerCase();
+            educationScript.append(",'").append("search_coverage").append("',").append("searchPathString");
+            result.put("searchPathString",searchPathString);
+        }
+        educationScript.append(").id();");
+        educationScript.append(" return education};");
+        script.append(educationScript);
         return result;
     }
 
@@ -254,23 +335,27 @@ public class TitanScritpUtils {
 
         Map<String, Object> resultParam = new HashMap<>();
         int orderNumber = 0;
-        StringBuffer techInfoScript = null;
+        StringBuilder techinfoScriptMethd = new StringBuilder("public void createTechInfo(Long education){");
         for(TechInfo techInfo : techInfos){
             String suffix = "_ti"+orderNumber;
             String techInfoNode = "techinfo"+suffix;
             Map<String, Object> techInfoParam = getParam4NotNull(techInfo);
-            techInfoScript  = new StringBuffer(techInfoNode + " = graph.addVertex(T.label, 'tech_info'");
+            StringBuffer techInfoScript  = new StringBuffer(techInfoNode + " = graph.addVertex(T.label,'tech_info'");
             for (String key : techInfoParam.keySet()) {
-                techInfoScript.append(", '").append(key).append("', ").append(key).append(suffix);
+                techInfoScript.append(",'").append(key).append("',").append(key).append(suffix);
                 resultParam.put(key + suffix, techInfoParam.get(key));
             }
             techInfoScript.append(");");
-            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',"+techInfoNode+" ,'identifier',edgeIdentifier").append(suffix).append(");");
+            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',"+techInfoNode+",'identifier',edgeIdentifier").append(suffix).append(");");
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
 
-            script.append(techInfoScript);
+            techinfoScriptMethd.append(techInfoScript);
             orderNumber ++;
         }
+
+        techinfoScriptMethd.append("};");
+        script.append(techinfoScriptMethd);
+
         return resultParam;
     }
 
@@ -280,11 +365,11 @@ public class TitanScritpUtils {
         }
 
         Map<String, Object> resultParam = new HashMap<>();
-        Set<String> categoryPathSet = new HashSet<>();
         int orderNumber = 0;
-        StringBuffer categorieScript = null;
 
+        StringBuilder categorieScriptMethod = new StringBuilder("public void createCategories(Long education){");
         for(ResourceCategory category : categories){
+            StringBuffer categorieScript = null;
             String suffix = "_cg"+orderNumber;
             String categoryNode = "categoryNode"+suffix;
             String categoryNodeAll = "categoryNodeAll"+suffix;
@@ -311,16 +396,22 @@ public class TitanScritpUtils {
             resultParam.put(taxoncodeName, category.getTaxoncode());
             resultParam.put(edgeIdentifierName, category.getIdentifier());
 
-            script.append(categorieScript);
-
-            if(StringUtils.isNotEmpty(category.getTaxonpath())){
-                categoryPathSet.add(category.getTaxonpath());
-            }
+            categorieScriptMethod.append(categorieScript);
             orderNumber ++ ;
         }
 
-        orderNumber = 0;
-        for (String path : categoryPathSet){
+        categorieScriptMethod.append("};");
+        script.append(categorieScriptMethod);
+
+        return resultParam;
+    }
+
+    private static Map<String, Object> buildPathScript(StringBuffer script, List<String> categoryPaths){
+
+        StringBuilder categroyPathMethod = new StringBuilder("public void createCategoriesPath(Long education){");
+        Map<String, Object> resultParam = new HashMap<>();
+        int orderNumber = 0;
+        for (String path : categoryPaths){
             String suffix = "_cgp"+orderNumber;
             String categoryPathNode = "categoryNode"+suffix;
             String categoryPathNodeAll = "categoryNodeAll"+suffix;
@@ -335,11 +426,15 @@ public class TitanScritpUtils {
             StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_categories_path',"+categoryPathNode+");");
             categroyPath.append(ifScript).append(addEdgeScript);
 
-            script.append(categroyPath);
+            categroyPathMethod.append(categroyPath);
 
             resultParam.put(taxonpathName, path);
             orderNumber ++ ;
         }
+
+        categroyPathMethod.append("};");
+        script.append(categroyPathMethod);
+
         return resultParam;
     }
 
@@ -350,7 +445,7 @@ public class TitanScritpUtils {
 
         Map<String, Object> resultParam = new HashMap<>();
         int orderNumber = 0;
-        StringBuffer coverageScript = null;
+        StringBuilder coverageScriptMethod = new StringBuilder("public void createCoverage(Long education){");
         for(ResCoverage coverage : coverages){
             String suffix = "_cov"+orderNumber;
             String targetTypeName = "target_type" +suffix;
@@ -359,7 +454,7 @@ public class TitanScritpUtils {
             String coverageNodeNameAll = "coverageNodeAll"+suffix;
             String coverageNodeName = "coverageNode"+suffix;
             String edgeIdentifierName = "edgeIdentifier"+suffix;
-            coverageScript = new StringBuffer(coverageNodeNameAll+"=g.V().hasLabel('coverage')" +
+            StringBuilder coverageScript = new StringBuilder(coverageNodeNameAll+"=g.V().hasLabel('coverage')" +
                     ".has('target_type',"+targetTypeName+").has('target',"+targetName+")" +
                     ".has('strategy',"+strategyName+");");
             StringBuilder addCoverageNodeScript = new StringBuilder(coverageNodeName+
@@ -367,18 +462,21 @@ public class TitanScritpUtils {
                     ",'strategy',"+strategyName+",'target',"+targetName+");");
             String ifScript = "if(!"+coverageNodeNameAll+".iterator().hasNext()){"+addCoverageNodeScript+"" +
                     "}else{"+coverageNodeName+"="+coverageNodeNameAll+".next()};";
-            String addEdgeScript = "g.V().has('identifier',identifier_edu).next()" +
+            String addEdgeScript = "g.V(education).next()" +
                     ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+").id();";
 
             coverageScript.append(ifScript).append(addEdgeScript);
 
-            script.append(coverageScript);
+            coverageScriptMethod.append(coverageScript);
             resultParam.put(targetTypeName, coverage.getTargetType());
             resultParam.put(targetName, coverage.getTarget());
             resultParam.put(strategyName, coverage.getStrategy());
             resultParam.put(edgeIdentifierName, coverage.getIdentifier());
             orderNumber ++;
         }
+
+        coverageScriptMethod.append("};");
+        script.append(coverageScriptMethod);
         return resultParam;
     }
 
@@ -416,76 +514,6 @@ public class TitanScritpUtils {
         }
 
         return result;
-    }
-
-    private static Map<String, Object> buildSearchPropertyScript(StringBuffer script,List<ResourceCategory> categories, List<ResCoverage> coverages ,Education education){
-        Set<String> resCoverages = new HashSet<>() ;
-        Set<String> categoryCodes = new HashSet<>();
-        Set<String> paths = new HashSet<>();
-        if(CollectionUtils.isNotEmpty(coverages)){
-            for(ResCoverage resCoverage : coverages){
-                String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
-                String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
-                String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
-                String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
-                resCoverages.add(setValue1);
-                resCoverages.add(setValue2);
-                resCoverages.add(setValue3);
-                resCoverages.add(setValue4);
-            }
-        }
-
-        if(CollectionUtils.isNotEmpty(categories)){
-            for(ResourceCategory category : categories){
-                if(StringUtils.isNotEmpty(category.getTaxonpath())){
-                    paths.add(category.getTaxonpath());
-                }
-                if(StringUtils.isNotEmpty(category.getTaxoncode())){
-                    categoryCodes.add(category.getTaxoncode());
-                }
-
-            }
-        }
-
-        StringBuffer searchPropertyScript = new StringBuffer("g.V(education)");
-        Map<String, Object> param = new HashMap<>();
-
-        addSetProperty("search_coverage",resCoverages,searchPropertyScript,param);
-        addSetProperty("search_code",categoryCodes,searchPropertyScript,param);
-        addSetProperty("search_path",paths,searchPropertyScript,param);
-
-        String searchCoverageString = StringUtils.join(resCoverages,",").toLowerCase();
-        searchPropertyScript.append(".property('search_coverage_string',searchCoverageString)");
-        param.put("searchCoverageString", searchCoverageString);
-
-        if(CollectionUtils.isNotEmpty(paths)){
-            String searchPathString = StringUtils.join(paths, ",").toLowerCase();
-            searchPropertyScript.append(".property('search_path_string',searchPathString)");
-            param.put("searchPathString", searchPathString);
-
-        }
-        if(CollectionUtils.isNotEmpty(categoryCodes)){
-            String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
-            searchPropertyScript.append(".property('search_code_string',searchCodeString)");
-            param.put("searchCodeString", searchCodeString);
-        }
-
-        script.append(searchPropertyScript).append(";");
-        return param;
-    }
-
-    private static void addSetProperty(String fieldName,
-                                Set<String> values ,StringBuffer script ,Map<String, Object> param) {
-        if(values == null || values.size() == 0){
-            return;
-        }
-        int index = 0;
-        for (String value : values){
-            String paramKey = fieldName+index;
-            index ++ ;
-            script.append(".property(set,'").append(fieldName).append("',").append(paramKey).append(")");
-            param.put(paramKey , value);
-        }
     }
 
     public static  void main(String[] args){
