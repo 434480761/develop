@@ -40,6 +40,12 @@ public class TitanResourceController {
 		return titanResourceService.importData(resourceType);
 	}
 
+	@RequestMapping(value = "/{resourceType}/script", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long import4Script(@PathVariable String resourceType) {
+		return titanResourceService.importData4Script(resourceType);
+	}
+
 	/**
 	 * 导入数据
 	 * G

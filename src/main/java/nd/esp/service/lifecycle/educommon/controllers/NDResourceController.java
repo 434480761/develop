@@ -11,6 +11,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +23,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
@@ -100,6 +108,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 import com.nd.gaea.rest.security.authens.UserInfo;
+import com.rits.cloning.Cloner;
 
 
 /**
@@ -731,10 +740,10 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                rListViewModel = resourceQueryByTitanRealTime(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey);
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
@@ -761,7 +770,357 @@ public class NDResourceController {
 
         return result;
     }
+    /**
+     * 实现实时检索titan方案
+     * @param resType
+     * @param includes
+     * @param categories
+     * @param categoryExclude
+     * @param relations
+     * @param coverages
+     * @param propsMap
+     * @param orderMap
+     * @param words
+     * @param limit
+     * @param isNotManagement
+     * @param reverse
+     * @param printable
+     * @param printableKey
+     * @param showVersion 
+     * @param tags 
+     * @param forceStatus 
+     * @param statisticsPlatform 
+     * @param statisticsType 
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
+            Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
+            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
+//      return tmp(resType, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words,
+//                limit, isNotManagement, reverse, printable, printableKey,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+        
+      return ndResourceService.resourceQueryByTitan(resType,
+              includes, categories, categoryExclude, relations,
+              coverages, propsMap, orderMap, words, limit,
+              isNotManagement, reverse, printable, printableKey);
+    }
 
+    private ListViewModel<ResourceModel> tmp(String resType, List<String> includes, Set<String> categories,
+            Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
+            boolean isNotManagement, boolean reverse, Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
+        int intevalTimeMillis = -3600000;
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MILLISECOND, intevalTimeMillis);
+        Cloner cloner = new Cloner();
+        Map<String, Set<String>> propsMapForDB = (Map<String, Set<String>>) cloner.deepClone(propsMap);
+        ExecutorService excetorService = Executors.newFixedThreadPool(2);
+        String lastUpdateLtKey = "lc_last_update_LT";
+        Date maxLastUpdateDateFromPorpsMap = getMaxLastUpdateDateFromPorpsMap(propsMap, lastUpdateLtKey);
+        Date minDate = getMinLastUpdateDate(maxLastUpdateDateFromPorpsMap,calendar);
+        modifyPropsMapLastUpdate(propsMap, lastUpdateLtKey, minDate);
+        int titanMoreOffset = 2;
+        String[] split = limit.replace("(", "").replace(")", "").split(",");
+        int begin = Integer.valueOf(split[0]).intValue();
+        int end = Integer.valueOf(split[1]).intValue();
+        int beginForTitan = 0;
+//        int endForTitan = 0;
+        int subListBegin = 0;
+        int subListEnd = 0; 
+        if (begin - titanMoreOffset > 0) {
+            beginForTitan = begin - titanMoreOffset;
+            subListBegin = titanMoreOffset;
+            subListEnd = (end - begin) + titanMoreOffset;
+//            endForTitan = end + titanMoreOffset;
+        }else {
+            beginForTitan = 0;
+            subListBegin = 0;
+            subListEnd = end;
+//            endForTitan = end;
+        }
+        String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(end).append(")").toString();
+        
+        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includes, categories,
+                categoryExclude, relations, coverages, propsMap, orderMap, words, limitForTitan, isNotManagement, reverse,
+                printable, printableKey, excetorService);
+        
+        Map<String, Object> changeMap = changeKey(propsMapForDB,
+                orderMap, true);
+        propsMapForDB = (Map<String, Set<String>>) changeMap
+                .get("propsMapNew");
+//        orderMap = (Map<String, String>) changeMap
+//                .get("orderMapNew");
+        String lastUpdateGtKey = "last_update_GT";
+        Date minLastUpdateDateFromPorpsMap = getMinLastUpdateDateFromPorpsMap(propsMapForDB, lastUpdateGtKey);
+        Date maxDate = getMaxLastUpdateDate(minLastUpdateDateFromPorpsMap,calendar);
+        modifyPropsMapLastUpdate(propsMapForDB, lastUpdateGtKey, maxDate);
+        String limitForDb = "(0,100)";
+        
+        Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includes, categories, categoryExclude,
+                relations, coverages, null, words, limitForDb, isNotManagement, reverse, printable, printableKey,
+                propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+        
+        ListViewModel<ResourceModel> resourceQueryByTitanResult = null;
+        ListViewModel<ResourceModel> resourceQueryByDBResult = null;
+        
+        try {
+            resourceQueryByTitanResult = titanFuture.get();
+            resourceQueryByDBResult = dbFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        String field = "";
+        String sort = "";
+        if (orderMap != null) {
+            for (Entry<String,String> entry : orderMap.entrySet()) {
+                field = entry.getKey();
+                sort = entry.getValue();
+                break;
+            }
+        }
+        if (sort.equalsIgnoreCase("ASC")) {
+            insertDbResultToTitanResultAsc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
+        }
+        else if (sort.equalsIgnoreCase("DESC")){
+            insertDbResultToTitanResultDesc(resourceQueryByTitanResult, resourceQueryByDBResult, field);
+        }
+        
+        excetorService.shutdown();
+        
+        List<ResourceModel> items = resourceQueryByTitanResult.getItems();
+        subListEnd = subListEnd > items.size() ? items.size() : subListEnd;
+        List<ResourceModel> resourceQueryByTitanResultSubList = items.subList(subListBegin, subListEnd);
+//        List<ResourceModel> resourceQueryByTitanResultSubList = resourceQueryByTitanResult.getItems().subList(end-begin-titanMoreOffset, end-begin);
+//        for (int i = 0; i < resourceQueryByTitanResult.getItems().size(); i++) {
+//            resourceQueryByTitanResult.getItems().remove(i);
+//        }
+        resourceQueryByTitanResult.setItems(resourceQueryByTitanResultSubList);
+
+        resourceQueryByTitanResult.setLimit(limit);
+        int size = items.size();
+//        if (size > end) {
+//            int removeIndex = end;
+//            for (int i = end; i < size; i++) {
+//                resourceQueryByTitanResult.getItems().remove(removeIndex);
+//            }
+//        }
+        return resourceQueryByTitanResult;
+//        return resourceQueryByDBResult;
+    }
+
+    private void insertDbResultToTitanResultDesc(ListViewModel<ResourceModel> resourceQueryByTitanResult,
+            ListViewModel<ResourceModel> resourceQueryByDBResult, String field) {
+        for (int i = 0; i < resourceQueryByDBResult.getItems().size(); i++) {
+            ResourceModel resourceModelDb = resourceQueryByDBResult.getItems().get(i);
+            for (int j = 0; j < resourceQueryByTitanResult.getItems().size(); j++) {
+                ResourceModel resourceModelTitan = resourceQueryByTitanResult.getItems().get(j);
+                if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
+                    resourceQueryByTitanResult.getItems().remove(j);
+                    resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                }else {
+                    if (field.equals("lc_create_time")) {
+                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
+                        if (compare >= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                        }
+                    }else if (field.equals("lc_last_update")){
+                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
+                        if (compare >= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                        }
+                    }else if (field.equals("lc_title")){
+                        int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
+                        if (compare >= 0) {
+                            resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void insertDbResultToTitanResultAsc(ListViewModel<ResourceModel> resourceQueryByTitanResult,
+            ListViewModel<ResourceModel> resourceQueryByDBResult, String field) {
+        int dbResultSize = resourceQueryByDBResult.getItems().size();
+        long totalResult = resourceQueryByTitanResult.getTotal()+resourceQueryByDBResult.getTotal();
+        for (int i = 0; i < dbResultSize; i++) {
+            ResourceModel resourceModelDb = resourceQueryByDBResult.getItems().get(i);
+            int titanResultSize = resourceQueryByTitanResult.getItems().size();
+            if (titanResultSize != 0) {
+                for (int j = 0; j < titanResultSize; j++) {
+                    ResourceModel resourceModelTitan = resourceQueryByTitanResult.getItems().get(j);
+                    if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
+                        resourceQueryByTitanResult.getItems().remove(j);
+                        resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                        --totalResult;
+                    }else {
+                        if (field.equals("lc_create_time")) {
+                            int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
+                            if (compare <= 0) {
+                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                                break;
+                            }else {
+                                if (j == titanResultSize-1) {
+                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                                }
+                            }
+                        }else if (field.equals("lc_last_update")){
+                            int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
+                            if (compare <= 0) {
+                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                                break;
+                            }else {
+                                if (j == titanResultSize-1) {
+                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                                }
+                            }
+                        }else if (field.equals("lc_title")){
+                            int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
+                            if (compare <= 0) {
+                                resourceQueryByTitanResult.getItems().add(j, resourceModelDb);
+                                break;
+                            }else{
+                                if (j == titanResultSize-1) {
+                                    resourceQueryByTitanResult.getItems().add(j+1, resourceModelDb);
+                                }
+                            }
+                        }
+                    }
+                }
+            }else{
+                resourceQueryByTitanResult.getItems().add(resourceModelDb);
+            }
+        }
+        resourceQueryByTitanResult.setTotal(totalResult);
+    }
+
+    private Future<ListViewModel<ResourceModel>> getDBFuture(final String resType, final List<String> includes,
+            final Set<String> categories, final Set<String> categoryExclude, final List<Map<String, String>> relations,
+            final List<String> coverages, final Map<String, String> orderMap, final String words, final String limit, final boolean isNotManagement,
+            final boolean reverse, final Boolean printable, final String printableKey, final Map<String, Set<String>> propsMapForDB,
+            ExecutorService excetorService, final String statisticsType, final String statisticsPlatform, final boolean forceStatus, final List<String> tags, final boolean showVersion) {
+        Future<ListViewModel<ResourceModel>> dbFuture = excetorService.submit(new Callable<ListViewModel<ResourceModel>>() {
+
+            @Override
+            public ListViewModel<ResourceModel> call() throws Exception {
+                return ndResourceService.resourceQueryByDB(resType,
+                        "", includes, categories, categoryExclude,
+                        relations, coverages, propsMapForDB, orderMap, words,
+                        limit, isNotManagement, reverse, printable, printableKey,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+        }});
+        return dbFuture;
+    }
+
+    private Future<ListViewModel<ResourceModel>> getTitanFuture(final String resType, final List<String> includes,
+            final Set<String> categories, final Set<String> categoryExclude, final List<Map<String, String>> relations,
+            final List<String> coverages, final Map<String, Set<String>> propsMap, final Map<String, String> orderMap,
+            final String words, final String limit, final boolean isNotManagement, final boolean reverse,
+            final Boolean printable, final String printableKey, ExecutorService excetorService) {
+        Future<ListViewModel<ResourceModel>> titanFuture = excetorService.submit(new Callable<ListViewModel<ResourceModel>>() {
+
+            @Override
+            public ListViewModel<ResourceModel> call() throws Exception {
+              return ndResourceService.resourceQueryByTitan(resType,
+                  includes, categories, categoryExclude, relations,
+                  coverages, propsMap, orderMap, words, limit,
+                  isNotManagement, reverse, printable, printableKey);
+        }});
+        return titanFuture;
+    }
+
+    private void modifyPropsMapLastUpdate(Map<String, Set<String>> propsMap, String lastUpdateKey, Date date) {
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        if (propsMap.containsKey(lastUpdateKey)) {
+            propsMap.remove(lastUpdateKey);
+            HashSet<String> dateStr = new HashSet<String>();
+            if (dateStr.contains(".")) {
+                dateStr.add(sdf2.format(date));
+            }else {
+                dateStr.add(sdf1.format(date));
+            }
+            propsMap.put(lastUpdateKey, dateStr);
+        }
+    }
+
+    private Date getMinLastUpdateDate(Date minDate, Calendar calendar) {
+        Date maxDate = minDate.compareTo(calendar.getTime()) < 0 ? minDate : calendar.getTime();
+        return maxDate;
+    }
+    
+    private Date getMaxLastUpdateDate(Date maxDate, Calendar calendar) {
+        Date minDate = maxDate.compareTo(calendar.getTime()) > 0 ? maxDate : calendar.getTime();
+        return minDate;
+    }
+
+    private Date getMaxLastUpdateDateFromPorpsMap(Map<String, Set<String>> propsMap, String lastUpdateLtKey) {
+        Date minDate = null;
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        for (Entry<String, Set<String>> entry : propsMap.entrySet()) {
+            int value = 0;
+            if (lastUpdateLtKey.equals(entry.getKey())) {
+                Map<Date, String> treeMap = new TreeMap<Date, String>(new Comparator<Date>() {
+                    @Override
+//                  key  desc sort
+                    public int compare(Date o1, Date o2) {
+                        return o2.compareTo(o1);
+                    }});
+                Set<String> lastUpdateSet = entry.getValue();
+                for (String lastUpdateStr : lastUpdateSet) {
+                    try {
+                        Date lastUpdateDate = null;
+                        if (lastUpdateStr.contains(".")) {
+                            lastUpdateDate = sdf2.parse(lastUpdateStr);
+                        }else {
+                            lastUpdateDate = sdf1.parse(lastUpdateStr);
+                        }
+                        treeMap.put(lastUpdateDate, String.valueOf(value++));
+                    } catch (ParseException e) {
+                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                                "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
+                    }
+                }
+                minDate = treeMap.keySet().iterator().next();
+            }
+        }
+        return minDate;
+    }
+    
+
+    private Date getMinLastUpdateDateFromPorpsMap(Map<String, Set<String>> propsMap, String lastUpdateGtKey) {
+        Date maxDate = null;
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        for (Entry<String, Set<String>> entry : propsMap.entrySet()) {
+            int value = 0;
+            if (lastUpdateGtKey.equals(entry.getKey())) {
+//                default key asc sort
+                Map<Date, String> treeMap = new TreeMap<Date, String>();
+                Set<String> lastUpdateSet = entry.getValue();
+                for (String lastUpdateStr : lastUpdateSet) {
+                    try {
+                        Date lastUpdateDate = null;
+                        if (lastUpdateStr.contains(".")) {
+                            lastUpdateDate = sdf2.parse(lastUpdateStr);
+                        }else {
+                            lastUpdateDate = sdf1.parse(lastUpdateStr);
+                        }
+                        treeMap.put(lastUpdateDate, String.valueOf(value++));
+                    } catch (ParseException e) {
+                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                                "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
+                    }
+                }
+                maxDate = treeMap.keySet().iterator().next();
+            }
+        }
+        return maxDate;
+    }
     /**
      * 判断走数据库的通用查询是否可以通用ES查询
      * <p>Create Time: 2016年4月5日   </p>

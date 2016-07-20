@@ -4,6 +4,7 @@ public interface TitanResourceService {
 	
 	
 	long importData(String primaryCategory);
+	long importData4Script(String primaryCategory);
 
 	long updateData(String primaryCategory);
 
