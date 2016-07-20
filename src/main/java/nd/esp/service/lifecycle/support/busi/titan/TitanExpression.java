@@ -21,6 +21,30 @@ public class TitanExpression implements TitanScriptGenerator {
     private boolean needTechInfo = true;
     private boolean needTaxoncode = true;
     private boolean needTaxonpath = true;
+    
+    public boolean isNeedTechInfo() {
+		return needTechInfo;
+	}
+
+	public void setNeedTechInfo(boolean needTechInfo) {
+		this.needTechInfo = needTechInfo;
+	}
+
+	public boolean isNeedTaxoncode() {
+		return needTaxoncode;
+	}
+
+	public void setNeedTaxoncode(boolean needTaxoncode) {
+		this.needTaxoncode = needTaxoncode;
+	}
+
+	public boolean isNeedTaxonpath() {
+		return needTaxonpath;
+	}
+
+	public void setNeedTaxonpath(boolean needTaxonpath) {
+		this.needTaxonpath = needTaxonpath;
+	}
 
     private String innerCondition;// 用于保存中间产生的条件；主要避免重复产生脚本：总数，分页
 
