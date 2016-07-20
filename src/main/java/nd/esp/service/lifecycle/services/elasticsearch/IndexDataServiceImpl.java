@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -85,7 +86,7 @@ public class IndexDataServiceImpl implements IndexDataService {
 		int row = 500;
 		EspRepository<?> espRepository = ServicesManager.get(resourceType);
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = null;
+		Page resourcePage = new PageImpl<>(new ArrayList<>());
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 
