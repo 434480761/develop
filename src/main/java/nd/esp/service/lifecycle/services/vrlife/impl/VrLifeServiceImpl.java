@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.services.vrlife.impl;
 import java.sql.Timestamp;
 import java.util.List;
 
+import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
@@ -10,6 +11,7 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.vrlife.VrLifeService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -23,6 +25,7 @@ import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,10 @@ public class VrLifeServiceImpl implements VrLifeService{
     private NotifyReportService nds;
 	@Autowired
 	private CommonServiceHelper commonServiceHelper;
+	@Autowired()
+    @Qualifier("lifecycleServiceV06")
+    private LifecycleServiceV06 lifecycleService;
+   
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -82,6 +89,18 @@ public class VrLifeServiceImpl implements VrLifeService{
                                           LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
                                           e.getLocalizedMessage());
 		}
+		
+		//创建资源生命周期  -- 记录审核人
+        ResContributeModel contributeModel = new ResContributeModel();
+        contributeModel.setLifecycleStatus(oldBean.getStatus());
+        contributeModel.setMessage(
+        		"VR人生资源审核:[" + inViewModel.getReviewPerson() + "] 修改了 [" 
+        		+ inViewModel.getResType() + ":" + inViewModel.getIdentifier() + "]");
+        contributeModel.setTitle("vrlife");
+        contributeModel.setTargetType("User");
+        contributeModel.setTargetId("vrlife");
+        contributeModel.setTargetName(inViewModel.getReviewPerson());
+        lifecycleService.addLifecycleStep(inViewModel.getResType(), inViewModel.getIdentifier(), contributeModel);
 		
 		ResourceModel resourceModel = ndResourceService.getDetail(inViewModel.getResType(), inViewModel.getIdentifier(), IncludesConstant.getIncludesList());
 		//同步推送至报表系统

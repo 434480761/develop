@@ -46,6 +46,16 @@ public class VrLifeController {
 	@Autowired
 	private AsynEsResourceService esResourceOperation;
 	
+	/**
+	 * 资源审核,更新内容包括了资源状态与标签分类
+	 * @author xiezy
+	 * @date 2016年7月19日
+	 * @param resType
+	 * @param id
+	 * @param statusReviewViewModel4In
+	 * @param bindingResult
+	 * @return
+	 */
 	@RequestMapping(value = "/status/review/{id}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public StatusReviewViewModel4Out statusReview(@PathVariable(value="res_type") String resType,@PathVariable(value="id") String id,
 			@Valid @RequestBody StatusReviewViewModel4In statusReviewViewModel4In,BindingResult bindingResult){

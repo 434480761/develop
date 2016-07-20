@@ -3,6 +3,8 @@ package nd.esp.service.lifecycle.support;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+
 import nd.esp.service.lifecycle.services.AdapterDBDataService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -41,6 +43,7 @@ public class UpdateStaticDataTask {
      */
 //    @Scheduled(cron="0 25 17 * * ?")
     @Scheduled(fixedRate=60000)
+    @PostConstruct
     public void runTask(){
         if(lastUpdateTime == 0){//项目刚启动,进行初始化
             lastUpdateTime = staticDataService.queryLastUpdateTime(SWITCH_TASK_ID);
@@ -75,6 +78,7 @@ public class UpdateStaticDataTask {
      */
 //  @Scheduled(cron="0 7 15 * * ?")
     @Scheduled(fixedRate=60000)
+    @PostConstruct
     public void runTask4Ivc(){
         if(lastUpdateTime4Ivc == 0){//项目刚启动,进行初始化
         	lastUpdateTime4Ivc = staticDataService.queryLastUpdateTime(IVC_TASK_ID);
@@ -99,6 +103,7 @@ public class UpdateStaticDataTask {
      */
 //  @Scheduled(cron="0 7 15 * * ?")
     @Scheduled(fixedRate=60000)
+    @PostConstruct
     public void runTask4CategoryPattern(){
         if(lastUpdateTime4CP == 0){//项目刚启动,进行初始化
         	lastUpdateTime4CP = staticDataService.queryLastUpdateTime(CP_TASK_ID);

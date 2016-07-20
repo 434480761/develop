@@ -220,11 +220,11 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Autowired
     private NotifyReportService nds;
     
-    @Autowired()
+    @Autowired
     @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     
-    @Autowired()
+    @Autowired
     @Qualifier("lifecycleService4QtiV06")
     private LifecycleServiceV06 lifecycleService4Qti;
     
@@ -3158,7 +3158,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 			} catch (Exception e) {
 				LOG.error("获取UC用户信息出错",e);
 			}
-        	
         }
         service.addLifecycleStep(resType, newUuid, contributeModel);
         ResourceModel resourceModel = new ResourceModel();
@@ -3245,7 +3244,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 			} catch (Exception e) {
 				LOG.error("获取UC用户信息出错",e);
 			}
-        	
         }
         service.addLifecycleStep(resType, newUuid, contributeModel);
         ResourceModel resourceModel = new ResourceModel();
