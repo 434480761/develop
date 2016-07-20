@@ -23,7 +23,7 @@ import java.util.*;
 @Component
 public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
-    public static int MAX_REPORT_TIMES = 200;
+    public static int MAX_REPORT_TIMES = 10;
     public static boolean LOCKED = false;
 
     @Autowired
@@ -37,7 +37,7 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-    @Scheduled(fixedRate=60000)
+    @Scheduled(fixedRate=300000)
     public void syncTask(){
         if(LOCKED){
             LOG.info("正在同步数据....");

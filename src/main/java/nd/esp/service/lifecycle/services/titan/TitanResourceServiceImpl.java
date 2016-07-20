@@ -103,6 +103,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return abstractPageQuery.doing(primaryCategory);
 	}
 
+	@Override
+	public long importData4Script(String primaryCategory) {
+		AbstractPageQuery abstractPageQuery = new ImprotData4ScriptPageQuery();
+		abstractPageQuery.doing(primaryCategory);
+		return 0;
+	}
+
 
 	@Override
 	public long updateData(String primaryCategory){
@@ -234,19 +241,57 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		List<ResCoverage> resCoverageList =getResCoverage(
 				coverageDao.queryCoverageByResource(primaryCategory, uuids));
 
-
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
 
 
-		List<ResourceRelation> resourceRelations =  getResourceRelation(
-				educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
-
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-		Map<String, Object> result = TitanScritpUtils.buildScript(education,resCoverageList,resourceCategoryList,techInfos);
+		importOneData(education, resCoverageList,resourceCategoryList,techInfos);
+	}
+
+
+	private void importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos){
+		Map<String,ResCoverage> coverageMap = new HashMap<>();
+		for(ResCoverage coverage : resCoverageList){
+			String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
+			if(coverageMap.get(key)==null){
+				coverageMap.put(key, coverage);
+			}
+		}
+
+
+		Set<String> categoryPathSet = new HashSet<>();
+		Map<String, ResourceCategory> categoryMap = new HashMap<>();
+		for (ResourceCategory resourceCategory : resourceCategoryList){
+			if(StringUtils.isNotEmpty(resourceCategory.getTaxonpath())){
+				categoryPathSet.add(resourceCategory.getTaxonpath());
+			}
+			if(categoryMap.get(resourceCategory.getTaxoncode())==null){
+				categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
+			}
+
+		}
+
+		Map<String, TechInfo> techInfoMap = new HashMap<>();
+		for (TechInfo techInfo : techInfos){
+			if(techInfoMap.get(techInfo.getTitle()) == null){
+				techInfoMap.put(techInfo.getTitle(), techInfo);
+			}
+		}
+
+		List<ResCoverage> coverageList = new ArrayList<>();
+		coverageList.addAll(coverageMap.values());
+		List<ResourceCategory> categoryList = new ArrayList<>();
+		categoryList.addAll(categoryMap.values());
+		List<TechInfo> techInfoList = new ArrayList<>();
+		techInfoList.addAll(techInfoMap.values());
+		List<String> categoryPathList = new ArrayList<>();
+		categoryPathList.addAll(categoryPathSet);
+
+		Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,categoryList,techInfoList,categoryPathList);
 		try {
 			titanCommonRepository.executeScript(result.get("script").toString(),(Map<String, Object>) result.get("param"));
 		} catch (Exception e) {
@@ -702,6 +747,72 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 
+	public class ImprotData4ScriptPageQuery extends AbstractPageQuery{
+
+		@Override
+		long operate(List<Education> educations, String primaryCategory) {
+			if(CollectionUtils.isEmpty(educations)){
+				return 0L;
+			}
+			Set<String> uuids = new HashSet<String>();
+			for (Education education : educations) {
+				uuids.add(education.getIdentifier());
+			}
+
+			List<ResCoverage> resCoverageList =getResCoverage(
+					coverageDao.queryCoverageByResource(primaryCategory, uuids));
+			Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
+			for (ResCoverage resCoverage : resCoverageList){
+				List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
+				if(resCoverages == null){
+					resCoverages = new ArrayList<>();
+					resCoverageMap.put(resCoverage.getResource(), resCoverages);
+				}
+
+				resCoverages.add(resCoverage);
+			}
+
+			List<String> resourceTypes = new ArrayList<String>();
+			resourceTypes.add(primaryCategory);
+			List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+			Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
+			for (ResourceCategory resourceCategory : resourceCategoryList){
+				List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
+				if(resourceCategories == null){
+					resourceCategories = new ArrayList<>();
+					resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
+				}
+
+				resourceCategories.add(resourceCategory);
+			}
+
+			List<String> primaryCategorys = new ArrayList<>();
+			primaryCategorys.add(primaryCategory);
+			List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+			Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
+			for (TechInfo techInfo : techInfos){
+				List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
+				if(techInfoList == null){
+					techInfoList = new ArrayList<>();
+					techInfoMap.put(techInfo.getResource(), techInfoList);
+				}
+
+				techInfoList.add(techInfo);
+			}
+			LOG.info("script start time:{}",System.currentTimeMillis());
+			for (Education education : educations){
+				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
+				List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+				List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
+//				importOneData(education);
+			}
+			LOG.info("script end time:{}",System.currentTimeMillis());
+
+			return educations.size();
+		}
+	}
+
+
 	private class TimeTaskPageQuery{
 
 		private String primaryCategory = null;
@@ -828,6 +939,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			return false;
 		}
 	}
+
 
 	private class TimeTaskPageQuery4Update{
 
