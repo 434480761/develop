@@ -276,6 +276,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
         builder.setWords(words);
         builder.setParams(params);
+        builder.setResType(resType);
         builder.setRange(from,size);
         String script=builder.generateScript();
         LOG.info("script:"+script);
@@ -291,9 +292,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         while (iterator.hasNext()) {
             resultStr.add(iterator.next().getString());
         }
-        System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
+        //System.out.println(resultStr);
+        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
         long parseBegin = System.currentTimeMillis();
         List<String> otherLines = new ArrayList<>();
@@ -301,7 +301,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String mainResult = null;
         int count = 0;
         for (String line : resultStr) {
-            System.out.println(line);
+            //System.out.println(line);
             if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.contains("COUNT:"))) {
                 items.add(getItem(resType, mainResult, otherLines, taxOnPath));
                 otherLines.clear();
