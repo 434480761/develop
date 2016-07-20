@@ -82,8 +82,13 @@ public class EsIndexQueryBuilder {
     public String generateScript() {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
-        baseQuery.append(dealWithWords(this.words));
-        baseQuery.append(dealWithParams());
+        String wordSegmentation=dealWithWords(this.words);
+        String other=dealWithParams();
+        if("".endsWith(wordSegmentation.trim())){
+            other=other.trim().replaceFirst("AND","");
+        }
+        baseQuery.append(wordSegmentation);
+        baseQuery.append(other);
         baseQuery.append(dealWithResType());
 
         //baseQuery.deleteCharAt(baseQuery.length()-1);
