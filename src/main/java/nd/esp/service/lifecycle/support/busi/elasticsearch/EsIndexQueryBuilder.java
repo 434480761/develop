@@ -132,7 +132,13 @@ public class EsIndexQueryBuilder {
             query.append("\\\":(");
             query.append(words);
             query.append(")");
-            if (i != coversLength - 1) query.append(" OR ");
+            if (i != coversLength - 1) {
+                if (words.contains("-")) {
+                    query.append(" AND ");
+                } else {
+                    query.append(" OR ");
+                }
+            }
         }
 
         return "("+query.toString()+")";
@@ -153,10 +159,10 @@ public class EsIndexQueryBuilder {
             query.append(" AND ").append(codeStr);
         }
         if(!"".equals(pathStr)){
-            query.append("AND ").append(pathStr);
+            query.append(" AND ").append(pathStr);
         }
         if(!"".equals(coverageStr)){
-            query.append("AND ").append(coverageStr);
+            query.append(" AND ").append(coverageStr);
         }
         return query.toString();
     }

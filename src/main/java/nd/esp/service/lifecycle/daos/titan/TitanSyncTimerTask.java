@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TitanSync;
 import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
+import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,9 @@ public class TitanSyncTimerTask {
 
     @Scheduled(fixedRate=300000)
     public void syncTask(){
+        if (!StaticDatas.TITAN_SWITCH){
+            return;
+        }
         if(LOCKED){
             LOG.info("正在同步数据....");
             return;
