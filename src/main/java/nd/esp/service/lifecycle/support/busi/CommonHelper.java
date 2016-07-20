@@ -1486,6 +1486,65 @@ public class CommonHelper {
 	    
         return limit;
 	}
+
+	/**
+	 *
+	 * @param words
+	 * @return
+     */
+	public static String checkWordSegmentation(String words) {
+		if (words == null || "".equals(words)) return "";
+		String check = words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
+		if (check.contains(",")) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+					words + "--words格式错误,不支持多个words");
+		}
+		if (check.endsWith(" AND") || check.endsWith(" OR") || check.endsWith(" and") || check.endsWith(" or")) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+					words + "--words格式错误,布尔操作符不能出现在结尾");
+		}
+		if (check.startsWith("AND ") || check.startsWith("OR ") || check.startsWith("and ") || check.startsWith("or ")) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+					words + "--words格式错误,布尔操作符不能出现在开头");
+		}
+
+		words = words.replaceAll(" or ", " OR ").replaceAll(" and ", " AND ");
+		if (words.contains(" OR ")) {
+			if(!checkOptNum(words, " OR ")){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+						words + "--words格式错误,检查OR逻辑是否出错");
+			}
+		}
+
+		if (words.contains(" AND ")) {
+			if(!checkOptNum(words, " AND ")){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+						words + "--words格式错误,检查AND逻辑是否出错");
+			}
+		}
+
+		return words;
+	}
+
+	public static boolean checkOptNum(String words, String opt) {
+		if (words == null) return true;
+		int total = 0;
+		for (String tmp = words;tmp.length()>=opt.length();){
+			if(tmp.indexOf(opt) == 0){
+				total ++;
+			}
+			tmp = tmp.substring(1);
+		}
+		if (total == words.split(opt).length - 1) {
+			return true;
+		}
+		return false;
+	}
 	
 	/**
      * 返回一个hashMap
@@ -1658,5 +1717,4 @@ public class CommonHelper {
             }
         }
     }
-    
 }

@@ -480,5 +480,25 @@ public class AdapterDBDataController {
         
         return message;
     }
+
+    @RequestMapping(value = "/titan/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String titanSwitchChange(@RequestParam String open){
+        String message = "";
+
+        if(open.equals("false") && StaticDatas.TITAN_SWITCH){
+            message = "关闭titan开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("TITAN_SWITCH",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.TITAN_SWITCH = false;
+        }else if(open.equals("true") && !StaticDatas.TITAN_SWITCH){
+            message = "开启titan开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("TITAN_SWITCH",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.TITAN_SWITCH = true;
+        }
+
+        return message;
+    }
+
     /*******************************静态变量开关相关接口--end************************************/
 }

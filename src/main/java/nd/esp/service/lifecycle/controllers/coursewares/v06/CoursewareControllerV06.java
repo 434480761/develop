@@ -178,11 +178,11 @@ public class CoursewareControllerV06 {
 		viewModel = CommonHelper.convertViewModelOut(cm,CoursewareViewModel.class);
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.coursewares.toString(), id);
-			// offline metadata(coverage) to elasticsearch
-			if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewares.toString())) {
-				esResourceOperation.asynAdd(
-						new Resource(ResourceNdCode.coursewares.toString(), id));
-			}
+		}
+		// offline metadata(coverage) to elasticsearch
+		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewares.toString())) {
+			esResourceOperation.asynAdd(
+					new Resource(ResourceNdCode.coursewares.toString(), id));
 		}
 
 		return viewModel;

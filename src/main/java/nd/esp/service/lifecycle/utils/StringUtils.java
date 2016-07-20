@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
@@ -32,6 +34,25 @@ public final class StringUtils {
      * 私有化构造函数，不允许实例化该类
      */
     private StringUtils() {
+    }
+    
+    /**
+     * 将时间戳转化为Date 1464764846605=>Wed Jun 01 15:07:26 CST 2016
+     * @param timeStr
+     * @return
+     */
+    public static Date strTimeStampToDate(String timeStr) {
+        if(timeStr==null) return null;
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Long time = Long.parseLong(timeStr);
+        String d = format.format(time);
+        Date date = null;
+        try {
+            date = format.parse(d);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
     }
 
     /**
