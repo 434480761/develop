@@ -117,11 +117,11 @@ public class CoursewareObjectTemplateController {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.coursewareobjecttemplates.toString(), id);
-        }
-        // offline metadata(coverage) to elasticsearch
-        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewareobjecttemplates.toString())) {
-            esResourceOperation.asynAdd(
-                    new Resource(ResourceNdCode.coursewareobjecttemplates.toString(), id));
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.coursewareobjecttemplates.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.coursewareobjecttemplates.toString(), id));
+            }
         }
 
         return ctvm;

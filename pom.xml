@@ -280,13 +280,6 @@
 			<artifactId>elasticsearch</artifactId>
 			<version>2.3.1</version>
 		</dependency>
-		
-		<!-- titan -->
-		 <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>gremlin-driver</artifactId>
-            <version>3.0.2-incubating</version>
-        </dependency>
 
 
     </dependencies>
@@ -403,13 +396,6 @@
             <id>pressure</id>
             <properties>
                 <env>pressure</env>
-            </properties>
-            <!-- <activation><activeByDefault>true</activeByDefault></activation> -->
-        </profile>
-        <profile>
-            <id>titanlocalpresurre</id>
-            <properties>
-                <env>titanlocalpresurre</env>
             </properties>
             <!-- <activation><activeByDefault>true</activeByDefault></activation> -->
         </profile>

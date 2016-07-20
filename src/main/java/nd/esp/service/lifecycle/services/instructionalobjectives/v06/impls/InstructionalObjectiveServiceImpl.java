@@ -49,8 +49,10 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
     public InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel) {
         // 调用通用创建接口
         instructionalObjectiveModel.setTechInfoList(null);
-        instructionalObjectiveModel = (InstructionalObjectiveModel)ndResourceService.patch(ResourceNdCode.instructionalobjectives.toString(),
+        ndResourceService.patch(ResourceNdCode.instructionalobjectives.toString(),
                 instructionalObjectiveModel);
+        instructionalObjectiveModel = (InstructionalObjectiveModel)ndResourceService.getDetail(ResourceNdCode.instructionalobjectives.toString(),
+                instructionalObjectiveModel.getIdentifier(), IncludesConstant.getIncludesList());
         instructionalObjectiveModel.setPreview(null);
         instructionalObjectiveModel.setEducationInfo(null);
 

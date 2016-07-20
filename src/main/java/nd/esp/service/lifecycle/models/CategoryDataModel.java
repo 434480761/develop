@@ -55,12 +55,6 @@ public class CategoryDataModel {
 	 * 学科的英文名称
 	 */
 	private String shortName;
-	
-	/**
-	 * 预览图
-	 */
-	private String preview;
-	
 	public String getNdCode() {
 		return ndCode;
 	}
@@ -126,12 +120,6 @@ public class CategoryDataModel {
 	}
 	public void setShortName(String shortName) {
 		this.shortName = shortName;
-	}
-	public String getPreview() {
-		return preview;
-	}
-	public void setPreview(String preview) {
-		this.preview = preview;
 	}
 
 

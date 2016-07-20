@@ -145,11 +145,11 @@ public class TeachingactivitiesControllerV06 {
 
 		if(notice) {
 			offlineService.writeToCsAsync(IndexSourceType.SourceTeachingActivitiesType.getName(), id);
-		}
-		// offline metadata(coverage) to elasticsearch
-		if (ResourceTypeSupport.isValidEsResourceType(IndexSourceType.SourceTeachingActivitiesType.getName())) {
-			esResourceOperation.asynAdd(
-					new Resource(IndexSourceType.SourceTeachingActivitiesType.getName(), id));
+			// offline metadata(coverage) to elasticsearch
+			if (ResourceTypeSupport.isValidEsResourceType(IndexSourceType.SourceTeachingActivitiesType.getName())) {
+				esResourceOperation.asynAdd(
+						new Resource(IndexSourceType.SourceTeachingActivitiesType.getName(), id));
+			}
 		}
 		return viewModel;
 	}

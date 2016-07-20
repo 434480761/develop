@@ -121,11 +121,11 @@ public class HomeworkControllerV06 {
 
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.homeworks.toString(), id);
-		}
-		// offline metadata(coverage) to elasticsearch
-		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.homeworks.toString())) {
-			esResourceOperation.asynAdd(
-					new Resource(ResourceNdCode.homeworks.toString(), id));
+			// offline metadata(coverage) to elasticsearch
+			if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.homeworks.toString())) {
+				esResourceOperation.asynAdd(
+						new Resource(ResourceNdCode.homeworks.toString(), id));
+			}
 		}
 		return hvm;
 	}

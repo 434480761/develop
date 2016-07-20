@@ -44,6 +44,7 @@ public class ToolsServiceImplV06 implements ToolsServiceV06 {
 
     @Override
     public CourseWareObjectModel patchTools(CourseWareObjectModel model) {
-        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.tools.toString(), model);
+        ndResourceService.patch(ResourceNdCode.tools.toString(), model);
+        return (CourseWareObjectModel)ndResourceService.getDetail(ResourceNdCode.tools.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
     }
 }

@@ -40,6 +40,7 @@ public class CourseWareObjectTemplateServiceImplV06 implements CourseWareObjectT
 
     @Override
     public CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm) {
-        return (CourseWareObjectTemplateModel)ndResourceService.patch(ResourceNdCode.coursewareobjecttemplates.toString(), ctm);
+        ndResourceService.patch(ResourceNdCode.coursewareobjecttemplates.toString(), ctm);
+        return (CourseWareObjectTemplateModel)ndResourceService.getDetail(ResourceNdCode.coursewareobjecttemplates.toString(), ctm.getIdentifier(), IncludesConstant.getIncludesList());
     }
 }

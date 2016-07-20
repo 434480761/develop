@@ -205,11 +205,11 @@ public class QuestionControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.questions.toString(), id);
-        }
-        // offline metadata(coverage) to elasticsearch
-        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.questions.toString())) {
-            esResourceOperation.asynAdd(
-                    new Resource(ResourceNdCode.questions.toString(), id));
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.questions.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.questions.toString(), id));
+            }
         }
 
         return questionViewModel;

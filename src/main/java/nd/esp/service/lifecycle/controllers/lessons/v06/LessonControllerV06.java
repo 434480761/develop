@@ -130,11 +130,11 @@ public class LessonControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.lessons.toString(), id);
-        }
-        // offline metadata(coverage) to elasticsearch
-        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.lessons.toString())) {
-            esResourceOperation.asynAdd(
-                    new Resource(ResourceNdCode.lessons.toString(), id));
+            // offline metadata(coverage) to elasticsearch
+            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.lessons.toString())) {
+                esResourceOperation.asynAdd(
+                        new Resource(ResourceNdCode.lessons.toString(), id));
+            }
         }
 
         return viewModel;

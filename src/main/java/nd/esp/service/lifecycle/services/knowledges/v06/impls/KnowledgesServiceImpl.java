@@ -88,7 +88,8 @@ public class KnowledgesServiceImpl implements KnowledgeService {
 
     @Override
     public KnowledgeModel patchKnowledge(KnowledgeModel model) {
-        return (KnowledgeModel)ndResourceService.patch(ResourceNdCode.knowledges.toString(), model);
+        ndResourceService.patch(ResourceNdCode.knowledges.toString(), model);
+        return (KnowledgeModel)ndResourceService.getDetail(ResourceNdCode.knowledges.toString(), model.getIdentifier(), IncludesConstant.getIncludesList());
     }
     
     @Override

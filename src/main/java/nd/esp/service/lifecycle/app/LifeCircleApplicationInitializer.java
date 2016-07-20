@@ -40,15 +40,6 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties tablenames_properties=null;
 	public static Properties ndCode_properties=null;
 	
-	//titan
-	public static Properties db_titan_field_ndresource=null;
-	public static Properties db_titan_field_ndresource_ext_common=null;
-	public static Properties db_titan_field_ndresource_ext_questions=null;
-	public static Properties db_titan_field_relation=null;
-	public static Properties db_titan_field_techinfo=null;
-	public static Properties db_titan_field_category=null;
-	public static Properties db_titan_field_knowledgerelation=null;
-	
 
 	static {
 		try {
@@ -66,27 +57,6 @@ public class LifeCircleApplicationInitializer extends
 			        .loadAllProperties("config/props/restype_corresponding_tablename.properties");
 			ndCode_properties = PropertiesLoaderUtils
 			        .loadAllProperties("config/props/ndcode_corresponding_tablename.properties");
-			
-			//titan
-			db_titan_field_ndresource = PropertiesLoaderUtils
-                    .loadAllProperties("config/props/db_titan_field_ndresource.properties");
-
-			db_titan_field_ndresource_ext_common = PropertiesLoaderUtils
-                    .loadAllProperties("config/props/db_titan_field_ndresource_ext_common.properties");
-			db_titan_field_ndresource_ext_common.putAll(db_titan_field_ndresource);
-
-			db_titan_field_ndresource_ext_questions = PropertiesLoaderUtils
-					.loadAllProperties("config/props/db_titan_field_ndresource_ext_questions.properties");
-			db_titan_field_ndresource_ext_questions.putAll(db_titan_field_ndresource);
-
-			db_titan_field_relation = PropertiesLoaderUtils
-					.loadAllProperties("config/props/db_titan_field_relation.properties");
-			db_titan_field_techinfo = PropertiesLoaderUtils
-					.loadAllProperties("config/props/db_titan_field_techinfo.prperties");
-			db_titan_field_category = PropertiesLoaderUtils
-					.loadAllProperties("config/props/db_titan_field_category.properties");
-			db_titan_field_knowledgerelation = PropertiesLoaderUtils
-					.loadAllProperties("config/props/db_titan_field_knowledgerelation.properties");
 		} catch (IOException e) {
 
 			LOG.warn("加载配置文件失败", e);
