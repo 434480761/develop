@@ -53,6 +53,10 @@ public class TransCodeTrigger {
     public void triggerVideo(TransCodeParam codeParam){
         executorService.execute(new VideoTranscodeThread(codeParam));
     }
+
+    public void triggerImage(TransCodeParam codeParam ){
+        executorService.execute(new ImageTranscodeThread(codeParam));
+    }
     
     /**
      * 视频转码线程
@@ -135,7 +139,34 @@ public class TransCodeTrigger {
             
         }
     }
-    
+
+    class ImageTranscodeThread extends Thread{
+        private TransCodeParam codeParam;
+        public ImageTranscodeThread (TransCodeParam codeParam){
+            this.codeParam = codeParam;
+        }
+        public void run(){
+            try {
+                LOG.info("href对应的实例键值:{}",codeParam.getInstanceKey());//${ref-path}/edu
+                Constant.CSInstanceInfo instanceInfo=  Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey());
+                String session= SessionUtil.createSession(instanceInfo);
+                LOG.info("href实例对应的sessionID:{}",session);
+                String domain=TransCodeUtil.getDomain(codeParam.getReferer());
+                int priority=TransCodeUtil.getTranscodePriority(  domain);
+
+                //暂时不使用两个配置
+                //String taskUrl= TransCodeUtil.getTransCodeTaskUrl(instanceKey);
+
+                transCodeUtil.TriggerImageTransCode(codeParam, session, priority);
+
+            } catch (Exception e) {
+                LOG.warn("创建转码任务失败:",e);
+
+                lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+            }
+
+        }
+    }
 
 
 }
