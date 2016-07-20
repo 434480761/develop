@@ -25,6 +25,11 @@ public class StatusReviewViewModel4In {
 	@NotBlank(message="{statusReviewViewModel4In.status.notBlank.validmsg}")
 	private String status;
 	/**
+	 * 资源审核人
+	 */
+	@NotBlank(message="{statusReviewViewModel4In.reviewPerson.notBlank.validmsg}")
+	private String reviewPerson;
+	/**
 	 * 资源标签
 	 */
 	@Valid
@@ -53,5 +58,11 @@ public class StatusReviewViewModel4In {
 	}
 	public void setTags(List<StatusReviewTags> tags) {
 		this.tags = tags;
+	}
+	public String getReviewPerson() {
+		return reviewPerson;
+	}
+	public void setReviewPerson(String reviewPerson) {
+		this.reviewPerson = reviewPerson;
 	}
 }
