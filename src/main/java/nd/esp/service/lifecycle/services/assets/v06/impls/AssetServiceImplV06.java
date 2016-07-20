@@ -33,8 +33,6 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 
 	@Override
 	public AssetModel patchAsset(AssetModel am) {
-		ndResourceService.patch(ResourceNdCode.assets.toString(), am);
-
-		return (AssetModel)ndResourceService.getDetail(ResourceNdCode.assets.toString(), am.getIdentifier(), IncludesConstant.getIncludesList());
+		return (AssetModel)ndResourceService.patch(ResourceNdCode.assets.toString(), am);
 	}
 }

@@ -1,0 +1,124 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <title>knowledge map</title>
+    <script type="text/javascript" src="../../js/configure.js"></script>
+    <script type="text/javascript" src="../../lib/jquery/1.11.2/jquery.js"></script>
+    <script type="text/javascript" src="../../lib/jquery/mouse/jquery.mousewheel.js"></script>
+    <script type="text/javascript" src="../../lib/d3/3.5.6/d3.js"></script>
+    <script type="text/javascript" src="mapUtils.js"></script>
+    <script type="text/javascript" src="drawmap.js"></script>
+    <script type="text/javascript" src="initLoadDatas.js"></script>
+    <link href="style.css" rel="stylesheet" type="text/css"/>
+</head>
+<style>
+</style>
+
+<body>
+<div id="container">
+    <div id="header">
+        <div class="search" ,id="search">
+            <div id="logo" class="logo">
+                <h3 class="text">知&nbsp;识&nbsp;图&nbsp;谱</h3>
+            </div>
+            <div id="start_div">
+                <div class="path_start_div">
+                    起点:<input type="text" id="path_start" class="start" value="">
+                </div>
+                <div class="text_start_div" hidden>
+
+                </div>
+            </div>
+
+            <div id="end_div">
+                <div class="path_end_div">
+                    终点:<input type="text" id="path_end" class="end" value="">
+                </div>
+                <div class="text_end_div" hidden>
+                </div>
+            </div>
+            <div>
+
+                <div class="search_relaiton_div" id="search_relaiton_div">
+                    <label for="search_relation">关系:</label>
+                    <select id="search_relation" class="search_relation">
+                        <option value="1">next</option>
+                        <option value="2">relation2</option>
+                        <option value="3">relation3</option>
+                        <option value="4">relation4</option>
+                        <option value="5">relation5</option>
+                    </select>
+                </div>
+
+                <div class="search_depth_div" id="search_depth_div">
+                    <label for="search_depth">深度:</label>
+                    <select id="search_depth" class="search_depth">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                    </select>
+                </div>
+                <div class="search_button_div">
+                    <button id="submit" class="submit" onclick="drawMapButton()">查&nbsp;&nbsp;&nbsp;&nbsp;询</button>
+                </div>
+
+                <div class="adddepth_div" class="adddepth_div" hidden>
+                    <button id="adddepth" class="adddepth">增加深度</button>
+                </div>
+
+                <div class="subdepth_div" class="subdepth_div" hidden>
+                    <button id="subdepth" class="subdepth">减小深度</button>
+                </div>
+
+            </div>
+            <div id="hidden_div" hidden>
+                <input type="text" name="startId" id="startId" value="">
+                <input type="text" name="endId" id="endId" value="">
+                <input type="text" name="isQueryStart" id="isQueryStart" value="true">
+                <input type="text" name="limit" id="limit" value="5">
+                <input type="text" name="minDepth" id="minDepth" value="1">
+                <input type="text" name="maxDepth" id="maxDepth" value="1">
+                <input type="text" name="currentDepth" id="currentDepth" value="1">
+            </div>
+        </div>
+    </div>
+    <div id="mainContent">
+        <div id="sidebar_lift">
+        </div>
+        <div id="content"></div>
+        <div id="sidebar_right">
+            <div id="search" class="search">
+                <br>&nbsp;&nbsp;节点名称:
+                <input type="text" id="name" class="name">
+                <input type="text" id="indentifier" class="indentifier" hidden>
+                <br>&nbsp;&nbsp;资源类型:
+                <select id="type" class="type">
+                </select>
+                <button class="submit" id="submit">submit</button>
+            </div>
+            <hr class="line">
+            <div id="content_div" class="content_div">
+                &nbsp;相关内容<br>
+                <ol id="content_ol" class="content_ol" start="1">
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div id="footer">
+    </div>
+</div>
+</body>
+</html>

@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nd.esp.service.lifecycle.educommon.controllers.NDResourceController;
 import nd.esp.service.lifecycle.educommon.vos.ResCoverageViewModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
@@ -81,7 +83,7 @@ public class ParameterVerificationHelper {
      * @param relation
      * @return
      */
-    public static Map<String, String> relationVerification(String relation){
+    public static Map<String, String> relationVerification(String relation, NDResourceController.QueryType queryType){
     	Map<String,String> map = new HashMap<String, String>();
         //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
         relation = relation + " ";
@@ -102,7 +104,18 @@ public class ParameterVerificationHelper {
          
         //判断源资源是否存在,stype + suuid
         if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
-            CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
+            if(queryType == NDResourceController.QueryType.DB) {
+                CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
+            }
+        }else{
+            // "relation参数进行递归查询时,目前仅支持:chapters,knowledges"
+            if (!ResourceNdCode.chapters.toString().equals(elements.get(0)) &&
+                    !ResourceNdCode.knowledges.toString().equals(elements.get(0))) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                        "relation参数进行递归查询时,目前仅支持:chapters,knowledges");
+            }
+
         }
         //r_type的特殊处理
         if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){

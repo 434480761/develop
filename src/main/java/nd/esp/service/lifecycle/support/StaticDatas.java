@@ -31,6 +31,8 @@ public class StaticDatas {
     
     /*同步推送数据给报表系统*/
     public static boolean SYNC_REPORT_DATA = true;
+
+    public static boolean TITAN_SWITCH = true;
     
     /*访问控制策略的Map*/
     public static ConcurrentMap<String, IvcConfigModel> IVC_CONFIG_MAP = new ConcurrentHashMap<String, IvcConfigModel>();

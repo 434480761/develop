@@ -115,13 +115,13 @@ public class ToolsControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.tools.toString(), id);
-            // offline metadata(coverage) to elasticsearch
-            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.tools.toString())) {
-                esResourceOperation.asynAdd(
-                        new Resource(ResourceNdCode.tools.toString(), id));
-            }
         }
 
+        // offline metadata(coverage) to elasticsearch
+        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.tools.toString())) {
+            esResourceOperation.asynAdd(
+                    new Resource(ResourceNdCode.tools.toString(), id));
+        }
         return viewModel;
     }
 

@@ -43,7 +43,6 @@ public class LessonPlansServiceImplV06 implements LessonPlansServiceV06 {
 	 */
 	@Override
 	public LessonPlanModel patch(LessonPlanModel lessonPlansModel) {
-		ndResourceService.patch(ResourceNdCode.lessonplans.toString(), lessonPlansModel);
-		return (LessonPlanModel)ndResourceService.getDetail(ResourceNdCode.lessonplans.toString(), lessonPlansModel.getIdentifier(), IncludesConstant.getIncludesList());
+		return (LessonPlanModel)ndResourceService.patch(ResourceNdCode.lessonplans.toString(), lessonPlansModel);
 	}
 }

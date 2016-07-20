@@ -1,0 +1,131 @@
+==================================================================
+节点
+mysql字段名	                    titan字段名	                字段类型
+Ndresource(Vertex)
+primaryCategory（资源类型）	    T.label
+identifier	                    identifier	                String
+description	                    description	                String
+title	                        title	                    String
+dbcreateTime	                lc_create_time	            Long
+dblastUpdate	                lc_last_update	            Long
+dbpreview	                    preview	                    String
+dbtags	                        tags	                    String
+dbkeywords	                    keywords	                String
+language	                    language	                String
+enable	                        lc_enable	                boolean
+customProperties	            custom_properties	        String
+providerSource	                lc_provider_source	        String
+version	                        lc_version	                String
+status	                        lc_status	                String
+creator	                        lc_creator	                String
+provider	                    lc_provider	                String
+crRight	                        cr_right	                String
+crDescription	                cr_description	            String
+author	                        cr_author	                String
+interactivity	                edu_interactivity	        Integer
+interactivityLevel	            edu_interactivity_level	    Integer
+endUserType	                    edu_end_user_type	        String
+semanticDensity	                edu_semantic_density	    Integer
+ageRange	                    edu_age_range	            String
+difficulty	                    edu_difficulty	            String
+learningTime	                edu_learning_time	        String
+dbEduDescription	            edu_description	            String
+eduLanguage	                    edu_language	            String
+publisher                       lc_publisher                String
+Ndresource扩展字段
+Ebbok、TeachingMaterial、GuidanceBooks
+isbn                            ext_isbn                    String
+dbattachments                   ext_attachments             String
+criterion                       ext_criterion               String
+edition                         ext_edition                 String
+grade                           ext_grade                   String
+phase                           ext_phase                   String
+subject                         ext_subject                 String
+questions
+isAutoRemark                    ext_is_auto_remark          Boolean
+questionType                    ext_question_type           String
+dbsubject                       ext_subject                 String
+suggestDuration                 ext_suggest_duration        String
+discrimination                  ext_discrimination          Float
+dbanswer                        ext_answer                  String
+dbitemContent                   ext_item_content            String
+dbcriterion                     ext_criterion               String
+score                           ext_score                   Float
+dbsource                        ext_source                  String
+secrecy                         ext_secrecy                 Integer
+modifiedDifficulty              ext_modified_difficulty     Float
+extDifficulty                   ext_ext_difficulty          Float
+modifiedDiscrimination          ext_modified_discrimination Float
+usedTime                        ext_used_time               Integer
+exposalDate                     ext_exposal_date            Long
+autoRemark                      ext_auto_remark             Boolean
+
+
+Coverage（Vertex）
+"coverage"	                    T.label
+TargetType	                    target_type	                String
+strategy	                    strategy	                String
+target	                        target	                    String
+
+ResourceCategory_Code（Vertex）
+"category_code"	                T.label
+taxoncode	                    cg_taxoncode	            String
+taxonname                       cg_taxonname                String
+shortName                       cg_short_name               String
+categoryCode                    cg_category_code            String
+categoryName                    cg_category_name            String
+
+ResourceCategory_Path（Vertex）
+"categories_path"	            T.label
+taxonpath	                    cg_taxonpath	            String
+
+TechInfo(Vertex)
+"tech_info"	                    T.label
+identifier	                    identifier	                String
+description	                    description	                String
+title	                        ti_title	                String
+format	                        ti_format	                String
+location	                    ti_location	                String
+md5	                            ti_md5	                    String
+requirements	                ti_requirements	            String
+secureKey	                    ti_secure_key	            String
+size	                        ti_size	                    Long
+entry	                        ti_entry	                String
+
+===================================================================
+关系
+has_relation
+dbtags                          tags                        String
+enable                          enable                      boolean
+orderNum                        order_num                   Float
+label                           rr_label                    String
+relationType                    relation_type               String
+identifier                      identifier                  String
+
+has_category_code
+identifier                      identifier                  String
+
+has_coverage
+identifier                      identifier                  String
+
+has_categories_path
+
+has_chapter
+
+has_knowledge
+
+has_tech_info
+identifier                      identifier                  String
+
+===================================================================
+索引
+索引名	                字段
+byIdentifier	        identifier
+byTaxoncode	            cg_taxoncode
+coverages	            target
+	                    strategy
+	                    target_type
+taxonpath	            cg_taxonpath
+
+注意：1、cg_taxoncode、cg_taxonpath  2、边上增加ID
+

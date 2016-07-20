@@ -131,11 +131,11 @@ public class InstructionalObjectiveControllerV06 {
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.instructionalobjectives.toString(), id);
-            // offline metadata(coverage) to elasticsearch
-            if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.instructionalobjectives.toString())) {
-                esResourceOperation.asynAdd(
-                        new Resource(ResourceNdCode.instructionalobjectives.toString(), id));
-            }
+        }
+        // offline metadata(coverage) to elasticsearch
+        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.instructionalobjectives.toString())) {
+            esResourceOperation.asynAdd(
+                    new Resource(ResourceNdCode.instructionalobjectives.toString(), id));
         }
         return avm;
     }

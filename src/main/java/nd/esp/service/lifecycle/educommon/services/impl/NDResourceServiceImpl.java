@@ -1,5 +1,4 @@
 package nd.esp.service.lifecycle.educommon.services.impl;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -24,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
@@ -72,6 +72,7 @@ import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
+import nd.esp.service.lifecycle.services.titan.TitanSearchService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -210,14 +211,20 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Autowired
     private ES_Search eS_Search;
     
+ // just for test titan;
+ 	@Autowired
+ 	private TitanSearchService titanSearchService;
+     @Autowired
+     private TitanRelationRepository titanRelationRepository;
+    
     @Autowired
     private NotifyReportService nds;
     
-    @Autowired()
+    @Autowired
     @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
     
-    @Autowired()
+    @Autowired
     @Qualifier("lifecycleService4QtiV06")
     private LifecycleServiceV06 lifecycleService4Qti;
     
@@ -247,6 +254,62 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		listViewModel = eS_Search.searchByES(resType, includes, params, orderMap, result[0], result[1]);
 		listViewModel.setLimit(limit);
+		return listViewModel;
+	}
+    
+    /**
+     * 资源检索(titan)
+     * @author linsm
+     */
+    @Override
+	public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,
+			List<String> includes, Set<String> categories, Set<String> categoryExclude,
+			List<Map<String, String>> relations, List<String> coverages,
+			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
+			String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey) {
+		// 返回的结果集
+		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
+
+		// 参数整理
+		Map<String, Map<String, List<String>>> params = this
+				.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey);
+		Integer result[] = ParamCheckUtil.checkLimit(limit);
+		if(includes == null){
+			includes = new ArrayList<String>();
+		}
+		//just for test by lsm
+		listViewModel = 
+				titanSearchService.searchWithAdditionProperties(resType, includes, params, orderMap,
+						result[0], result[1],reverse,words);
+		listViewModel.setLimit(limit);
+		return listViewModel;
+	}
+    
+    /**
+     * 资源检索(titan)
+     * @author linsm
+     */
+    @Override
+	public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,
+			List<String> includes, Set<String> categories, Set<String> categoryExclude,
+			List<Map<String, String>> relations, List<String> coverages,
+			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
+			String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey) {
+		// 返回的结果集
+		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
+
+		// 参数整理
+		Map<String, Map<String, List<String>>> params = this
+				.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey);
+		Integer result[] = ParamCheckUtil.checkLimit(limit);
+		if(includes == null){
+			includes = new ArrayList<String>();
+		}
+		//just for test by lsm
+		listViewModel = 
+				titanSearchService.searchUseES(resType, includes, params, orderMap,
+						result[0], result[1],reverse,words);
+		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
     
@@ -326,29 +389,29 @@ public class NDResourceServiceImpl implements NDResourceService{
 			params.get(key_cv).put(PropOperationConstant.OP_IN, cvIn);
 		}
 
-		// // relations
-		// // params key值定义
-		// final String key_re = "relation";
-		// List<String> reEq = new ArrayList<String>();
+		
+		// relations
+		// params key值定义
+		final String key_re = "relation";
+		List<String> reEq = new ArrayList<String>();
 		// List<String> reLike = new ArrayList<String>();
-		// if (CollectionUtils.isNotEmpty(relations)) {
-		// for (Map<String, String> relation : relations) {
-		// String r = relation.get("stype") + "/" + relation.get("suuid")
-		// + "/";
-		// if (relation.get("rtype") == null) {
-		// r += "*";
-		// reLike.add(r);
-		// } else {
-		// r += relation.get("rtype");
-		// reEq.add(r);
-		// }
-		// }
-		// }
-		//
-		// if (CollectionUtils.isNotEmpty(reEq)) {
-		// params.put(key_re, new HashMap<String, List<String>>());
-		// params.get(key_re).put(PropOperationConstant.OP_EQ, reEq);
-		// }
+		if (CollectionUtils.isNotEmpty(relations)) {
+			for (Map<String, String> relation : relations) {
+				String r = relation.get("stype") + "/" + relation.get("suuid")
+						+ "/";
+				if (relation.get("rtype") == null) {
+					r += "*";
+				} else {
+					r += relation.get("rtype");
+				}
+				reEq.add(r);
+			}
+		}
+
+		if (CollectionUtils.isNotEmpty(reEq)) {
+			params.put(key_re, new HashMap<String, List<String>>());
+			params.get(key_re).put(PropOperationConstant.OP_EQ, reEq);
+		}
 		// if (CollectionUtils.isNotEmpty(reLike)) {
 		// params.put(key_re, new HashMap<String, List<String>>());
 		// params.get(key_re).put(PropOperationConstant.OP_LIKE, reLike);
@@ -1209,6 +1272,9 @@ public class NDResourceServiceImpl implements NDResourceService{
     private void deleteRelation(String resourceType, String uuid) {
     	commonServiceHelper.deleteRelation(resourceType,uuid);
     	commonServiceHelper.deleteRelation4QuestionDB(resourceType, uuid);
+    	
+    	//TODO delete relation for titan
+        titanRelationRepository.deleteRelationSoft(resourceType, uuid);
     }
     
 
@@ -2457,14 +2523,57 @@ public class NDResourceServiceImpl implements NDResourceService{
         nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
         return resourceModel;
     }
+    
+    /**
+     * @author linsm
+     * @param resourceType
+     * @param identifier
+     * @return
+     * @since
+     */
+    @Override
+    public Education checkResourceExist(String resourceType, String identifier) {
+        // 后期是否可以结合取详情一起来处理
+        // 判断资源是否存在
+        Education oldBean = null;
+
+        LOG.debug("调用sdk方法：get");
+
+        try {
+            oldBean = (Education) commonServiceHelper.getRepository(resourceType).get(identifier);
+        } catch (EspStoreException e) {
+
+            LOG.error("调用存储SDK出错了", e);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                                          e.getLocalizedMessage());
+        }
+        if (oldBean == null || !resourceType.equals(oldBean.getPrimaryCategory())) {
+
+            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
+        }
+        // 资源是否被删除过
+        if (!oldBean.getEnable()) {
+
+            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
+        }
+        return oldBean;
+    }
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel) {
-		patch(resourceType, resourceModel,DbName.DEFAULT);
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
+		return patch(resourceType, resourceModel,DbName.DEFAULT);
 	}
 
 	@Override
-	public void patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2476,26 +2585,23 @@ public class NDResourceServiceImpl implements NDResourceService{
 			}
 		}
 
-		List<String> includeList = new ArrayList<>();
-
 		// 2、基本属性的处理
 		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
 
 		// 3、categories属性处理
 		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
 			dealCategoryPatch(resourceType, resourceModel);
-			includeList.add(IncludesConstant.INCLUDE_CG);
 		}
 
 		// 4、tech_info属性处理
 		if(resourceModel.getTechInfoList()!=null && CollectionUtils.isNotEmpty(resourceModel.getTechInfoList())){
 			dealTechInfoPatch(resourceType, resourceModel, dbName);
-			includeList.add(IncludesConstant.INCLUDE_TI);
 		}
 
 		// 5、同步推送至报表系统
-		nds.notifyReport4Resource(resourceType,resourceModel,OperationType.UPDATE);
-
+		ResourceModel rtModel = getDetail(resourceType, resourceModel.getIdentifier(), IncludesConstant.getIncludesList());
+		nds.notifyReport4Resource(resourceType,rtModel,OperationType.UPDATE);
+		return  rtModel;
 	}
 
 	private boolean dealTechInfoPatch(String resourceType, ResourceModel resourceModel, DbName dbName) {
@@ -2978,48 +3084,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
     }
 
-    /**
-     * @author linsm
-     * @param resourceType
-     * @param identifier
-     * @return
-     * @since
-     */
-    private Education checkResourceExist(String resourceType, String identifier) {
-        // 后期是否可以结合取详情一起来处理
-        // 判断资源是否存在
-        Education oldBean = null;
-
-        LOG.debug("调用sdk方法：get");
-
-        try {
-            oldBean = (Education) commonServiceHelper.getRepository(resourceType).get(identifier);
-        } catch (EspStoreException e) {
-
-            LOG.error("调用存储SDK出错了", e);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getLocalizedMessage());
-        }
-        if (oldBean == null || !resourceType.equals(oldBean.getPrimaryCategory())) {
-
-            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
-        }
-        // 资源是否被删除过
-        if (!oldBean.getEnable()) {
-
-            LOG.error(LifeCircleErrorMessageMapper.ChangeObjectNotExist.getMessage() + identifier);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.ChangeObjectNotExist);
-        }
-        return oldBean;
-    }
-
 	@Override
     @Transactional(value="transactionManager")
 	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
@@ -3094,7 +3158,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 			} catch (Exception e) {
 				LOG.error("获取UC用户信息出错",e);
 			}
-        	
         }
         service.addLifecycleStep(resType, newUuid, contributeModel);
         ResourceModel resourceModel = new ResourceModel();
@@ -3181,7 +3244,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 			} catch (Exception e) {
 				LOG.error("获取UC用户信息出错",e);
 			}
-        	
         }
         service.addLifecycleStep(resType, newUuid, contributeModel);
         ResourceModel resourceModel = new ResourceModel();
