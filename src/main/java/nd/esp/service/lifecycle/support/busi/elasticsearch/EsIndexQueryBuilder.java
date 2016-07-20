@@ -82,8 +82,13 @@ public class EsIndexQueryBuilder {
     public String generateScript() {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
-        baseQuery.append(dealWithWords(this.words));
-        baseQuery.append(dealWithParams());
+        String wordSegmentation=dealWithWords(this.words);
+        String other=dealWithParams();
+        if("".endsWith(wordSegmentation.trim())){
+            other=other.trim().replaceFirst("AND","");
+        }
+        baseQuery.append(wordSegmentation);
+        baseQuery.append(other);
         baseQuery.append(dealWithResType());
 
         //baseQuery.deleteCharAt(baseQuery.length()-1);
@@ -127,7 +132,13 @@ public class EsIndexQueryBuilder {
             query.append("\\\":(");
             query.append(words);
             query.append(")");
-            if (i != coversLength - 1) query.append(" OR ");
+            if (i != coversLength - 1) {
+                if (words.contains("-")) {
+                    query.append(" AND ");
+                } else {
+                    query.append(" OR ");
+                }
+            }
         }
 
         return "("+query.toString()+")";
@@ -148,10 +159,10 @@ public class EsIndexQueryBuilder {
             query.append(" AND ").append(codeStr);
         }
         if(!"".equals(pathStr)){
-            query.append("AND ").append(pathStr);
+            query.append(" AND ").append(pathStr);
         }
         if(!"".equals(coverageStr)){
-            query.append("AND ").append(coverageStr);
+            query.append(" AND ").append(coverageStr);
         }
         return query.toString();
     }

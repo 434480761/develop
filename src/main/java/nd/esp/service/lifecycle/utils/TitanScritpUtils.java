@@ -219,7 +219,7 @@ public class TitanScritpUtils {
         }
 
         if(CollectionUtils.isNotEmpty(categoryPathList)){
-            buildPathScript(script, categoryPathList);
+            param.putAll(buildPathScript(script, categoryPathList));
         }
 
         if(CollectionUtils.isNotEmpty(categoryList)){
@@ -407,7 +407,9 @@ public class TitanScritpUtils {
     }
 
     private static Map<String, Object> buildPathScript(StringBuffer script, List<String> categoryPaths){
-
+        if(CollectionUtils.isEmpty(categoryPaths)){
+            return new HashMap<>();
+        }
         StringBuilder categroyPathMethod = new StringBuilder("public void createCategoriesPath(Long education){");
         Map<String, Object> resultParam = new HashMap<>();
         int orderNumber = 0;
