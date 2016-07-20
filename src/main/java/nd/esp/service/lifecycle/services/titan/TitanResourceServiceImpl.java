@@ -1,14 +1,6 @@
 package nd.esp.service.lifecycle.services.titan;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
@@ -37,10 +29,7 @@ import org.apache.tinkerpop.gremlin.driver.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 
@@ -255,30 +244,35 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	private void importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos){
 		Map<String,ResCoverage> coverageMap = new HashMap<>();
-		for(ResCoverage coverage : resCoverageList){
-			String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
-			if(coverageMap.get(key)==null){
-				coverageMap.put(key, coverage);
+		if(CollectionUtils.isNotEmpty(resCoverageList)){
+			for(ResCoverage coverage : resCoverageList){
+				String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
+				if(coverageMap.get(key)==null){
+					coverageMap.put(key, coverage);
+				}
 			}
 		}
-
 
 		Set<String> categoryPathSet = new HashSet<>();
 		Map<String, ResourceCategory> categoryMap = new HashMap<>();
-		for (ResourceCategory resourceCategory : resourceCategoryList){
-			if(StringUtils.isNotEmpty(resourceCategory.getTaxonpath())){
-				categoryPathSet.add(resourceCategory.getTaxonpath());
-			}
-			if(categoryMap.get(resourceCategory.getTaxoncode())==null){
-				categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
-			}
+		if(CollectionUtils.isNotEmpty(resourceCategoryList)){
+			for (ResourceCategory resourceCategory : resourceCategoryList){
+				if(StringUtils.isNotEmpty(resourceCategory.getTaxonpath())){
+					categoryPathSet.add(resourceCategory.getTaxonpath());
+				}
+				if(categoryMap.get(resourceCategory.getTaxoncode())==null){
+					categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
+				}
 
+			}
 		}
 
 		Map<String, TechInfo> techInfoMap = new HashMap<>();
-		for (TechInfo techInfo : techInfos){
-			if(techInfoMap.get(techInfo.getTitle()) == null){
-				techInfoMap.put(techInfo.getTitle(), techInfo);
+		if(CollectionUtils.isNotEmpty(techInfos)){
+			for (TechInfo techInfo : techInfos){
+				if(techInfoMap.get(techInfo.getTitle()) == null){
+					techInfoMap.put(techInfo.getTitle(), techInfo);
+				}
 			}
 		}
 
@@ -512,7 +506,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		int page = 0;
 		int row = 500;
 		@SuppressWarnings("rawtypes")
-		Page resourcePage = null;
+		Page resourcePage = new PageImpl(new LinkedList());
 		@SuppressWarnings("rawtypes")
 		List entitylist = null;
 
@@ -579,7 +573,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			long indexNum = 0;
 			// 分页
 			int page = 0;
-			int row = 500;
+			int row = 300;
 			EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
 			@SuppressWarnings("rawtypes")
 			Page resourcePage = null;
@@ -799,15 +793,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 				techInfoList.add(techInfo);
 			}
-			LOG.info("script start time:{}",System.currentTimeMillis());
+			LOG.info("start : ", new Date().getSeconds());
 			for (Education education : educations){
 				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
 				List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
 				List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
-//				importOneData(education);
+				importOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 			}
-			LOG.info("script end time:{}",System.currentTimeMillis());
-
+			LOG.info("end : ", new Date().getSeconds());
 			return educations.size();
 		}
 	}

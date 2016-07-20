@@ -142,7 +142,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			e.printStackTrace();
 			return false;
 		}
-
+		if(resultSet == null){
+			return false;
+		}
 		Iterator<Result> iterator = resultSet.iterator();
 		String result = null;
 		if (iterator.hasNext()) {
