@@ -30,8 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nd.gaea.rest.security.authens.UserCenterRoleDetails;
-
 @Service("vrLifeServiceImpl")
 @Transactional
 public class VrLifeServiceImpl implements VrLifeService{
