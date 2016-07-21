@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.educommon.models.*;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
@@ -163,6 +164,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
+        dealWithInclude(titanExpression,includes);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
 
@@ -438,6 +440,28 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return viewModels;
 
     }
+    
+    /**
+     * 处理是否返回模块的属性
+     * @param titanExpression
+     * @param includes
+     */
+    private void dealWithInclude(TitanExpression titanExpression,
+			List<String> includes) {
+		if(CollectionUtils.isEmpty(includes)){
+			return;
+		}
+		
+		for(String include : includes){
+            if(include.equals(IncludesConstant.INCLUDE_TI)){
+            	titanExpression.setNeedTechInfo(true);
+            }else if(include.equals(IncludesConstant.INCLUDE_CG)){
+            	titanExpression.setNeedTaxoncode(true);
+            	titanExpression.setNeedTaxonpath(true);
+            }
+		}
+		
+	}
 
 
 
