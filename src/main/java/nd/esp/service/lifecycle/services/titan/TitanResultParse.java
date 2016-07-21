@@ -2,14 +2,20 @@ package nd.esp.service.lifecycle.services.titan;
 
 import com.google.gson.reflect.TypeToken;
 import nd.esp.service.lifecycle.educommon.models.*;
+import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
+import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
+import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ******************************************
@@ -39,6 +45,221 @@ import java.util.Map;
  * @date 2016/6/27
  */
 public class TitanResultParse {
+
+
+    /**
+     * 解析资源
+     * @param resType
+     * @param resultStr
+     * @return
+     */
+    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr) {
+        ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
+        List<ResourceModel> items = new ArrayList<>();
+
+        List<String> otherLines = new ArrayList<>();
+        String taxOnPath = null;
+        String mainResult = null;
+        int count = 0;
+        for (String line : resultStr) {
+            if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
+                items.add(TitanResultParse.parseResource(resType, mainResult, otherLines, taxOnPath));
+                otherLines.clear();
+                taxOnPath = null;
+            }
+
+            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
+                Map<String, String> map = TitanResultParse.toMap(line);
+                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
+            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
+                mainResult = line;
+            } else {
+                otherLines.add(line);
+            }
+            count++;
+        }
+
+        viewModels.setItems(items);
+        return viewModels;
+    }
+
+    /**
+     * 解析资源
+     * @param resType
+     * @param mainResult
+     * @param otherLines
+     * @param taxOnPath
+     * @return
+     */
+    public static ResourceModel parseResource(String resType, String mainResult, List<String> otherLines, String taxOnPath) {
+        if (ResourceNdCode.ebooks.toString().equals(resType)) {
+            return generateEbookModel(mainResult, otherLines, taxOnPath);
+        } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
+            generateTeachingMaterialModel(mainResult, otherLines, taxOnPath);
+        } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
+        } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
+            return generateQuestionModel(mainResult, otherLines, taxOnPath);
+        }
+        return generateResourceModel(mainResult, otherLines, taxOnPath);
+    }
+
+    /**
+     * TeachingMaterial的扩展属性
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static TeachingMaterialModel generateTeachingMaterialModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+        TeachingMaterialModel item = new TeachingMaterialModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap);
+        TmExtPropertiesModel extProperties = new TmExtPropertiesModel();
+        extProperties.setIsbn(fieldMap.get("ext_isbn"));
+        extProperties.setCriterion(fieldMap.get("ext_criterion"));
+        String attachments = fieldMap.get("ext_attachments");
+        if (attachments != null) {
+            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+        }
+        item.setExtProperties(extProperties);
+        generateModel(item, strInOneItem, taxOnPath);
+        return item;
+    }
+
+    /**
+     * Ebook的扩展属性
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static EbookModel generateEbookModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+        EbookModel item = new EbookModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap);
+        EbookExtPropertiesModel extProperties = new EbookExtPropertiesModel();
+        extProperties.setIsbn(fieldMap.get("ext_isbn"));
+        extProperties.setCriterion(fieldMap.get("ext_criterion"));
+        String attachments = fieldMap.get("ext_attachments");
+        if (attachments != null) {
+            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+        }
+        item.setExtProperties(extProperties);
+        generateModel(item, strInOneItem, taxOnPath);
+        return item;
+    }
+
+    /**
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static QuestionModel generateQuestionModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+        QuestionModel item = new QuestionModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap);
+        QuestionExtPropertyModel extProperties = new QuestionExtPropertyModel();
+
+        String discrimination = fieldMap.get("ext_discrimination");
+        if (discrimination != null) {
+            extProperties.setDiscrimination(Float.parseFloat(discrimination.trim()));
+        }
+        String answer = fieldMap.get("ext_answer");
+        if (answer != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, String> answerMap = ObjectUtils.fromJson(answer, Map.class);
+            extProperties.setAnswer(answerMap);
+        }
+        String content = fieldMap.get("ext_item_content");
+        if (content != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, String> contentMap = ObjectUtils.fromJson(content, Map.class);
+            extProperties.setItemContent(contentMap);
+        }
+        String criterion = fieldMap.get("ext_criterion");
+        if (criterion != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, String> criterionMap = ObjectUtils.fromJson(criterion, Map.class);
+            extProperties.setCriterion(criterionMap);
+        }
+        String score = fieldMap.get("ext_score");
+        if (score != null) {
+            extProperties.setScore(Float.parseFloat(score.trim()));
+        }
+        String secrecy = fieldMap.get("ext_secrecy");
+        if (secrecy != null) {
+            extProperties.setSecrecy(Integer.parseInt(secrecy.trim()));
+        }
+        String modifiedDifficulty = fieldMap.get("ext_modified_difficulty");
+        if (modifiedDifficulty != null) {
+            extProperties.setModifiedDifficulty(Float.parseFloat(modifiedDifficulty.trim()));
+        }
+        String difficulty = fieldMap.get("ext_ext_difficulty");
+        if (difficulty != null) {
+            extProperties.setExtDifficulty(Float.parseFloat(difficulty.trim()));
+        }
+        String modifiedDiscrimination = fieldMap.get("ext_modified_discrimination");
+        if (modifiedDiscrimination != null) {
+            extProperties.setModifiedDiscrimination(Float.parseFloat(modifiedDiscrimination.trim()));
+        }
+        String usedTime = fieldMap.get("ext_used_time");
+        if (usedTime != null) {
+            extProperties.setUsedTime(Integer.parseInt(usedTime.trim()));
+        }
+        String exposalDate = fieldMap.get("ext_exposal_date");
+        if (exposalDate != null) {
+            extProperties.setExposalDate(new Date(new Long(exposalDate)));
+        }
+        extProperties.setAutoRemark("true".equals(fieldMap.get("ext_is_auto_remark")));
+
+        item.setQuestionType(fieldMap.get("ext_question_type"));
+        item.setExtProperties(extProperties);
+        generateModel(item, strInOneItem, taxOnPath);
+        return item;
+    }
+
+    /**
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static ResourceModel generateResourceModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+        ResourceModel item = new ResourceModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap);
+        generateModel(item, strInOneItem, taxOnPath);
+        return item;
+    }
+
+    /**
+     * @param strInOneItem
+     * @param taxOnPath
+     */
+    private static void generateModel(ResourceModel item, List<String> strInOneItem, String taxOnPath) {
+        List<ResTechInfoModel> techInfoList = new ArrayList<>();
+        List<ResClassificationModel> categoryList = new ArrayList<>();
+
+        for (String str : strInOneItem) {
+            Map<String, String> fieldMap = toMap(str);
+            if (str.contains(ES_SearchField.ti_md5.toString())) { //tech_info
+                techInfoList.add(dealTI(fieldMap));
+            } else if (str.contains(ES_SearchField.cg_taxoncode.toString())) {// categoryList
+                categoryList.add(dealCG(fieldMap, taxOnPath));
+            }
+        }
+        item.setTechInfoList(techInfoList);
+        item.setCategoryList(categoryList);
+    }
+
+
+
+
+
+
     /**
      * @param item
      * @param fieldMap
