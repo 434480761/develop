@@ -25,6 +25,10 @@ public class StatusReviewViewModel4In {
 	@NotBlank(message="{statusReviewViewModel4In.status.notBlank.validmsg}")
 	private String status;
 	/**
+	 * 源发布类型维度
+	 */
+	private String publishType;
+	/**
 	 * 资源审核人
 	 */
 	@NotBlank(message="{statusReviewViewModel4In.reviewPerson.notBlank.validmsg}")
@@ -64,5 +68,11 @@ public class StatusReviewViewModel4In {
 	}
 	public void setReviewPerson(String reviewPerson) {
 		this.reviewPerson = reviewPerson;
+	}
+	public String getPublishType() {
+		return publishType;
+	}
+	public void setPublishType(String publishType) {
+		this.publishType = publishType;
 	}
 }
