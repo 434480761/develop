@@ -731,15 +731,15 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-//                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
-//                        includesList, categories, categoryExclude, relationsMap,
-//                        coveragesList, propsMap, orderMap, words, limit,
-//                        isNotManagement, reverseBoolean, printable, printableKey);
-
-                rListViewModel = resourceQueryByTitanRealTime(resType,
+                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                        isNotManagement, reverseBoolean, printable, printableKey);
+
+//                rListViewModel = resourceQueryByTitanRealTime(resType,
+//                        includesList, categories, categoryExclude, relationsMap,
+//                        coveragesList, propsMap, orderMap, words, limit,
+//                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
