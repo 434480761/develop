@@ -77,15 +77,15 @@ public class VrLifeController {
         		}
         	}
         }
+     	//校验PT
+        if(StringUtils.isNotEmpty(statusReviewViewModel4In.getPublishType())){
+  			commonServiceHelper.isPublishType(statusReviewViewModel4In.getPublishType());
+  		}
         //补全参数
         statusReviewViewModel4In.setIdentifier(id);
         statusReviewViewModel4In.setResType(resType);
         
         StatusReviewViewModel4Out statusReviewViewModel4Out = new StatusReviewViewModel4Out();
-		//校验PT
-		if(StringUtils.isNotEmpty(statusReviewViewModel4In.getPublishType())){
-			commonServiceHelper.isPublishType(statusReviewViewModel4In.getPublishType());
-		}
         if(CommonServiceHelper.isQuestionDb(resType)){
         	statusReviewViewModel4Out = vrLifeService4QuestionDb.statusReview(statusReviewViewModel4In);
         }else{
