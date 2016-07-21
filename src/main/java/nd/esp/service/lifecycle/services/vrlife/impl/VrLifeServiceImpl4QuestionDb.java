@@ -60,18 +60,11 @@ public class VrLifeServiceImpl4QuestionDb implements VrLifeService{
     ResourceCategory4QuestionDBRepository resourceCategory4QuestionDBRepository;
 	@Autowired
 	private CategoryDataRepository categoryDataRepository;
-	@Qualifier(value="defaultJdbcTemplate")
-	@Autowired
-	private JdbcTemplate defaultJdbcTemplate;
+
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public StatusReviewViewModel4Out statusReview(StatusReviewViewModel4In inViewModel) {
-		//校验PT
-		if(StringUtils.isNotEmpty(inViewModel.getPublishType())){
-			isPublishType(inViewModel.getPublishType());
-		}
-		
 		//校验资源是否存在
 		Education oldBean = ndResourceService.checkResourceExist(inViewModel.getResType(), inViewModel.getIdentifier());
 		
@@ -173,35 +166,5 @@ public class VrLifeServiceImpl4QuestionDb implements VrLifeService{
 		
 		return outViewModel;
 	}
-	
-	/**
-	 * 判断维度数据是否是合法的PT维度
-	 * @author xiezy
-	 * @date 2016年7月21日
-	 * @param code
-	 */
-	private void isPublishType(String code){
-		final List<String> resultList = new ArrayList<String>();
-		
-		String sql = "SELECT nd_code as nc FROM category_datas WHERE nd_code LIKE 'PT%'";
-		defaultJdbcTemplate.query(sql, new RowMapper<String>(){
-			@Override
-			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-				resultList.add(rs.getString("nc"));
-				return null;
-			}
-		});
-		
-		if(CollectionUtils.isNotEmpty(resultList)){
-			if(!resultList.contains(code)){
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-						"LC/PT_CODE_IS_NOT_EXIST",
-						code + ":不是合法的PT维度");
-			}
-		}else{
-			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"LC/PT_IS_NOT_EXIST",
-					"PT维度在该环境未录入");
-		}
-	}
+
 }

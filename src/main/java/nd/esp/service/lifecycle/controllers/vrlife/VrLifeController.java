@@ -13,6 +13,7 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewTags;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4In;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4Out;
@@ -45,6 +46,8 @@ public class VrLifeController {
 	private OfflineService offlineService;
 	@Autowired
 	private AsynEsResourceService esResourceOperation;
+	@Autowired
+	private CommonServiceHelper commonServiceHelper;
 	
 	/**
 	 * 资源审核,更新内容包括了资源状态与标签分类
@@ -79,6 +82,10 @@ public class VrLifeController {
         statusReviewViewModel4In.setResType(resType);
         
         StatusReviewViewModel4Out statusReviewViewModel4Out = new StatusReviewViewModel4Out();
+		//校验PT
+		if(StringUtils.isNotEmpty(statusReviewViewModel4In.getPublishType())){
+			commonServiceHelper.isPublishType(statusReviewViewModel4In.getPublishType());
+		}
         if(CommonServiceHelper.isQuestionDb(resType)){
         	statusReviewViewModel4Out = vrLifeService4QuestionDb.statusReview(statusReviewViewModel4In);
         }else{
