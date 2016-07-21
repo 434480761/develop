@@ -289,6 +289,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		try {
 			titanCommonRepository.executeScript(result.get("script").toString(),(Map<String, Object>) result.get("param"));
 		} catch (Exception e) {
+			LOG.error("titanImportErrorData:{}" ,education.getIdentifier());
 			e.printStackTrace();
 		}
 	}
@@ -573,7 +574,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			long indexNum = 0;
 			// 分页
 			int page = 0;
-			int row = 300;
+			int row = 500;
 			EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
 			@SuppressWarnings("rawtypes")
 			Page resourcePage = new PageImpl(new ArrayList());
@@ -616,6 +617,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				} catch (Exception e) {
 					e.printStackTrace();
 					LOG.error(e.getMessage());
+					LOG.error("importTitanMySqlError page:{} primaryCategory:{}",page,primaryCategory);
 				}
 			} while (++page < resourcePage.getTotalPages());
 
@@ -793,14 +795,12 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 				techInfoList.add(techInfo);
 			}
-			LOG.info("start : ", new Date().getSeconds());
 			for (Education education : educations){
 				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
 				List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
 				List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 				importOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 			}
-			LOG.info("end : ", new Date().getSeconds());
 			return educations.size();
 		}
 	}

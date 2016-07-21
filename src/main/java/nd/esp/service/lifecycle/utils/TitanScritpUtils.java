@@ -214,28 +214,46 @@ public class TitanScritpUtils {
         param.put("primaryCategory_edu",education.getPrimaryCategory());
         param.putAll(buildEducationScript(script,education,categoryList,coverageList));
 
+        Map<String, Object> coverageParamMap = null;
         if(CollectionUtils.isNotEmpty(coverageList)){
-           param.putAll(buildCoverageScript(script, coverageList));
+            coverageParamMap = buildCoverageScript(script, coverageList);
+            param.putAll(coverageParamMap);
         }
 
+        Map<String, Object> pathParamMap = null;
         if(CollectionUtils.isNotEmpty(categoryPathList)){
-            param.putAll(buildPathScript(script, categoryPathList));
+            pathParamMap= buildPathScript(script, categoryPathList);
+            param.putAll(pathParamMap);
         }
 
+        Map<String, Object> categoryParamMap = null;
         if(CollectionUtils.isNotEmpty(categoryList)){
-            param.putAll(buildCategoryScript(script, categoryList));
+            categoryParamMap=buildCategoryScript(script, categoryList);
+            param.putAll(categoryParamMap);
         }
 
+        Map<String, Object> techInfoParamMap = null;
         if(CollectionUtils.isNotEmpty(techInfoList)){
-            param.putAll(buildTechInfoScript(script, techInfoList));
+            techInfoParamMap = buildTechInfoScript(script, techInfoList);
+            param.putAll(techInfoParamMap);
         }
 
-        script.append("educationId=createEducation();"+
-                "createCoverage(educationId);"+
-                "createCategoriesPath(educationId);"+
-                "createCategories(educationId);"+
-                "createTechInfo(educationId);"
-        );
+        script.append("educationId=createEducation();");
+        if(CollectionUtils.isNotEmpty(coverageParamMap)){
+            script.append("createCoverage(educationId);");
+        }
+
+        if(CollectionUtils.isNotEmpty(pathParamMap)){
+            script.append("createCategoriesPath(educationId);");
+        }
+
+        if(CollectionUtils.isNotEmpty(categoryParamMap)){
+            script.append("createCategories(educationId);");
+        }
+
+        if(CollectionUtils.isNotEmpty(techInfoParamMap)){
+            script.append("createTechInfo(educationId);");
+        }
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);

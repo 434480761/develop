@@ -64,6 +64,19 @@ public class TitanResourceController {
 		titanResourceService.importKnowledgeRelation();
 	}
 	
+	@RequestMapping(value = "/all/script", method = RequestMethod.GET)
+	public void indexAllScript() {
+		titanResourceService.importData4Script(ResourceNdCode.chapters.toString());
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.importData4Script(resourceType);
+		}
+//
+		titanResourceService.createChapterRelation();
+		titanResourceService.createKnowledgeRealtion();
+		titanResourceService.importAllRelation();
+		titanResourceService.importKnowledgeRelation();
+	}
+	
 	
 	/**
 	 * 导入数据
