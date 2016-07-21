@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.daos.resourcesecuritykey;
+package nd.esp.service.lifecycle.daos.resourcesecuritykey.v06;
 
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
 
@@ -14,17 +14,17 @@ public interface ResourceSecurityKeyDao {
 
     /**
      * 新增资源文件密钥信息      
-     * @param
+     * @param resourceSecurityKeyModel
      * @return
-     * @author lanyl
+     * @author lianggz
      */
     public int insert(ResourceSecurityKeyModel resourceSecurityKeyModel);
     
     /**
      * 查询资源文件密钥信息      
      * @param uuid
-     * @param publicKey
      * @return
+     * @author lianggz
      */
 	public ResourceSecurityKeyModel findSecurityKeyInfo(String uuid);
 

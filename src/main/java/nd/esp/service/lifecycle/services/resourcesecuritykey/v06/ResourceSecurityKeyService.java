@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.services.resourcesecuritykey;
+package nd.esp.service.lifecycle.services.resourcesecuritykey.v06;
 
 /**
  * <p>Title: ResourceSecurityKeyService   </p>

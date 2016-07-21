@@ -1,8 +1,8 @@
-package nd.esp.service.lifecycle.services.resourcesecuritykey.impl;
+package nd.esp.service.lifecycle.services.resourcesecuritykey.v06.impl;
 
-import nd.esp.service.lifecycle.daos.resourcesecuritykey.ResourceSecurityKeyDao;
+import nd.esp.service.lifecycle.daos.resourcesecuritykey.v06.ResourceSecurityKeyDao;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
-import nd.esp.service.lifecycle.services.resourcesecuritykey.ResourceSecurityKeyService;
+import nd.esp.service.lifecycle.services.resourcesecuritykey.v06.ResourceSecurityKeyService;
 import nd.esp.service.lifecycle.utils.encrypt.DESUtils;
 import nd.esp.service.lifecycle.utils.encrypt.RSAUtil;
 
@@ -39,9 +39,7 @@ public class ResourceSecurityKeyServiceImpl implements ResourceSecurityKeyServic
         if(resourceSecurityKeyModel != null){
             securityKey = resourceSecurityKeyModel.getSecurityKey();
             desKey = RSAUtil.encoder(securityKey, publicKey);
-        }
-        // 不存在密钥信息，则重新生成后保存。
-        else{
+        } else{ // 不存在密钥信息，则重新生成后保存。
             securityKey = DESUtils.getSecurityKey();
             desKey = RSAUtil.encoder(securityKey, publicKey);
             resourceSecurityKeyModel = new ResourceSecurityKeyModel();

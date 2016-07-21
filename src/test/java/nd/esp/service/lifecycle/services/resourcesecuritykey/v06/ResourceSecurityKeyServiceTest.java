@@ -5,7 +5,7 @@ import java.util.UUID;
 import nd.esp.service.lifecycle.BaseControllerConfig;
 import nd.esp.service.lifecycle.daos.common.BaseDao;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
-import nd.esp.service.lifecycle.services.resourcesecuritykey.ResourceSecurityKeyService;
+import nd.esp.service.lifecycle.services.resourcesecuritykey.v06.ResourceSecurityKeyService;
 import nd.esp.service.lifecycle.utils.common.StringTestUtil;
 import nd.esp.service.lifecycle.utils.common.TestException;
 
