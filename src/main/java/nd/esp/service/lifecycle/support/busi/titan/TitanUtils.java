@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
@@ -15,6 +16,26 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  *
  */
 public class TitanUtils {
+
+	public static String generateScriptForInclude(List<String> includes) {
+		if (CollectionUtils.isEmpty(includes)) return "";
+		StringBuffer scriptBuffer = new StringBuffer();
+		String begin = ".as('v').union(select('v')";
+		String end = ")";
+
+		for (String include : includes) {
+			if (include.equals(IncludesConstant.INCLUDE_TI)) {
+				scriptBuffer.append(",out('has_tech_info')");
+			} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
+				scriptBuffer.append(",out('has_category_code')");
+				scriptBuffer.append(",out('has_categories_path')");
+			}
+		}
+
+		if ("".equals(scriptBuffer.toString())) return "";
+		return begin + scriptBuffer.toString() + end;
+	}
+
 	// 生成脚本参数名字，避免多个值冲突
 	public static String generateKey(Map<String, Object> scriptParamMap,
 			String originKey) {
