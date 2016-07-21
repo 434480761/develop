@@ -47,6 +47,7 @@ public class EsIndexQueryBuilder {
     private int end = 10;
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'COUNT:' + count;resultList";
+
     public void setIndex(String index) {
         this.index = index;
     }
@@ -94,7 +95,9 @@ public class EsIndexQueryBuilder {
         //baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
-        baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
+        baseQuery.append(getRangeIds());
+        baseQuery.append("results = g.V(rangeids.toArray())");
+       // baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
         baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
@@ -108,8 +111,8 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithResType() {
         StringBuffer query = new StringBuffer();
-        query.append("AND v.\\\"primary_category\\\":(").append(this.resType).append(") ");
-        query.append("AND v.\\\"lc_enable\\\":(true)");
+        query.append(" AND v.\\\"primary_category\\\":(").append(this.resType).append(")");
+        query.append(" AND v.\\\"lc_enable\\\":(true)");
 
         return query.toString();
     }
@@ -133,7 +136,7 @@ public class EsIndexQueryBuilder {
             query.append(words);
             query.append(")");
             if (i != coversLength - 1) {
-                if (words.contains("-")) {
+                if (ckeckContainsNot(words)) {
                     query.append(" AND ");
                 } else {
                     query.append(" OR ");
@@ -142,6 +145,36 @@ public class EsIndexQueryBuilder {
         }
 
         return "("+query.toString()+")";
+    }
+
+    /**
+     * 检查words里的条件是否以"-"开头
+     * @param words
+     * @return
+     */
+    private boolean ckeckContainsNot(String words) {
+        if (words != null) {
+            String[] opts = words.replaceAll("\\)", "").replaceAll("\\(", "").trim().split(" ");
+            for (String opt : opts) {
+                if (opt.trim().startsWith("-")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 截取分页的ID
+     * @return
+     */
+    private String getRangeIds(){
+        StringBuffer range = new StringBuffer();
+        range.append("List<String> rangeids = new ArrayList<String>();");
+        range.append("for(int i=").append(this.from).append(";i<ids.size() && i<").append(this.end).append(";i++){rangeids.add(ids.get(i))};");
+
+        return range.toString();
+
     }
 
     /**
