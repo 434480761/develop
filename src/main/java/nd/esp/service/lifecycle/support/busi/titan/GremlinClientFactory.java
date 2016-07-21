@@ -53,6 +53,7 @@ public class GremlinClientFactory {
         clusterBuilder.nioPoolSize(48);
         clusterBuilder.workerPoolSize(48);
         clusterBuilder.resultIterationBatchSize(20);
+		clusterBuilder.maxContentLength(655360);
 
 		// create a cluster instance
 		cluster = clusterBuilder.create();
