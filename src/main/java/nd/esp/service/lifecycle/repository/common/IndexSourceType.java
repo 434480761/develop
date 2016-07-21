@@ -71,6 +71,8 @@ public enum IndexSourceType {
 	SourceTeachingActivitiesType("teachingactivities",200, 218),
 	
 	ToolsType("tools",200,218),
+    /**子教学目标*/
+    SubInstructionType("subInstruction",200,219) ,
 	/**章节资源*/
 	ChapterResourceType("ChapterResourceType",300,300),
 	/**章节知识点*/
