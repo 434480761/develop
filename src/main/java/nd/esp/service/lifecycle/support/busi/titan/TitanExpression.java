@@ -18,9 +18,9 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
  */
 public class TitanExpression implements TitanScriptGenerator {
 
-    private boolean needTechInfo = true;
-    private boolean needTaxoncode = true;
-    private boolean needTaxonpath = true;
+    private boolean needTechInfo = false;
+    private boolean needTaxoncode = false;
+    private boolean needTaxonpath = false;
     
     public boolean isNeedTechInfo() {
 		return needTechInfo;
