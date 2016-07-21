@@ -12,6 +12,7 @@
 package nd.esp.service.lifecycle.repository.v02.impl;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -389,6 +390,11 @@ public class ResourceRelationApiServiceImpl extends BaseStoreApiImpl<ResourceRel
 																	   String sourceId) throws EspStoreException {
 		List<ResourceRelation> resourceRelationList = resourceRelationRepository.findByResTypeAndTargetTypeAndSourceId(resType, targetType, sourceId);
 		return resourceRelationList;
+	}
+
+	@Override
+	public List<ResourceRelation> getByTargetId(Collection<String> ids) {
+		return resourceRelationRepository.findByTarget(ids);
 	}
 
 }

@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.repository.v02;
 
 
+import java.util.Collection;
 import java.util.List;
 
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
@@ -111,4 +112,5 @@ public interface ResourceRelationApiService extends SearchApi<ResourceRelation>{
 	public List<ResourceRelation> getByResTypeAndTargetTypeAndSourceId(String resType, String targetType,
 																	   String sourceId) throws EspStoreException;
 
+	public List<ResourceRelation> getByTargetId(Collection<String> ids);
 }

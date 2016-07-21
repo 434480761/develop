@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.repository.sdk;
 
 
   
+import java.util.Collection;
 import java.util.List;
 
 import nd.esp.service.lifecycle.repository.ResourceRepository;
@@ -34,5 +35,6 @@ public interface ResourceRelationRepository extends ResourceRepository<ResourceR
 	@Query("SELECT t1 FROM ResourceRelation t1 where t1.resType=?1 and t1.resourceTargetType=?2 and t1.enable=1 and EXISTS(select 1 from Education t2 where t1.sourceUuid=t2.identifier and t2.enable=1) and EXISTS(select 1 from Education t2 where t1.target=t2.identifier and t2.enable=1) and t1.sourceUuid=?3 ")
 	List<ResourceRelation> findByResTypeAndTargetTypeAndSourceId(String resType, String targetType, String sourceId);
 
-
+	@Query("SELECT t FROM ResourceRelation t where t.target in (?1)")
+	List<ResourceRelation> findByTarget(Collection<String> ids);
 }
