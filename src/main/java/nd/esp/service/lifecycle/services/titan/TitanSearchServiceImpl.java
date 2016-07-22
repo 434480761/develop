@@ -2,18 +2,10 @@ package nd.esp.service.lifecycle.services.titan;
 
 import java.util.*;
 
-import com.google.gson.reflect.TypeToken;
-
 import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
-import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
-import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookModel;
-import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
-import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
@@ -35,13 +27,11 @@ import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,10 +52,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                List<String> includes,
                                                Map<String, Map<String, List<String>>> params,
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-       /* System.out.println("params:" + params);
-        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
-        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
+
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -99,9 +86,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
-        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
-        List<ResourceModel> items = new ArrayList<ResourceModel>();
-
         //for count and result
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
@@ -120,35 +104,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         }
         LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
-        long parseBegin = System.currentTimeMillis();
-        List<String> otherLines = new ArrayList<>();
-        String taxOnPath = null;
-        String mainResult = null;
-        int count = 0;
-        for (String line : resultStr) {
-            if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
-                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
-                otherLines.clear();
-                taxOnPath = null;
-            }
-
-            if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
-            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                Map <String,String> map= TitanResultParse.toMap(line);
-                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                mainResult = line;
-            } else {
-                otherLines.add(line);
-            }
-            count++;
-        }
-        LOG.info("parse consume times:" + (System.currentTimeMillis() - parseBegin));
-
-        viewModels.setItems(items);
-        return viewModels;
-
+        return TitanResultParse.parseToListView(resType,resultStr);
     }
 
 
@@ -164,7 +120,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
-        dealWithInclude(titanExpression,includes);
+        titanExpression.setIncludes(includes);
+        //dealWithInclude(titanExpression,includes);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
 
@@ -193,32 +150,21 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // FIXME
         // resourceQueryVertex.setVertexLabel(resType);
 
-        resourceVertexPropertyMap.put("primary_category",
-                generateFieldCondtion("primary_category", resType));
-        resourceVertexPropertyMap
-                .put(ES_SearchField.lc_enable.toString(),
-                        generateFieldCondtion(
-                                ES_SearchField.lc_enable.toString(), true));
+        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
+        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
+                        generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
-        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
-        List<ResourceModel> items = new ArrayList<ResourceModel>();
-
         // for count and result
-        String scriptForResultAndCount = titanExpression
-                .generateScriptForResultAndCount(scriptParamMap);
-        LOG.info("titan generate script consume times:"
-                + (System.currentTimeMillis() - generateScriptBegin));
+        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
+        LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
 
         System.out.println(scriptForResultAndCount);
         System.out.println(scriptParamMap);
         long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(
-                scriptForResultAndCount, scriptParamMap);
-        LOG.info("titan search consume times:"
-                + (System.currentTimeMillis() - searchBegin));
-
+        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
+        LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
         List<String> resultStr = new ArrayList<>();
         long getResultBegin = System.currentTimeMillis();
         Iterator<Result> iterator = resultSet.iterator();
@@ -226,45 +172,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             resultStr.add(iterator.next().getString());
         }
         //System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
+        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
-        long parseBegin = System.currentTimeMillis();
-        List<String> otherLines = new ArrayList<>();
-        String taxOnPath = null;
-        String mainResult = null;
-        int count = 0;
-        for (String line : resultStr) {
-            if (count > 0
-                    && (line.contains(ES_SearchField.lc_create_time.toString()) || line
-                    .startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
-                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
-                otherLines.clear();
-                taxOnPath = null;
-            }
-
-            if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
-            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-               Map <String,String> map= TitanResultParse.toMap(line);
-                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-               /* line = line.split("=")[1];
-                int length = line.length();
-                if (length > 2) {
-                    taxOnPath = line.substring(1, length - 2);
-                }*/
-            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                mainResult = line;
-            } else {
-                otherLines.add(line);
-            }
-            count++;
-        }
-        LOG.info("parse consume times:"
-                + (System.currentTimeMillis() - parseBegin));
-
-        viewModels.setItems(items);
-        return viewModels;
+        return TitanResultParse.parseToListView(resType,resultStr);
 
     }
 
@@ -280,11 +190,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         builder.setParams(params);
         builder.setResType(resType);
         builder.setRange(from,size);
+        builder.setIncludes(includes);
         String script=builder.generateScript();
         LOG.info("script:"+script);
 
-        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
-        List<ResourceModel> items = new ArrayList<ResourceModel>();
         ResultSet resultSet = titanResourceRepository.search(script, null);
 
 
@@ -297,35 +206,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         //System.out.println(resultStr);
         LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
-        long parseBegin = System.currentTimeMillis();
-        List<String> otherLines = new ArrayList<>();
-        String taxOnPath = null;
-        String mainResult = null;
-        int count = 0;
-        for (String line : resultStr) {
-            //System.out.println(line);
-            if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.contains("COUNT:"))) {
-                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
-                otherLines.clear();
-                taxOnPath = null;
-            }
-
-            if (line.contains("COUNT:")) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
-            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                Map <String,String> map= TitanResultParse.toMap(line);
-                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                mainResult = line;
-            } else {
-                otherLines.add(line);
-            }
-            count++;
-        }
-        LOG.info("parse consume times:"+ (System.currentTimeMillis() - parseBegin));
-
-        viewModels.setItems(items);
-        return viewModels;
+        return TitanResultParse.parseToListView(resType,resultStr);
     }
 
     @Override
@@ -374,9 +255,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
-        ListViewModel<ResourceModel> viewModels = new ListViewModel<ResourceModel>();
-        List<ResourceModel> items = new ArrayList<ResourceModel>();
-
         // for count and result
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         EsIndexQueryForTitanSearch esIndexQueryForTitanSearch=new EsIndexQueryForTitanSearch();
@@ -404,64 +282,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("get resultset consume times:"
                 + (System.currentTimeMillis() - getResultBegin));
 
-        long parseBegin = System.currentTimeMillis();
-        List<String> otherLines = new ArrayList<>();
-        String taxOnPath = null;
-        String mainResult = null;
-        int count = 0;
-        for (String line : resultStr) {
-            if (count > 0
-                    && (line.contains(ES_SearchField.lc_create_time.toString()) || line
-                    .startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
-                items.add(getItem(resType, mainResult, otherLines, taxOnPath));
-                otherLines.clear();
-                taxOnPath = null;
-            }
-
-            if (line.startsWith(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
-            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                line = line.split("=")[1];
-                int length = line.length();
-                if (length > 2) {
-                    taxOnPath = line.substring(1, length - 2);
-                }
-            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                mainResult = line;
-            } else {
-                otherLines.add(line);
-            }
-            count++;
-        }
-        LOG.info("parse consume times:"
-                + (System.currentTimeMillis() - parseBegin));
-
-        viewModels.setItems(items);
-        return viewModels;
+        return TitanResultParse.parseToListView(resType,resultStr);
 
     }
-    
-    /**
-     * 处理是否返回模块的属性
-     * @param titanExpression
-     * @param includes
-     */
-    private void dealWithInclude(TitanExpression titanExpression,
-			List<String> includes) {
-		if(CollectionUtils.isEmpty(includes)){
-			return;
-		}
-		
-		for(String include : includes){
-            if(include.equals(IncludesConstant.INCLUDE_TI)){
-            	titanExpression.setNeedTechInfo(true);
-            }else if(include.equals(IncludesConstant.INCLUDE_CG)){
-            	titanExpression.setNeedTaxoncode(true);
-            	titanExpression.setNeedTaxonpath(true);
-            }
-		}
-		
-	}
 
 
 
@@ -591,177 +414,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         }
 
-    }
-
-
-
-    /**
-     * @param resType
-     * @param mainResult
-     * @param otherLines
-     * @param taxOnPath
-     * @return
-     */
-    private ResourceModel getItem(String resType, String mainResult, List<String> otherLines, String taxOnPath) {
-        if (ResourceNdCode.ebooks.toString().equals(resType)) {
-            return generateEbookModel(mainResult, otherLines, taxOnPath);
-        } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
-            generateTeachingMaterialModel(mainResult, otherLines, taxOnPath);
-        } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
-        } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
-            return generateQuestionModel(mainResult, otherLines, taxOnPath);
-        }
-        return generateResourceModel(mainResult, otherLines, taxOnPath);
-    }
-
-    /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
-     * @return
-     */
-    private TeachingMaterialModel generateTeachingMaterialModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
-        TeachingMaterialModel item = new TeachingMaterialModel();
-        Map<String, String> fieldMap = TitanResultParse.toMap(mainResult);
-        TitanResultParse.dealMainResult(item, fieldMap);
-        TmExtPropertiesModel extProperties = new TmExtPropertiesModel();
-        extProperties.setIsbn(fieldMap.get("ext_isbn"));
-        extProperties.setCriterion(fieldMap.get("ext_criterion"));
-        String attachments = fieldMap.get("ext_attachments");
-        if (attachments != null) {
-            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
-        }
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
-        return item;
-    }
-
-    /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
-     * @return
-     */
-    private EbookModel generateEbookModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
-        EbookModel item = new EbookModel();
-        Map<String, String> fieldMap = TitanResultParse.toMap(mainResult);
-        TitanResultParse.dealMainResult(item, fieldMap);
-        EbookExtPropertiesModel extProperties = new EbookExtPropertiesModel();
-        extProperties.setIsbn(fieldMap.get("ext_isbn"));
-        extProperties.setCriterion(fieldMap.get("ext_criterion"));
-        String attachments = fieldMap.get("ext_attachments");
-        if (attachments != null) {
-            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
-        }
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
-        return item;
-    }
-
-    /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
-     * @return
-     */
-    private QuestionModel generateQuestionModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
-        QuestionModel item = new QuestionModel();
-        Map<String, String> fieldMap = TitanResultParse.toMap(mainResult);
-        TitanResultParse.dealMainResult(item, fieldMap);
-        QuestionExtPropertyModel extProperties = new QuestionExtPropertyModel();
-
-        String discrimination = fieldMap.get("ext_discrimination");
-        if (discrimination != null) {
-            extProperties.setDiscrimination(Float.parseFloat(discrimination.trim()));
-        }
-        String answer = fieldMap.get("ext_answer");
-        if (answer != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> answerMap = ObjectUtils.fromJson(answer, Map.class);
-            extProperties.setAnswer(answerMap);
-        }
-        String content = fieldMap.get("ext_item_content");
-        if (content != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> contentMap = ObjectUtils.fromJson(content, Map.class);
-            extProperties.setItemContent(contentMap);
-        }
-        String criterion = fieldMap.get("ext_criterion");
-        if (criterion != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> criterionMap = ObjectUtils.fromJson(criterion, Map.class);
-            extProperties.setCriterion(criterionMap);
-        }
-        String score = fieldMap.get("ext_score");
-        if (score != null) {
-            extProperties.setScore(Float.parseFloat(score.trim()));
-        }
-        String secrecy = fieldMap.get("ext_secrecy");
-        if (secrecy != null) {
-            extProperties.setSecrecy(Integer.parseInt(secrecy.trim()));
-        }
-        String modifiedDifficulty = fieldMap.get("ext_modified_difficulty");
-        if (modifiedDifficulty != null) {
-            extProperties.setModifiedDifficulty(Float.parseFloat(modifiedDifficulty.trim()));
-        }
-        String difficulty = fieldMap.get("ext_ext_difficulty");
-        if (difficulty != null) {
-            extProperties.setExtDifficulty(Float.parseFloat(difficulty.trim()));
-        }
-        String modifiedDiscrimination = fieldMap.get("ext_modified_discrimination");
-        if (modifiedDiscrimination != null) {
-            extProperties.setModifiedDiscrimination(Float.parseFloat(modifiedDiscrimination.trim()));
-        }
-        String usedTime = fieldMap.get("ext_used_time");
-        if (usedTime != null) {
-            extProperties.setUsedTime(Integer.parseInt(usedTime.trim()));
-        }
-        String exposalDate = fieldMap.get("ext_exposal_date");
-        if (exposalDate != null) {
-            extProperties.setExposalDate(new Date(new Long(exposalDate)));
-        }
-        extProperties.setAutoRemark("true".equals(fieldMap.get("ext_is_auto_remark")));
-
-        item.setQuestionType(fieldMap.get("ext_question_type"));
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
-        return item;
-    }
-
-    /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
-     * @return
-     */
-    private ResourceModel generateResourceModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
-        ResourceModel item = new ResourceModel();
-        Map<String, String> fieldMap = TitanResultParse.toMap(mainResult);
-        TitanResultParse.dealMainResult(item, fieldMap);
-        generateModel(item, strInOneItem, taxOnPath);
-        return item;
-    }
-
-    /**
-     * @param strInOneItem
-     * @param taxOnPath
-     */
-    private void generateModel(ResourceModel item, List<String> strInOneItem, String taxOnPath) {
-        // ResourceModel item =null;
-        List<ResTechInfoModel> techInfoList = new ArrayList<>();
-        List<ResClassificationModel> categoryList = new ArrayList<>();
-
-        for (String str : strInOneItem) {
-            Map<String, String> fieldMap = TitanResultParse.toMap(str);
-            if (str.contains(ES_SearchField.ti_md5.toString())) { //tech_info
-                techInfoList.add(TitanResultParse.dealTI(fieldMap));
-            } else if (str.contains(ES_SearchField.cg_taxoncode.toString())) {// categoryList
-                categoryList.add(TitanResultParse.dealCG(fieldMap, taxOnPath));
-            }
-        }
-        item.setTechInfoList(techInfoList);
-        item.setCategoryList(categoryList);
-        //return item;
     }
 
 

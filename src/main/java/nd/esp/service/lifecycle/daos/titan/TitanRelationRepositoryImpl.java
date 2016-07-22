@@ -134,6 +134,16 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		return false;
 	}
 
+	@Override
+	public void batchAdd4Import(List<ResourceRelation> resourceRelations) {
+		if(CollectionUtils.isEmpty(resourceRelations)){
+			return ;
+		}
+		for (ResourceRelation resourceRelation : resourceRelations) {
+			addRelation(resourceRelation);
+		}
+	}
+
 	private ResourceRelation addRelation(ResourceRelation resourceRelation){
 		StringBuffer scriptBuffer = new StringBuffer(
 				"g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
