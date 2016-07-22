@@ -45,8 +45,10 @@ public class EsIndexQueryBuilder {
     private Map<String, Map<String, List<String>>> params;
     private int from = 0;
     private int end = 10;
+    private List<String> includes;
+
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
-    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'COUNT:' + count;resultList";
+    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
 
     public void setIndex(String index) {
         this.index = index;
@@ -67,6 +69,10 @@ public class EsIndexQueryBuilder {
     public void setRange(int from, int size) {
         this.from = from;
         this.end = size + from;
+    }
+
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
     }
 
 
@@ -97,8 +103,10 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append(getRangeIds());
         baseQuery.append("results = g.V(rangeids.toArray())");
-       // baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
-        baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
+        //baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
+        //baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes));
+        baseQuery.append(".valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
 
