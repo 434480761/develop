@@ -23,6 +23,7 @@ public class TestAssetController extends SimpleJunitTest4ResourceImpl {
     private final static String RES_TYPE = "assets";
 	@Test
 	public void testAll(){
+		//test
 		String uuid;
 		//校验上传接口使用错误的资源类型
 		testUploadErrorRES_TYPE();
