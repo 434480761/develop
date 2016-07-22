@@ -52,7 +52,7 @@ public class ResourceSecurityKeyDaoTest extends BaseControllerConfig {
      * @throws Exception
      * @author gaoq
      */
-    @Test
+    //@Test
     public void test001Insert() throws Exception {
     	//例1：uuid为空，其他参数正确 【期望结果：错误】
         uuid = UUID.randomUUID().toString();
@@ -155,7 +155,7 @@ public class ResourceSecurityKeyDaoTest extends BaseControllerConfig {
      * @throws Exception
      * @author gaoq
      */
-    @Test
+    //@Test
     public void test002FindSecurityKeyInfo() throws Exception {
     	//例1：uuid为空，其他参数正确 【期望结果：通过】
     	ResourceSecurityKeyModel resourceSecurityKeyModel = this.resourceSecurityKeyDao.findSecurityKeyInfo(null);

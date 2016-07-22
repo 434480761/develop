@@ -34,7 +34,7 @@ public class TestUserRoleController extends CusBaseControllerConfig {
 	 * @author lanyl
 	 * @throws Exception
 	 */
-	@Test
+	//@Test
 	public void Test0001AddUserRoleTest()  throws Exception{
 		String url = TEST_BASE_URL_USER_ROLE + "{userId}/roles" ;
 		logger.info("==================");
