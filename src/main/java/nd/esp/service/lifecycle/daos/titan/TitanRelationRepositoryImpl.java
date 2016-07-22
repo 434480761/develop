@@ -134,6 +134,16 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		return false;
 	}
 
+	@Override
+	public void batchAdd4Import(List<ResourceRelation> resourceRelations) {
+		if(CollectionUtils.isEmpty(resourceRelations)){
+			return ;
+		}
+		for (ResourceRelation resourceRelation : resourceRelations) {
+			addRelation(resourceRelation);
+		}
+	}
+
 	private ResourceRelation addRelation(ResourceRelation resourceRelation){
 		StringBuffer scriptBuffer = new StringBuffer(
 				"g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
@@ -167,19 +177,17 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 	}
 
 	private ResourceRelation updateRelation(ResourceRelation resourceRelation){
-		StringBuffer scriptBuffer = new StringBuffer("g.E().has(primaryCategory,'identifier',identifier)");
+		StringBuffer scriptBuffer = new StringBuffer("g.E().has('identifier',identifier)");
 		Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
 				resourceRelation);
+		graphParams.put("identifier", resourceRelation.getIdentifier());
+		System.out.println(scriptBuffer.toString());
 		String edgeId;
 		try {
 			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() ,graphParams);
 		} catch (Exception e) {
 			e.printStackTrace();
 			//TODO titan sync
-			return null;
-		}
-
-		if(edgeId == null){
 			return null;
 		}
 		return resourceRelation;

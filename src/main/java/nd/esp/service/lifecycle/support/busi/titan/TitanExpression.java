@@ -18,9 +18,11 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
  */
 public class TitanExpression implements TitanScriptGenerator {
 
-    private boolean needTechInfo = true;
-    private boolean needTaxoncode = true;
-    private boolean needTaxonpath = true;
+    private List<String> includes;
+
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
+    }
 
     private String innerCondition;// 用于保存中间产生的条件；主要避免重复产生脚本：总数，分页
 
@@ -151,21 +153,8 @@ public class TitanExpression implements TitanScriptGenerator {
                     .append(")");
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
-
-        if (needTaxoncode || needTaxonpath || needTechInfo) {
-            scriptBuffer.append(".as('v').union(select('v')");
-            if (needTaxoncode) {
-                scriptBuffer.append(",out('has_category_code')");
-            }
-            if (needTaxonpath) {
-                scriptBuffer.append(",out('has_categories_path')");
-
-            }
-            if (needTechInfo) {
-                scriptBuffer.append(",out('has_tech_info')");
-            }
-            scriptBuffer.append(")");
-        }
+        // 拼接include
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes));
         scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 

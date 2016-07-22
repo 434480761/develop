@@ -5,7 +5,13 @@ package nd.esp.service.lifecycle.educommon.vos;
  * @date 2016年7月13日
  */
 public class ChapterStatisticsViewModel {
+	/**
+	 * 父章节id
+	 */
 	private String parent;
+	/**
+	 * 章节名称
+	 */
 	private String chapterTitle;
 	private Integer counts;
 	

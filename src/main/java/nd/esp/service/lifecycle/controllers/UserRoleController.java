@@ -126,8 +126,8 @@ public class UserRoleController {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("user_id", userId);
 		params.put("role_id", roleId);
-		params.put("coverages", coverageList.toArray());
-		params.put("res_types", resTypeList.toArray());
+		params.put("coverages", coverageList == null ? null :coverageList.toArray());
+		params.put("res_types", resTypeList == null ? null : resTypeList.toArray());
 		return 	params;
 	}
 
@@ -237,7 +237,7 @@ public class UserRoleController {
 		//返回内容
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("limit", limit);
-		result.put("items", userRoleViewModelArrayList.toArray());
+		result.put("items", userCoverageMappingModelList.toArray());
 		return result;
 	}
 

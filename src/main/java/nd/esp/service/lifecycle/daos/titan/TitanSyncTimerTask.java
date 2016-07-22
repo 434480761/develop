@@ -1,6 +1,9 @@
 package nd.esp.service.lifecycle.daos.titan;
 
+import nd.esp.service.lifecycle.repository.ds.ComparsionOperator;
 import nd.esp.service.lifecycle.repository.ds.Item;
+import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
+import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TitanSync;
 import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
@@ -26,6 +29,7 @@ public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
     public static int MAX_REPORT_TIMES = 10;
     public static boolean LOCKED = false;
+    public static boolean TITAN_SYNC_SWITCH = true;
 
     @Autowired
     private TitanSyncService titanSyncService;
@@ -40,7 +44,12 @@ public class TitanSyncTimerTask {
 
     @Scheduled(fixedRate=300000)
     public void syncTask(){
+        if(!TITAN_SYNC_SWITCH){
+            LOG.info("titan_sync_closed");
+            return;
+        }
         if (!StaticDatas.TITAN_SWITCH){
+            LOG.info("titan_client_closet");
             return;
         }
         if(LOCKED){
@@ -57,6 +66,7 @@ public class TitanSyncTimerTask {
             } finally {
                 LOCKED = false;
             }
+            LOCKED = false;
         }
     }
 
@@ -68,6 +78,13 @@ public class TitanSyncTimerTask {
             int row = 10;
             List<TitanSync> entitylist;
             List<Item<? extends Object>> items = new ArrayList<>();
+            Item<Integer> resourceTypeItem = new Item<>();
+            resourceTypeItem.setKey("executeTimes");
+            resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
+            resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+            resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
+            items.add(resourceTypeItem);
+
             Sort sort = new Sort(Sort.Direction.ASC, fieldName);
             Pageable pageable = new PageRequest(page, row, sort);
             try {
@@ -97,7 +114,7 @@ public class TitanSyncTimerTask {
     }
 
     private boolean checkHaveData(){
-        String script = "select count(*) from titan_sync";
+        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES;
 
         Long total = jdbcTemplate.queryForLong(script);
 
