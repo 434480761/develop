@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeTrargetAndParentModel;
@@ -48,6 +49,14 @@ public interface NDResourceService {
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,
 	            Boolean printable, String printableKey);
     
+	 
+	 public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,List<String> includes,Set<String> categories,
+	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
+	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
+	
+	 public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,List<String> includes,Set<String> categories,
+	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
+	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
     /**
      * 资源检索 -- 直接查询数据库,数据可以保证实时性
      * <p>Description:  资源检索升级目的主要是使得查询效率更高，准确度更高。
@@ -205,7 +214,7 @@ public interface NDResourceService {
      */
     public ResourceModel update(String resourceType, ResourceModel resourceModel,DbName dbName);
 
-    void patch(String resourceType, ResourceModel resourceModel);
+    ResourceModel patch(String resourceType, ResourceModel resourceModel);
 
     /**
      * 部分更新资源(支持分库)
@@ -215,7 +224,17 @@ public interface NDResourceService {
      * @return
      * @since
      */
-    public void patch(String resourceType, ResourceModel resourceModel, DbName dbName);
+    public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName);
+    
+    /**
+     * 判断资源是否存在
+     * @author xiezy
+     * @date 2016年7月19日
+     * @param resourceType
+     * @param identifier
+     * @return
+     */
+    public Education checkResourceExist(String resourceType, String identifier);
     
     /**
      * CS文件上传

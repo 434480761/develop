@@ -242,6 +242,8 @@ public class Constant {
     //视频转码service id
     public  static String WORKER_VIDEO_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_video_transcode_service");
 
+    public  static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
+
     /**
      * 后门API开关
      * @see nd.esp.service.lifecycle.controllers.v06.BackDoorController
@@ -279,6 +281,12 @@ public class Constant {
 	// public final static String ES_CLUSTER_NAME="lcms_elasticsearch_lcms";
 	// public final static String
 	// ES_INDEX_NAME="test_full_function_dev_just_for_test";
+	
+
+	//titan configure
+	public final static String TITAN_DOMAIN = LifeCircleApplicationInitializer.properties
+			.getProperty("titan.domain");
+	
     //课件编辑器域名
     public final static String SLIDES_URI=LifeCircleApplicationInitializer.properties.getProperty("slides.uri");
     //智能出题域名

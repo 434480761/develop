@@ -15,9 +15,13 @@ import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesSer
 import nd.esp.service.lifecycle.services.notify.models.NotifyInstructionalobjectivesRelationModel;
 import nd.esp.service.lifecycle.services.tags.ResourceTagService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
+import nd.esp.service.lifecycle.services.titan.TitanTreeMoveService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.busi.titan.TitanTreeModel;
+import nd.esp.service.lifecycle.support.busi.titan.TitanTreeType;
+import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -58,6 +62,9 @@ public class ChapterControllerV06 {
     
     @Autowired
     private ResourceTagService resourceTagService;
+    
+    @Autowired
+    private TitanTreeMoveService titanTreeMoveService;
     /**
      * 创建章节 
      * <p>Create Time: 2015年8月3日   </p>
@@ -94,6 +101,18 @@ public class ChapterControllerV06 {
         //转换为ChapterModel
         ChapterModel chapterModel = BeanMapperUtils.beanMapper(chapterViewModel, ChapterModel.class);
         chapterModel = chapterService.createChapter(resourceType,mid, chapterModel);
+        
+        //titan
+        TitanTreeModel titanTreeModel = new TitanTreeModel();
+
+        titanTreeModel.setTreeType(TitanTreeType.chapters);
+        titanTreeModel.setTreeDirection(TreeDirection.fromString(chapterViewModel.getDirection()));
+        titanTreeModel.setParent(chapterViewModel.getParent());
+        titanTreeModel.setTarget(chapterViewModel.getTarget());
+        titanTreeModel.setRoot(mid);
+        titanTreeModel.setSource(chapterModel.getIdentifier());
+
+        titanTreeMoveService.addNode(titanTreeModel);
         
         return BeanMapperUtils.beanMapper(chapterModel,ChapterViewModel.class);
     }
@@ -266,6 +285,17 @@ public class ChapterControllerV06 {
         //转换为ChapterModel
         ChapterModel chapterModel = BeanMapperUtils.beanMapper(chapterViewModel4Move, ChapterModel.class);
         chapterService.moveChapter(resourceType,mid, cid, chapterModel);
+        
+        //titan
+        TitanTreeModel titanTreeModel = new TitanTreeModel();
+        titanTreeModel.setTreeType(TitanTreeType.chapters);
+        titanTreeModel.setTreeDirection(TreeDirection.fromString(chapterViewModel4Move.getDirection()));
+        titanTreeModel.setParent(chapterViewModel4Move.getParent());
+        titanTreeModel.setTarget(chapterViewModel4Move.getTarget());
+        titanTreeModel.setRoot(mid);
+        titanTreeModel.setSource(chapterModel.getIdentifier());
+
+        titanTreeMoveService.moveNode(titanTreeModel);
     }
     
     /**

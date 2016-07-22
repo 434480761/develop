@@ -39,9 +39,7 @@ public class QuestionServiceImplV06 implements QuestionServiceV06 {
 
     @Override
     public QuestionModel patchQuestion(QuestionModel questionModel) {
-        ndResourceService.patch(ResourceNdCode.questions.toString(),
-                questionModel,DbName.QUESTION);
-        return (QuestionModel)ndResourceService.getDetail(ResourceNdCode.questions.toString(), questionModel.getIdentifier(), IncludesConstant.getIncludesList());
+        return (QuestionModel)ndResourceService.patch(ResourceNdCode.questions.toString(), questionModel, DbName.QUESTION);
     }
 
 }

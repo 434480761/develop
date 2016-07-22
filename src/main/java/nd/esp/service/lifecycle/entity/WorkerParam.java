@@ -149,7 +149,21 @@ public class WorkerParam {
         return param;
 
     }
-    
 
+    /**
+     * 获取视频转码worker参数：设置group, service
+     * @author linsm
+     * @return WorkerParam
+     * @since
+     */
+    public static WorkerParam createImageTranscodeParam() {
+        // group:2, service :6
+        WorkerParam param = new WorkerParam();
+        param.setServiceId(Constant.WORKER_IMAGE_TRANSCODE_SERVICE);
+        // FIXME 暂时只布了一台， group 先写死
+        param.setGroupId(Constant.WORKER_DEFAULT_GROUP_ID);
+        return param;
+
+    }
 
 }

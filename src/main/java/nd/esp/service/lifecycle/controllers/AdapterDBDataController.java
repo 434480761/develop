@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nd.esp.service.lifecycle.daos.titan.TitanSyncTimerTask;
 import nd.esp.service.lifecycle.entity.lifecycle.AdapterTaskResult;
 import nd.esp.service.lifecycle.services.AdapterDBDataService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
@@ -480,5 +481,39 @@ public class AdapterDBDataController {
         
         return message;
     }
+
+    @RequestMapping(value = "/titan/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String titanSwitchChange(@RequestParam String open){
+        String message = "";
+
+        if(open.equals("false") && StaticDatas.TITAN_SWITCH){
+            message = "关闭titan开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("TITAN_SWITCH",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.TITAN_SWITCH = false;
+        }else if(open.equals("true") && !StaticDatas.TITAN_SWITCH){
+            message = "开启titan开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("TITAN_SWITCH",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.TITAN_SWITCH = true;
+        }
+
+        return message;
+    }
+
+    @RequestMapping(value = "/titan/sync/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String titanSyncSwitchChange(@RequestParam String open){
+        if("true".equals(open)){
+            TitanSyncTimerTask.TITAN_SYNC_SWITCH = true;
+        }
+
+        if("false".equals(open)){
+            TitanSyncTimerTask.TITAN_SYNC_SWITCH = false;
+        }
+
+
+        return "titan sync status : " + TitanSyncTimerTask.TITAN_SYNC_SWITCH;
+    }
+
     /*******************************静态变量开关相关接口--end************************************/
 }

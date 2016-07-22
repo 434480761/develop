@@ -19,6 +19,7 @@ import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.models.v06.ResourceRelationResultModel;
 import nd.esp.service.lifecycle.models.v06.ResultModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -1395,5 +1396,19 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
         // 设置过期时间
         ert.expire(key, 1l, TimeUnit.DAYS);
     }
-    
+
+    @Override
+    public List<ResourceRelation> batchGetRelationByResourceSourceOrTarget(String primaryCategory, Set<String> uuidsSet){
+        //FIXME question db
+        javax.persistence.Query query = repository
+                .getEntityManager()
+                .createNamedQuery("batchGetRelationByResourceSourceOrTarget");
+        query.setParameter("resType", primaryCategory);
+        query.setParameter("rids", uuidsSet);
+
+        @SuppressWarnings("unchecked")
+        List<ResourceRelation> result = query.getResultList();
+
+        return result;
+    }
 }

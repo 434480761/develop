@@ -42,7 +42,8 @@ import org.springframework.util.ReflectionUtils.FieldCallback;
 @Table(name = "resource_relations")
 @NamedQueries({
     @NamedQuery(name = "getResourceRelations", query = "SELECT rr.orderNum  AS orderNum FROM ResourceRelation rr WHERE sourceUuid = :sourceUuid AND rr.resType = :resType AND rr.resourceTargetType = :targetType AND rr.enable = 1"),
-    @NamedQuery(name = "getResourceRelationsWithOrder", query = "SELECT rr.orderNum AS orderNum, rr.sortNum AS sortNum, rr.resourceTargetType AS resourceTargetType FROM ResourceRelation rr WHERE sourceUuid = :sourceUuid AND rr.resType = :resType AND rr.enable = 1 ORDER BY rr.sortNum DESC")
+    @NamedQuery(name = "getResourceRelationsWithOrder", query = "SELECT rr.orderNum AS orderNum, rr.sortNum AS sortNum, rr.resourceTargetType AS resourceTargetType FROM ResourceRelation rr WHERE sourceUuid = :sourceUuid AND rr.resType = :resType AND rr.enable = 1 ORDER BY rr.sortNum DESC"),
+		@NamedQuery(name = "batchGetRelationByResourceSourceOrTarget", query = "SELECT rr FROM ResourceRelation rr WHERE (rr.resType=:resType AND rr.sourceUuid IN (:rids)) or (rr.resourceTargetType=:resType AND rr.target IN (:rids))")
 })
 public class ResourceRelation extends EspEntity implements IndexMapper {
 	

@@ -1,7 +1,5 @@
 package nd.esp.service.lifecycle.services.thirdpartybuss.v06;
 
-import java.util.List;
-
 import nd.esp.service.lifecycle.models.ApiModel;
 import nd.esp.service.lifecycle.models.ThirdPartyBsysModle;
 import nd.esp.service.lifecycle.vos.ListViewModel;
