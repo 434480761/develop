@@ -46,6 +46,7 @@ public class SecurityKeyController {
 		
 		// 有效性检验
 		AssertUtils.isEmpty(userId, "user_id");
+		AssertUtils.isLong(userId, "user_id");
 		// 查询密钥
 		String securityKey = this.securityKeyService.getRsaEncryptDesKey(userId, key);
 		// 返回参数
