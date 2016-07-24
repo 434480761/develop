@@ -212,13 +212,19 @@ public class TitanScritpUtils {
         StringBuffer script = new StringBuffer("");
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory_edu",education.getPrimaryCategory());
-        param.putAll(buildEducationScript(script,education,categoryList,coverageList));
+        Map<String,Object> educationParam = buildEducationScript(script,education,categoryList,coverageList);
+        //对addVertex中的参数个数做限制，最多不能超过250个
+        if(educationParam.size() > 125){
+            return null;
+        }
+        param.putAll(educationParam);
 
         Map<String, Object> coverageParamMap = null;
         if(CollectionUtils.isNotEmpty(coverageList)){
             coverageParamMap = buildCoverageScript(script, coverageList);
             param.putAll(coverageParamMap);
         }
+
 
         Map<String, Object> pathParamMap = null;
         if(CollectionUtils.isNotEmpty(categoryPathList)){

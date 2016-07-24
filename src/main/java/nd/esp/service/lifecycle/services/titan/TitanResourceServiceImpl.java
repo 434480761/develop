@@ -291,18 +291,18 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		categoryPathList.addAll(categoryPathSet);
 
 		Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,categoryList,techInfoList,categoryPathList);
-		try {
-			String script = result.get("script").toString();
-			Map<String, Object> param = (Map<String, Object>) result.get("param");
-			if(script != null && script.length() > 20000 ){
-				saveErrorSource(education);
-			} else {
-				titanCommonRepository.executeScript(script, param);
-			}
-		} catch (Exception e) {
-			LOG.error("titanImportErrorData:{}" ,education.getIdentifier());
+		if(CollectionUtils.isEmpty(result)){
 			saveErrorSource(education);
-			e.printStackTrace();
+		} else {
+			try {
+				String script = result.get("script").toString();
+				Map<String, Object> param = (Map<String, Object>) result.get("param");
+				titanCommonRepository.executeScript(script, param);
+			} catch (Exception e) {
+				LOG.error("titanImportErrorData:{}" ,education.getIdentifier());
+				saveErrorSource(education);
+				e.printStackTrace();
+			}
 		}
 	}
 
