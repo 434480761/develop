@@ -48,6 +48,7 @@ public class EsIndexQueryBuilder {
     private int from = 0;
     private int end = 10;
     private List<String> includes;
+    private List<String> fields;
 
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
@@ -77,6 +78,9 @@ public class EsIndexQueryBuilder {
         this.includes = includes;
     }
 
+    public void setFields(List<String> fields) {
+        this.fields = fields;
+    }
 
     /**
      * 构建indexQuery查询脚本
@@ -138,15 +142,14 @@ public class EsIndexQueryBuilder {
         if ("".equals(words.trim()) || ",".equals(words.trim())) return "";
 
         StringBuffer query = new StringBuffer();
-        WordsCover[] covers=WordsCover.values();
-        int coversLength=covers.length;
-        for (int i = 0; i < coversLength; i++) {
+        int fieldSize=fields.size();
+        for (int i = 0; i < fieldSize; i++) {
             query.append("v.\\\"");
-            query.append(covers[i]);
+            query.append(this.fields.get(i));
             query.append("\\\":(");
             query.append(words);
             query.append(")");
-            if (i != coversLength - 1) {
+            if (i != fieldSize - 1) {
                 if (isOnlyNot) {
                     query.append(" AND ");
                 } else {
@@ -187,12 +190,11 @@ public class EsIndexQueryBuilder {
 
         StringBuffer queryNot = new StringBuffer();
         StringBuffer queryHas = new StringBuffer(" AND (");
-        WordsCover[] covers=WordsCover.values();
-        int coversLength=covers.length;
-        for (int i = 0; i < coversLength; i++) {
-            queryNot.append("v.\\\"").append(covers[i]).append("\\\":(").append(not).append(")");
-            queryHas.append("v.\\\"").append(covers[i]).append("\\\":(").append(has).append(")");
-            if (i != coversLength - 1) {
+        int fieldSize=fields.size();
+        for (int i = 0; i < fieldSize; i++) {
+            queryNot.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(not).append(")");
+            queryHas.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(has).append(")");
+            if (i != fieldSize - 1) {
                 queryNot.append(" AND ");
                 queryHas.append(" OR ");
             }

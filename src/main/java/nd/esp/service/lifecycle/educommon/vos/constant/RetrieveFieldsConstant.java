@@ -59,26 +59,40 @@ public class RetrieveFieldsConstant {
         return list;
     }
 
+    public static Map<String, String> getFieldsMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put(FIELD_TIT, "title");
+        map.put(FIELD_KWS, "keywords");
+        map.put(FIELD_TAG, "tags");
+        map.put(FIELD_DES, "description");
+        map.put(FIELD_EDES, "edu_description");
+        map.put(FIELD_CDES, "cr_description");
+        return map;
+    }
+
     /**
      *
      * @param fields
      * @return
      */
-    public static List<String> getValidFields(String fields){
-        if(StringUtils.isEmpty(fields)){
+    public static List<String> getValidFields(String fields) {
+        if (StringUtils.isEmpty(fields)) {
             return new ArrayList<String>();
         }
 
         Set<String> set = new HashSet<String>(Arrays.asList(fields.split(",")));
-        List<String> fieldsList = getFieldsList();
-        for(String field : set){
-            if(!fieldsList.contains(field.trim())){
+        List<String> fieldsList = new ArrayList<String>();
+        Map<String, String> fieldsMap = getFieldsMap();
+        for (String field : set) {
+            if (!fieldsMap.containsKey(field.trim())) {
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                         LifeCircleErrorMessageMapper.RetrieveFieldsParamError.getCode(),
                         "fields检索字段中的:" + field + ",不在规定范围内");
+            } else {
+                fieldsList.add(fieldsMap.get(field.trim()));
             }
         }
 
-        return new ArrayList<String>(set);
+        return fieldsList;
     }
 }

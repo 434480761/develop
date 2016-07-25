@@ -191,6 +191,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         builder.setResType(resType);
         builder.setRange(from,size);
         builder.setIncludes(includes);
+        builder.setFields(fields);
         String script=builder.generateScript();
         LOG.info("script:"+script);
 
