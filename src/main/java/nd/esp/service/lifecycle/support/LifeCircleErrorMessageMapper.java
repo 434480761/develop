@@ -406,6 +406,8 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	
 	//includes
 	IncludesParamError("INCLUDES_PARAM_ERROR",""),
+	// Retrieve Fields
+	RetrieveFieldsParamError("RETRIEVE_FIELDS_PARAM_ERROR",""),
 	TimeUnitParamError("TIMEUNIT_PARAM_ERROR",""),
 	//direction
 	DirectionParamError("DIRECTION_PARAM_ERROR",""),

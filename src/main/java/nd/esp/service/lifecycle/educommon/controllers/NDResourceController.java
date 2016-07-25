@@ -49,6 +49,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.educommon.vos.constant.RetrieveFieldsConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
@@ -669,7 +670,7 @@ public class NDResourceController {
 
         //参数校验和处理
         Map<String, Object> paramMap =
-                requestParamVerifyAndHandle(resType, resCodes, includes, categories, categoryExclude,
+                requestParamVerifyAndHandle(resType,retrieveFileds, resCodes, includes, categories, categoryExclude,
                         relations, coverages, props, orderBy,words, limit, queryType, reverse);
 
         // include
@@ -1351,7 +1352,7 @@ public class NDResourceController {
                                                  List<String> props, boolean isNotManagement, String groupBy){
         //参数校验和处理
         Map<String, Object> paramMap =
-                requestParamVerifyAndHandle(resType, null, null, categories, null, null,
+                requestParamVerifyAndHandle(resType, null,null, null, categories, null, null,
                         coverages, props, null,null, "(0,1)", QueryType.DB, null);
 
         //categories
@@ -1440,7 +1441,7 @@ public class NDResourceController {
      * <p>Create Time: 2016年3月28日   </p>
      * <p>Create author: xiezy   </p>
      */
-    private Map<String, Object> requestParamVerifyAndHandle(String resType, String resCodes, String includes,
+    private Map<String, Object> requestParamVerifyAndHandle(String resType, String fields,String resCodes, String includes,
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
                                                             List<String> orderBy,String words, String limit, QueryType queryType, String reverse){
         //reverse,默认为false
@@ -1779,10 +1780,11 @@ public class NDResourceController {
         //7. limit
         limit = CommonHelper.checkLimitMaxSize(limit);
 
+        List<String> fieldsList=null;
         switch (queryType) {
-
             case TITAN_ES:
                 words = CommonHelper.checkWordSegmentation(words);
+                fieldsList = RetrieveFieldsConstant.getValidFields(fields);
                 break;
             default:
                 break;
@@ -1799,6 +1801,7 @@ public class NDResourceController {
         paramMap.put("reverse", reverseBoolean);
         paramMap.put("limit", limit);
         paramMap.put("words", words);
+        paramMap.put("fields", fieldsList);
 
         return paramMap;
     }
