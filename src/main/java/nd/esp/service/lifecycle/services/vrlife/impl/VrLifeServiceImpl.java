@@ -44,6 +44,7 @@ public class VrLifeServiceImpl implements VrLifeService{
 		
 		//新的资源model,用于局部更新
 		ResourceModel newResourceModel = new ResourceModel();
+		newResourceModel.setIdentifier(oldResourceModel.getIdentifier());
 		//资源状态修改
 		ResLifeCycleModel lc4Status = new ResLifeCycleModel();
 		lc4Status.setStatus(inViewModel.getStatus());
@@ -70,12 +71,14 @@ public class VrLifeServiceImpl implements VrLifeService{
 		newResourceModel.setTags(dealTags);
 		
 		//如果是改成ONLINE,则处理publish_type
-		ResClassificationModel newPtCategory = new ResClassificationModel();
 		if(inViewModel.getStatus().equals(LifecycleStatus.ONLINE.getCode()) && StringUtils.isNotEmpty(inViewModel.getPublishType())){
+			ResClassificationModel newPtCategory = new ResClassificationModel();
+			
 			if(oldResourceModel!=null && CollectionUtils.isNotEmpty(oldResourceModel.getCategoryList())){
 				for(ResClassificationModel rcm : oldResourceModel.getCategoryList()){
 					if(StringUtils.isNotEmpty(rcm.getTaxoncode()) && rcm.getTaxoncode().startsWith("PT")){//有PT的情况,目前认为一个资源只有一个PT维度
-						newPtCategory = rcm;
+						newPtCategory.setIdentifier(rcm.getIdentifier());
+						newPtCategory.setTaxoncode(inViewModel.getPublishType());
 						newPtCategory.setOperation("update");
 						
 						break;
@@ -88,10 +91,11 @@ public class VrLifeServiceImpl implements VrLifeService{
 				newPtCategory.setTaxoncode(inViewModel.getPublishType());
 				newPtCategory.setOperation("add");
 			}
+			
+			List<ResClassificationModel> categoryList = new ArrayList<ResClassificationModel>();
+			categoryList.add(newPtCategory);
+			newResourceModel.setCategoryList(categoryList);
 		}
-		List<ResClassificationModel> categoryList = new ArrayList<ResClassificationModel>();
-		categoryList.add(newPtCategory);
-		newResourceModel.setCategoryList(categoryList);
 		
 		//调用局部更新的service方法
 		newResourceModel = ndResourceService.patch(inViewModel.getResType(), newResourceModel);
