@@ -445,13 +445,18 @@ public class NDResourceController {
             @RequestParam(required = false, value = "prop") List<String> props,
             @RequestParam(required = false, value = "orderby") List<String> orderBy,
             @RequestParam(required = false, value = "isAll", defaultValue = "false") Boolean isAll,
+            @RequestParam(required = false, value = "isRT", defaultValue = "false") Boolean isRT,
             @RequestParam(required = false, value = "reverse") String reverse,
             @RequestParam String words,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam String limit) {
+		QueryType queryType = QueryType.TITAN;
+		if (isRT) {
+			queryType = QueryType.TITAN_REALTIME;
+		}
         return requestQuering(resType, resCodes, includes, categories,
-                categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.TITAN, !isAll,
+                categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, !isAll,
                 reverse,printable, printableKey,null,null,false,null,false);
     }
 
@@ -744,11 +749,12 @@ public class NDResourceController {
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean, printable, printableKey);
-
-//                rListViewModel = resourceQueryByTitanRealTime(resType,
-//                        includesList, categories, categoryExclude, relationsMap,
-//                        coveragesList, propsMap, orderMap, words, limit,
-//                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                break;
+            case TITAN_REALTIME:
+                rListViewModel = resourceQueryByTitanRealTime(resType,
+                        includesList, categories, categoryExclude, relationsMap,
+                        coveragesList, propsMap, orderMap, words, limit,
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
@@ -1552,6 +1558,7 @@ public class NDResourceController {
                 break;
             case ES:
             case TITAN:
+            case TITAN_REALTIME:
                 properties = LifeCircleApplicationInitializer.props_properties_es;
                 break;
             default:
@@ -2403,7 +2410,7 @@ public class NDResourceController {
     }
 
     public static enum QueryType{
-        DB,ES,TITAN,TITAN_ES
+        DB,ES,TITAN,TITAN_ES,TITAN_REALTIME
     }
 
     /**
