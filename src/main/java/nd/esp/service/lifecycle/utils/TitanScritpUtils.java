@@ -218,13 +218,11 @@ public class TitanScritpUtils {
             return null;
         }
         param.putAll(educationParam);
-
         Map<String, Object> coverageParamMap = null;
         if(CollectionUtils.isNotEmpty(coverageList)){
             coverageParamMap = buildCoverageScript(script, coverageList);
             param.putAll(coverageParamMap);
         }
-
 
         Map<String, Object> pathParamMap = null;
         if(CollectionUtils.isNotEmpty(categoryPathList)){
@@ -244,6 +242,10 @@ public class TitanScritpUtils {
             param.putAll(techInfoParamMap);
         }
 
+        Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
+        param.putAll(checkParam);
+
+        script.append("if(!checkExist()){");
         script.append("educationId=createEducation();");
         if(CollectionUtils.isNotEmpty(coverageParamMap)){
             script.append("createCoverage(educationId);");
@@ -260,11 +262,24 @@ public class TitanScritpUtils {
         if(CollectionUtils.isNotEmpty(techInfoParamMap)){
             script.append("createTechInfo(educationId);");
         }
+        script.append("}");
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
         return result;
 
+    }
+
+    private static Map<String, Object> buildCheckExistScript(StringBuffer script, String primaryCategory, String identifier){
+        Map<String, Object> resultParam = new HashMap<>();
+        resultParam.put("identifier_ck",identifier);
+        resultParam.put("primaryCategory_ck", primaryCategory);
+
+        String checkScrip = "public boolean checkExist(){" +
+                "if(g.V().hasLabel(primaryCategory_ck).has('identifier',identifier_ck).iterator().hasNext()){return true}" +
+                "else{return false}};";
+        script.append(checkScrip);
+        return resultParam;
     }
 
     private static Map<String, Object> buildEducationScript(StringBuffer script, Education education ,List<ResourceCategory> categories, List<ResCoverage> coverages){
