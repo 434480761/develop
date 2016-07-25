@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,7 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -811,36 +811,24 @@ public class NDResourceController {
     private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
-      return tmp(resType, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words,
-                limit, isNotManagement, reverse, printable, printableKey,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
-        
-//      return ndResourceService.resourceQueryByTitan(resType,
-//              includes, categories, categoryExclude, relations,
-//              coverages, propsMap, orderMap, words, limit,
-//              isNotManagement, reverse, printable, printableKey);
-    }
-
-    @SuppressWarnings("unchecked")
-    private ListViewModel<ResourceModel> tmp(String resType, List<String> includes, Set<String> categories,
-            Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
-            Map<String, Set<String>> propsMap, Map<String, String> orderMap, String words, String limit,
-            boolean isNotManagement, boolean reverse, Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
-        int intevalTimeMillis = -3600000;
+        int intevalTimeMillis = -600000;
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MILLISECOND, intevalTimeMillis);
         Cloner cloner = new Cloner();
         Map<String, Set<String>> propsMapForDB = (Map<String, Set<String>>) cloner.deepClone(propsMap);
         
         ExecutorService excetorService = Executors.newFixedThreadPool(2);
+        if (propsMap == null) {
+            propsMap = new HashMap<String, Set<String>>();
+        }
         String lastUpdateLtKey = "lc_last_update_LT";
-        Date maxLastUpdateDateFromPorpsMap = getMaxLastUpdateDateFromPorpsMap(propsMap, lastUpdateLtKey);
-        Date minDate = getMinLastUpdateDate(maxLastUpdateDateFromPorpsMap,calendar);
-        modifyPropsMapLastUpdate(propsMap, lastUpdateLtKey, minDate);
+        Date maxLastUpdateDateFromPorpsMap = getMinLastUpdateDate(propsMap, lastUpdateLtKey, calendar);
+        modifyPropsMapLastUpdate(propsMap, lastUpdateLtKey, maxLastUpdateDateFromPorpsMap);
         
         int moreOffset = 10;
-        String[] split = limit.replace("(", "").replace(")", "").split(",");
-        int begin = Integer.valueOf(split[0]).intValue();
-        int size = Integer.valueOf(split[1]).intValue();
+        Integer[] checkLimit = ParamCheckUtil.checkLimit(limit);
+        int begin = checkLimit[0];
+        int size = checkLimit[1];
         
         String limitForTitan = modifyTitanLimit(moreOffset, begin, size);
         
@@ -855,11 +843,14 @@ public class NDResourceController {
                 .get("propsMapNew");
         orderMapForDb = (Map<String, String>) changeMap
                 .get("orderMapNew");
+        if (propsMapForDB == null) {
+            propsMapForDB = new HashMap<String, Set<String>>();
+        }
         String lastUpdateGtKey = "last_update_GT";
-        Date minLastUpdateDateFromPorpsMap = getMinLastUpdateDateFromPorpsMap(propsMapForDB, lastUpdateGtKey);
-        Date maxDate = getMaxLastUpdateDate(minLastUpdateDateFromPorpsMap,calendar);
-        modifyPropsMapLastUpdate(propsMapForDB, lastUpdateGtKey, maxDate);
-//        假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
+        Date minLastUpdateDate = getMaxLastUpdateDate(propsMapForDB, lastUpdateGtKey, calendar);
+        String lastUpdateGeKey = "last_update_GE";
+        modifyPropsMapLastUpdate(propsMapForDB, lastUpdateGeKey, minLastUpdateDate);
+        // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includes, categories, categoryExclude,
@@ -874,7 +865,7 @@ public class NDResourceController {
         } catch (InterruptedException | ExecutionException e) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                    "获取数据库或者titan数据异常");
+                    e.getMessage());
         }
         excetorService.shutdown();
         
@@ -882,7 +873,6 @@ public class NDResourceController {
 
         titanQueryResult.setLimit(limit);
         return titanQueryResult;
-//        return resourceQueryByDBResult;
     }
 
     private String modifyTitanLimit(int moreOffset, int begin, int size) {
@@ -968,106 +958,81 @@ public class NDResourceController {
 
     private void insertDbResultToTitanResultDesc(ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult, String field) {
-        int dbResultSize = dbQueryResult.getItems().size();
-        long totalResult = titanQueryResult.getTotal()+dbQueryResult.getTotal();
-        for (int i = 0; i < dbResultSize; i++) {
-            ResourceModel resourceModelDb = dbQueryResult.getItems().get(i);
-            int titanResultSize = titanQueryResult.getItems().size();
-            for (int j = 0; j < titanResultSize; j++) {
-                ResourceModel resourceModelTitan = titanQueryResult.getItems().get(j);
-                if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
-                    titanQueryResult.getItems().remove(j);
-                    titanQueryResult.getItems().add(j, resourceModelDb);
-                    --totalResult;
-                }else {
-                    if (field.equals("lc_create_time")) {
-                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
-                        if (compare >= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else {
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }else if (field.equals("lc_last_update")){
-                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
-                        if (compare >= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else {
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }else if (field.equals("lc_title")){
-                        int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
-                        if (compare >= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else{
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }
+        long totalResult = uniqueAndSortResultSet(titanQueryResult, dbQueryResult);
+        List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
+        if (field.equals("lc_create_time")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o2.getLifeCycle().getCreateTime().compareTo(o1.getLifeCycle().getCreateTime());
                 }
-            }
+            });
+        }
+        else if (field.equals("lc_last_update")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o2.getLifeCycle().getLastUpdate().compareTo(o1.getLifeCycle().getLastUpdate());
+                }
+            });
+        }
+        else if (field.equals("title")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o2.getTitle().compareTo(o1.getTitle());
+                }
+            });
         }
         titanQueryResult.setTotal(totalResult);
     }
 
     private void insertDbResultToTitanResultAsc(ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult, String field) {
-        int dbResultSize = dbQueryResult.getItems().size();
-        long totalResult = titanQueryResult.getTotal()+dbQueryResult.getTotal();
-        for (int i = 0; i < dbResultSize; i++) {
-            ResourceModel resourceModelDb = dbQueryResult.getItems().get(i);
-            int titanResultSize = titanQueryResult.getItems().size();
-            for (int j = 0; j < titanResultSize; j++) {
-                ResourceModel resourceModelTitan = titanQueryResult.getItems().get(j);
-                if (resourceModelTitan.getIdentifier().equals(resourceModelDb.getIdentifier())) {
-                    titanQueryResult.getItems().remove(j);
-                    titanQueryResult.getItems().add(j, resourceModelDb);
-                    --totalResult;
-                }else {
-                    if (field.equals("lc_create_time")) {
-                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getCreateTime());
-                        if (compare <= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else {
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }else if (field.equals("lc_last_update")){
-                        int compare = resourceModelDb.getLifeCycle().getCreateTime().compareTo(resourceModelTitan.getLifeCycle().getLastUpdate());
-                        if (compare <= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else {
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }else if (field.equals("lc_title")){
-                        int compare = resourceModelDb.getTitle().compareTo(resourceModelTitan.getTitle());
-                        if (compare <= 0) {
-                            titanQueryResult.getItems().add(j, resourceModelDb);
-                            break;
-                        }else{
-                            if (j == titanResultSize-1) {
-                                titanQueryResult.getItems().add(j+1, resourceModelDb);
-                            }
-                        }
-                    }
+        long totalResult = uniqueAndSortResultSet(titanQueryResult, dbQueryResult);
+        List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
+        if (field.equals("lc_create_time")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o1.getLifeCycle().getCreateTime().compareTo(o2.getLifeCycle().getCreateTime());
                 }
-            }
+            });
+        }
+        else if (field.equals("lc_last_update")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o1.getLifeCycle().getLastUpdate().compareTo(o2.getLifeCycle().getLastUpdate());
+                }
+            });
+        }
+        else if (field.equals("title")) {
+            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
+                @Override
+                public int compare(ResourceModel o1, ResourceModel o2) {
+                    return o1.getTitle().compareTo(o2.getTitle());
+                }
+            });
         }
         titanQueryResult.setTotal(totalResult);
     }
 
+    private long uniqueAndSortResultSet(ListViewModel<ResourceModel> titanQueryResult, ListViewModel<ResourceModel> dbQueryResult){
+        List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
+        List<ResourceModel> dbQueryResultItems = dbQueryResult.getItems();
+        titanQueryResultItems.addAll(dbQueryResultItems);
+//      去除重复id资源
+        int itemsCount = titanQueryResultItems.size();
+        Map<String, ResourceModel> uniqueResourceModel = new HashMap<String, ResourceModel>();
+        for (ResourceModel resourceModel : titanQueryResultItems) {
+            uniqueResourceModel.put(resourceModel.getIdentifier(), resourceModel);
+        }
+        titanQueryResultItems.clear();
+        titanQueryResultItems.addAll(uniqueResourceModel.values());
+        return titanQueryResult.getTotal()+dbQueryResult.getTotal() - (itemsCount - titanQueryResultItems.size());
+    }
+    
     private Future<ListViewModel<ResourceModel>> getDBFuture(final String resType, final List<String> includes,
             final Set<String> categories, final Set<String> categoryExclude, final List<Map<String, String>> relations,
             final List<String> coverages, final Map<String, String> orderMap, final String words, final String limit, final boolean isNotManagement,
@@ -1103,95 +1068,68 @@ public class NDResourceController {
     }
 
     private void modifyPropsMapLastUpdate(Map<String, Set<String>> propsMap, String lastUpdateKey, Date date) {
+        HashSet<String> dateStr = new HashSet<String>();
+        dateStr.add(dateToString(date));
+        propsMap.put(lastUpdateKey, dateStr);
+    }
+
+    private String dateToString(Date date){
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        String dateFormat;
+        dateFormat = sdf2.format(date);
+        return dateFormat;
+    }
+    
+    private Date stringToDate(String dateStr){
         SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        if (propsMap.containsKey(lastUpdateKey)) {
-            propsMap.remove(lastUpdateKey);
-            HashSet<String> dateStr = new HashSet<String>();
+        Date date = null;
+        try {
             if (dateStr.contains(".")) {
-                dateStr.add(sdf2.format(date));
+                date = sdf2.parse(dateStr);
             }else {
-                dateStr.add(sdf1.format(date));
+                date = sdf1.parse(dateStr);
             }
-            propsMap.put(lastUpdateKey, dateStr);
+        } catch (ParseException e) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
         }
-    }
-
-    private Date getMinLastUpdateDate(Date minDate, Calendar calendar) {
-        Date maxDate = minDate.compareTo(calendar.getTime()) < 0 ? minDate : calendar.getTime();
-        return maxDate;
+        return date;
     }
     
-    private Date getMaxLastUpdateDate(Date maxDate, Calendar calendar) {
-        Date minDate = maxDate.compareTo(calendar.getTime()) > 0 ? maxDate : calendar.getTime();
-        return minDate;
-    }
-
-    private Date getMaxLastUpdateDateFromPorpsMap(Map<String, Set<String>> propsMap, String lastUpdateLtKey) {
-        Date minDate = null;
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        for (Entry<String, Set<String>> entry : propsMap.entrySet()) {
-            int value = 0;
-            if (lastUpdateLtKey.equals(entry.getKey())) {
-                Map<Date, String> treeMap = new TreeMap<Date, String>(new Comparator<Date>() {
-                    @Override
-//                  key  desc sort
-                    public int compare(Date o1, Date o2) {
-                        return o2.compareTo(o1);
-                    }});
-                Set<String> lastUpdateSet = entry.getValue();
-                for (String lastUpdateStr : lastUpdateSet) {
-                    try {
-                        Date lastUpdateDate = null;
-                        if (lastUpdateStr.contains(".")) {
-                            lastUpdateDate = sdf2.parse(lastUpdateStr);
-                        }else {
-                            lastUpdateDate = sdf1.parse(lastUpdateStr);
-                        }
-                        treeMap.put(lastUpdateDate, String.valueOf(value++));
-                    } catch (ParseException e) {
-                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                                "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
-                    }
-                }
-                minDate = treeMap.keySet().iterator().next();
-            }
+    private Date getMinLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
+        Date minDate = calendar.getTime();
+        if (!propsMap.isEmpty()) {
+            List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
+            Date maxDate = sortLastUpdate.get(sortLastUpdate.size() - 1);
+            minDate = maxDate.compareTo(calendar.getTime()) < 0 ? maxDate : calendar.getTime();
+            propsMap.remove(operator);
         }
         return minDate;
     }
     
 
-    private Date getMinLastUpdateDateFromPorpsMap(Map<String, Set<String>> propsMap, String lastUpdateGtKey) {
-        Date maxDate = null;
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        for (Entry<String, Set<String>> entry : propsMap.entrySet()) {
-            int value = 0;
-            if (lastUpdateGtKey.equals(entry.getKey())) {
-//                default key asc sort
-                Map<Date, String> treeMap = new TreeMap<Date, String>();
-                Set<String> lastUpdateSet = entry.getValue();
-                for (String lastUpdateStr : lastUpdateSet) {
-                    try {
-                        Date lastUpdateDate = null;
-                        if (lastUpdateStr.contains(".")) {
-                            lastUpdateDate = sdf2.parse(lastUpdateStr);
-                        }else {
-                            lastUpdateDate = sdf1.parse(lastUpdateStr);
-                        }
-                        treeMap.put(lastUpdateDate, String.valueOf(value++));
-                    } catch (ParseException e) {
-                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                                "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
-                    }
-                }
-                maxDate = treeMap.keySet().iterator().next();
-            }
+    private Date getMaxLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
+        Date maxDate = calendar.getTime();
+        if (!propsMap.isEmpty()) {
+            List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
+            Date minDate = sortLastUpdate.get(0);
+            maxDate = minDate.compareTo(calendar.getTime()) > 0 ? minDate : calendar.getTime();
+            propsMap.remove(operator);
         }
         return maxDate;
+    }
+
+    private List<Date> sortLastUpdate(Map<String, Set<String>> propsMap, String lastUpdateGtKey) {
+        Set<String> lastUpdateSet = propsMap.get(lastUpdateGtKey);
+        List<Date> sortLastUpdate = new ArrayList<Date>();
+        for (String lastUpdateStr : lastUpdateSet) {
+            Date lastUpdateDate = stringToDate(lastUpdateStr);
+            sortLastUpdate.add(lastUpdateDate);
+        }
+        Collections.sort(sortLastUpdate);
+        return sortLastUpdate;
     }
     /**
      * 判断走数据库的通用查询是否可以通用ES查询
