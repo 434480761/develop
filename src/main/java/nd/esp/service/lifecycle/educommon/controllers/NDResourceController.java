@@ -357,7 +357,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
 
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus,tags, showVersion);
+        return requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus,tags, showVersion);
 
     }
 
@@ -409,7 +409,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
 			/* @RequestParam(required=false,value="reverse") String reverse, */
 			/* @RequestParam String words, */@RequestParam String limit) {
-        return requestQuering(resType, resCodes, includes, categories,
+        return requestQuering(resType,null, resCodes, includes, categories,
                 categoryExclude, null, coverages, props, orderBy, null, limit,
 
                 QueryType.ES, !isAll, "false", printable, printableKey, null,null,false,null,false);
@@ -455,7 +455,7 @@ public class NDResourceController {
 		if (isRT) {
 			queryType = QueryType.TITAN_REALTIME;
 		}
-        return requestQuering(resType, resCodes, includes, categories,
+        return requestQuering(resType,null, resCodes, includes, categories,
                 categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, !isAll,
                 reverse,printable, printableKey,null,null,false,null,false);
     }
@@ -463,6 +463,7 @@ public class NDResourceController {
     @RequestMapping(value = "/actions/retrieve", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
     public ListViewModel<ResourceViewModel> requestQueringByTitanES(
             @PathVariable(value = "res_type") String resType,
+            @RequestParam(required = false, value = "fields", defaultValue = "TIT,DES,KWS,TAG,EDES,CDES") String fields,
             @RequestParam(required = false, value = "rescode") String resCodes,
             @RequestParam(required = false, value = "include") String includes,
             @RequestParam(required = false, value = "category") Set<String> categories,
@@ -478,7 +479,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam String limit) {
 
-        return requestQuering(resType, resCodes, includes, categories,
+        return requestQuering(resType,fields, resCodes, includes, categories,
                 categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
                 reverse,printable, printableKey,null,null,false,null,false);
     }
@@ -528,7 +529,7 @@ public class NDResourceController {
             @RequestParam String words,@RequestParam String limit){
 
 
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags,showVersion);
+        return requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags,showVersion);
 
     }
 
@@ -580,7 +581,7 @@ public class NDResourceController {
             @RequestParam String words,@RequestParam String limit){
 
 
-        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus,tags, showVersion);
+        return requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus,tags, showVersion);
 
     }
 
@@ -635,7 +636,7 @@ public class NDResourceController {
      * @return
      */
     @SuppressWarnings("unchecked")
-    private ListViewModel<ResourceViewModel> requestQuering(String resType, String resCodes, String includes,
+    private ListViewModel<ResourceViewModel> requestQuering(String resType,String retrieveFileds, String resCodes, String includes,
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
                                                             List<String> orderBy, String words, String limit, QueryType queryType, boolean isNotManagement, String reverse,
                                                             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,
@@ -758,7 +759,7 @@ public class NDResourceController {
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
-                rListViewModel = ndResourceService.resourceQueryByTitanES(resType,
+                rListViewModel = ndResourceService.resourceQueryByTitanES(resType,null,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey);

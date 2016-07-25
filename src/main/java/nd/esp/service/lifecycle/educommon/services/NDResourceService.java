@@ -54,7 +54,7 @@ public interface NDResourceService {
 	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
 	
-	 public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,List<String> includes,Set<String> categories,
+	 public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,List<String> fields,List<String> includes,Set<String> categories,
 	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
     /**
