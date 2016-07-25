@@ -2,15 +2,6 @@ package nd.esp.service.lifecycle.vos.lifecycle.v06;
 
 import java.util.Date;
 
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.NotBlank;
-
-import nd.esp.service.lifecycle.support.annotation.Reg;
-import nd.esp.service.lifecycle.vos.valid.LessPropertiesDefault;
-import nd.esp.service.lifecycle.vos.valid.LifecycleDefault;
-
 
 /**
  * 生命周期的管理过程中，对资源有所操作的所有的相关记录 什么人在什么时间，以什么角色对资源做了什么操作
