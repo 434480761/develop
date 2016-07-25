@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.annotations.SerializedName;
 
 
 public class QuestionExtPropertyViewModel {

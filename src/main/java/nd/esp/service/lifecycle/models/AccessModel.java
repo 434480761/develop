@@ -7,8 +7,6 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-
 /**
  * 请求素材资源，课件颗粒所需要的信息封装，包括url，method，key，失效时间等等
  * @author johnny
@@ -17,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  */
 @JsonInclude(Include.NON_NULL)
 public class AccessModel implements Serializable{
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * 访问后端服务认证所需的key
 	 */

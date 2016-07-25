@@ -2,7 +2,6 @@ package nd.esp.service.lifecycle.vos.educationrelation.v06;
 
 import java.util.Date;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
 
 import nd.esp.service.lifecycle.support.annotation.Reg;

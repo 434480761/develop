@@ -1,11 +1,8 @@
 package nd.esp.service.lifecycle.entity;
 
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
-import nd.esp.service.lifecycle.support.Constant;
-
-import org.springframework.beans.factory.annotation.Value;
-
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.support.Constant;
 
 /**
  * @title 创建任务需要的bean

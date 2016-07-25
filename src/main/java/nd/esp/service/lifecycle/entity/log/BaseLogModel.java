@@ -1,7 +1,4 @@
 package nd.esp.service.lifecycle.entity.log;
-
-import java.util.Date;
-
 /**
  * @title 日志对象基类
  * @desc
@@ -9,7 +6,7 @@ import java.util.Date;
  * @createtime on 2015/9/25 14:32
  */
 public class BaseLogModel {
-
+	
 
     protected long startTime;
 

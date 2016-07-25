@@ -17,8 +17,10 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
+import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -26,11 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 用于辅助调试问题（titan）
@@ -107,9 +105,16 @@ public class TitanHelperController {
 	 * @author linsm
 	 */
 	@Deprecated
-	@RequestMapping(value = "/actions/gremlin/{script}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public List<String> executScript(@PathVariable String script) {
+	@RequestMapping(value = "/actions/gremlin/script", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<String> executeScript(@RequestBody Map<String, Object> map) {
 		List<String> result = new ArrayList<String>();
+
+		if(CollectionUtils.isEmpty(map)){
+			result.add("script is empty");
+			return result;
+		}
+
+		String script = map.get("script").toString();
 		if (StringUtils.isEmpty(script)) {
 			result.add("script is empty");
 			return result;
@@ -125,6 +130,35 @@ public class TitanHelperController {
 		getResult(resultSet, result);
 		return result;
 	}
+
+	@Deprecated
+	@RequestMapping(value = "/actions/gremlin/script/param", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<String> executeScript4Params(@RequestBody Map<String, Object> scriptAndParam) {
+		List<String> result = new ArrayList<String>();
+		if(CollectionUtils.isEmpty(scriptAndParam)){
+			result.add("script is empty");
+			return result;
+		}
+
+		String script = scriptAndParam.get("script").toString();
+		Map<String, Object> param = (Map<String, Object>) scriptAndParam.get("param");
+
+		if (StringUtils.isEmpty(script)) {
+			result.add("script is empty");
+			return result;
+		}
+		ResultSet resultSet = null;
+		try {
+			resultSet = titanCommonRepository.executeScriptResultSet(script, param);
+		} catch (Exception e) {
+			LOG.error(e.getLocalizedMessage());
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"LC/TITAN", "submit script and has errors");
+		}
+		getResult(resultSet, result);
+		return result;
+	}
+
 
 	/**
 	 * 获取资源详情

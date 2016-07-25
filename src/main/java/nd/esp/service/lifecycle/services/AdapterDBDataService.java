@@ -10,9 +10,18 @@ import java.util.Set;
  */
 public interface AdapterDBDataService {
     /**
+     * 触发旧资源转码
+     *
+     * @author:ql
+     * @date:2015年12月10日
+     * @return
+     * @throws Exception
+     */
+    Map<String,String> triggerTranscodeByIds(String resType, List<String> listIds, boolean bOnlyOgv);
+
+    /**
      * 触发资源转码
      * @param resType
-     * @param status
      * @author liuwx
      * @return
      */
@@ -26,16 +35,6 @@ public interface AdapterDBDataService {
      * @return
      */
     public Map<String, String> triggerVideoTranscode(int totCount, Set<String> statusSet, boolean bOnlyOgv);
-    
-    /**
-     * 触发旧视频转码
-     * 
-     * @author:ql
-     * @date:2015年12月10日
-     * @return
-     * @throws Exception 
-     */
-    public Map<String, String> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv);
     
     /**
      * 资源preview修复
