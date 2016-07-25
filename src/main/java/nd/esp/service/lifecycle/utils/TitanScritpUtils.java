@@ -521,7 +521,7 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
-    private static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
+    public static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
         int orderNumber = 0;
         Map<String, Object> result = new HashMap<>();
         for(ResourceRelation resourceRelation : resourceRelations){
@@ -543,13 +543,13 @@ public class TitanScritpUtils {
                 result.put(key + suffix, createRelationParams.get(key));
             }
 
-            scriptBuffer.append(").id()");
+            scriptBuffer.append(");");
 
-            createRelationParams.put("sourcePrimaryCategoryName", resourceRelation.getResType());
-            createRelationParams.put("sourceIdentifierName", resourceRelation.getSourceUuid());
-            createRelationParams.put("targetPrimaryCategoryName", resourceRelation.getResourceTargetType());
-            createRelationParams.put("targetIdentifierName", resourceRelation.getTarget());
-            createRelationParams.put("edgeIdentifierName", resourceRelation.getIdentifier());
+            createRelationParams.put(sourcePrimaryCategoryName, resourceRelation.getResType());
+            createRelationParams.put(sourceIdentifierName, resourceRelation.getSourceUuid());
+            createRelationParams.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
+            createRelationParams.put(targetIdentifierName, resourceRelation.getTarget());
+            createRelationParams.put(edgeIdentifierName, resourceRelation.getIdentifier());
 
             script.append(scriptBuffer);
         }

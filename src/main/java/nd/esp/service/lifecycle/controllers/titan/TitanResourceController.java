@@ -73,6 +73,7 @@ public class TitanResourceController {
 //
 		titanResourceService.createChapterRelation();
 		titanResourceService.createKnowledgeRealtion();
+		titanResourceService.updateKnowledgeRelation();
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
 	}
@@ -158,4 +159,5 @@ public class TitanResourceController {
 		titanResourceService.importOneData4Script(resourceType,id);
 		return 0;
 	}
+
 }
