@@ -760,7 +760,8 @@ public class NDResourceController {
                 break;
             case TITAN_ES:
                 words = (String)paramMap.get("words");
-                rListViewModel = ndResourceService.resourceQueryByTitanES(resType,null,
+                List<String> fieldsList = (List<String>) paramMap.get("fields");
+                rListViewModel = ndResourceService.resourceQueryByTitanES(resType,fieldsList,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey);
