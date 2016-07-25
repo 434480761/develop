@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
@@ -15,6 +16,7 @@ import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,11 +103,22 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         return false;
     }
 
+    @Override
+    public boolean batchDeleteResource(Set<Resource> resourceSet) {
+        if(CollectionUtils.isEmpty(resourceSet)){
+            return true;
+        }
+        for (Resource resource : resourceSet){
+            deleteResource(resource.getResourceType(), resource.getIdentifier());
+        }
+        return true;
+    }
+
     private boolean delete(String primaryCategory, String identifier){
         LOG.info("titan sync : delete resource start primaryCategory：{}  identifier:{}",primaryCategory,identifier);
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
-        LOG.info("titan sync : delete resource success");
+        LOG.info("titan sync : delete {} success",identifier);
         return techInfoDeleted && resourceDeleted;
     }
 
@@ -157,7 +170,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
-        LOG.info("titan sync : report resource success");
+        LOG.info("titan sync : report {} success",education.getIdentifier());
         return true;
     }
 }
