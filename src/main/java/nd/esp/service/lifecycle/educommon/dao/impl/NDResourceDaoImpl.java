@@ -2776,27 +2776,65 @@ public class NDResourceDaoImpl implements NDResourceDao{
 			}
         });
         
+        //获取全部需要返回的章节信息
+        List<Chapter> chapters = new ArrayList<Chapter>();
+        try {
+        	if(CollectionUtils.isNotEmpty(chapterIds)){
+            	chapters = chapterRepository.getAll(new ArrayList<String>(chapterIds));
+            }else{
+            	Chapter chapter4Tm = new Chapter();
+            	chapter4Tm.setTeachingMaterial(tmId);
+            	chapters = chapterRepository.getAllByExample(chapter4Tm);
+            }
+		} catch (EspStoreException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), "获取章节详细出错！");
+		}
+        
+        //没有查到存在的章节,返回空
+        if(CollectionUtils.isEmpty(chapters)){
+        	return new HashMap<String, ChapterStatisticsViewModel>();
+        }
+        
         if(CollectionUtils.isNotEmpty(resultMap)){
-        	try {
-				List<Chapter> chapters = chapterRepository.getAll(new ArrayList<String>(resultMap.keySet()));
-				if(CollectionUtils.isNotEmpty(chapters)){
-					for(Chapter chapter : chapters){
-						if(resultMap.containsKey(chapter.getIdentifier())){
-							ChapterStatisticsViewModel cs = resultMap.get(chapter.getIdentifier());
-							cs.setChapterTitle(chapter.getTitle());
-							if(chapter.getParent().equals(chapter.getTeachingMaterial())){
-								cs.setParent("ROOT");
-							}else{
-								cs.setParent(chapter.getParent());
-							}
-							resultMap.put(chapter.getIdentifier(), cs);
+        	if(CollectionUtils.isNotEmpty(chapters)){
+				for(Chapter chapter : chapters){
+					if(resultMap.containsKey(chapter.getIdentifier())){
+						ChapterStatisticsViewModel cs = resultMap.get(chapter.getIdentifier());
+						cs.setChapterTitle(chapter.getTitle());
+						if(chapter.getParent().equals(chapter.getTeachingMaterial())){
+							cs.setParent("ROOT");
+						}else{
+							cs.setParent(chapter.getParent());
 						}
+						resultMap.put(chapter.getIdentifier(), cs);
+					}else{
+						ChapterStatisticsViewModel cs = new ChapterStatisticsViewModel();
+	            		cs.setChapterTitle(chapter.getTitle());
+	            		if(chapter.getParent().equals(chapter.getTeachingMaterial())){
+							cs.setParent("ROOT");
+						}else{
+							cs.setParent(chapter.getParent());
+						}
+	            		cs.setCounts(0);
+	            		resultMap.put(chapter.getIdentifier(), cs);
 					}
 				}
-			} catch (EspStoreException e) {
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-    					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), "获取章节详细出错！");
 			}
+        }else{
+        	if(CollectionUtils.isNotEmpty(chapters)){
+        		for(Chapter chapter : chapters){
+            		ChapterStatisticsViewModel cs = new ChapterStatisticsViewModel();
+            		cs.setChapterTitle(chapter.getTitle());
+            		if(chapter.getParent().equals(chapter.getTeachingMaterial())){
+						cs.setParent("ROOT");
+					}else{
+						cs.setParent(chapter.getParent());
+					}
+            		cs.setCounts(0);
+            		resultMap.put(chapter.getIdentifier(), cs);
+            	}
+        	}
         }
         
 		return resultMap;
