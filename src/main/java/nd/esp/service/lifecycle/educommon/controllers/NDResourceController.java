@@ -1561,6 +1561,9 @@ public class NDResourceController {
             case TITAN_REALTIME:
                 properties = LifeCircleApplicationInitializer.props_properties_es;
                 break;
+            case TITAN_ES:
+                properties = LifeCircleApplicationInitializer.props_properties_es;
+                break;
             default:
                 break;
         }
