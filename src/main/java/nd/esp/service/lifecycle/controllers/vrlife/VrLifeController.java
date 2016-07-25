@@ -11,7 +11,6 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
-import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewTags;
@@ -93,7 +92,7 @@ public class VrLifeController {
         }
 		
 		offlineService.writeToCsAsync(resType, id);
-		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.assets.toString())) {
+		if (ResourceTypeSupport.isValidEsResourceType(resType)) {
 			esResourceOperation.asynAdd(new Resource(resType, id));
 		}
 		
