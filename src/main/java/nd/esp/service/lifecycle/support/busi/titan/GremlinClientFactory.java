@@ -38,7 +38,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 	public static void init() {
 		Cluster cluster = null;
 		// TODO get from config
-		String address = "192.168.11.139";
+		String address = Constant.TITAN_DOMAIN;
 		int port = 8182;
 		GryoMessageSerializerV1d0 serializerClass = null;
 		Builder clusterBuilder = null;
@@ -57,12 +57,12 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		clusterBuilder.port(port);
 		clusterBuilder.serializer(serializerClass);
 		
-//		clusterBuilder.minConnectionPoolSize(200);
-//        clusterBuilder.maxConnectionPoolSize(200);
-//        clusterBuilder.nioPoolSize(48);
-//        clusterBuilder.workerPoolSize(48);
-//        clusterBuilder.resultIterationBatchSize(20);
-//		clusterBuilder.maxContentLength(655360);
+		clusterBuilder.minConnectionPoolSize(200);
+        clusterBuilder.maxConnectionPoolSize(200);
+        clusterBuilder.nioPoolSize(48);
+        clusterBuilder.workerPoolSize(48);
+        clusterBuilder.resultIterationBatchSize(20);
+		clusterBuilder.maxContentLength(655360);
 
 		// create a cluster instance
 		cluster = clusterBuilder.create();
