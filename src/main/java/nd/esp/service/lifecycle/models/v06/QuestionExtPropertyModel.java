@@ -3,9 +3,6 @@ package nd.esp.service.lifecycle.models.v06;
 import java.util.Date;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.annotations.SerializedName;
-
 public class QuestionExtPropertyModel {
     private float discrimination;
     

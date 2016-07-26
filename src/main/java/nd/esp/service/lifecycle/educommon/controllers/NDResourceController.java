@@ -846,9 +846,8 @@ public class NDResourceController {
         if (propsMapForDB == null) {
             propsMapForDB = new HashMap<String, Set<String>>();
         }
-        String lastUpdateGtKey = "last_update_GT";
-        Date minLastUpdateDate = getMaxLastUpdateDate(propsMapForDB, lastUpdateGtKey, calendar);
         String lastUpdateGeKey = "last_update_GE";
+        Date minLastUpdateDate = getMaxLastUpdateDate(propsMapForDB, lastUpdateGeKey, calendar);
         modifyPropsMapLastUpdate(propsMapForDB, lastUpdateGeKey, minLastUpdateDate);
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
@@ -958,7 +957,7 @@ public class NDResourceController {
 
     private void insertDbResultToTitanResultDesc(ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult, String field) {
-        long totalResult = uniqueAndSortResultSet(titanQueryResult, dbQueryResult);
+        long totalResult = uniqueResults(titanQueryResult, dbQueryResult);
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
         if (field.equals("lc_create_time")) {
             Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
@@ -989,7 +988,7 @@ public class NDResourceController {
 
     private void insertDbResultToTitanResultAsc(ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult, String field) {
-        long totalResult = uniqueAndSortResultSet(titanQueryResult, dbQueryResult);
+        long totalResult = uniqueResults(titanQueryResult, dbQueryResult);
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
         if (field.equals("lc_create_time")) {
             Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
@@ -1018,19 +1017,25 @@ public class NDResourceController {
         titanQueryResult.setTotal(totalResult);
     }
 
-    private long uniqueAndSortResultSet(ListViewModel<ResourceModel> titanQueryResult, ListViewModel<ResourceModel> dbQueryResult){
+    private long uniqueResults(ListViewModel<ResourceModel> titanQueryResult, ListViewModel<ResourceModel> dbQueryResult){
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
         List<ResourceModel> dbQueryResultItems = dbQueryResult.getItems();
-        titanQueryResultItems.addAll(dbQueryResultItems);
-//      去除重复id资源
-        int itemsCount = titanQueryResultItems.size();
-        Map<String, ResourceModel> uniqueResourceModel = new HashMap<String, ResourceModel>();
-        for (ResourceModel resourceModel : titanQueryResultItems) {
-            uniqueResourceModel.put(resourceModel.getIdentifier(), resourceModel);
+        // 以db 中的数据为主，去除重复id资源
+        Map<String, ResourceModel> uniqueResources = new HashMap<String, ResourceModel>();
+        for (ResourceModel dbResource : dbQueryResultItems) {
+            uniqueResources.put(dbResource.getIdentifier(), dbResource);
+        }
+        int conflictCount = 0;
+        for (ResourceModel titanResource : titanQueryResultItems) {
+            if (!uniqueResources.containsKey(titanResource.getIdentifier())) {
+                uniqueResources.put(titanResource.getIdentifier(), titanResource);
+            }else {
+                ++conflictCount;
+            }
         }
         titanQueryResultItems.clear();
-        titanQueryResultItems.addAll(uniqueResourceModel.values());
-        return titanQueryResult.getTotal()+dbQueryResult.getTotal() - (itemsCount - titanQueryResultItems.size());
+        titanQueryResultItems.addAll(uniqueResources.values());
+        return titanQueryResult.getTotal() + dbQueryResult.getTotal() - conflictCount;
     }
     
     private Future<ListViewModel<ResourceModel>> getDBFuture(final String resType, final List<String> includes,
@@ -1100,7 +1105,7 @@ public class NDResourceController {
     
     private Date getMinLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
         Date minDate = calendar.getTime();
-        if (!propsMap.isEmpty()) {
+        if (!propsMap.isEmpty() && propsMap.containsKey(operator)) {
             List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
             Date maxDate = sortLastUpdate.get(sortLastUpdate.size() - 1);
             minDate = maxDate.compareTo(calendar.getTime()) < 0 ? maxDate : calendar.getTime();
@@ -1112,7 +1117,7 @@ public class NDResourceController {
 
     private Date getMaxLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
         Date maxDate = calendar.getTime();
-        if (!propsMap.isEmpty()) {
+        if (!propsMap.isEmpty() && propsMap.containsKey(operator)) {
             List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
             Date minDate = sortLastUpdate.get(0);
             maxDate = minDate.compareTo(calendar.getTime()) > 0 ? minDate : calendar.getTime();
@@ -1121,8 +1126,8 @@ public class NDResourceController {
         return maxDate;
     }
 
-    private List<Date> sortLastUpdate(Map<String, Set<String>> propsMap, String lastUpdateGtKey) {
-        Set<String> lastUpdateSet = propsMap.get(lastUpdateGtKey);
+    private List<Date> sortLastUpdate(Map<String, Set<String>> propsMap, String operation) {
+        Set<String> lastUpdateSet = propsMap.get(operation);
         List<Date> sortLastUpdate = new ArrayList<Date>();
         for (String lastUpdateStr : lastUpdateSet) {
             Date lastUpdateDate = stringToDate(lastUpdateStr);

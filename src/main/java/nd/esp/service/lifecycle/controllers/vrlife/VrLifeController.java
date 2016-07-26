@@ -11,8 +11,8 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
-import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewTags;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4In;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4Out;
@@ -45,6 +45,8 @@ public class VrLifeController {
 	private OfflineService offlineService;
 	@Autowired
 	private AsynEsResourceService esResourceOperation;
+	@Autowired
+	private CommonServiceHelper commonServiceHelper;
 	
 	/**
 	 * 资源审核,更新内容包括了资源状态与标签分类
@@ -74,6 +76,10 @@ public class VrLifeController {
         		}
         	}
         }
+     	//校验PT
+        if(StringUtils.isNotEmpty(statusReviewViewModel4In.getPublishType())){
+  			commonServiceHelper.isPublishType(statusReviewViewModel4In.getPublishType());
+  		}
         //补全参数
         statusReviewViewModel4In.setIdentifier(id);
         statusReviewViewModel4In.setResType(resType);
@@ -86,7 +92,7 @@ public class VrLifeController {
         }
 		
 		offlineService.writeToCsAsync(resType, id);
-		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.assets.toString())) {
+		if (ResourceTypeSupport.isValidEsResourceType(resType)) {
 			esResourceOperation.asynAdd(new Resource(resType, id));
 		}
 		

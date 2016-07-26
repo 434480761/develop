@@ -34,7 +34,7 @@ public class TestUserRoleController extends CusBaseControllerConfig {
 	 * @author lanyl
 	 * @throws Exception
 	 */
-	@Test
+	//@Test
 	public void Test0001AddUserRoleTest()  throws Exception{
 		String url = TEST_BASE_URL_USER_ROLE + "{userId}/roles" ;
 		logger.info("==================");
@@ -207,51 +207,27 @@ public class TestUserRoleController extends CusBaseControllerConfig {
 	 */
 	@Test
 	public void Test0003GetUserRoleTest()  throws Exception{
-		String url = TEST_BASE_URL_USER_ROLE + "{userId}/roles/{roleId}" ;
+		String url = TEST_BASE_URL_USER_ROLE + "{userId}/roles" ;
 		logger.info("==================");
 		logger.info("name:{}, url:{}", new Object[] {"查询角色用户", url});
 		logger.info("=== start ===");
 
 		//例1：userId 为非法字符，roleId 正常值 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE + "x/roles/"+ UcRoleClient.COVERAGEADMIN;
+		url = TEST_BASE_URL_USER_ROLE + "x/roles"+ UcRoleClient.COVERAGEADMIN;
 		String result = MockUtil.mockGet(mockMvc, url, "{}");
 		if(StringUtils.isNotEmpty(result)) {
 			throw new TestException();
 		}
 		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
-		//例2：userId 为正常值，roleId 非法字符 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE + this.userId +"/roles/x";
-		result = MockUtil.mockGet(mockMvc, url, "{}");
-		if(StringUtils.isNotEmpty(result)) {
-			throw new TestException();
-		}
-		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
 
-		//例3：userId 有效的用户，roleId 无效的角色 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE + this.userId +"/roles/00000" ;
+		//例2：userId 有效的用户【期望结果：pass】
+		url = TEST_BASE_URL_USER_ROLE + this.userId + "/roles" ;
 		result = MockUtil.mockGet(mockMvc, url, "{}");
-		if(!"LC/INVALIDARGUMENTS_ERROR".equals(JSON.parseObject(result).getString("code"))){
+		if(StringUtils.isEmpty(result)) {
 			throw new TestException();
 		}
-		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
-
-		//例4：userId 无效的用户，roleId 有效的角色 【期望结果：error】
-		url = TEST_BASE_URL_USER_ROLE  +"00000/roles/" + UcRoleClient.COVERAGEADMIN ;
-		result = MockUtil.mockGet(mockMvc, url, "{}");
-		if(!"UC/ACCOUNT_NOT_EXIST".equals(JSON.parseObject(result).getString("code"))){
-			throw new TestException();
-		}
-		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "error", result, "{}"});
-
-		//例5：userId 有效的用户，roleId 有效的角色 【期望结果：pass】
-		url = TEST_BASE_URL_USER_ROLE + this.userId + "/roles/"+UcRoleClient.COVERAGEADMIN ;
-		result = MockUtil.mockGet(mockMvc, url, "{}");
-		if(UcRoleClient.COVERAGEADMIN.equals(JSON.parseObject(result).getString("role_id"))) {
-			logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "pass", result, "{}"});
-		} else {
-			throw new TestException();
-		}
+		logger.info("url:{}, status:{}, response:{}, remark:{}", new Object[] {url, "pass", result, "{}"});
 		logger.info("=== END ===");
 	}
 

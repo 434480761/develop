@@ -9,6 +9,8 @@
 
 package nd.esp.service.lifecycle.educommon.services.impl;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +106,10 @@ import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewMod
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -207,6 +212,10 @@ public class CommonServiceHelper {
 	
 	@PersistenceContext(unitName="questionEntityManagerFactory")
 	EntityManager questionEm;
+	
+	@Qualifier(value="defaultJdbcTemplate")
+	@Autowired
+	private JdbcTemplate defaultJdbcTemplate;
 	
     Map<String, RepositoryAndModelAndView> repositoryAndModelMap;
 
@@ -705,4 +714,35 @@ public class CommonServiceHelper {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),e.getLocalizedMessage());
 		}
     }
+    
+	/**
+	 * 判断维度数据是否是合法的PT维度
+	 * @author xiezy
+	 * @date 2016年7月21日
+	 * @param code
+	 */
+	public void isPublishType(String code){
+		final List<String> resultList = new ArrayList<String>();
+		
+		String sql = "SELECT nd_code as nc FROM category_datas WHERE nd_code LIKE 'PT%'";
+		defaultJdbcTemplate.query(sql, new RowMapper<String>(){
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				resultList.add(rs.getString("nc"));
+				return null;
+			}
+		});
+		
+		if(CollectionUtils.isNotEmpty(resultList)){
+			if(!resultList.contains(code)){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/PT_CODE_IS_NOT_EXIST",
+						code + ":不是合法的PT维度");
+			}
+		}else{
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"LC/PT_IS_NOT_EXIST",
+					"PT维度在该环境未录入");
+		}
+	}
 }

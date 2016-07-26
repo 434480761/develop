@@ -318,9 +318,7 @@ public class TransCodeUtil {
      *
      * @param codeParam
      * @param session
-     * @param templatePath
      * @param priority
-     * @param isUpdated
      */
     public void TriggerImageTransCode(TransCodeParam codeParam, String session, int priority) {
         String url = Constant.TASK_SUBMIT_URL;
@@ -389,7 +387,6 @@ public class TransCodeUtil {
      * @param session
      * @param templatePath
      * @param priority
-     * @param isUpdated
      */
     public void TriggerTransCode(TransCodeParam codeParam, String session, int priority,
                                  String templatePath) {
@@ -410,7 +407,6 @@ public class TransCodeUtil {
      * @param session
      * @param priority
      * @param templatePath
-     * @param isUpdated
      */
     public void TriggerTransCode(String taskUrl, TransCodeParam codeParam, String session, int priority,
                    String templatePath) {
@@ -604,16 +600,7 @@ public class TransCodeUtil {
     }
     
     public void triggerTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
-        if (isVideoTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup, false);
-        } else if(Constant.AUDIO_TRANSCODE && isAudioTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup, false);
-        } else if(isImageTransCode(resourceModel,resType)) {
-            triggerImageTransCode(resourceModel, resType);
-        } else {
-            triggerWordOrPptTransCode(resourceModel, resType); 
-        }
-        
+        triggerTransCode(resourceModel, resType, statusBackup, false);
     }
     
     public void triggerTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
@@ -621,10 +608,11 @@ public class TransCodeUtil {
             triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
         } else if(Constant.AUDIO_TRANSCODE && isAudioTransCode(resourceModel, resType)) {
             triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
+        } else if(isImageTransCode(resourceModel,resType)) {
+            triggerImageTransCode(resourceModel, resType, statusBackup);
         } else {
-            triggerWordOrPptTransCode(resourceModel, resType); 
+            triggerWordOrPptTransCode(resourceModel, resType, statusBackup);
         }
-        
     }
     
 
@@ -855,7 +843,7 @@ public class TransCodeUtil {
      * @author: qil
      * @author linsm  为了兼容视频转码，修改了方法的名称
      */
-    private void triggerImageTransCode(ResourceModel resourceModel, String resType) {
+    private void triggerImageTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
         String referer="";
         try{
 
@@ -906,6 +894,7 @@ public class TransCodeUtil {
             codeParam.buildResId(resourceModel.getIdentifier());
             codeParam.buildSourceFileId(path);
             codeParam.buildReferer(referer);
+            codeParam.buildStatusBackup(statusBackup);
             transCodeTrigger.triggerImage(codeParam);
             /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
                     lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
@@ -919,7 +908,7 @@ public class TransCodeUtil {
      * @author: liuwx
      * @author linsm  为了兼容视频转码，修改了方法的名称
      */
-    private void triggerWordOrPptTransCode(ResourceModel resourceModel, String resType) {
+    private void triggerWordOrPptTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
         String referer="";
         try{
 
@@ -977,6 +966,7 @@ public class TransCodeUtil {
             codeParam.buildResId(resourceModel.getIdentifier());
             codeParam.buildSourceFileId(path);
             codeParam.buildReferer(referer);
+            codeParam.buildStatusBackup(statusBackup);
             transCodeTrigger.trigger(codeParam);
             /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
                     lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
