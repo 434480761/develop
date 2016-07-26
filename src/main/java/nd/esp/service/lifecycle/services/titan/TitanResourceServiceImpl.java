@@ -707,6 +707,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				resources.add(chapter);
 			}
 		    long size =	titanChapterRelationRepository.batchCreateRelation(resources);
+			titanChapterRelationRepository.updateRelationOrderValue(resources,primaryCategory);
 			return size;
 		}
 	}
@@ -764,7 +765,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				Chapter knowledge = (Chapter) object;
 				resources.add(knowledge);
 			}
-			return titanKnowledgeRelationRepository.batchCreateRelation4Tree(resources);
+			titanKnowledgeRelationRepository.batchCreateRelation4Tree(resources);
+			titanChapterRelationRepository.updateRelationOrderValue(resources,primaryCategory);
+			return 0L;
 		}
 	}
 
