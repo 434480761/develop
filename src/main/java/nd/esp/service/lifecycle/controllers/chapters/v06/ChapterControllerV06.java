@@ -331,8 +331,8 @@ public class ChapterControllerV06 {
      * @return
      */
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.POST,produces={MediaType.APPLICATION_JSON_VALUE},consumes={MediaType.APPLICATION_JSON_VALUE})
-    public Map<String,String> addChapterTags(@PathVariable String cid,@RequestBody Map<String,Integer> params,HttpServletResponse response){
-    	Map<String,String> returnMap = resourceTagService.addResourceTags(cid, params);
+    public Map<String,String> addChapterTags(@PathVariable String cid,@RequestBody Map<String,Integer> params,HttpServletResponse response,@RequestParam(required=false,defaultValue="$RA0101") String category){
+    	Map<String,String> returnMap = resourceTagService.addResourceTags(cid,category,params);
     	if(CollectionUtils.isNotEmpty(returnMap)){
     		response.setStatus(500);
     	}
@@ -344,8 +344,8 @@ public class ChapterControllerV06 {
      * @return
      */
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
-    public Map<String,Object> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit){
-    	return resourceTagService.queryResourceTagsByCid(cid, limit);
+    public Map<String,Object> queryChapterTagsByCid(@PathVariable String cid,@RequestParam String limit,@RequestParam(required=false) String category){
+    	return resourceTagService.queryResourceTagsByCid(cid,category,limit);
     }
     
     /**
