@@ -73,7 +73,6 @@ public class TitanResourceController {
 //
 		titanResourceService.createChapterRelation();
 		titanResourceService.createKnowledgeRealtion();
-		titanResourceService.updateKnowledgeRelation();
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
 	}
