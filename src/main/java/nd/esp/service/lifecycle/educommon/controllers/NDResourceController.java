@@ -895,7 +895,7 @@ public class NDResourceController {
     private void getFinalResult(Map<String, String> orderMap, int moreOffset, int begin, int size,
             ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult) {
-        String field = "create_time";
+        String field = "lc_create_time";
         String sort = "ASC";
         if (orderMap != null) {
             for (Entry<String,String> entry : orderMap.entrySet()) {
