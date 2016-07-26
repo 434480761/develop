@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 用于辅助调试问题（titan）
- * 
+ *
  * @author linsm
  *
  */
@@ -51,7 +51,7 @@ public class TitanHelperController {
 
 	/**
 	 * 用于查找结点的相关信息
-	 * 
+	 *
 	 * @param resourceType
 	 * @param uuid
 	 * @return
@@ -59,22 +59,22 @@ public class TitanHelperController {
 	 */
 	@RequestMapping(value = "/vertexAndEdge/{resourceType}/{uuid}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public List<String> getVertexAndEdge(@PathVariable String resourceType,
-			@PathVariable String uuid) {
+										 @PathVariable String uuid) {
 		checkResourceTypeAndId(resourceType, uuid);
 		List<String> result = new ArrayList<String>();
 		ResourceNdCode resourceNdCode = ResourceNdCode.fromString(resourceType);
 		StringBuilder scriptBuilder = new StringBuilder(
 				"g.V().has('identifier',identifier).has('primary_category',primary_category).as('v').union(select('v'),bothE('has_relation'),both('has_relation'),both('has_coverage'),both('has_categories_path'),both('has_category_code')");
 		switch (resourceNdCode) {
-		case chapters:
-			scriptBuilder.append(",bothE('has_chapter'),both('has_chapter')");
-			break;
-		case knowledges:
-			scriptBuilder
-					.append(",bothE('has_knowledge'),both('has_knowledge'),bothE('has_knowledge_relation'),both('has_knowledge_relation')");
-			break;
-		default:
-			break;
+			case chapters:
+				scriptBuilder.append(",bothE('has_chapter'),both('has_chapter')");
+				break;
+			case knowledges:
+				scriptBuilder
+						.append(",bothE('has_knowledge'),both('has_knowledge'),bothE('has_knowledge_relation'),both('has_knowledge_relation')");
+				break;
+			default:
+				break;
 		}
 		scriptBuilder.append(").valueMap(true)");
 
@@ -99,8 +99,8 @@ public class TitanHelperController {
 
 	/**
 	 * 用于执行脚本（预生产，生产环境，无法访问到titan）, 用get暂时不行（url转义）
-	 * 
-	 * @param script
+	 *
+	 * @param map
 	 * @return
 	 * @author linsm
 	 */
@@ -162,7 +162,7 @@ public class TitanHelperController {
 
 	/**
 	 * 获取资源详情
-	 * 
+	 *
 	 * @param resourceType
 	 * @param uuid
 	 * @param include
@@ -225,7 +225,7 @@ public class TitanHelperController {
 
 	/**
 	 * 检查类型与uuid
-	 * 
+	 *
 	 * @param resourceType
 	 * @param uuid
 	 * @author linsm
@@ -245,7 +245,7 @@ public class TitanHelperController {
 
 	/**
 	 * 简单处理结果
-	 * 
+	 *
 	 * @param resultSet
 	 * @param result
 	 * @author linsm

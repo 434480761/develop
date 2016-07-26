@@ -180,7 +180,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
 
     @Override
-    public ListViewModel<ResourceModel> searchUseES(String resType,
+    public ListViewModel<ResourceModel> searchUseES(String resType,List<String> fields,
                                                List<String> includes,
                                                Map<String, Map<String, List<String>>> params,
                                                Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
@@ -191,6 +191,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         builder.setResType(resType);
         builder.setRange(from,size);
         builder.setIncludes(includes);
+        builder.setFields(fields);
         String script=builder.generateScript();
         LOG.info("script:"+script);
 

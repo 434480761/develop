@@ -12,7 +12,9 @@ public enum  TitanSyncType {
     //任何和资源相关的修改
     SAVE_OR_UPDATE_ERROR,
     //导入数据失败
-    IMPORT_DATA_ERROR;
+    IMPORT_DATA_ERROR,
+    FIELD_LENGTH_TOO_LONG,
+    SYNC_SUCCESS;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {

@@ -14,6 +14,7 @@ import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.services.elasticsearch.SyncResourceService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.enums.SynVariable;
 import nd.esp.service.lifecycle.support.logs.DBLogUtil;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -71,6 +72,9 @@ public class DeleteDirtyDataTask {
 	
 	@Autowired
 	private SyncResourceService syncResourceService;
+
+	@Autowired
+	private TitanSyncService titanSyncService;
 	
 	//目前支持的资源类型
 	private static final String[] resTypes = { "assets", "coursewares",
@@ -100,6 +104,7 @@ public class DeleteDirtyDataTask {
 					syncReport(resType);
 					dealDirtyData(createTime,resType);
 					syncEs(resType);
+					syncTitan(resType);
 				}
 			}else{
 				commonServiceHelper.initSynVariable(SynVariable.deleteDirtyTask.getValue());
@@ -369,5 +374,10 @@ public class DeleteDirtyDataTask {
 			npjt.update(deleteCategorySql, paramMap);
 			npjt.update(deleteNdresourceSql, paramMap);
 		}
+	}
+
+	private void syncTitan(String resType){
+		Set<Resource> resourceSet = queryResources(resType);
+		titanSyncService.batchDeleteResource(resourceSet);
 	}
 }
