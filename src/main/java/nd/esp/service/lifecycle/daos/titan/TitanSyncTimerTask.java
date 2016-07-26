@@ -49,16 +49,16 @@ public class TitanSyncTimerTask {
             return;
         }
         if (!StaticDatas.TITAN_SWITCH){
-            LOG.info("titan_client_closet");
+            LOG.info("titan_client_closed");
             return;
         }
         if(LOCKED){
-            LOG.info("正在同步数据....");
+            LOG.info("titan_sync_ing....");
             return;
         }
-        if (checkHaveData()){
+        if (!checkHaveData()){
             LOCKED = true;
-            LOG.info("titan sync start");
+            LOG.info("titan_sync_start");
             try{
                 syncData();
             } catch (Exception e){
@@ -68,6 +68,8 @@ public class TitanSyncTimerTask {
             }
             LOCKED = false;
         }
+
+
     }
 
     private void syncData() {

@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.utils;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
 import org.apache.tinkerpop.gremlin.driver.Result;
@@ -19,6 +20,7 @@ import java.util.Date;
 public class TitanScritpUtils {
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanScritpUtils.class);
+
     public static Long getOneVertexOrEdegeIdByResultSet(ResultSet resultSet) {
         Iterator<Result> it = resultSet.iterator();
         try {
@@ -56,22 +58,22 @@ public class TitanScritpUtils {
                 continue;
 
             //TODO 字符串长度过长
-//            if(value instanceof String){
-//                String str = (String) value;
-//                if(str.length() > 1000){
-//                    for(Field f : fields){
-//                        f.setAccessible(true);
-//                        if("identifier".equals(f.getName())){
-//                            try {
-//                                LOG.info("over length identifier :{} ;class:{}",f.get(model),model.getClass().getName());
-//                            } catch (IllegalAccessException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }
-//                    continue;
-//                }
-//            }
+            if(value instanceof String){
+                String str = (String) value;
+                if(str.length() > 10000){
+                    for(Field f : fields){
+                        f.setAccessible(true);
+                        if("identifier".equals(f.getName())){
+                            try {
+                                LOG.info("field_length_too_long :{} ;class:{}",f.get(model),model.getClass().getName());
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
 
             //BigDecimal进行转换
             if (value instanceof BigDecimal) {
@@ -212,8 +214,12 @@ public class TitanScritpUtils {
         StringBuffer script = new StringBuffer("");
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory_edu",education.getPrimaryCategory());
-        param.putAll(buildEducationScript(script,education,categoryList,coverageList));
-
+        Map<String,Object> educationParam = buildEducationScript(script,education,categoryList,coverageList);
+        //对addVertex中的参数个数做限制，最多不能超过250个
+        if(educationParam.size() > 125){
+            return null;
+        }
+        param.putAll(educationParam);
         Map<String, Object> coverageParamMap = null;
         if(CollectionUtils.isNotEmpty(coverageList)){
             coverageParamMap = buildCoverageScript(script, coverageList);
@@ -238,6 +244,10 @@ public class TitanScritpUtils {
             param.putAll(techInfoParamMap);
         }
 
+        Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
+        param.putAll(checkParam);
+
+        script.append("if(!checkExist()){");
         script.append("educationId=createEducation();");
         if(CollectionUtils.isNotEmpty(coverageParamMap)){
             script.append("createCoverage(educationId);");
@@ -254,11 +264,24 @@ public class TitanScritpUtils {
         if(CollectionUtils.isNotEmpty(techInfoParamMap)){
             script.append("createTechInfo(educationId);");
         }
+        script.append("}");
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
         return result;
 
+    }
+
+    private static Map<String, Object> buildCheckExistScript(StringBuffer script, String primaryCategory, String identifier){
+        Map<String, Object> resultParam = new HashMap<>();
+        resultParam.put("identifier_ck",identifier);
+        resultParam.put("primaryCategory_ck", primaryCategory);
+
+        String checkScrip = "public boolean checkExist(){" +
+                "if(g.V().hasLabel(primaryCategory_ck).has('identifier',identifier_ck).iterator().hasNext()){return true}" +
+                "else{return false}};";
+        script.append(checkScrip);
+        return resultParam;
     }
 
     private static Map<String, Object> buildEducationScript(StringBuffer script, Education education ,List<ResourceCategory> categories, List<ResCoverage> coverages){
@@ -500,7 +523,7 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
-    private static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
+    public static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
         int orderNumber = 0;
         Map<String, Object> result = new HashMap<>();
         for(ResourceRelation resourceRelation : resourceRelations){
@@ -522,13 +545,13 @@ public class TitanScritpUtils {
                 result.put(key + suffix, createRelationParams.get(key));
             }
 
-            scriptBuffer.append(").id()");
+            scriptBuffer.append(");");
 
-            createRelationParams.put("sourcePrimaryCategoryName", resourceRelation.getResType());
-            createRelationParams.put("sourceIdentifierName", resourceRelation.getSourceUuid());
-            createRelationParams.put("targetPrimaryCategoryName", resourceRelation.getResourceTargetType());
-            createRelationParams.put("targetIdentifierName", resourceRelation.getTarget());
-            createRelationParams.put("edgeIdentifierName", resourceRelation.getIdentifier());
+            createRelationParams.put(sourcePrimaryCategoryName, resourceRelation.getResType());
+            createRelationParams.put(sourceIdentifierName, resourceRelation.getSourceUuid());
+            createRelationParams.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
+            createRelationParams.put(targetIdentifierName, resourceRelation.getTarget());
+            createRelationParams.put(edgeIdentifierName, resourceRelation.getIdentifier());
 
             script.append(scriptBuffer);
         }
