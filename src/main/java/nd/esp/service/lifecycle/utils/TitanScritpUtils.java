@@ -264,8 +264,7 @@ public class TitanScritpUtils {
         if(CollectionUtils.isNotEmpty(techInfoParamMap)){
             script.append("createTechInfo(educationId);");
         }
-        script.append("};");
-        script.append("g.V().hasLabel(primaryCategory_ck).has('identifier',identifier_ck).id()");
+        script.append("}");
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
