@@ -44,6 +44,8 @@ import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
+import nd.esp.service.lifecycle.educommon.support.QueryType;
+import nd.esp.service.lifecycle.educommon.support.StatisticsPlatform;
 import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.VersionViewModel;
@@ -663,9 +665,9 @@ public class NDResourceController {
             statisticsType = "valuesum";
         }
         if("self".equals(statisticsPlatform) && StringUtils.hasText(bsyskey) && bsyskey.equals(Constant.BSYSKEY_101PPT)){
-            statisticsPlatform = "101PPT";
+            statisticsPlatform = StatisticsPlatform.NDPPT.getName();
         }else{
-            statisticsPlatform = "TOTAL";
+            statisticsPlatform = StatisticsPlatform.TOTAL.getName();
         }
 
         //参数校验和处理
@@ -1406,15 +1408,6 @@ public class NDResourceController {
 
         // 1.includes
         List<String> includesList = IncludesConstant.getValidIncludes(includes);
-//        List<String> ignoreAttributes = new ArrayList<String>();
-//        if(!IncludesConstant.isNotContainsAttributes(includesList, ignoreAttributes)){
-//
-//            LOG.error("检索接口目前只支持:TI,EDU,LC,CG,CR");
-//
-//            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-//                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-//                    "检索接口目前只支持:TI,EDU,LC,CG,CR");
-//        }
 
         //先将参数中的5个Set中的null和""去掉
         categories = CollectionUtils.removeEmptyDeep(categories);
@@ -1441,46 +1434,6 @@ public class NDResourceController {
             relationsMap = null;
         }else{
             for(String relation : relations){
-               /* Map<String,String> map = new HashMap<String, String>();
-                //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
-                relation = relation + " ";
-                List<String> elements = Arrays.asList(relation.split("/"));
-                //格式错误判断
-                if(elements.size() != 3){
-
-                    LOG.error(relation + "--relation格式错误");
-
-                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                            LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                            relation + "--relation格式错误");
-                }
-
-                String resourceType = elements.get(0).trim();
-                String resourceUuid = elements.get(1).trim();
-                String relationType = elements.get(2).trim();
-
-                //判断源资源是否存在,stype + suuid
-                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
-                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
-                }else{
-                	// "relation参数进行递归查询时,目前仅支持:chapters,knowledges"
-					if (!IndexSourceType.ChapterType.getName().equals(elements.get(0)) &&
-							!IndexSourceType.KnowledgeType.getName().equals(elements.get(0))) {
-						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-								LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-								"relation参数进行递归查询时,目前仅支持:chapters,knowledges");
-					}
-
-                }
-                //r_type的特殊处理
-                if(StringUtils.isEmpty(relationType) || RelationType.shouldBeAssociate(relationType)){
-                    relationType = RelationType.ASSOCIATE.getName();
-                }
-
-                map.put("stype", resourceType);
-                map.put("suuid", resourceUuid);
-                map.put("rtype", relationType);*/
-
                 Map<String,String> map = ParameterVerificationHelper.relationVerification(relation,queryType);
                 relationsMap.add(map);
             }
@@ -2362,10 +2315,6 @@ public class NDResourceController {
         }else{
             statisticalService.addDownloadStatistical(bsyskey, resType, uuid);
         }
-    }
-
-    public static enum QueryType{
-        DB,ES,TITAN,TITAN_ES,TITAN_REALTIME
     }
 
     /**

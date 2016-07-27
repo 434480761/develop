@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nd.esp.service.lifecycle.educommon.controllers.NDResourceController;
 import nd.esp.service.lifecycle.educommon.vos.ResCoverageViewModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -83,7 +82,7 @@ public class ParameterVerificationHelper {
      * @param relation
      * @return
      */
-    public static Map<String, String> relationVerification(String relation, NDResourceController.QueryType queryType){
+    public static Map<String, String> relationVerification(String relation, QueryType queryType){
     	Map<String,String> map = new HashMap<String, String>();
         //对于入参的relation每个在最后追加一个空格，以保证elemnt的size为3
         relation = relation + " ";
@@ -104,7 +103,7 @@ public class ParameterVerificationHelper {
          
         //判断源资源是否存在,stype + suuid
         if(!resourceUuid.endsWith("$")){//不为递归查询时才校验
-            if(queryType == NDResourceController.QueryType.DB) {
+            if(queryType == QueryType.DB) {
                 CommonHelper.resourceExist(resourceType, resourceUuid, ResourceType.RESOURCE_SOURCE);
             }
         }else{
