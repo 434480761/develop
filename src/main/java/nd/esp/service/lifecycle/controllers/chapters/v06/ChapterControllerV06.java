@@ -353,8 +353,8 @@ public class ChapterControllerV06 {
      * @return
      */
     @RequestMapping(value="/{cid}/tags",method=RequestMethod.DELETE,produces={MediaType.APPLICATION_JSON_VALUE})
-    public Map<String,Object> deleteResourceTagsByCid(@PathVariable String cid){
-    	int num = resourceTagService.deleteResourceTagsByCid(cid);
+    public Map<String,Object> deleteResourceTagsByCid(@PathVariable String cid,@RequestParam(value="category",required = false) String category){
+    	int num = resourceTagService.deleteResourceTagsByCid(cid,category);
     	Map<String,Object> map = new HashMap<String, Object>();
     	map.put("成功删除记录数", num);
     	return map;
