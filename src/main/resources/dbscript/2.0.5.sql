@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS `security_key` (
 
 
 ALTER TABLE `security_key`
-  ADD PRIMARY KEY (`identifier`), ADD UNIQUE KEY `user_key_inx` (`security_key`,`user_id`);
+  ADD PRIMARY KEY (`identifier`), ADD UNIQUE KEY `user_key_inx` (`user_id`);

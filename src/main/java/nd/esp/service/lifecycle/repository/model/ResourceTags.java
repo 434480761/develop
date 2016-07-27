@@ -30,6 +30,8 @@ public class ResourceTags extends EspEntity {
 	@Column(name = "last_update")
 	protected BigDecimal lu;
 	
+	private String category;
+	
 	public String getResource() {
 		return resource;
 	}
@@ -68,6 +70,14 @@ public class ResourceTags extends EspEntity {
 
 	public void setLu(BigDecimal lu) {
 		this.lu = lu;
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 
 	@Override
