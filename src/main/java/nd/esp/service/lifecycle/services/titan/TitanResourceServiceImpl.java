@@ -246,6 +246,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		importOneData(education, resCoverageList,resourceCategoryList,techInfos);
 	}
 
+	@Override
+	public String importStatus() {
+		return "primaryCategory:" +s_primaryCategory +"  totalPage:" + s_totalPage +"  page"+ s_page;
+	}
+
 
 	private void importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos){
 		Map<String,ResCoverage> coverageMap = new HashMap<>();
@@ -521,6 +526,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				e.printStackTrace();
 				LOG.error(e.getMessage());
 			}
+			setStatisticParam("relations", resourcePage.getTotalPages(), page);
 		} while (++page < resourcePage.getTotalPages());
 
 		return indexNum;
@@ -645,6 +651,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					LOG.error(e.getMessage());
 					LOG.error("importTitanMySqlError page:{} primaryCategory:{}",page,primaryCategory);
 				}
+				setStatisticParam(primaryCategory,resourcePage.getTotalPages(),page);
 			} while (++page < resourcePage.getTotalPages());
 
 			return indexNum;

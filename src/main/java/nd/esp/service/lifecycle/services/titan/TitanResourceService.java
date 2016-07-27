@@ -28,4 +28,6 @@ public interface TitanResourceService {
 	public void timeTaskImport4Update(Integer page, String type);
 
 	public void importOneData4Script(String primaryCategory, String id);
+
+	public String importStatus();
 }
