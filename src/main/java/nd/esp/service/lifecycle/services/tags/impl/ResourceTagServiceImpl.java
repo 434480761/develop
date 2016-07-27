@@ -208,8 +208,11 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	}
 	
 	@Override
-	public int deleteResourceTagsByCid(String cid){
+	public int deleteResourceTagsByCid(String cid,String category){
 		String sql = "delete from resource_tags where resource='"+cid+"'";
+		if(StringUtils.isNotEmpty(category)){
+			sql = "delete from resource_tags where resource='"+cid+"' and category = '"+category+"'";
+		}
 		int num = jt.update(sql);
 		return num;
 	}
