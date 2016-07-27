@@ -159,11 +159,23 @@ public class TitanResourceController {
 		return 0;
 	}
 
-	@RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
+	@RequestMapping(value = "/{resourceType}/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkData(@PathVariable String resourceType) {
 		titanResourceService.checkResource(resourceType);
 		return 0;
 	}
 
+	@RequestMapping(value = "/{resourceType}/{id}/check", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long checkOneData(@PathVariable String resourceType, @PathVariable String id) {
+		titanResourceService.checkOneData(resourceType, id);
+		return 0;
+	}
+	@RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long checkAllData(@PathVariable String resourceType) {
+		titanResourceService.checkAllData(resourceType);
+		return 0;
+	}
 }

@@ -30,4 +30,8 @@ public interface TitanResourceService {
 	public void importOneData4Script(String primaryCategory, String id);
 
 	public void checkResource(String primaryCategory);
+
+	public void checkOneData(String primaryCategory, String id);
+
+	public void checkAllData(String primaryCategory);
 }

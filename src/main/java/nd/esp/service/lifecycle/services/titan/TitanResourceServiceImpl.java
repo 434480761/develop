@@ -247,6 +247,47 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
+	public void checkOneData(String primaryCategory, String id){
+		EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+		Education education = null;
+		try {
+			education = (Education) espRepository.get(id);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+
+		if (education == null){
+			return;
+		}
+		Set<String> uuids = new HashSet<>();
+		uuids.add(education.getIdentifier());
+
+		List<ResCoverage> resCoverageList =getResCoverage(
+				coverageDao.queryCoverageByResource(primaryCategory, uuids));
+
+		List<String> resourceTypes = new ArrayList<String>();
+		resourceTypes.add(primaryCategory);
+		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+
+
+		List<String> primaryCategorys = new ArrayList<>();
+		primaryCategorys.add(primaryCategory);
+		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+
+		List<ResourceRelation> resourceRelations =  getResourceRelation(
+				educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
+
+		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
+
+	}
+
+	@Override
+	public void checkAllData(String primaryCategory){
+		AbstractPageQuery abstractPageQuery = new CheckResourceAllPageQuery();
+		abstractPageQuery.doing(primaryCategory);
+	}
+
+	@Override
 	public void checkResource(String primaryCategory) {
 		AbstractPageQuery abstractPageQuery = new CheckResourcePageQuery();
 		abstractPageQuery.doing(primaryCategory);
@@ -604,30 +645,76 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		@Override
 		long operate(List<Education> educations, String primaryCategory) {
 			for(Education education : educations){
-				String script = "g.V().has(primaryCategory,'identifier',identifier).count();";
-				Map<String, Object> param = new HashMap<>();
-				param.put("primaryCategory",education.getPrimaryCategory());
-				param.put("identifier",education.getIdentifier());
+				titanImportRepository.checkResourceExistInTitan(education);
+			}
+			return 0;
+		}
+	}
 
-				Long count = null;
-				try {
-					count = titanCommonRepository.executeScriptUniqueLong(script, param);
-				} catch (Exception e) {
-					e.printStackTrace();
+	class CheckResourceAllPageQuery extends  AbstractPageQuery{
+
+		@Override
+		long operate(List<Education> educations, String primaryCategory) {
+
+			if(CollectionUtils.isEmpty(educations)){
+				return 0L;
+			}
+			Set<String> uuids = new HashSet<String>();
+			for (Education education : educations) {
+				uuids.add(education.getIdentifier());
+			}
+
+			List<ResCoverage> resCoverageList =getResCoverage(
+					coverageDao.queryCoverageByResource(primaryCategory, uuids));
+			Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
+			for (ResCoverage resCoverage : resCoverageList){
+				List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
+				if(resCoverages == null){
+					resCoverages = new ArrayList<>();
+					resCoverageMap.put(resCoverage.getResource(), resCoverages);
 				}
 
-				if(count == null || count == 0){
-					LOG.info("资源在titan中不存在 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(), education.getIdentifier());
-				} else if(count > 1){
-					LOG.info("资源在titan中有重复 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(), education.getIdentifier());
+				resCoverages.add(resCoverage);
+			}
 
+			List<String> resourceTypes = new ArrayList<String>();
+			resourceTypes.add(primaryCategory);
+			List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+			Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
+			for (ResourceCategory resourceCategory : resourceCategoryList){
+				List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
+				if(resourceCategories == null){
+					resourceCategories = new ArrayList<>();
+					resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
 				}
 
+				resourceCategories.add(resourceCategory);
+			}
+
+			List<String> primaryCategorys = new ArrayList<>();
+			primaryCategorys.add(primaryCategory);
+			List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+			Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
+			for (TechInfo techInfo : techInfos){
+				List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
+				if(techInfoList == null){
+					techInfoList = new ArrayList<>();
+					techInfoMap.put(techInfo.getResource(), techInfoList);
+				}
+
+				techInfoList.add(techInfo);
+			}
+			for (Education education : educations){
+				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
+				List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+				List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
+				titanImportRepository.checkResourceAllInTitan(education,sourceResCoverage,resourceCategory,sourceTechInfo ,null);
 			}
 
 			return 0;
 		}
 	}
+
 
 	/**
 	 * 导入除关系外的其它节点
