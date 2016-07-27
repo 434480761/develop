@@ -339,8 +339,8 @@ public class TransCodeUtil {
             String uploadUrl = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
                     + "/upload?session=" + session;
             arg.put("upload_api", uploadUrl);
-//            String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
-            String callBackUrl = "http://192.168.253.17:8080/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
+            String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
+//            String callBackUrl = "http://192.168.253.17:8080/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
             arg.put("callback", callBackUrl);
 
             String argument = ObjectUtils.toJson(arg);
