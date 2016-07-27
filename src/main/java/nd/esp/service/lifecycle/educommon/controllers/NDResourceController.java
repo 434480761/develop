@@ -852,7 +852,11 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
-        Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includes, categories, categoryExclude,
+        List<String> includesList = cloner.deepClone(includes);
+        if (!includesList.contains("LC")) {
+            includesList.add("LC");
+        }
+        Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         
@@ -891,8 +895,8 @@ public class NDResourceController {
     private void getFinalResult(Map<String, String> orderMap, int moreOffset, int begin, int size,
             ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult) {
-        String field = "";
-        String sort = "";
+        String field = "lc_create_time";
+        String sort = "ASC";
         if (orderMap != null) {
             for (Entry<String,String> entry : orderMap.entrySet()) {
                 field = entry.getKey();
@@ -1105,7 +1109,7 @@ public class NDResourceController {
     
     private Date getMinLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
         Date minDate = calendar.getTime();
-        if (!propsMap.isEmpty() && propsMap.containsKey(operator)) {
+        if (propsMap.containsKey(operator)) {
             List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
             Date maxDate = sortLastUpdate.get(sortLastUpdate.size() - 1);
             minDate = maxDate.compareTo(calendar.getTime()) < 0 ? maxDate : calendar.getTime();
@@ -1117,7 +1121,7 @@ public class NDResourceController {
 
     private Date getMaxLastUpdateDate(Map<String, Set<String>> propsMap, String operator, Calendar calendar) {
         Date maxDate = calendar.getTime();
-        if (!propsMap.isEmpty() && propsMap.containsKey(operator)) {
+        if (propsMap.containsKey(operator)) {
             List<Date> sortLastUpdate = sortLastUpdate(propsMap, operator);
             Date minDate = sortLastUpdate.get(0);
             maxDate = minDate.compareTo(calendar.getTime()) > 0 ? minDate : calendar.getTime();

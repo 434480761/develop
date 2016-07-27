@@ -47,11 +47,14 @@ public class EsIndexQueryBuilder {
     private Map<String, Map<String, List<String>>> params;
     private int from = 0;
     private int end = 10;
+    private int size=10;
     private List<String> includes;
     private List<String> fields;
 
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
+    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT:' + count;resultList";
+    public static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
     public void setIndex(String index) {
         this.index = index;
@@ -71,6 +74,7 @@ public class EsIndexQueryBuilder {
 
     public void setRange(int from, int size) {
         this.from = from;
+        this.size = size;
         this.end = size + from;
     }
 
@@ -121,6 +125,40 @@ public class EsIndexQueryBuilder {
     }
 
     /**
+     * List<String> ids = new ArrayList<String>();
+     * com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder builder = graph.indexQuery("mixed_ndresource","(v.\"keywords\":(test) OR v.\"title\":(test))").offset(0).limit(10);
+     * builder.vertices().collect{ids.add(it.getElement().id())};
+     * if(ids.size()==0){return};
+     * results = g.V(ids.toArray()).valueMap();
+     * List<Object> resultList = results.toList();
+     * Long count = builder.count();
+     * resultList << 'TOTALCOUNT:' + count;resultList
+     * @return
+     */
+    public String generateScriptAfterEsUpdate() {
+        StringBuffer query=new StringBuffer();
+        StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
+        String wordSegmentation=dealWithWordsContainsNot(this.words);
+        String other=dealWithParams();
+        if("".endsWith(wordSegmentation.trim())){
+            other=other.trim().replaceFirst("AND","");
+        }
+        baseQuery.append(wordSegmentation);
+        baseQuery.append(other);
+        baseQuery.append(dealWithResType());
+        baseQuery.append("\")");
+        baseQuery.append(".offset(").append(this.from).append(")");
+        baseQuery.append(".limit(").append(this.size).append(");");
+        baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
+        baseQuery.append("results = g.V(ids.toArray())");
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes));
+        baseQuery.append(".valueMap();");
+        query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
+
+        return query.toString();
+    }
+
+    /**
      * 处理可用资源（primary_category、lc_enable）
      * @return
      */
@@ -144,11 +182,7 @@ public class EsIndexQueryBuilder {
         StringBuffer query = new StringBuffer();
         int fieldSize=fields.size();
         for (int i = 0; i < fieldSize; i++) {
-            query.append("v.\\\"");
-            query.append(this.fields.get(i));
-            query.append("\\\":(");
-            query.append(words);
-            query.append(")");
+            query.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(words).append(")");
             if (i != fieldSize - 1) {
                 if (isOnlyNot) {
                     query.append(" AND ");
