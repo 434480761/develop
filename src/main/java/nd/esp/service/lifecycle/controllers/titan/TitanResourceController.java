@@ -159,4 +159,11 @@ public class TitanResourceController {
 		return 0;
 	}
 
+	@RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long checkData(@PathVariable String resourceType) {
+		titanResourceService.checkResource(resourceType);
+		return 0;
+	}
+
 }

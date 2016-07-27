@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
+import nd.esp.service.lifecycle.daos.titan.TitanResourceRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
@@ -62,6 +63,12 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Autowired
     private TitanChapterRelationRepository titanChapterRelationRepository;
+
+    @Autowired
+    private TitanResourceService titanResourceService;
+
+    @Autowired
+    private TitanImportRepository titanImportRepository;
 
 
     @Override
@@ -139,35 +146,21 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
 
-        Education resultEducation = titanResourceRepository.add(education);
-        if(resultEducation == null){
-            return false;
-        }
-
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(resCoverageList);
-        if(resCoverageList.size() != resultCoverage.size()){
-            return false;
-        }
-
-
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
-        if(resourceCategoryList.size()!=resultCategory.size()){
-            return false;
-        }
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
 
         List<ResourceRelation> resourceRelations =
                 educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
-        List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
-        if(resourceRelations.size() != resultResourceRelations.size()){
+
+        boolean educationSuccess = titanImportRepository
+                .importOneData(education,resCoverageList,resourceCategoryList,techInfos);
+        if(!educationSuccess){
             return false;
         }
-
-        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfos);
-        if(techInfos.size()!=resultTechInfos.size()){
-            return false;
+        List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
+        if(resourceRelations.size() != resultResourceRelations.size()){
+            return  false;
         }
 
         LOG.info("titan sync : report {} success",education.getIdentifier());
