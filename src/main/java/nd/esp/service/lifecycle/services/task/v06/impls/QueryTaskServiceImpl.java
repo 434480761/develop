@@ -66,7 +66,8 @@ public class QueryTaskServiceImpl implements QueryTaskService {
                         } catch (Exception e) {
                             LOG.error("处理超时任务失败：",e);
                         }
-                    } else if(info.getTaskId() != null && !"NULL".equals(info.getTaskId())) {
+                    } else if(info.getTaskId() != null && !"NULL".equals(info.getTaskId()) &&
+                            !TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(info.getBussType())) {
                         if(!bFirst) {
                             ids += (","+info.getTaskId());
                         } else {

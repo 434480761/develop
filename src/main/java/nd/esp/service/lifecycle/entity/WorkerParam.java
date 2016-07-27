@@ -158,7 +158,7 @@ public class WorkerParam {
         WorkerParam param = new WorkerParam();
         param.setServiceId(Constant.WORKER_IMAGE_TRANSCODE_SERVICE);
         // FIXME 暂时只布了一台， group 先写死
-        param.setGroupId(Constant.WORKER_DEFAULT_GROUP_ID);
+        param.setGroupId("6");
         return param;
 
     }

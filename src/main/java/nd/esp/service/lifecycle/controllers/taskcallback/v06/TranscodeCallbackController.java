@@ -107,6 +107,47 @@ public class TranscodeCallbackController {
         
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }
+
+    /**
+     * 视频转码回调接口,更新lcms task 表， 资源元数据
+     *
+     * @author qil
+     * @return
+     * @since
+     */
+    @RequestMapping(value = "/image_callback", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+    @ResponseBody
+    Map<String, String> imageTranscodeCallback(@RequestBody String requestBody,
+                                               @PathVariable String version,
+                                               @PathVariable String res_type,
+                                               @RequestParam(value = "identifier", required = true) String id) throws IOException {
+
+        String taskId = null;
+        Map<String,Object> m=BeanMapperUtils.mapperOnString(requestBody, Map.class);
+        if(m.get("executionId") != null){
+            LOG.info("回调的map中executionId的值:"+m.get("executionId"));
+            taskId = String.valueOf(m.get("executionId"));
+        }
+
+        Query query = taskRepository.getEntityManager().createNamedQuery("queryByTaskId");
+        query.setParameter("taskid", taskId);
+        TaskStatusInfo taskInfo = (TaskStatusInfo) query.getSingleResult();
+
+        if(null == taskInfo) {
+            LOG.info("回调的任务："+taskId+"已取消或不在任务表");
+            return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
+        }
+
+        if(StringUtils.isNotEmpty(requestBody)) {
+            taskService.FinishTask(taskId, new HashMap<String,String>(), requestBody);
+
+            //异步过程：同步元数据
+            offlineService.writeToCsAsync(res_type, id);
+            esResourceOperation.asynAdd(new Resource(res_type, id));
+        }
+
+        return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
+    }
     
     /**
      * 视频转码回调接口,更新lcms task 表， 资源元数据（仅支持assets)( preview, techinfo, 包含requirement（文件元数据））
@@ -118,17 +159,15 @@ public class TranscodeCallbackController {
      */
     @RequestMapping(value = "/videoCallback", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     @ResponseBody
-    Map<String, String> videoTranscodeCallback(@RequestBody String requestBody, 
-                                               @PathVariable String version,
+    Map<String, String> videoTranscodeCallback(@PathVariable String version,
                                                @PathVariable String res_type,
                                                @RequestParam(value = "identifier", required = true) String id,
                                                @RequestBody Map<String,Object> body) throws IOException {
 
         String taskId = null;
-        Map<String,Object> m=BeanMapperUtils.mapperOnString(requestBody, Map.class);
-        if(m.get("executionId") != null){
-            LOG.info("回调的map中executionId的值:"+m.get("executionId"));
-            taskId = String.valueOf(m.get("executionId"));
+        if(body.get("executionId") != null){
+            LOG.info("回调的map中executionId的值:"+body.get("executionId"));
+            taskId = String.valueOf(body.get("executionId"));
         }
         
         Query query = taskRepository.getEntityManager().createNamedQuery("queryByTaskId");

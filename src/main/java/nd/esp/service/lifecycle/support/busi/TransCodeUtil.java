@@ -322,8 +322,9 @@ public class TransCodeUtil {
      */
     public void TriggerImageTransCode(TransCodeParam codeParam, String session, int priority) {
         String url = Constant.TASK_SUBMIT_URL;
+        String sourcePath = codeParam.getSourceFileId();
         String location = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
-                + "/download?path=" + URLEncoder.encodeURL(codeParam.getSourceFileId());
+                + "/download?path=" + URLEncoder.encodeURL(sourcePath) + "&session=" + session;
 
         LOG.error("转码发送的url地址:" + url);
         try {
@@ -332,11 +333,14 @@ public class TransCodeUtil {
             arg.put("cmd","101ppt_pic");
             arg.put("pic_path", location);
 
-            String trascodePath = location.substring(0, location.lastIndexOf("/")) + "/transcode";
+            String trascodePath = sourcePath.substring(0, sourcePath.lastIndexOf("/")) + "/transcode";
             arg.put("pic_transcode_path", trascodePath);
             //新增部分内容
-            arg.put("session", session);
-            String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType() + "/transcode/image_callback";
+            String uploadUrl = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
+                    + "/upload?session=" + session;
+            arg.put("upload_api", uploadUrl);
+//            String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
+            String callBackUrl = "http://192.168.253.17:8080/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
             arg.put("callback", callBackUrl);
 
             String argument = ObjectUtils.toJson(arg);
@@ -362,7 +366,7 @@ public class TransCodeUtil {
             }
             TaskStatusInfo taskInfo = new TaskStatusInfo();
             taskInfo.setResType(codeParam.getResType());
-            taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_TRANSCODE);
+            taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE);
             taskInfo.setBussId(codeParam.getResId());
             taskInfo.setTaskId(taskId);
             taskInfo.setDescription(codeParam.getStatusBackup());
@@ -858,7 +862,6 @@ public class TransCodeUtil {
         boolean isHrefExist = false;
         String sourceLocation = "";
         String hrefLocation = "";
-        ResTechInfoModel hrefTechInfo = null;
         for (ResTechInfoModel techInfo : techInfos) {
             if (techInfo.getTitle().equals(TransCodeUtil.CONVERT_SOURCE_KEY)) {
                 sourceLocation = techInfo.getLocation();//${ref-path}/edu/esp/lessonplans/2558b42d-ae05-42fc-b62b-797fe554867d.pkg/xxx.ppt
@@ -867,38 +870,33 @@ public class TransCodeUtil {
             }
             if(techInfo.getTitle().equals(TransCodeUtil.CONVERT_STOREINFO_KEY)) {
                 hrefLocation = techInfo.getLocation();
-                hrefTechInfo = techInfo;
             }
         }
 
-        ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();
-        if (!isHrefExist) {
-            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source未上传");
-            lifeCycle = resourceModel.getLifeCycle();
-            lifeCycle.setStatus(TransCodeUtil.getTransErrStatus(true));
-            resourceModel.setLifeCycle(lifeCycle);
-        } else {
-            LOG.info("source对应的值:" + sourceLocation);
-            String instanceKey = SessionUtil.getHrefInstanceKey(sourceLocation);
-            LOG.info("source对应的实例键值:" + instanceKey);//${ref-path}/edu
-            if (Constant.CS_INSTANCE_MAP.get(instanceKey) == null) {
-                LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source地址格式错误");
-                lifeCycle = resourceModel.getLifeCycle();
-                lifeCycle.setStatus(TransCodeUtil.CONVERT_STATUS_CONVERT_ERR);
-                resourceModel.setLifeCycle(lifeCycle);
-            }
-            String path = sourceLocation.replace(TransCodeUtil.REF_PATH, "");
-            TransCodeParam codeParam = TransCodeParam.build();
-            codeParam.buildInstanceKey(instanceKey);
-            codeParam.buildResType(resType);
-            codeParam.buildResId(resourceModel.getIdentifier());
-            codeParam.buildSourceFileId(path);
-            codeParam.buildReferer(referer);
-            codeParam.buildStatusBackup(statusBackup);
-            transCodeTrigger.triggerImage(codeParam);
-            /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
-                    lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
+        if (!isHrefExist && StringUtils.isNotEmpty(hrefLocation)) {
+            sourceLocation = hrefLocation;
         }
+
+        LOG.info("source对应的值:" + sourceLocation);
+        String instanceKey = SessionUtil.getHrefInstanceKey(sourceLocation);
+        LOG.info("source对应的实例键值:" + instanceKey);//${ref-path}/edu
+        if (Constant.CS_INSTANCE_MAP.get(instanceKey) == null) {
+            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source地址格式错误");
+            ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();
+            lifeCycle.setStatus(TransCodeUtil.CONVERT_STATUS_CONVERT_ERR);
+            resourceModel.setLifeCycle(lifeCycle);
+        }
+        String path = sourceLocation.replace(TransCodeUtil.REF_PATH, "");
+        TransCodeParam codeParam = TransCodeParam.build();
+        codeParam.buildInstanceKey(instanceKey);
+        codeParam.buildResType(resType);
+        codeParam.buildResId(resourceModel.getIdentifier());
+        codeParam.buildSourceFileId(path);
+        codeParam.buildReferer(referer);
+        codeParam.buildStatusBackup(statusBackup);
+        transCodeTrigger.triggerImage(codeParam);
+        /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
+                lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
     }
 
     /**

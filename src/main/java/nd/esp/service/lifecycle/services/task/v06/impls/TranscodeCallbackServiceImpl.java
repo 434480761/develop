@@ -144,7 +144,67 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             LOG.error("转码任务回调失败", e);
         }
     }
-        
+
+    @Override
+    public void imageTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException {
+        String resType = taskInfo.getResType();
+        String id = taskInfo.getUuid();
+
+        ResourceModel resource = null;
+        try {
+            resource = ndResourceService.getDetail(resType, id,
+                    IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC));
+        } catch (LifeCircleException e) { // 资源不存在时会抛出异常
+
+            LOG.error("转码完成的资源已删除", e);
+
+        }
+        if (resource == null) {
+
+            LOG.error("转码完成的资源已删除");
+
+            taskInfo.setStatus("resourse_deleted");
+            return ;
+        }
+        try {
+            int status = argument.getStatus();
+            if (1 == status) {
+                updateImageTechInfos(resource, argument, resType);
+
+                taskInfo.setStatus(PackageUtil.PackStatus.READY.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            } else {
+                taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            }
+
+            //update by lsm (只是移动顺序，保证生命周期最后改变（数据库）)
+            String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
+            if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
+                lifecycleService.addLifecycleStep(resType, id, status==1,
+                        status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
+                //恢复原状态
+                if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
+                    ResContributeModel contributeModel = new ResContributeModel();
+                    contributeModel.setTargetId("777");
+                    contributeModel.setTargetName("LCMS");
+                    contributeModel.setTargetType("USER");
+                    contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
+                    contributeModel.setLifecycleStatus(taskInfo.getDescription());
+                    contributeModel.setProcess(100.0f);
+                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
+                    MDC.put("resource", id);
+                    MDC.put("res_type", IndexSourceType.AssetType.getName());
+                    MDC.put("operation_type", "转码完成");
+                    MDC.put("remark", "历史视频转码完成："+taskInfo.getErrMsg());
+                }
+                MDC.clear();
+            }
+        } catch (Exception e) {
+            LOG.error("转码任务回调失败", e);
+        }
+    }
+
     /**
      * 添加requirement到 techInfo中
      * 
@@ -265,6 +325,73 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 LOG.info("UpdatePreview6: "+ObjectUtils.toJson(resource.getPreview()));
                 resLifecycleDao.updatePreview(resType, resource.getIdentifier(), resource.getPreview());
             }
+        }
+    }
+
+    private void updateImageTechInfos(ResourceModel resource, TransCodeCallBackParam argument, String resType) {
+        List<ResTechInfoModel> techInfos = resource.getTechInfoList();
+        if(techInfos == null){
+            techInfos = new ArrayList<ResTechInfoModel>();
+            resource.setTechInfoList(techInfos);
+        }
+
+        Map<String, String> metadataMap = argument.getMetadata();
+        Map<String,ResTechInfoModel> newTechInfos = new HashMap<String,ResTechInfoModel>();
+        if(metadataMap != null && StringUtils.isNotEmpty(metadataMap.get(TECH_INFO_SOURCE_KEY))){
+            for(ResTechInfoModel resTechInfoModel:techInfos){
+                if(resTechInfoModel!= null && TECH_INFO_HREF_KEYS.contains(resTechInfoModel.getTitle())){
+                    //newTechInfo = resTechInfoModel;
+                    newTechInfos.put(resTechInfoModel.getTitle(), resTechInfoModel);
+                }
+            }
+        }
+
+        //techInfo add
+        Map<String,String> locations = argument.getLocations();
+        for(String key : locations.keySet()) {
+//            String hrefKey = argument.getHref().equals(locations.get(key)) ? TECH_INFO_HREF_KEY : TECH_INFO_HREF_KEY+"-"+key;
+
+            ResTechInfoModel newTechInfo = newTechInfos.get(key);
+            if(newTechInfo == null) {
+                newTechInfo = new ResTechInfoModel();
+                newTechInfos.put(key, newTechInfo);
+                newTechInfo.setTitle(key);
+                newTechInfo.setIdentifier(UUID.randomUUID().toString());
+                newTechInfo.setRequirements(new ArrayList<TechnologyRequirementModel>());
+            }
+            newTechInfo.setLocation(locations.get(key));
+            String targetMetadata = null;
+            targetMetadata = metadataMap.get(key);
+            Map<String,Object> targetMetadataMap = ObjectUtils.fromJson(targetMetadata, Map.class);
+            long size=0;
+            if(targetMetadataMap!=null && targetMetadataMap.get("FileSize")!=null) {
+                BigDecimal bigDecimal=new BigDecimal(String.valueOf(targetMetadataMap.get("FileSize")));
+                size = bigDecimal.longValue();
+            }
+            if(targetMetadataMap!=null && targetMetadataMap.get("md5")!=null) {
+                newTechInfo.setMd5((String)targetMetadataMap.get("md5"));
+            }
+            newTechInfo.setSize(size);
+            newTechInfo.setFormat("image/jpg");
+
+            if(metadataMap != null){
+                if(StringUtils.isNotEmpty(metadataMap.get(key))) {
+                    addRequirement(newTechInfo,metadataMap.get(key));
+                }
+            }
+        }
+        try {
+            List<TechInfo> tiList = new ArrayList<TechInfo>();
+            for(String key : newTechInfos.keySet()) {
+                TechInfo ti = BeanMapperUtils.beanMapper(newTechInfos.get(key), TechInfo.class);
+                ti.setResource(resource.getIdentifier());
+                ti.setResType(resType);
+                ti.setRequirements(ObjectUtils.toJson(newTechInfos.get(key).getRequirements()));
+                tiList.add(ti);
+            }
+            techInfoRepository.batchAdd(tiList);
+        } catch (Exception e1) {
+            LOG.error("更新tech_info数据失败:"+e1.getMessage());
         }
     }
     
