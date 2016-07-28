@@ -1,7 +1,10 @@
 package nd.esp.service.lifecycle.services.titan;
 
+import nd.esp.service.lifecycle.daos.titan.TitanCoverageRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCoverageRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +15,8 @@ import java.util.List;
  */
 @Repository
 public class TitanCommonServiceImpl implements TitanCommonService {
+    private final static Logger LOG = LoggerFactory
+            .getLogger(TitanCoverageRepositoryImpl.class);
     public static final String EDGE="edge";
     public static final String VERTEX="vertex";
 
@@ -27,7 +32,7 @@ public class TitanCommonServiceImpl implements TitanCommonService {
             try {
                 titanCoverageRepository.delete(id);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{}" ,e.getMessage());
                 //TODO 出现异常处理方式，重新执行这条sql语句
             }
         } else if(type==VERTEX){
@@ -42,7 +47,7 @@ public class TitanCommonServiceImpl implements TitanCommonService {
             try {
                 titanCommonRepository.butchDeleteEdgeById(ids);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{}" ,e.getMessage());
                 //TODO 出现异常处理方式，重新执行这条sql语句
             }
         } else if(type==VERTEX){

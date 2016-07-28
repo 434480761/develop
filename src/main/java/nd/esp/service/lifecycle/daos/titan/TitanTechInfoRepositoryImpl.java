@@ -102,7 +102,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         try {
             titanCommonRepository.executeScript(deleteScriptBuffer, deleteParam);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resource);
             //TODO titan sync
             return false;
         }
@@ -125,7 +125,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         try {
             techInfoEdgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), graphParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());
             //TODO titan sync
             return null;
         }
@@ -143,7 +143,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         try {
             titanCommonRepository.deleteAllOutVertexByResourceAndVertexLabel(primaryCategory,identifier,"tech_info");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             return false;
         }
 

@@ -306,7 +306,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			} catch (Exception e) {
 				LOG.error("titanImportErrorData:{}" ,education.getIdentifier());
 				saveErrorSource(education);
-				e.printStackTrace();
 			}
 		}
 	}
@@ -1175,7 +1174,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             try {
                 titanCommonRepository.executeScript(script.toString(),param);
             } catch (Exception e) {
-                e.printStackTrace();
+				LOG.error("titan_repository error:{}" ,e.getMessage());
             }
         }
 	}

@@ -165,7 +165,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		try {
 			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), createRelationParams);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceRelation.getIdentifier());
 			//TODO titan sync
 			return null;
 		}
@@ -186,7 +186,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		try {
 			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() ,graphParams);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceRelation.getIdentifier());
 			//TODO titan sync
 			return null;
 		}

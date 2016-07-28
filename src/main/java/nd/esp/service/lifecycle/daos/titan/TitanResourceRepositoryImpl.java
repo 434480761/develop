@@ -77,7 +77,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         try {
             titanCommonRepository.deleteVertexByLabelAndIdentifier(primaryCategory, identifier);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
             //TODO titan sync
             return false;
         }
@@ -106,7 +106,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
     	try {
             return titanCommonRepository.executeScriptResultSet(script, scriptParamMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
         }
     	
     	return null;
@@ -117,7 +117,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         try {
             oldNodeId = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),model.getIdentifier());
             //TODO titan sync
             return null;
         }
@@ -134,8 +134,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             try {
                 nodeId = titanCommonRepository.executeScriptUniqueLong(scriptBuffer.toString() ,graphParams);
             } catch (Exception e) {
-                LOG.error("资源保存到titan失败");
-                e.printStackTrace();
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),model.getIdentifier());
                 //TODO titan sync
                 return null;
             }
