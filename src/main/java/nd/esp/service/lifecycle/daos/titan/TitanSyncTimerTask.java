@@ -56,7 +56,7 @@ public class TitanSyncTimerTask {
             LOG.info("titan_sync_ing....");
             return;
         }
-        if (!checkHaveData()){
+        if (checkHaveData()){
             LOCKED = true;
             LOG.info("titan_sync_start");
             try{
@@ -103,12 +103,10 @@ public class TitanSyncTimerTask {
                 continue;
             }
             for (TitanSync titanSync : entitylist) {
-                if(titanSync.getExecuteTimes() < MAX_REPORT_TIMES){
-                    if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                        titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                    } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                        titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                    }
+                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
+                    titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
+                } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
+                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
                 }
             }
 
