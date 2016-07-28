@@ -34,4 +34,5 @@ public interface TitanResourceService {
 	public void checkOneData(String primaryCategory, String id);
 
 	public void checkAllData(String primaryCategory);
+	public String importStatus();
 }

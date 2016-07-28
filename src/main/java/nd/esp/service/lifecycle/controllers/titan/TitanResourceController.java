@@ -178,4 +178,9 @@ public class TitanResourceController {
 		titanResourceService.checkAllData(resourceType);
 		return 0;
 	}
+	@RequestMapping(value = "importStatus", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String importStatus(){
+		return titanResourceService.importStatus();
+	}
 }

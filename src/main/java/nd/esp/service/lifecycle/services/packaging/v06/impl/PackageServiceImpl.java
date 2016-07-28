@@ -120,8 +120,8 @@ public class PackageServiceImpl implements PackageService {
             
         // 策略判断,如果path不符合规范,则提示
         // ${ref-path}/edu/esp/%s/%s.pkg/main.xml
-        if ((!path.contains(Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getPath())
-                && !path.contains(Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE_OTHER).getPath()))
+        if ((!path.contains(Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getPath().replace("esp", ""))
+                && !path.contains(Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE_OTHER).getPath().replace("esp","")))
               || !path.contains(param.getUuid()+".pkg")) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.ResourceRequestArchivingFail.getCode(), "元数据的href不符合规范格式");
@@ -141,7 +141,7 @@ public class PackageServiceImpl implements PackageService {
         }
         String oldTaskId = null;
         if(taskInfo!=null) {
-            taskRepository.getEntityManager().refresh(taskInfo, LockModeType.PESSIMISTIC_WRITE);
+//            taskRepository.getEntityManager().refresh(taskInfo, LockModeType.PESSIMISTIC_WRITE);
             oldTaskId = taskInfo.getTaskId();
         }
 

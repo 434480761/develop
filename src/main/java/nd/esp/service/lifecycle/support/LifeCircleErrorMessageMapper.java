@@ -148,7 +148,8 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	ParentNotFound("LC/PARENT_NOT_FOUND",getPropertyValue("teachingMaterialController.createChapter.checkParent.fail")),
 	TeachingMaterialNotFound("LC/TEACHING_MATERIAL_NOT_FOUND",getPropertyValue("teachingMaterialController.createChapter.check.fail")),
 	HaveChildrenDeleteChapterFail("LC/HAVE_CHILDREN_DELETE_CHAPTER_FAIL",getPropertyValue("teachingMaterialController.deleteChapter.check.fail")),
-
+	CheckResourceTagFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("resourceTagServiceImpl.addResourceTags.check.fail")),
+	
 	//Addon
 	CreateAddonFail("LC/CREATE_ADDON_FAIL",getPropertyValue("addonsController.createAddon.operation.fail")),
 	DeleteAddonSuccess("LC/DELETE_ADDON_SUCCESS",getPropertyValue("addonsController.deleteAddon.operation.success")),

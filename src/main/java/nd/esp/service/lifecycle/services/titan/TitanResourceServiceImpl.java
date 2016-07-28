@@ -247,7 +247,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
-	public void checkOneData(String primaryCategory, String id){
+	public void checkOneData(String primaryCategory, String id) {
 		EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
 		Education education = null;
 		try {
@@ -279,6 +279,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
 
+	}
+
+	@Override
+	public String importStatus() {
+		return "primaryCategory:" +s_primaryCategory +"  totalPage:" + s_totalPage +"  page"+ s_page;
 	}
 
 	@Override
@@ -508,6 +513,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				e.printStackTrace();
 				LOG.error(e.getMessage());
 			}
+			setStatisticParam("relations", resourcePage.getTotalPages(), page);
 		} while (++page < resourcePage.getTotalPages());
 
 		return indexNum;
@@ -632,6 +638,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					LOG.error(e.getMessage());
 					LOG.error("importTitanMySqlError page:{} primaryCategory:{}",page,primaryCategory);
 				}
+				setStatisticParam(primaryCategory,resourcePage.getTotalPages(),page);
 			} while (++page < resourcePage.getTotalPages());
 
 			return indexNum;

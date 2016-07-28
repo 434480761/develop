@@ -122,6 +122,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/*/archive_webp");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/transcode/callback");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/transcode/videoCallback");
+		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/transcode/image_callback");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/*/packaging/callback");
 	}
 	

@@ -15,6 +15,8 @@ import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -30,8 +32,7 @@ import javax.annotation.PostConstruct;
  */
 @Component
 public class GremlinClientFactory implements ApplicationContextAware {
-//	 private static final Logger logger =
-//	 LoggerFactory.getLogger(GremlinClientFactory.class);
+	private final static Logger LOG = LoggerFactory.getLogger(GremlinClientFactory.class);
 
 	private static Client client;
 
@@ -80,10 +81,13 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 	private static Client reConnectServer(){
 		try {
-			client.close();
+			if(client != null){
+				client.close();
+			}
 		} catch (Exception ex){
 			ex.printStackTrace();
 		}
+
 		init();
 		return client;
 	}
@@ -91,19 +95,26 @@ public class GremlinClientFactory implements ApplicationContextAware {
 	private static boolean isConnection(){
 		String script = "1 + 1";
 		if(client == null){
+			LOG.info("titan_service_disconnect_client_null");
 			return false;
 		}
+		Integer value = 0;
 		try {
 			ResultSet resultSet = client.submit(script);
 			Iterator<Result> iterator = resultSet.iterator();
 			if (iterator.hasNext()) {
-				Integer value = iterator.next().getInt();
-				if(value == 2){
-					return true;
-				}
+				value = iterator.next().getInt();
 			}
 		} catch (RuntimeException ex){
+			LOG.info("titan_service_disconnect_exception");
 			return false;
+		}
+
+		if(value == 2){
+			LOG.info("titan_service_connect_success");
+			return true;
+		} else {
+			LOG.info("titan_service_disconnect");
 		}
 		return false;
 	}
@@ -116,10 +127,10 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			public void run() {
 				while (true){
 					if(isConnection()){
-						sleepTime = 1000 * 60;
+						sleepTime = 1000 * 60 * 5;
 					} else {
 						reConnectServer();
-						sleepTime = 1000 * 30;
+						sleepTime = 1000 * 60;
 					}
 					try {
 						Thread.sleep(sleepTime);

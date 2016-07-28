@@ -9,4 +9,6 @@ import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
 public interface TranscodeCallbackService {
 
     void transcodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException;
+
+    void imageTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException;
 }
