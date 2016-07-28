@@ -1500,6 +1500,12 @@ public class CommonHelper {
 					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
 					words + "--words格式错误,括号不对");
 		}
+		// 去掉最外层"()"
+		if (words.startsWith("(")) {
+			if (words.endsWith(")")) {
+				words = words.substring(1, words.length() - 1).trim();
+			}
+		}
 		String check = words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
 		if (check.contains(",")) {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1516,12 +1522,7 @@ public class CommonHelper {
 					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
 					words + "--words格式错误,布尔操作符不能出现在开头");
 		}
-
-		if (words.startsWith("(")) {
-			if (words.endsWith(")")) {
-				words = words.substring(1, words.length() - 1).trim();
-			}
-		}
+		// 操作符转化
 		words = words.replaceAll(" or ", " OR ").replaceAll(" and ", " AND ");
 		if (words.contains(" OR ")) {
 			if(!checkOptNum(words, " OR ")){
