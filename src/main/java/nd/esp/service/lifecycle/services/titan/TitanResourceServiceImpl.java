@@ -269,7 +269,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
 
-
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
@@ -1243,7 +1242,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             try {
                 titanCommonRepository.executeScript(script.toString(),param);
             } catch (Exception e) {
-                e.printStackTrace();
+				LOG.error("titan_repository error:{}" ,e.getMessage());
             }
         }
 	}

@@ -215,7 +215,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			try {
 				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
 				//TODO titan sync
 				return null;
 			}
@@ -235,7 +235,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			try {
 				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
 				//TODO titan sync
 				return null;
 			}
@@ -257,7 +257,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		try {
 			sourcePathId = titanCommonRepository.executeScriptUniqueLong(queryPathScript,queryPathParams);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
 			//TODO titan sync
 			//获取ID不成功后直接返回，不进行后续的操作
 			return null;
@@ -277,7 +277,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			try {
 				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
 				//TODO titan sync
 				return null;
 			}
@@ -290,7 +290,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			try {
 				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
 				//TODO titan sync
 				return null;
 			}
@@ -314,7 +314,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			try {
 				taxoncodeId = titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{}" ,e.getMessage());
 				//FIXME 这个地方的代码应该做
 			}
 
@@ -348,6 +348,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		try {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
+			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),identifier);
 			// TODO Auto-generated catch block
 			//TODO titan sync
 			e.printStackTrace();

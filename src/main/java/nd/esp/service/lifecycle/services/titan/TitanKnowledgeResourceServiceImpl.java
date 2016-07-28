@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.services.titan;
 
+import nd.esp.service.lifecycle.daos.titan.TitanCoverageRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgePathViewModel;
@@ -9,6 +10,8 @@ import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +47,8 @@ import java.util.*;
 
 @Service
 public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResourceService {
+    private final static Logger LOG = LoggerFactory
+            .getLogger(TitanCoverageRepositoryImpl.class);
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
@@ -68,7 +73,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
 			result = titanCommonRepository.executeScriptResultSet(script.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
 			return null;
 		}
         Iterator<Result> iterator = result.iterator();
@@ -120,7 +125,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
 			result = titanCommonRepository.executeScriptResultSet(script.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
 			return null;
 		}
         Iterator<Result> iterator = result.iterator();
@@ -156,7 +161,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
 			result = titanCommonRepository.executeScriptResultSet(script.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
 			return null;
 		}
         Iterator<Result> iterator = result.iterator();
@@ -201,7 +206,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
 			result = titanCommonRepository.executeScriptResultSet(script.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
 			return null;
 		}
         Iterator<Result> iterator = result.iterator();

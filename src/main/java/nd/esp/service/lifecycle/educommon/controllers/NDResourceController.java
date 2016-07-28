@@ -813,7 +813,7 @@ public class NDResourceController {
     private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
-        int intevalTimeMillis = -600000;
+        int intevalTimeMillis = -60000;
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MILLISECOND, intevalTimeMillis);
         Cloner cloner = new Cloner();
@@ -898,7 +898,7 @@ public class NDResourceController {
             ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult) {
         String field = "lc_create_time";
-        String sort = "ASC";
+        String sort = "DESC";
         if (orderMap != null) {
             for (Entry<String,String> entry : orderMap.entrySet()) {
                 field = entry.getKey();
@@ -921,15 +921,16 @@ public class NDResourceController {
             ListViewModel<ResourceModel> titanQueryResult) {
         List<ResourceModel> titanAndDbMergeResultItems = titanQueryResult.getItems();
         List<ResourceModel> resourceQueryByTitanResultSubList = new ArrayList<ResourceModel>();
-        int listLastIndex = titanAndDbMergeResultItems.size() > size + begin ? size + begin : titanAndDbMergeResultItems.size();
-        if (moreOffset >= begin) {
+        if (moreOffset > begin) {
+            int listLastIndex = titanAndDbMergeResultItems.size() > size + begin ? size + begin : titanAndDbMergeResultItems.size();
             for (int i = begin; i < listLastIndex; i++) {
                 resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
             }
         }
         
-        if (moreOffset < begin) {
-            for (int i = moreOffset; i < listLastIndex; i++) {
+        if (moreOffset <= begin) {
+            int listLastIndex = titanAndDbMergeResultItems.size() - moreOffset > size ? size : titanAndDbMergeResultItems.size() - moreOffset;
+            for (int i = moreOffset; i < moreOffset + listLastIndex; i++) {
                 resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
             }
         }

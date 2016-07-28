@@ -3,6 +3,8 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanTreeRepository;
 import nd.esp.service.lifecycle.support.busi.titan.TitanTreeType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +17,8 @@ import java.util.Map;
  */
 @Repository
 public class TitanTreeRepositoryImpl implements TitanTreeRepository{
+    private final static Logger LOG = LoggerFactory
+            .getLogger(TitanCoverageRepositoryImpl.class);
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
@@ -31,7 +35,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             titanCommonRepository.executeScript(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{} identifier:{}" ,e.getMessage(),identifier);
             //TODO titan 异常处理
         }
     }
@@ -48,7 +52,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             titanCommonRepository.executeScript(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
     }
@@ -62,7 +66,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptListDouble(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
 
@@ -81,7 +85,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
         return null;
@@ -92,7 +96,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
 
@@ -108,7 +112,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
         return null;
@@ -122,7 +126,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
         return null;
@@ -138,7 +142,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
         return null;
@@ -154,7 +158,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
 
@@ -171,7 +175,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueString(script, paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
         return null;
