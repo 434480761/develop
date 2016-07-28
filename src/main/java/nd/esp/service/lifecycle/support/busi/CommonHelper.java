@@ -1494,6 +1494,12 @@ public class CommonHelper {
      */
 	public static String checkWordSegmentation(String words) {
 		if (words == null || "".equals(words)) return "";
+		words = checkBlank(words);//检查空格
+		if(!checkBrackets(words)){//检查括号
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+					words + "--words格式错误,括号不对");
+		}
 		String check = words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
 		if (check.contains(",")) {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1511,6 +1517,11 @@ public class CommonHelper {
 					words + "--words格式错误,布尔操作符不能出现在开头");
 		}
 
+		if (words.startsWith("(")) {
+			if (words.endsWith(")")) {
+				words = words.substring(1, words.length() - 1).trim();
+			}
+		}
 		words = words.replaceAll(" or ", " OR ").replaceAll(" and ", " AND ");
 		if (words.contains(" OR ")) {
 			if(!checkOptNum(words, " OR ")){
@@ -1531,19 +1542,60 @@ public class CommonHelper {
 		return words;
 	}
 
+	/**
+	 * 检查操作符
+	 * @param words
+	 * @param opt
+     * @return
+     */
 	public static boolean checkOptNum(String words, String opt) {
 		if (words == null) return true;
-		int total = 0;
-		for (String tmp = words;tmp.length()>=opt.length();){
-			if(tmp.indexOf(opt) == 0){
-				total ++;
-			}
-			tmp = tmp.substring(1);
-		}
+		int total = getSubStrAppearTimes(words,opt);
 		if (total == words.split(opt).length - 1) {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * 检查括号
+	 * @param words
+	 * @return
+     */
+	public static boolean checkBrackets(String words) {
+		if (words == null) return true;
+		int left = getSubStrAppearTimes(words, "(");
+		int right = getSubStrAppearTimes(words, ")");
+		if (left == right) return true;
+		return false;
+	}
+
+	/**
+	 * 多个连续空格变成单个空格
+	 * @param str
+	 * @return
+     */
+	public static String checkBlank(String str) {
+		if (str == null) return "";
+		return str.replaceAll("\\s{1,}", " ");
+	}
+
+	/**
+	 * 取字符在字符串中出现的次数
+	 * @param str
+	 * @param subStr
+     * @return
+     */
+	public static int getSubStrAppearTimes(String str, String subStr) {
+		if (str == null) return 0;
+		int total = 0;
+		for (String tmp = str; tmp.length() >= subStr.length(); ) {
+			if (tmp.indexOf(subStr) == 0) {
+				total++;
+			}
+			tmp = tmp.substring(1);
+		}
+		return total;
 	}
 	
 	/**

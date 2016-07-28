@@ -1,11 +1,14 @@
 package nd.esp.service.lifecycle.support.busi.elasticsearch;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -208,18 +211,19 @@ public class EsIndexQueryBuilder {
         List<String> notWords =fetchContainsNotWords(words);
         if (notWords.size() == 0) return dealWithWords(words, false);
 
-
-        words=words.replaceAll("\\)", "").replaceAll("\\(", "").trim();
-
         // 只有“-”
         String not = notWords.get(0);
         if(not.equals(words)) return dealWithWords(words,true);
 
+        if (!words.startsWith("-")) {//"-"要在表达式最前面
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), this.words + ",words格式错误,‘-’要放在表达式最前面");
+        }
+
         String has = words.replace(not, "").trim();
         if (has.startsWith("AND ")) {
-            has = has.replace("AND ", "");
-        } else if (has.endsWith(" AND")) {
-            has = has.replace(" AND", "");
+            has = has.replaceFirst("AND ", "");
+        } else {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(), "不支持查询条件:"+this.words);
         }
 
         StringBuffer queryNot = new StringBuffer();
