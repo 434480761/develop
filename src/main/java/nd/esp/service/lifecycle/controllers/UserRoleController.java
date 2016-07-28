@@ -237,7 +237,7 @@ public class UserRoleController {
 		//返回内容
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("limit", limit);
-		result.put("items", userRoleViewModelArrayList == null ? null :userRoleViewModelArrayList.toArray());
+		result.put("items", userRoleViewModelArrayList);
 		return result;
 	}
 
