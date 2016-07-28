@@ -28,7 +28,6 @@ import java.util.*;
 public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
     public static int MAX_REPORT_TIMES = 10;
-    public static boolean LOCKED = false;
     public static boolean TITAN_SYNC_SWITCH = true;
 
     @Autowired
@@ -42,7 +41,7 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-    @Scheduled(fixedRate=300000)
+    @Scheduled(fixedDelay=300000)
     public void syncTask(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_closed");
@@ -52,24 +51,14 @@ public class TitanSyncTimerTask {
             LOG.info("titan_client_closed");
             return;
         }
-        if(LOCKED){
-            LOG.info("titan_sync_ing....");
-            return;
-        }
         if (checkHaveData()){
-            LOCKED = true;
             LOG.info("titan_sync_start");
             try{
                 syncData();
             } catch (Exception e){
                 e.printStackTrace();
-            } finally {
-                LOCKED = false;
             }
-            LOCKED = false;
         }
-
-
     }
 
     private void syncData() {
