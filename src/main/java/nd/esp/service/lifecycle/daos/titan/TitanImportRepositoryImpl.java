@@ -224,8 +224,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         } else {
             checkAllScript.append(".id()");
         }
-        Long id = null;
-        try {
+        Long id = null;        try {
+
             id = titanCommonRepository.executeScriptUniqueLong(checkAllScript.toString(), paramMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -248,8 +248,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             e.printStackTrace();
         }
 
-        Integer edgeCountMysql = coverageMap.size() + techInfoMap.size() + categoryMap.size() + categoryPathSet.size();
-        if (edgeCount == null || edgeCount.intValue() != edgeCountMysql ){
+        //category在保存的时候没有做去重处理，在导入数据的时候有做去重处理
+        Integer edgeCountMysql = coverageMap.size() + techInfoMap.size() + resourceCategoryList.size() + categoryPathSet.size();
+        if (edgeCount == null || edgeCount.intValue() > edgeCountMysql ){
             LOG.info("数据校验：数据有误 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());
             return false;
         }
