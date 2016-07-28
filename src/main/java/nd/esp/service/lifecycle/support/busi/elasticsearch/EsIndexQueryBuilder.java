@@ -1,11 +1,14 @@
 package nd.esp.service.lifecycle.support.busi.elasticsearch;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -220,6 +223,10 @@ public class EsIndexQueryBuilder {
             has = has.replace("AND ", "");
         } else if (has.endsWith(" AND")) {
             has = has.replace(" AND", "");
+        } else {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                    "不支持查询条件:"+this.words);
         }
 
         StringBuffer queryNot = new StringBuffer();
