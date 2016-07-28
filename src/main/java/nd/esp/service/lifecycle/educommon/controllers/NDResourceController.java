@@ -887,8 +887,8 @@ public class NDResourceController {
             beginForTitan = begin - moreOffset;
             endForTitan = moreOffset + size;
         }else {
-            beginForTitan = begin;
-            endForTitan = size;
+            beginForTitan = 0;
+            endForTitan = begin + size;
         }
         String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(endForTitan).append(")").toString();
         return limitForTitan;
@@ -922,8 +922,8 @@ public class NDResourceController {
         List<ResourceModel> titanAndDbMergeResultItems = titanQueryResult.getItems();
         List<ResourceModel> resourceQueryByTitanResultSubList = new ArrayList<ResourceModel>();
         if (moreOffset > begin) {
-            int listLastIndex = titanAndDbMergeResultItems.size() > size ? size : titanAndDbMergeResultItems.size();
-            for (int i = 0; i < listLastIndex; i++) {
+            int listLastIndex = titanAndDbMergeResultItems.size() > size + begin ? size + begin : titanAndDbMergeResultItems.size();
+            for (int i = begin; i < listLastIndex; i++) {
                 resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
             }
         }
