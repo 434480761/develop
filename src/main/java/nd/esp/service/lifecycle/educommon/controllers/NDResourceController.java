@@ -885,8 +885,8 @@ public class NDResourceController {
             beginForTitan = begin - moreOffset;
             endForTitan = moreOffset + size;
         }else {
-            beginForTitan = 0;
-            endForTitan = begin + size;
+            beginForTitan = begin;
+            endForTitan = size;
         }
         String limitForTitan = new StringBuffer().append("(").append(beginForTitan).append(",").append(endForTitan).append(")").toString();
         return limitForTitan;
@@ -896,7 +896,7 @@ public class NDResourceController {
             ListViewModel<ResourceModel> titanQueryResult,
             ListViewModel<ResourceModel> dbQueryResult) {
         String field = "lc_create_time";
-        String sort = "ASC";
+        String sort = "DESC";
         if (orderMap != null) {
             for (Entry<String,String> entry : orderMap.entrySet()) {
                 field = entry.getKey();
@@ -919,15 +919,16 @@ public class NDResourceController {
             ListViewModel<ResourceModel> titanQueryResult) {
         List<ResourceModel> titanAndDbMergeResultItems = titanQueryResult.getItems();
         List<ResourceModel> resourceQueryByTitanResultSubList = new ArrayList<ResourceModel>();
-        int listLastIndex = titanAndDbMergeResultItems.size() > size + begin ? size + begin : titanAndDbMergeResultItems.size();
-        if (moreOffset >= begin) {
-            for (int i = begin; i < listLastIndex; i++) {
+        if (moreOffset > begin) {
+            int listLastIndex = titanAndDbMergeResultItems.size() > size ? size : titanAndDbMergeResultItems.size();
+            for (int i = 0; i < listLastIndex; i++) {
                 resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
             }
         }
         
-        if (moreOffset < begin) {
-            for (int i = moreOffset; i < listLastIndex; i++) {
+        if (moreOffset <= begin) {
+            int listLastIndex = titanAndDbMergeResultItems.size() - moreOffset > size ? size : titanAndDbMergeResultItems.size() - moreOffset;
+            for (int i = moreOffset; i < moreOffset + listLastIndex; i++) {
                 resourceQueryByTitanResultSubList.add(titanAndDbMergeResultItems.get(i));
             }
         }
