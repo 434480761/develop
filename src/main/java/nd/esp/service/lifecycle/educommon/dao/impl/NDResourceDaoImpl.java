@@ -2275,6 +2275,8 @@ public class NDResourceDaoImpl implements NDResourceDao{
             	int i = 0;
             	for(String cgexlike : cgex4Like){
             		params.put(paramHead + "cgexlike" + i, cgexlike.replaceAll("\\*", "\\%"));
+            		
+            		i++;
             	}
             }
         }
