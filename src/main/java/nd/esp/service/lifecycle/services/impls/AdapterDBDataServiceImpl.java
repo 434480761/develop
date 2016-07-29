@@ -35,10 +35,12 @@ import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
 import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.Knowledge;
+import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourcePreviews;
 import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceCategoryRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourcePreviewsRepository;
 import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
@@ -63,6 +65,10 @@ import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
 
+
+
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -80,6 +86,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.nd.gaea.client.http.BearerAuthorizationProvider;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
@@ -121,6 +128,9 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private ResCoverageRepository resCoverageRepository;
     
     
     public Map<String,Integer> adapterInstructionalobjectives(){
@@ -1235,6 +1245,62 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 		}
 		
 		System.out.println("循环次数:" + count);
+	}
+	
+	@Transactional
+	public Map<String,String> adapterCoverage(String oldUserId,String newUserId){
+		//根据旧的oldUserId找出所有的覆盖范围
+		String sql = "select identifier,res_type,resource,target,strategy from res_coverages where target='"+oldUserId+"'";
+		//判断资源和新的newUserId是否存在覆盖范围
+		List<Map<String,Object>> list = jdbcTemplate.queryForList(sql);
+		
+		List<String> updateSql = new ArrayList<String>();
+		
+		List<ResCoverage> rcList = new ArrayList<ResCoverage>();
+		
+		
+		//修改旧覆盖范围的strategy为SHAREING
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String identifier = (String)map.get("identifier");
+				String resType = (String)map.get("res_type");
+				String resource = (String)map.get("resource");
+				String target = (String)map.get("target");
+				String strategy = (String)map.get("strategy");
+				if(!"SHAREING".equals(strategy)){
+					updateSql.add("update res_coverages set strategy='SHAREING' where identifier = '"+identifier+"'");
+				}
+				String querySql = "select identifier from res_coverages where resource='"+resource+"' and target = '"+newUserId+"'";
+				List<Map<String,Object>> ll = jdbcTemplate.queryForList(querySql);
+				if(CollectionUtils.isEmpty(ll)){
+					ResCoverage rc = new ResCoverage();
+					rc.setIdentifier(UUID.randomUUID().toString());
+					rc.setResource(resource);
+					rc.setResType(resType);
+					rc.setStrategy("OWNER");
+					rc.setTitle("copy from "+target);
+					rc.setTarget(newUserId);
+					rc.setTargetTitle("User");
+					rc.setTargetType("User");
+					rcList.add(rc);
+				}
+			}
+		}
+		//新增覆盖范围
+		String[] a = new String[]{};
+		if(CollectionUtils.isNotEmpty(updateSql)){
+			a = updateSql.toArray(a);
+			jdbcTemplate.batchUpdate(a);
+		}
+		
+		if(CollectionUtils.isNotEmpty(rcList)){
+			try {
+				resCoverageRepository.batchAdd(rcList);
+			} catch (EspStoreException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
     
 //	@Override
