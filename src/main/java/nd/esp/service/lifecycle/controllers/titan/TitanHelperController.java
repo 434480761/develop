@@ -154,6 +154,8 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		script = CommonHelper.checkBlank(script);
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
 			resultSet = titanCommonRepository.executeScriptResultSet(script, param);
