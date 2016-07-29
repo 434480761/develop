@@ -290,7 +290,7 @@ public class NDResourceServiceImpl implements NDResourceService{
      * @author linsm
      */
     @Override
-	public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,
+	public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,List<String> fields,
 			List<String> includes, Set<String> categories, Set<String> categoryExclude,
 			List<Map<String, String>> relations, List<String> coverages,
 			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
@@ -307,7 +307,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		//just for test by lsm
 		listViewModel = 
-				titanSearchService.searchUseES(resType, includes, params, orderMap,
+				titanSearchService.searchUseES(resType,fields, includes, params, orderMap,
 						result[0], result[1],reverse,words);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
@@ -2125,8 +2125,8 @@ public class NDResourceServiceImpl implements NDResourceService{
      * @author linsm
      * @param resourceType
      * @param resourceModel
-     * @param update
-     * @param oldEbook
+     * @param operationType
+     * @param oldBean
      * @since
      */
     @SuppressWarnings("unchecked")
@@ -2741,7 +2741,18 @@ public class NDResourceServiceImpl implements NDResourceService{
 								break;
 							case "update":
 								if (resourceCategory.getIdentifier() != null) {
-									resourceCategories.add(resourceCategory);
+									try {
+										ResourceCategory bean = (ResourceCategory) repository.get(resourceCategory.getIdentifier());
+										if(null!=bean && uuid.equals(bean.getResource())) {
+											resourceCategories.add(resourceCategory);
+										}
+									} catch (EspStoreException e) {
+										LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+										throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+												LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+												e.getLocalizedMessage());
+									}
 								}
 								break;
 							case "delete":

@@ -169,7 +169,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			titanCommonRepository.executeScript(script, paramMap);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),id);
 			return false;
 		}
 		return true;
@@ -230,7 +230,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 					graphParams);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("titan_repository error:{}" ,e.getMessage());
 		}
 		return null;
 	}
@@ -265,7 +265,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			try {
 				coveragePathId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() , innerGraphParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{} identifier:{}" ,e.getMessage(),resCoverage.getResource());
 				//TODO titan sync
 				return null;
 			}
@@ -281,7 +281,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			try {
 				coveragePathId = titanCommonRepository.executeScriptUniqueString(script , graphParams);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.error("titan_repository error:{} identifier:{}" ,e.getMessage(),resCoverage.getResource());
 				//TODO titan sync
 				return null;
 			}
@@ -322,7 +322,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			titanCommonRepository.executeScript(deleteScript, param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("titan_repository error:{}" ,e.getMessage());
 		}
 
 		StringBuffer addScript = new StringBuffer(
@@ -338,7 +338,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			titanCommonRepository.executeScript(addScript.toString(), param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("titan_repository error:{}" ,e.getMessage());
 		}
 
 	}

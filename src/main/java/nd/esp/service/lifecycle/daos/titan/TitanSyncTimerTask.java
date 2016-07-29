@@ -28,7 +28,6 @@ import java.util.*;
 public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
     public static int MAX_REPORT_TIMES = 10;
-    public static boolean LOCKED = false;
     public static boolean TITAN_SYNC_SWITCH = true;
 
     @Autowired
@@ -42,31 +41,23 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-    @Scheduled(fixedRate=300000)
+    @Scheduled(fixedDelay=300000)
     public void syncTask(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_closed");
             return;
         }
         if (!StaticDatas.TITAN_SWITCH){
-            LOG.info("titan_client_closet");
-            return;
-        }
-        if(LOCKED){
-            LOG.info("正在同步数据....");
+            LOG.info("titan_client_closed");
             return;
         }
         if (checkHaveData()){
-            LOCKED = true;
-            LOG.info("titan sync start");
+            LOG.info("titan_sync_start");
             try{
                 syncData();
             } catch (Exception e){
                 e.printStackTrace();
-            } finally {
-                LOCKED = false;
             }
-            LOCKED = false;
         }
     }
 
@@ -101,12 +92,10 @@ public class TitanSyncTimerTask {
                 continue;
             }
             for (TitanSync titanSync : entitylist) {
-                if(titanSync.getExecuteTimes() < MAX_REPORT_TIMES){
-                    if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                        titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                    } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                        titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                    }
+                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
+                    titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
+                } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
+                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
                 }
             }
 

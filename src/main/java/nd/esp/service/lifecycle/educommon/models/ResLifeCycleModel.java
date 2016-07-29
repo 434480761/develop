@@ -3,8 +3,6 @@ package nd.esp.service.lifecycle.educommon.models;
 import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 
 /**
  * @author johnny

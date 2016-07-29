@@ -112,12 +112,12 @@ public class AdapterDBDataController {
 
     }
     
-    @RequestMapping(value = "/videos/transcode/id",method=RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody Map<String,String> triggerVideoTranscodeById(@RequestBody List<String> listIds,
+    @RequestMapping(value = "/{resType}/transcode/id",method=RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public @ResponseBody Map<String,String> triggerVideoTranscodeById(@PathVariable String resType, @RequestBody List<String> listIds,
             @RequestParam(value = "onlyOgv", required = false,defaultValue = "false") boolean onlyOgv){
 
 
-       return this.adapterDBDataService.triggerVideoTranscodeByIds(listIds, onlyOgv);
+       return this.adapterDBDataService.triggerTranscodeByIds(resType, listIds, onlyOgv);
 
     }
     
@@ -202,7 +202,6 @@ public class AdapterDBDataController {
      * 0触发打包的开关
      * <p>Create Time: 2015年12月21日   </p>
      * <p>Create author: liuwx   </p>
-     * @param canquery
      * @return
      */
 //    @RequestMapping(value = "/task/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })

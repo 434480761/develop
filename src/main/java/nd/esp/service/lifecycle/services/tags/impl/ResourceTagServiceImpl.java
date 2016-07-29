@@ -15,8 +15,10 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.CategoryData;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.ResourceTags;
+import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceTagRepository;
 import nd.esp.service.lifecycle.services.tags.ResourceTagService;
@@ -24,6 +26,7 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.v06.ResourceTagViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	private ChapterRepository chapterRepository;
 	
 	@Autowired
+	private CategoryDataRepository categoryDataRepository;
+	
+	@Autowired
 	private ResourceTagRepository resourceTagRepository;
 	
 	@Autowired
@@ -49,7 +55,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	
 	@Override
 	@Transactional
-	public Map<String, String> addResourceTags(String cid,
+	public Map<String, String> addResourceTags(String cid,String category,
 			Map<String, Integer> params) {
 		long time = System.currentTimeMillis();
 		Map<String,String> returnMap = new HashMap<String, String>();
@@ -62,17 +68,35 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.ChapterNotFound);
 			}
 		} catch (EspStoreException e) {
-			e.printStackTrace();
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getMessage());
+		}
+		//校验category的有效性
+		if(!"$RA0101".equals(category)){
+			try {
+				CategoryData cd = new CategoryData();
+				cd.setNdCode(category);
+				cd = categoryDataRepository.getByExample(cd);
+				if(cd == null){
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckResourceTagFail);
+				}
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+	                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+	                    e.getMessage());
+			}
 		}
 		
 		//2、根据章节、标签获取统计数量
 		List<ResourceTags> queryResult = null;
 		if(params != null){
 			Set<String> keys = params.keySet();
-			String sql = "select * from resource_tags where resource = :resource and tag in (:tags) for update";
+			String sql = "select * from resource_tags where resource = :resource and category = :category and tag in (:tags) for update";
 			Query query = em.createNativeQuery(sql, ResourceTags.class);
 			query.setParameter("resource", cid);
 			query.setParameter("tags", keys);
+			query.setParameter("category", category);
 			queryResult = query.getResultList();
 		}
 		
@@ -102,6 +126,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 						tmp.setLu(new BigDecimal(time));
 						tmp.setResource(cid);
 						tmp.setTag(key);
+						tmp.setCategory(category);
 						addList.add(tmp);
 					}
 				}
@@ -119,6 +144,7 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 					tmp.setLu(new BigDecimal(time));
 					tmp.setResource(cid);
 					tmp.setTag(key);
+					tmp.setCategory(category);
 					addList.add(tmp);
 				}
 			}
@@ -140,15 +166,21 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	}
 
 	@Override
-	public Map<String,Object> queryResourceTagsByCid(String cid,
+	public Map<String,Object> queryResourceTagsByCid(String cid,String category,
 			String limit) {
 		Map<String,Object> returnMap = new HashMap<String, Object>();
 		List<ResourceTagViewModel> list = new ArrayList<ResourceTagViewModel>();
 		//1、校验limit的合法性
         Integer[] result = ParamCheckUtil.checkLimit(limit);
-        String countSql = "select count(identifier) from resource_tags where resource = ? and count > 0";
-        String sql = "select * from resource_tags where resource = :resource and count > 0 order by count desc limit :offset,:pagesize";
         String[] args = {cid};
+        String countSql = "select count(identifier) from resource_tags where resource = ? and count > 0";
+        String sql = "select * from resource_tags where resource = :resource and count > 0 order by category desc,count desc limit :offset,:pagesize";
+        if(StringUtils.isNotEmpty(category)){
+        	countSql += " and category = ?";
+        	sql = "select * from resource_tags where resource = :resource and count > 0 and category = :category order by count desc limit :offset,:pagesize";
+        	args = new String[]{cid,category};
+        }
+        
         Integer total = jt.queryForObject(countSql,args,Integer.class);
         
         if(total != null && total.intValue() > 0){
@@ -156,12 +188,16 @@ public class ResourceTagServiceImpl implements ResourceTagService {
     		query.setParameter("resource", cid);
     		query.setParameter("offset", result[0]);
     		query.setParameter("pagesize", result[1]);
+    		if(StringUtils.isNotEmpty(category)){
+    			query.setParameter("category", category);
+    		}
     		List<ResourceTags> queryResult = query.getResultList();
     		if(CollectionUtils.isNotEmpty(queryResult)){
     			for (ResourceTags resourceTag : queryResult) {
     				ResourceTagViewModel rtvm = new ResourceTagViewModel();
     				rtvm.setCount(resourceTag.getCount());
     				rtvm.setTag(resourceTag.getTag());
+    				rtvm.setCategory(resourceTag.getCategory());
     				list.add(rtvm);
     			}
     		}
@@ -172,8 +208,11 @@ public class ResourceTagServiceImpl implements ResourceTagService {
 	}
 	
 	@Override
-	public int deleteResourceTagsByCid(String cid){
+	public int deleteResourceTagsByCid(String cid,String category){
 		String sql = "delete from resource_tags where resource='"+cid+"'";
+		if(StringUtils.isNotEmpty(category)){
+			sql = "delete from resource_tags where resource='"+cid+"' and category = '"+category+"'";
+		}
 		int num = jt.update(sql);
 		return num;
 	}

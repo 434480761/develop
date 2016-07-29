@@ -94,7 +94,7 @@ public class AssetControllerV06 {
 		//model转换
 		avm = CommonHelper.convertViewModelOut(am,AssetViewModel.class,"assets_type");
 		
-		if (bTranscode) {
+		if (bTranscode || transCodeUtil.isImageTransCode(am, IndexSourceType.AssetType.getName())) {
             transCodeUtil.triggerTransCode(am, IndexSourceType.AssetType.getName());
         }
 		return avm;

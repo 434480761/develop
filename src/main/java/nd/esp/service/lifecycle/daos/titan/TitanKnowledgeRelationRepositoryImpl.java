@@ -8,6 +8,8 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.shaded.minlog.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +25,9 @@ import java.util.Map;
 public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelationRepository {
     @Autowired
     private TitanCommonRepository titanCommonRepository;
+
+    private final static Logger LOG = LoggerFactory
+            .getLogger(TitanCoverageRepositoryImpl.class);
 
     @Override
     public boolean createRelation4Tree(Chapter knowledge) {
@@ -43,7 +48,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
             try {
                 parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),knowledge.getIdentifier());
                 //TODO titan 异常处理
             }
         } else if (isUuid(knowledge.getParent())) {
@@ -53,7 +58,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
             try {
                 parentId = titanCommonRepository.executeScriptUniqueLong(queryParent,queryParentParam);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),knowledge.getIdentifier());
                 //TODO titan 异常处理
             }
         }
@@ -67,7 +72,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         try {
             childId = titanCommonRepository.executeScriptUniqueLong(queryChild, queryChildParam);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),knowledge.getIdentifier());
             //TODO titan 异常处理
         }
 
@@ -84,7 +89,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         try {
             titanCommonRepository.executeScript(createScript, createScriptParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),knowledge.getIdentifier());
             //TODO titan 异常处理
         }
 
@@ -126,7 +131,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         try {
             id = titanCommonRepository.executeScriptUniqueString(script.toString(),params);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),knowledgeRelation.getSource());
             return null;
             //TODO titan 异常处理
         }

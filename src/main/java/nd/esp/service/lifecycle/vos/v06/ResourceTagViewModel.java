@@ -7,6 +7,7 @@ package nd.esp.service.lifecycle.vos.v06;
 public class ResourceTagViewModel {
 	private String tag;
 	private int count;
+	private String category;
 	public String getTag() {
 		return tag;
 	}
@@ -18,6 +19,12 @@ public class ResourceTagViewModel {
 	}
 	public void setCount(int count) {
 		this.count = count;
+	}
+	public String getCategory() {
+		return category;
+	}
+	public void setCategory(String category) {
+		this.category = category;
 	}
 	
 }

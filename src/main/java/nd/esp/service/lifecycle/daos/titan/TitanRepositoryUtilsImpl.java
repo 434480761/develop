@@ -45,7 +45,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         try {
             titanSyncList = titanSyncRepository.getAllByExample(example);
         } catch (EspStoreException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             LOG.info("");
         }
 
@@ -76,7 +76,6 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             try {
                 titanSyncRepository.add(titanSync);
             } catch (EspStoreException e) {
-                e.printStackTrace();
                 LOG.error("titan数据同步,add异常数据到mysql失败 primaryCategory：{}  errorType:{}  source:{}",primaryCategory,errorType,source);
             }
         } else {
@@ -84,7 +83,6 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             try {
                 titanSyncRepository.update(titanSync);
             } catch (EspStoreException e) {
-                e.printStackTrace();
                 LOG.error("titan数据同步,update异常数据到mysql失败 primaryCategory：{}  errorType:{}  source:{}",primaryCategory,errorType,source);
 
             }
@@ -113,7 +111,6 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         try {
             titanSync = titanSyncRepository.getByExample(example);
         } catch (EspStoreException e) {
-            e.printStackTrace();
             LOG.info("");
         }
         if (titanSync != null){
@@ -128,7 +125,6 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         try {
             titanSyncRepository.deleteAllByExample(example);
         } catch (EspStoreException e) {
-            e.printStackTrace();
             LOG.error("titan数据同步,删除所有异常数据失败 primaryCategory：{}  source:{}",primaryCategory,source);
         }
     }
@@ -162,7 +158,6 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             //TODO 以后方法的改造可能对功能有影响
             educations = (List<Education>) espRepository.getAll(ids);
         } catch (EspStoreException e) {
-            e.printStackTrace();
             //抛出异常默认资源存在
             return true;
         }
@@ -185,7 +180,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         try {
            id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
         } catch (Exception e) {
-            e.printStackTrace();
+
+            LOG.error("titan_repository error:{}" ,e.getMessage());
+
             return false;
         }
 

@@ -3,8 +3,6 @@ package nd.esp.service.lifecycle.models.v06;
 import java.math.BigDecimal;
 import java.util.List;
 
-import javax.persistence.Column;
-
 public class EducationRelationModel {
     /**
      * 资源关系id

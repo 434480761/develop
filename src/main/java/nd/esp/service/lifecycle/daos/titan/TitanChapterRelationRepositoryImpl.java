@@ -3,6 +3,8 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.repository.model.Chapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +18,8 @@ import java.util.Map;
 
 @Repository
 public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationRepository{
+    private static final Logger LOG = LoggerFactory
+            .getLogger(TitanCategoryRepositoryImpl.class);
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
@@ -52,7 +56,7 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         try {
             titanCommonRepository.executeScript(createScript , scriptParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
             //TODO titan 异常处理
         }
 
@@ -98,7 +102,7 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             try {
                 left = titanCommonRepository.executeScriptUniqueLong(scriptLeft, params);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
                 //TODO titan 异常处理
             }
 
@@ -118,7 +122,7 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             try {
                 titanCommonRepository.executeScript(scriptOrder, paramOrder);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
                 //TODO titan 异常处理
             }
         }
@@ -138,7 +142,7 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         try {
             return titanCommonRepository.executeScriptUniqueLong(queryScript, queryParam);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),nodeId);
             //TODO titan 异常处理
         }
 

@@ -45,6 +45,8 @@ public class TaskServiceImpl implements TaskService {
     public static final String TASK_BUSS_TYPE_PACK = "packaging";
     
     public static final String TASK_BUSS_TYPE_TRANSCODE = "transcode";
+
+    public static final String TASK_BUSS_TYPE_IMAGE_TRANSCODE = "image_transcode";
     
     public static final String TASK_STATUS_FIELD="status";
     
@@ -183,6 +185,17 @@ public class TaskServiceImpl implements TaskService {
                 } catch (Exception e) {
                     LOG.error("转码任务回调失败:",e);
                 }
+            } else if(TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(taskInfo.getBussType())) {
+                try {
+                    TransCodeCallBackParam transCodeCallBackParam = null;
+                    if (StringUtils.isNotEmpty(argument)) {
+                        transCodeCallBackParam = ObjectUtils.fromJson(argument,
+                                TransCodeCallBackParam.class);
+                        transcodeCallbackService.imageTranscodeCallback(transCodeCallBackParam, taskInfo);
+                    }
+                } catch (Exception e) {
+                    LOG.error("图片转码任务回调失败:",e);
+                }
             }
             UpdateTaskInfo(taskInfo);
         }
@@ -198,11 +211,12 @@ public class TaskServiceImpl implements TaskService {
             taskInfo = (TaskStatusInfo) query.getSingleResult();
         } catch (Exception e1) {
             LOG.error("未在任务表中找到任务id: "+taskId);
+            return;
         }
         
         if (taskInfo != null) {
             String oldTaskId = taskInfo.getTaskId();
-            taskRepository.getEntityManager().refresh(taskInfo, LockModeType.PESSIMISTIC_WRITE);
+//            taskRepository.getEntityManager().refresh(taskInfo, LockModeType.PESSIMISTIC_WRITE);
             if(!oldTaskId.equals(taskInfo.getTaskId())) {
                 LOG.info("任务id被刷新， 取消处理无效任务");
                 return;

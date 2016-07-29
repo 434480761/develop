@@ -1,11 +1,8 @@
 package nd.esp.service.lifecycle.entity;
 
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
-import nd.esp.service.lifecycle.support.Constant;
-
-import org.springframework.beans.factory.annotation.Value;
-
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.support.Constant;
 
 /**
  * @title 创建任务需要的bean
@@ -161,7 +158,7 @@ public class WorkerParam {
         WorkerParam param = new WorkerParam();
         param.setServiceId(Constant.WORKER_IMAGE_TRANSCODE_SERVICE);
         // FIXME 暂时只布了一台， group 先写死
-        param.setGroupId(Constant.WORKER_DEFAULT_GROUP_ID);
+        param.setGroupId("6");
         return param;
 
     }

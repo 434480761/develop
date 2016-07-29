@@ -62,9 +62,10 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
-import org.apache.log4j.MDC;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -443,7 +444,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
         
         try {
             List<String> listIds = this.getVideoListToTrans(statusSet);
-            result = triggerVideoTranscodeByIds(listIds, bOnlyOgv);
+            result = triggerTranscodeByIds("assets", listIds, bOnlyOgv);
         } catch (Exception e) {
             LOG.error("执行转码调度失败了:" + e.getMessage(), e);
         }
@@ -452,7 +453,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
     }
     
     @Override
-    public Map<String,String> triggerVideoTranscodeByIds(List<String> listIds, boolean bOnlyOgv) {
+    public Map<String,String> triggerTranscodeByIds(String resType, List<String> listIds, boolean bOnlyOgv) {
         int successCount = 0;
         int failCount = 0;
        
@@ -461,12 +462,12 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
             if (CollectionUtils.isNotEmpty(listIds)) {
                 for (String id : listIds) {
                     try {
-                        ResourceModel cm = ndResourceService.getDetail(IndexSourceType.AssetType.getName(), 
-                            id, IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC
+                        ResourceModel cm = ndResourceService.getDetail(resType, id,
+                                IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC
                                 +","+IncludesConstant.INCLUDE_CG));
                     
                         MDC.put("resource", id);
-                        MDC.put("res_type", IndexSourceType.AssetType.getName());
+                        MDC.put("res_type", resType);
                         MDC.put("operation_type", "转码");
                         MDC.put("remark", "历史视频触发");
                         
@@ -482,8 +483,8 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
                         contributeModel.setMessage("历史视频触发转码");
                         contributeModel.setLifecycleStatus(TransCodeUtil.getTransIngStatus(true));
                         contributeModel.setProcess(0.0f);
-                        lifecycleService.addLifecycleStep(IndexSourceType.AssetType.getName(), cm.getIdentifier(), contributeModel, false);
-                        transCodeUtil.triggerTransCode(cm, IndexSourceType.AssetType.getName(), statusBackup, bOnlyOgv);
+                        lifecycleService.addLifecycleStep(resType, cm.getIdentifier(), contributeModel, false);
+                        transCodeUtil.triggerTransCode(cm, resType, statusBackup, bOnlyOgv);
 
                         LOG.info("触发转码的UUID:{}",cm.getIdentifier());
                         successCount++;

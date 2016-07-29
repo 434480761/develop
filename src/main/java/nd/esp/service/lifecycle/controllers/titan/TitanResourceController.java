@@ -158,4 +158,10 @@ public class TitanResourceController {
 		titanResourceService.importOneData4Script(resourceType,id);
 		return 0;
 	}
+
+	@RequestMapping(value = "importStatus", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String importStatus(){
+		return titanResourceService.importStatus();
+	}
 }

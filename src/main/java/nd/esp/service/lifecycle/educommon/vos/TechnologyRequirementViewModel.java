@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.educommon.vos;
 
 import nd.esp.service.lifecycle.support.annotation.Reg;
-import nd.esp.service.lifecycle.vos.valid.BasicInfoDefault;
 import nd.esp.service.lifecycle.vos.valid.RequirementDefault;
 
 import org.hibernate.validator.constraints.NotBlank;

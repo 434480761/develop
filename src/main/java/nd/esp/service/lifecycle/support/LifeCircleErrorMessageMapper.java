@@ -148,7 +148,8 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	ParentNotFound("LC/PARENT_NOT_FOUND",getPropertyValue("teachingMaterialController.createChapter.checkParent.fail")),
 	TeachingMaterialNotFound("LC/TEACHING_MATERIAL_NOT_FOUND",getPropertyValue("teachingMaterialController.createChapter.check.fail")),
 	HaveChildrenDeleteChapterFail("LC/HAVE_CHILDREN_DELETE_CHAPTER_FAIL",getPropertyValue("teachingMaterialController.deleteChapter.check.fail")),
-
+	CheckResourceTagFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("resourceTagServiceImpl.addResourceTags.check.fail")),
+	
 	//Addon
 	CreateAddonFail("LC/CREATE_ADDON_FAIL",getPropertyValue("addonsController.createAddon.operation.fail")),
 	DeleteAddonSuccess("LC/DELETE_ADDON_SUCCESS",getPropertyValue("addonsController.deleteAddon.operation.success")),
@@ -406,6 +407,8 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	
 	//includes
 	IncludesParamError("INCLUDES_PARAM_ERROR",""),
+	// Retrieve Fields
+	RetrieveFieldsParamError("RETRIEVE_FIELDS_PARAM_ERROR",""),
 	TimeUnitParamError("TIMEUNIT_PARAM_ERROR",""),
 	//direction
 	DirectionParamError("DIRECTION_PARAM_ERROR",""),
@@ -463,12 +466,20 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
 	//说明 add by @author lanyl
+	//数据加密相关错误配置
+	//====Start=====
+	EncryptDataFail("LC/ENCRYPT_DATA_FAIL",getPropertyValue("encrypt.data.fail")),
+	//====End=====
+
+	//说明 add by @author lanyl
 	//角色权限控制相关错误配置
 	//====Start=====
 	CheckParamEmpty("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("common.checkParam.empty")),
 	CoverageAdminDenied("LC/COVERAGE_ADMIN_DENIED",getPropertyValue("coverage.admin.denied")),
 	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
 	//====End=====
+
+
 
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);
 

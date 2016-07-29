@@ -4,8 +4,6 @@ import java.util.Date;
 
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 
-import com.ibm.icu.math.BigDecimal;
-
 public class KnowledgeBaseModel extends ResourceModel{
 	public String identifier;
 	public String kpid;

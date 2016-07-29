@@ -3,13 +3,11 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
-import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -20,15 +18,9 @@ import java.util.*;
 @Repository
 public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 	private final static Logger LOG = LoggerFactory.getLogger(TitanCommonRepositoryImpl.class);
-    @Autowired
-    private Client client;
 
-    public Client getClient() {
-        return client;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
+    public Client client() {
+        return GremlinClientFactory.getGremlinClient();
     }
 
     @Override
@@ -159,7 +151,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         Double id = null;
         try {
-            ResultSet resultSet = client.submit(script, params);
+            ResultSet resultSet = client().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getDouble();
@@ -178,7 +170,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         List<Double> ids = new LinkedList<>();
         try {
-            ResultSet resultSet = client.submit(script, params);
+            ResultSet resultSet = client().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             while (iterator.hasNext()) {
                 Double id = iterator.next().getDouble();
@@ -198,7 +190,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
             return;
         }
         try {
-            ResultSet resultSet = client.submit(script, params);
+            ResultSet resultSet = client().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 iterator.next();
@@ -215,7 +207,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         ResultSet resultSet = null;
         try {
-            resultSet = client.submit(script, params);
+            resultSet = client().submit(script, params);
         } catch (RuntimeException ex) {
             LOG.error("gremlin submit script:{" + script + "}|params:{" + params + "}");
             throw ex;
@@ -234,7 +226,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         Long id = null;
         try {
-            ResultSet resultSet = client.submit(script, params);
+            ResultSet resultSet = client().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getLong();
@@ -257,7 +249,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         String id = null;
         try {
-            ResultSet resultSet = client.submit(script, params);
+            ResultSet resultSet = client().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getString();

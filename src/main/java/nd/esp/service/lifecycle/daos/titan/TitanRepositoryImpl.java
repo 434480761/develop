@@ -36,8 +36,7 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
 
             return espRepository.batchAdd(models);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.info("batch add error");
+            LOG.info("titan batch add error");
         }
         return null;
     }
@@ -52,8 +51,7 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
             }
             return (M) espRepository.add(model);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.info("add error");
+            LOG.info("titan add error");
         }
 
         return null;
@@ -71,8 +69,7 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
 
             return (M) espRepository.update(model);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.info("update error");
+            LOG.info("titan update error");
         }
         return null;
     }
@@ -91,8 +88,7 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
             }
             return espRepository.batchUpdate(models);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.info("batchUpdate error");
+            LOG.info("titan batch update error");
         }
 
         return null;
