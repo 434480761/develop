@@ -43,7 +43,6 @@ public enum ES_OP {
 													.getNameInEsWithNested(),
 													value)));
 						}
-
 					} else {
 						// eq
 						if (ES_SearchField.cg_taxoncode == es_SearchField
@@ -57,10 +56,8 @@ public enum ES_OP {
 													.getNameInEsWithNested(),
 													value)));
 						}
-
 					}
 				}
-
 			}else if(es_SearchField==ES_SearchField.ti_printable){
 				String value = values.get(0);
 				if(value.contains("#")){
@@ -152,13 +149,20 @@ public enum ES_OP {
 					}
 				}
 			} else if (esSearchField.getParent() == ES_SearchField.category_list) {
-				// 需要特殊处理内置；
 				for (String value : values) {
-					QueryBuilder queryBuilder = QueryBuilders.termQuery(
-							esSearchField.getNameInEsWithNested(), value);
-					boolQueryBuilder.mustNot(categoryBuilder(queryBuilder));
-				}
+					if (StringUtils.isNotEmpty(value) && value.contains("*")) {
+						boolQueryBuilder
+									.mustNot(categoryBuilder(QueryBuilders
+											.wildcardQuery(esSearchField
+													.getNameInEsWithNested(),
+													value)));
 
+					}else{
+						QueryBuilder queryBuilder = QueryBuilders.termQuery(
+								esSearchField.getNameInEsWithNested(), value);
+						boolQueryBuilder.mustNot(categoryBuilder(queryBuilder));
+					}
+				}
 			} else {
 				for (String value : values) {
 					QueryBuilder queryBuilder = QueryBuilders.termQuery(
