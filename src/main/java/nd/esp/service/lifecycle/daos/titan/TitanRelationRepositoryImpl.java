@@ -134,6 +134,9 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		return false;
 	}
 
+	/**
+	 * 提供给数据导入使用的接口
+	 * */
 	@Override
 	public void batchAdd4Import(List<ResourceRelation> resourceRelations) {
 		if(CollectionUtils.isEmpty(resourceRelations)){

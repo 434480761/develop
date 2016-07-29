@@ -10,7 +10,5 @@ import java.util.List;
  */
 public interface TitanKnowledgeRelationRepository extends TitanEspRepository<KnowledgeRelation> {
     public boolean createRelation4Tree(Chapter knowledge);
-    public long batchCreateRelation4Tree(List<Chapter> knowledges);
-    public void deleteRelation4Tree(Chapter knowledges);
 }
 

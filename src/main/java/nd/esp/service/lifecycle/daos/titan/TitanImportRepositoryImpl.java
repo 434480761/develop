@@ -105,6 +105,12 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
 
     @Override
+    public boolean batchImportRelation(List<ResourceRelation> resourceRelation) {
+        titanRelationRepository.batchAdd4Import(resourceRelation);
+        return false;
+    }
+
+    @Override
     public boolean checkResourceExistInTitan(Education education) {
         String script = "g.V().has(primaryCategory,'identifier',identifier).count();";
         Map<String, Object> param = new HashMap<>();

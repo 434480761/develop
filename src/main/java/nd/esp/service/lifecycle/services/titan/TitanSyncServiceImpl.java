@@ -41,12 +41,6 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private TitanResourceRepository<Education> titanResourceRepository;
 
     @Autowired
-    private TitanCoverageRepository titanCoverageRepository;
-
-    @Autowired
-    private TitanCategoryRepository titanCategoryRepository;
-
-    @Autowired
     private TitanRelationRepository titanRelationRepository;
 
     @Autowired
@@ -60,12 +54,6 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
-
-    @Autowired
-    private TitanChapterRelationRepository titanChapterRelationRepository;
-
-    @Autowired
-    private TitanResourceService titanResourceService;
 
     @Autowired
     private TitanImportRepository titanImportRepository;
