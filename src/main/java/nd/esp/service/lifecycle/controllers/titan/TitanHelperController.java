@@ -119,6 +119,9 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		// 由于脚本中空格不影响查询(如："g.V().count()"可以写成"g.    V    (   ).   count   (   )")
+		// 需要把脚本中多余空格去掉，防止类似这样的失误：'xxx.drop()'==> 'xxx.    drop     ()'
+		script = CommonHelper.checkBlank(script);
 		// 检查脚本
 		checkScript(script);
 		ResultSet resultSet = null;
@@ -269,7 +272,7 @@ public class TitanHelperController {
 	private void checkScript(String script) {
 		if (script != null) {
 			for (ShieldOpt opt : ShieldOpt.values()) {
-				if (script.contains(opt.toString() + "(")) {
+				if (script.contains("." + opt.toString() + "(") || script.contains(". " + opt.toString() + " (")) {
 					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 							"LC/TITAN", "脚本中带有非法操作");
 				}
