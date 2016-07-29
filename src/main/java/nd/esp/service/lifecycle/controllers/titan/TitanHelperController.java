@@ -267,10 +267,12 @@ public class TitanHelperController {
 	 * @param script
      */
 	private void checkScript(String script) {
-		for (ShieldOpt opt : ShieldOpt.values()) {
-			if (script.contains(opt.toString()+"(")) {
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-						"LC/TITAN", "脚本中带有非法操作");
+		if (script != null) {
+			for (ShieldOpt opt : ShieldOpt.values()) {
+				if (script.contains(opt.toString() + "(")) {
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							"LC/TITAN", "脚本中带有非法操作");
+				}
 			}
 		}
 	}
