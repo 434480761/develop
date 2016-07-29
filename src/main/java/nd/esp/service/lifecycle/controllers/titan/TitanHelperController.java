@@ -119,8 +119,11 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		// 检查脚本
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
+			LOG.info("running script:{}",script);
 			resultSet = titanCommonRepository.executeScriptResultSet(script);
 		} catch (Exception e) {
 			LOG.error(e.getLocalizedMessage());
@@ -130,6 +133,7 @@ public class TitanHelperController {
 		getResult(resultSet, result);
 		return result;
 	}
+
 
 	@Deprecated
 	@RequestMapping(value = "/actions/gremlin/script/param", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -256,5 +260,25 @@ public class TitanHelperController {
 			result.add(iterator.next().getString());
 		}
 
+	}
+
+	/**
+	 * 检查脚本
+	 * @param script
+     */
+	private void checkScript(String script) {
+		for (ShieldOpt opt : ShieldOpt.values()) {
+			if (script.contains(opt.toString()+"(")) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/TITAN", "脚本中带有非法操作");
+			}
+		}
+	}
+
+	/**
+	 * 屏蔽的操作
+	 */
+	private enum ShieldOpt {
+		drop, addVertex, addEdge, property, updateIndex, buildMixedIndex, buildCompositeIndex, buildIndex, addKey, makePropertyKey, openManagement
 	}
 }
