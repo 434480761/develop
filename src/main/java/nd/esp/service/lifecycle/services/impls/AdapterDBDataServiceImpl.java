@@ -14,6 +14,7 @@ import java.util.UUID;
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.controllers.AdapterDBDataController;
+import nd.esp.service.lifecycle.controllers.v06.ToolController2;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
@@ -63,6 +64,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+
 
 
 
@@ -1249,8 +1251,18 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 	
 	@Transactional
 	public Map<String,String> adapterCoverage(String oldUserId,String newUserId){
+		if(StringUtils.isEmpty(newUserId)){
+			return null;
+		}
+		//根据oldUserId查询99家居的id
+		if(!ToolController2.userIdMap.containsKey(oldUserId)){
+			return null;
+		}
+		
+		String userId = ToolController2.userIdMap.get(oldUserId);
+		
 		//根据旧的oldUserId找出所有的覆盖范围
-		String sql = "select identifier,res_type,resource,target,strategy from res_coverages where target='"+oldUserId+"'";
+		String sql = "select identifier,res_type,resource,target,strategy from res_coverages where target='"+userId+"'";
 		//判断资源和新的newUserId是否存在覆盖范围
 		List<Map<String,Object>> list = jdbcTemplate.queryForList(sql);
 		
@@ -1286,6 +1298,10 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 				}
 			}
 		}
+		//修复chapters的teaching_material数据
+		String tSql = "update chapters set teaching_material = '"+newUserId+"' where teaching_material = '"+userId+"'";
+		jdbcTemplate.execute(tSql);
+		
 		//新增覆盖范围
 		String[] a = new String[]{};
 		if(CollectionUtils.isNotEmpty(updateSql)){
