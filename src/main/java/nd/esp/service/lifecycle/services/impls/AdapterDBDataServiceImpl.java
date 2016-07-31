@@ -1302,6 +1302,10 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 		String tSql = "update chapters set teaching_material = '"+newUserId+"' where teaching_material = '"+userId+"'";
 		jdbcTemplate.execute(tSql);
 		
+		//修复chapters的parent数据
+		String tSql2 = "update chapters set parent = '"+newUserId+"' where parent = '"+userId+"'";
+		jdbcTemplate.execute(tSql2);
+		
 		//新增覆盖范围
 		String[] a = new String[]{};
 		if(CollectionUtils.isNotEmpty(updateSql)){
