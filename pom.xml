@@ -431,5 +431,14 @@
                 <env>lwxdb</env>
             </properties>
         </profile>
+        <profile>
+        <id>sonar</id>
+        <activation>
+        <activeByDefault>true</activeByDefault>
+        </activation>
+        <properties>
+            <sonar.host.url>http://sonar.debug.sdp.nd</sonar.host.url>
+        </properties>
+    </profile>
     </profiles>
 </project>
