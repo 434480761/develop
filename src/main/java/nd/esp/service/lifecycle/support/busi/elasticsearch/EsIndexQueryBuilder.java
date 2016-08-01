@@ -143,12 +143,17 @@ public class EsIndexQueryBuilder {
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation=dealWithWordsContainsNot(this.words);
         String other=dealWithParams();
-        if("".endsWith(wordSegmentation.trim())){
-            other=other.trim().replaceFirst("AND","");
+        String property = dealWithProp();
+        //System.out.println(dealWithProp());
+        if ("".endsWith(wordSegmentation.trim())) {
+            other = other.trim().replaceFirst("AND", "");
         }
         baseQuery.append(wordSegmentation);
         baseQuery.append(other);
         baseQuery.append(dealWithResType());
+        if(!"".endsWith(property.trim())){
+            baseQuery.append(" AND ").append(property);
+        }
         baseQuery.append("\")");
         baseQuery.append(".offset(").append(this.from).append(")");
         baseQuery.append(".limit(").append(this.size).append(");");
@@ -308,7 +313,7 @@ public class EsIndexQueryBuilder {
             int fieldSize = params.entrySet().size();
             String base = "v.\\\"" + field + "\\\":(";
             Map<String, List<String>> optMap = entry.getValue();
-            System.out.println(field + " " + optMap);
+           // System.out.println(field + " " + optMap);
             int optSizeCount = 0;
             for (Map.Entry<String, List<String>> optEntry : optMap.entrySet()) {
                 String optName = optEntry.getKey();
