@@ -29,7 +29,7 @@ public class StaticDatas {
     /*通用查询是否优先使用ES查询的开关*/
     public static boolean QUERY_BY_ES_FIRST = true;
     
-    /*通用查询是否优先使用ES查询的开关*/
+    /*通用查询是否优先使用Titan查询的开关*/
     public static boolean QUERY_BY_TITAN_FIRST = true;
     /*同步推送数据给报表系统*/
     public static boolean SYNC_REPORT_DATA = true;
