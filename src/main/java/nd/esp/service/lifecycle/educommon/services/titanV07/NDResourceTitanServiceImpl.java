@@ -659,7 +659,6 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
                     Map<String, String> map = TitanResultParse.toMap(line);
                     taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
                 } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                    System.out.println(line);
                     mainResult = line;
                 } else {
                     otherLines.add(line);
