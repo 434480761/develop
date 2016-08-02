@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 字符串工具类
@@ -42,17 +44,36 @@ public final class StringUtils {
      * @return
      */
     public static Date strTimeStampToDate(String timeStr) {
-        if(timeStr==null) return null;
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Long time = Long.parseLong(timeStr);
-        String d = format.format(time);
-        Date date = null;
+        if (timeStr == null) return null;
+        Long time = Long.parseLong(timeStr.trim());
+        return new Date(time);
+    }
+
+    /**
+     * 字符串date将转化为时间戳 1464764846605=>Wed Jun 01 15:07:26 CST 2016
+     * @param date
+     * @return
+     */
+    public static Long strDateToTimeStamp(String date) {
+        if (date == null) return null;
+        if(date.endsWith(".")){
+            date=date.substring(0,date.length()-1);
+        }
+        SimpleDateFormat format =null;
+        if (date.contains(".")) {
+            format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        } else {
+            format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        }
+
+        Date d=null;
         try {
-            date = format.parse(d);
+            d = format.parse(date);
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        return date;
+
+        return d.getTime();
     }
 
     /**

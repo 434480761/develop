@@ -8,6 +8,7 @@ import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
@@ -309,14 +310,14 @@ public class EsIndexQueryBuilder {
         // FIXME 处理资源的属性
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
-            String field = entry.getKey();
-            int fieldSize = params.entrySet().size();
-            String base = "v.\\\"" + field + "\\\":(";
+            String propName = entry.getKey();
+            int propSize = params.entrySet().size();// prop数量
+            String base = "v.\\\"" + propName + "\\\":(";
             Map<String, List<String>> optMap = entry.getValue();
            // System.out.println(field + " " + optMap);
             int optSizeCount = 0;
             for (Map.Entry<String, List<String>> optEntry : optMap.entrySet()) {
-                String optName = optEntry.getKey();
+                String optName = optEntry.getKey().trim().toLowerCase();
                 List<String> optList = optEntry.getValue();
                 int optSize = optMap.entrySet().size();// in ne like 有几个
                 int optListSize = optList.size();// 每个操作符的值的个数
@@ -327,24 +328,29 @@ public class EsIndexQueryBuilder {
                         if (i != optListSize - 1) query.append(" OR ");
                     }
                     // query.append(")");
-
                 } else if ("ne".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append(base).append("-").append(optList.get(i));
                         if (i != optListSize - 1) query.append(" AND ");
                     }
                     // query.append(")");
-                } else if ("like".equals(optName)) {
+                }/* else if ("like".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append(base).append("*").append(optList.get(i)).append("*");
                         if (i != optListSize - 1) query.append(" OR ");
                     }
-                }else if("gt".equals(optName)){}
+                }*/else if("gt,lt,ge,le".contains(optName)){
+                    for (int i = 0; i < optListSize; i++) {
+                        String range = toRangeByOpt(optName, optList.get(i));
+                        query.append(base).append(range);
+                        if (i != optListSize - 1) query.append(" OR ");
+                    }
+                }
                 query.append(")");
                 if (optSizeCount != optSize - 1) query.append(" AND ");
                 optSizeCount++;
             }
-            if (paramCount != fieldSize - 1) query.append(" AND ");
+            if (paramCount != propSize - 1) query.append(" AND ");
             paramCount++;
 
         }
@@ -352,6 +358,34 @@ public class EsIndexQueryBuilder {
 
         return query.toString();
 
+    }
+
+    /**
+     * 根据操作符返回时间串的时间戳范围
+     * 支持的操作符有 gt(大于) , lt  (小于) , ge(大于等于) ,le(小于等于)
+     * @param optName
+     * @param date
+     * @return
+     */
+    private String toRangeByOpt(String optName, String date) {
+        long toTimeStamp = StringUtils.strDateToTimeStamp(date.trim());
+        String range = null;
+        if ("gt".equals(optName)) {// 大于
+            // [toTimeStamp+1 TO 9999999999999]
+            toTimeStamp = toTimeStamp + 1;
+            range = "[" + toTimeStamp + " TO 9999999999999]";
+        } else if ("lt".equals(optName)) {// 小于
+            // [0 TO　toTimeStamp-1]
+            toTimeStamp = toTimeStamp - 1;
+            range = "[0 TO　" + toTimeStamp + "]";
+        } else if ("ge".equals(optName)) {// 大于等于
+            // [toTimeStamp TO 9999999999999]
+            range = "[" + toTimeStamp + " TO 9999999999999]";
+        } else if ("lt".equals(optName)) {// 小于等于
+            // [0 TO　toTimeStamp]
+            range = "[0 TO　" + toTimeStamp + "]";
+        }
+        return range;
     }
 
     /**
@@ -433,6 +467,14 @@ public class EsIndexQueryBuilder {
 
     public enum PropsCover {
         publisher, creator, title, status, provider, author, identifier, languange, edulanguage, tags, keywords, ndres_code
+    }
+
+    public static void main(String[] args) {
+        System.out.println("2016-07-05 21:50:14");
+        String timestamp = StringUtils.strDateToTimeStamp("2016-07-05 21:50:14")+"";
+        System.out.println(timestamp);
+        System.out.println(StringUtils.strTimeStampToDate(timestamp));
+        System.out.println(StringUtils.strTimeStampToDate("1467726614001"));
     }
 
 
