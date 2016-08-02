@@ -577,8 +577,12 @@ public class TitanScritpUtils {
             String indentifierName = "identifier"+index;
             if(i == 0){
                 withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
             }
             params.put(indentifierName, identifierList.get(i));
+
+            index ++;
         }
         withInScript.append(")");
         scriptBuilder.append(withInScript.toString()).append(").has('primary_category',primary_category)");
