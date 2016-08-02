@@ -729,45 +729,46 @@ public class NDResourceController {
                                 forceStatus, tags, showVersion, includesList, relationsMap, coveragesList, propsMap,
                                 orderMap, reverseBoolean);
                     }
-                } else if(StaticDatas.QUERY_BY_TITAN_FIRST
-                            && canQueryByTitan(resType, relationsMap, orderMap, forceStatus,tags,showVersion)){
-                    if (canQueryByTitanRT(coveragesList, isNotManagement)) {
-                        try{
-                            rListViewModel = resourceQueryByTitanRealTime(resType,
-                                    includesList, categories, categoryExclude, relationsMap,
-                                    coveragesList, propsMap, orderMap, words, limit,
-                                    isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
-                            LOG.warn("Titan 实时查询完成");
-                        }catch (Exception e) {// 如果titan 实时出错,通过数据库查一遍
-                            LOG.error("Titan 实时查询出错,通用DB查询");
-                            rListViewModel = resourceQueryByDB(resType, resCodes, categories, categoryExclude, words,
-                                    limit, isNotManagement, printable, printableKey, statisticsType,
-                                    statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,
-                                    coveragesList, propsMap, orderMap, reverseBoolean);
-                        }
-                    }else{
-                        try{
-                            rListViewModel = ndResourceService.resourceQueryByTitan(resType,
-                                    includesList, categories, categoryExclude, relationsMap,
-                                    coveragesList, propsMap, orderMap, words, limit,
-                                    isNotManagement, reverseBoolean, printable, printableKey);
-                            LOG.warn("Titan 查询完成");
-                        }catch (Exception e) {// 如果Titan 查询出错,通过数据库查一遍
-                            LOG.error("Titan 查询出错,通用DB查询");
-                            rListViewModel = resourceQueryByDB(resType, resCodes, categories, categoryExclude, words,
-                                    limit, isNotManagement, printable, printableKey, statisticsType,
-                                    statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,
-                                    coveragesList, propsMap, orderMap, reverseBoolean);
-                        }
+            } else if (StaticDatas.QUERY_BY_TITAN_FIRST
+                    && canQueryByTitan(resType, relationsMap, orderMap, forceStatus, tags, showVersion)) {
+                Map<String, Object> changeMap = changeKey(propsMap,
+                        orderMap, false);
+                propsMap = (Map<String, Set<String>>) changeMap
+                        .get("propsMapNew");
+                orderMap = (Map<String, String>) changeMap
+                        .get("orderMapNew");
+                try {
+                    if (mustQueryByTitanRT(coveragesList, isNotManagement)) {
+                        rListViewModel = resourceQueryByTitanRealTime(resType,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean, printable, printableKey, statisticsType,
+                                statisticsPlatform, forceStatus, tags, showVersion);
+                        LOG.warn("Titan 实时查询完成");
+                    } else {
+                        rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean, printable, printableKey);
+                        LOG.warn("Titan 查询完成");
                     }
+
+                } catch (Exception e) {
+                    LOG.error("Titan 查询出错,通用DB查询");
+                    rListViewModel = resourceQueryByDB(resType, resCodes, categories, categoryExclude, words,
+                            limit, isNotManagement, printable, printableKey, statisticsType,
+                            statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,
+                            coveragesList, propsMap, orderMap, reverseBoolean);
                 }
-                else {
-                    rListViewModel = ndResourceService.resourceQueryByDB(resType,
-                            resCodes, includesList, categories, categoryExclude,
-                            relationsMap, coveragesList, propsMap, orderMap, words,
-                            limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
-                }
-                break;
+            }
+            else {
+                rListViewModel = ndResourceService.resourceQueryByDB(resType,
+                        resCodes, includesList, categories, categoryExclude,
+                        relationsMap, coveragesList, propsMap, orderMap, words,
+                        limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType,
+                        statisticsPlatform, forceStatus, tags, showVersion);
+            }
+            break;
             case ES:
                 rListViewModel = ndResourceService.resourceQueryByEla(resType,
                         includesList, categories, categoryExclude, relationsMap,
@@ -813,6 +814,7 @@ public class NDResourceController {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     private ListViewModel<ResourceModel> resourceQueryByDB(String resType, String resCodes, Set<String> categories,
             Set<String> categoryExclude, String words, String limit, boolean isNotManagement, Boolean printable,
             String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus,
@@ -1237,16 +1239,12 @@ public class NDResourceController {
     }
 
     /**
-     * 判断走数据库的通用查询是否可以通用ES查询
-     * <p>Create Time: 2016年4月5日   </p>
-     * <p>Create author: xiezy   </p>
-     * @param resType
-     * @param relations
-     * @param orderMap
-     * @param words
+     * 判断走数据库的通用查询是否必须通过 Titan 实时查询
+     * @param coveragesList
+     * @param isNotManagement
      * @return
      */
-    private boolean canQueryByTitanRT(List<String> coveragesList, boolean isNotManagement){
+    private boolean mustQueryByTitanRT(List<String> coveragesList, boolean isNotManagement){
         boolean haveUserCoverage = false;
         if(CollectionUtils.isNotEmpty(coveragesList)){
             for(String coverage : coveragesList){
@@ -1266,6 +1264,16 @@ public class NDResourceController {
         return false;
     }
     
+    /**
+     * 判断走数据库的通用查询是否必须通过 Titan 查询
+     * @param resType
+     * @param relations
+     * @param orderMap
+     * @param forceStatus
+     * @param tags
+     * @param showVersion
+     * @return
+     */
     private boolean canQueryByTitan(String resType, List<Map<String, String>> relations, Map<String, String>orderMap,
             boolean forceStatus,List<String> tags,boolean showVersion){
         return  !forceStatus &&

@@ -36,15 +36,17 @@ import java.util.List;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = { "nd.esp.service.lifecycle.repository" ,"nd.esp.service.lifecycle.controllers",
-		"nd.esp.service.lifecycle.services","nd.esp.service.lifecycle.daos","nd.esp.service.lifecycle.utils","nd.esp.service.lifecycle.support","nd.esp.service.lifecycle.educommon","nd.esp.service.lifecycle.security"})
+		"nd.esp.service.lifecycle.services","nd.esp.service.lifecycle.daos","nd.esp.service.lifecycle.utils",
+		"nd.esp.service.lifecycle.support","nd.esp.service.lifecycle.educommon",
+		"nd.esp.service.lifecycle.security","com.lcmq.component"})
 @Import(ApplicationConfig.class)
 @EnableAspectJAutoProxy
 @EnableScheduling
 //@PropertySource("classpath:config/worker.properties")
-@PropertySource("classpath:sdkdb/c3p0-config-main.properties")
+@PropertySource(value = {"classpath:sdkdb/c3p0-config-main.properties","classpath:system.properties"})
 public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 
-	private final static Logger LOG= LoggerFactory.getLogger(LifeCircleWebConfig.class);
+	private final static Logger LOG = LoggerFactory.getLogger(LifeCircleWebConfig.class);
 
 	//@Value("${db.driver}")
 	 //private String driver;
@@ -87,7 +89,6 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 	    return placeholderConfigurer;
 	}
 	
-	
 	/*
 	 * 使用ResourceBundleMessageSource来代替
 	 * @Bean
@@ -111,6 +112,7 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 		//LOG.info(source.getMessage("model.href.value.errormsg",   null, Locale.SIMPLIFIED_CHINESE));
 		return source;
 	}
+	
 	@Bean
 	public LocalValidatorFactoryBean getLocalValidatorFactoryBean() {
 		LocalValidatorFactoryBean factoryBean =new LocalValidatorFactoryBean();
@@ -210,10 +212,6 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
         return adapter;
     }
     
-
-
-
-
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(roleResInterceptor);
@@ -226,6 +224,4 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 	public BearerAuthorizationProvider bearerAuthorizationProvider() {
 		return new DeliverBearerAuthorizationProvider();
 	}
-
-    
 }
