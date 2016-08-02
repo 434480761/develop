@@ -284,7 +284,12 @@ public class TitanResultParse {
             if (preview.startsWith("{\"") && preview.endsWith("\"}")) {
                 @SuppressWarnings("unchecked")
                 Map<String, String> previewMap = ObjectUtils.fromJson(preview, Map.class);
+                if(previewMap == null){
+                    previewMap = new HashMap<>();
+                }
                 item.setPreview(previewMap);
+            } else {
+                item.setPreview(new HashMap<String, String>());
             }
         }
         String tags = fieldMap.get(ES_SearchField.tags.toString());
