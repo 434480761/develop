@@ -38,7 +38,7 @@ import java.util.List;
 @ComponentScan(basePackages = { "nd.esp.service.lifecycle.repository" ,"nd.esp.service.lifecycle.controllers",
 		"nd.esp.service.lifecycle.services","nd.esp.service.lifecycle.daos","nd.esp.service.lifecycle.utils",
 		"nd.esp.service.lifecycle.support","nd.esp.service.lifecycle.educommon",
-		"nd.esp.service.lifecycle.security","com.lcmq.component"})
+		"nd.esp.service.lifecycle.security"})
 @Import(ApplicationConfig.class)
 @EnableAspectJAutoProxy
 @EnableScheduling
