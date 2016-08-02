@@ -301,16 +301,22 @@ public class EsIndexQueryBuilder {
      *  1）不同【属性】时，prop之间为 AND
      *  2）相同【属性】，不同【操作符】时，prop之间为 AND， eq和in两者之间除外，可理解为eq和in本质上一样
      *  3）相同【属性】，相同【操作符】时，prop之间为 OR（ne除外，ne时为 AND）
+     *  以下不分词需要转换：
+     *  keywords__STRING,language__STRING,tags__STRING,title__STRING
+     *  keywords,language,tags,title
      * @return
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
        // String propsCover= Arrays.asList(PropsCover.values()).toString();
         StringBuffer query = new StringBuffer();
-        // FIXME 处理资源的属性
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
             String propName = entry.getKey();
+            // 不使用分词
+            if ("keywords,language,tags,title".contains(propName)) {
+                propName = propName + "__STRING";
+            }
             int propSize = params.entrySet().size();// prop数量
             String base = "v.\\\"" + propName + "\\\":(";
             Map<String, List<String>> optMap = entry.getValue();
@@ -334,7 +340,9 @@ public class EsIndexQueryBuilder {
                         if (i != optListSize - 1) query.append(" AND ");
                     }
                     // query.append(")");
-                }/* else if ("like".equals(optName)) {
+                }
+                //由于大写不支持like，暂时不支持like
+                /* else if ("like".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append(base).append("*").append(optList.get(i)).append("*");
                         if (i != optListSize - 1) query.append(" OR ");
@@ -377,7 +385,7 @@ public class EsIndexQueryBuilder {
         } else if ("lt".equals(optName)) {// 小于
             // [0 TO　toTimeStamp-1]
             toTimeStamp = toTimeStamp - 1;
-            range = "[0 TO　" + toTimeStamp + "]";
+            range = "[0 TO " + toTimeStamp + "]";
         } else if ("ge".equals(optName)) {// 大于等于
             // [toTimeStamp TO 9999999999999]
             range = "[" + toTimeStamp + " TO 9999999999999]";
