@@ -6,7 +6,6 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
@@ -22,15 +21,14 @@ import com.lcmq.component.mq.RabbitMqProducer;
 public class ProducerExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(ProducerExecutor.class);
 	
-	@Autowired
-	private RabbitMqProducer rabbitMqProducer;
-	
 	private ExecutorService excutorService = Executors.newCachedThreadPool();
 	
 	public void startProducer(final JSONObject object) {
 		this.excutorService.submit(new Thread() {
 			public void run() {
 				try {
+					RabbitMqProducer rabbitMqProducer = new RabbitMqProducer();
+					
 					logger.info("producer start");
 					MqMessage message = new MqMessage(UUID.randomUUID().toString(), "服务名", object);
 					//发送消息
