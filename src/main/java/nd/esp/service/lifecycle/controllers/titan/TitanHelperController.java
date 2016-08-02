@@ -119,8 +119,14 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		// 由于脚本中空格不影响查询(如："g.V().count()"可以写成"g.    V    (   ).   count   (   )")
+		// 需要把脚本中多余空格去掉，防止类似这样的失误：'xxx.drop()'==> 'xxx.    drop     ()'
+		script = CommonHelper.checkBlank(script);
+		// 检查脚本
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
+			LOG.info("running script:{}",script);
 			resultSet = titanCommonRepository.executeScriptResultSet(script);
 		} catch (Exception e) {
 			LOG.error(e.getLocalizedMessage());
@@ -130,6 +136,7 @@ public class TitanHelperController {
 		getResult(resultSet, result);
 		return result;
 	}
+
 
 	@Deprecated
 	@RequestMapping(value = "/actions/gremlin/script/param", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -147,6 +154,8 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		script = CommonHelper.checkBlank(script);
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
 			resultSet = titanCommonRepository.executeScriptResultSet(script, param);
@@ -256,5 +265,27 @@ public class TitanHelperController {
 			result.add(iterator.next().getString());
 		}
 
+	}
+
+	/**
+	 * 检查脚本
+	 * @param script
+     */
+	private void checkScript(String script) {
+		if (script != null) {
+			for (ShieldOpt opt : ShieldOpt.values()) {
+				if (script.contains("." + opt.toString() + "(") || script.contains(". " + opt.toString() + " (")) {
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							"LC/TITAN", "脚本中带有非法操作");
+				}
+			}
+		}
+	}
+
+	/**
+	 * 屏蔽的操作
+	 */
+	private enum ShieldOpt {
+		drop, addVertex, addEdge, property, updateIndex, buildMixedIndex, buildCompositeIndex, buildIndex, addKey, makePropertyKey, openManagement
 	}
 }

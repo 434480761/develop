@@ -324,7 +324,9 @@ public class TitanResultParse {
 
         edu.setAgeRange(tmpMap.get(ES_SearchField.edu_age_range.toString()));
         edu.setDifficulty(tmpMap.get(ES_SearchField.edu_difficulty.toString()));
-        edu.setLearningTime(tmpMap.get(ES_SearchField.edu_language.toString()));
+        edu.setLearningTime(tmpMap.get(ES_SearchField.edu_learning_time.toString()));
+        edu.setLanguage(tmpMap.get(ES_SearchField.edu_language.toString()));
+        edu.setContext(tmpMap.get(ES_SearchField.edu_context.toString()));
 
         String description = tmpMap.get(ES_SearchField.edu_description.toString());
         if (description != null) {
