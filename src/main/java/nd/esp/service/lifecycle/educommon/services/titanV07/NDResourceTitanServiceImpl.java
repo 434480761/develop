@@ -626,7 +626,6 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         Map<TitanScritpUtils.KeyWords, Object> resultScript = TitanScritpUtils.buildGetDetailScript(resourceType,uuids,includeList,isAll);
         String script = resultScript.get(TitanScritpUtils.KeyWords.script).toString();
         Map<String, Object> params = (Map<String, Object>) resultScript.get(TitanScritpUtils.KeyWords.params);
-        System.out.println(script);
         ResultSet resultSet = null;
         try {
             resultSet = titanCommonRepository.executeScriptResultSet(script, params);
