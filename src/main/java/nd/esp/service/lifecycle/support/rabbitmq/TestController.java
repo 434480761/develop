@@ -15,14 +15,14 @@ import com.lcmq.component.exception.MqException;
 import com.lcmq.component.listener.OnMessageListener;
 import com.lcmq.component.model.MqMessage;
 
-@RestController
-@RequestMapping("/test")
+//@RestController
+//@RequestMapping("/test")
 public class TestController {
 	
-	@Autowired
+	//@Autowired
 	private ConsumerExecutor consumerExecutor;
 	
-	@Autowired
+	//@Autowired
 	private ProducerExecutor producerExecutor;
 	
 	@RequestMapping(value = "/mq/p",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
