@@ -638,15 +638,15 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         //分组查询返回结
         List<List<String>> resultList = new ArrayList<>();
         Iterator<Result> iterator = resultSet.iterator();
-        List<String> result1 = new ArrayList<>();
+        List<String> resultTemp = new ArrayList<>();
         while (iterator.hasNext()) {
             String line = iterator.next().getString();
             Map<String, String> valueMap = TitanResultParse.toMap(line);
             if(valueMap.containsKey(ES_SearchField.preview.toString())){
-                result1 = new ArrayList<>();
-                resultList.add(result1);
+                resultTemp = new ArrayList<>();
+                resultList.add(resultTemp);
             }
-            result1.add(line);
+            resultTemp.add(line);
         }
 
         //解析资源
