@@ -39,7 +39,7 @@ public final class StringUtils {
     }
     
     /**
-     * 将时间戳转化为Date 1464764846605=>Wed Jun 01 15:07:26 CST 2016
+     * 将时间戳转化为Date 1464764846605=>Date
      * @param timeStr
      * @return
      */
@@ -50,7 +50,7 @@ public final class StringUtils {
     }
 
     /**
-     * 字符串date将转化为时间戳 1464764846605=>Wed Jun 01 15:07:26 CST 2016
+     * 字符串date将转化为时间戳
      * @param date
      * @return
      */
