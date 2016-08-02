@@ -245,7 +245,7 @@ public class TitanResultParse {
 
         for (String str : strInOneItem) {
             Map<String, String> fieldMap = toMap(str);
-            if (str.contains(ES_SearchField.ti_md5.toString())) { //tech_info
+            if (str.contains(ES_SearchField.ti_format.toString())) { //tech_info
                 techInfoList.add(dealTI(fieldMap));
             } else if (str.contains(ES_SearchField.cg_taxoncode.toString())) {// categoryList
                 categoryList.add(dealCG(fieldMap, taxOnPath));
