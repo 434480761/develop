@@ -308,19 +308,17 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
-       // String propsCover= Arrays.asList(PropsCover.values()).toString();
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
             String propName = entry.getKey();
-            // 不使用分词
+            // 不使用分词,,需要修改titan-core,升级后才支持
             if ("keywords,language,tags,title".contains(propName)) {
                 propName = propName + "__STRING";
             }
             int propSize = params.entrySet().size();// prop数量
             String base = "v.\\\"" + propName + "\\\":(";
             Map<String, List<String>> optMap = entry.getValue();
-           // System.out.println(field + " " + optMap);
             int optSizeCount = 0;
             for (Map.Entry<String, List<String>> optEntry : optMap.entrySet()) {
                 String optName = optEntry.getKey().trim().toLowerCase();
@@ -329,28 +327,23 @@ public class EsIndexQueryBuilder {
                 int optListSize = optList.size();// 每个操作符的值的个数
                 query.append(base);
                 if ("in".equals(optName)) {
-                   // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
                         query.append(optList.get(i));
                         if (i != optListSize - 1) query.append(" OR ");
                     }
-                    // query.append(")");
                 } else if ("ne".equals(optName)) {
-                   // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
                         query.append("-").append(optList.get(i));
                         if (i != optListSize - 1) query.append(" AND ");
                     }
-                    // query.append(")");
                 }
                 //由于大写不支持like，暂时不支持like,需要修改titan-es,升级后才支持
-                 else if ("like".equals(optName)) {
+                else if ("like".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append("*").append(optList.get(i)).append("*");
                         if (i != optListSize - 1) query.append(" OR ");
                     }
-                }else if("gt,lt,ge,le".contains(optName)){
-                   // query.append(base);
+                } else if ("gt,lt,ge,le".contains(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         String range = toRangeByOpt(optName, optList.get(i));
                         query.append(range);
@@ -365,10 +358,7 @@ public class EsIndexQueryBuilder {
             paramCount++;
 
         }
-
-
         return query.toString();
-
     }
 
     /**
