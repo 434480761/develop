@@ -111,7 +111,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         try {
             titanSync = titanSyncRepository.getByExample(example);
         } catch (EspStoreException e) {
-            LOG.info("");
+            LOG.info(e.getMessage());
         }
         if (titanSync != null){
             titanSyncRepository.delete(titanSync);
