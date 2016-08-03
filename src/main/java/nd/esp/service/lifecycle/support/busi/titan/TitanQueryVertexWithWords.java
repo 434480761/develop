@@ -106,10 +106,18 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
                         scriptBuffer.append(",");
                     }
-                } else if (opt.contains(PropOperationConstant.OP_LIKE)) {
+                } else if (opt.equals(PropOperationConstant.OP_LIKE)) {
                     List<Object> likeCodeList = (List) entry.getValue();
                     if (likeCodeList.size() > 0) {
                         scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
+                    }
+                }else if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
+                    List<Object> neLikeCodeList = (List) entry.getValue();
+                    if (neLikeCodeList.size() > 0) {
+                        //String test=".hasNot"+Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".has", "");
+                        //System.out.println(test);
+                        scriptBuffer.append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
+                        //scriptBuffer.append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
                     }
                 } else {
                     List<String> inCodeList = (List) entry.getValue();

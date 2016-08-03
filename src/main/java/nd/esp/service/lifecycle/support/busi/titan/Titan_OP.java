@@ -127,8 +127,14 @@ public enum Titan_OP {
         else if(this.equals(ne)) {
             // 字段为空时处理
             scriptBuffer.setLength(0);
-            scriptBuffer.append(".or(hasNot('").append(field).append("'),has('").append(field).append("',");
-            scriptBuffer.append(opToTitanString()).append("(");
+            // search_code不会为空，特殊处理
+            if ("search_code".equals(field)) {
+                scriptBuffer.append(".not(has('").append(field).append("',");
+                scriptBuffer.append("within").append("(");
+            } else {
+                scriptBuffer.append(".or(hasNot('").append(field).append("'),has('").append(field).append("',");
+                scriptBuffer.append(opToTitanString()).append("(");
+            }
             for (Object value : values) {
                 String valueKey = TitanUtils.generateKey(scriptParamMap, field);
                 scriptBuffer.append(valueKey).append(",");
