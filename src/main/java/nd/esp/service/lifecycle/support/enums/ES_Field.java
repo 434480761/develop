@@ -8,7 +8,7 @@ package nd.esp.service.lifecycle.support.enums;
  */
 public enum ES_Field {
 	// base 8
-	identifier, title, language, description, preview, tags, keywords, custom_properties,ndres_code,
+	identifier, title, language, description, preview, tags, keywords, custom_properties,ndres_code,m_identifier,
 
 	// lifeCycle 9
 	life_cycle, version, status, enable, creator, publisher, provider, provider_source, create_time, last_update, education_info,

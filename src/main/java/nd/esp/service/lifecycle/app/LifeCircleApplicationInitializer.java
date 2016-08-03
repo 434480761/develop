@@ -36,6 +36,7 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties message_properties=null;
 	public static Properties worker_properties=null;
 	public static Properties props_properties_es=null;
+	public static Properties props_properties_es_retrieve=null;
 	public static Properties props_properties_db=null;
 	public static Properties tablenames_properties=null;
 	public static Properties ndCode_properties=null;
@@ -60,6 +61,8 @@ public class LifeCircleApplicationInitializer extends
 			        .loadAllProperties("config/worker/worker.properties");
 			props_properties_es = PropertiesLoaderUtils
                     .loadAllProperties("config/props/resource_props_range_es.properties");
+			props_properties_es_retrieve = PropertiesLoaderUtils
+					.loadAllProperties("config/props/resource_props_range_es-retrieve.properties");
 			props_properties_db = PropertiesLoaderUtils
 			        .loadAllProperties("config/props/resource_props_range_db.properties");
 			tablenames_properties = PropertiesLoaderUtils

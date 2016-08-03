@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewTags;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4In;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4Out;
@@ -120,5 +121,15 @@ public class VrLifeServiceImpl4QuestionDb implements VrLifeService{
 		outViewModel.setTags(newResourceModel.getTags());
 		
 		return outViewModel;
+	}
+
+	@Override
+	public ListViewModel<ResourceModel> recommendResourceList(String skeletonId, String type, List<String> includeList) {
+		return null;
+	}
+
+	@Override
+	public ListViewModel<ResourceModel> dynamicComposition(String skeletonId, List<String> includeList) {
+		return null;
 	}
 }

@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.titan;
 
 import com.google.gson.reflect.TypeToken;
 import nd.esp.service.lifecycle.educommon.models.*;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
@@ -14,6 +15,8 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -46,6 +49,9 @@ import java.util.*;
  */
 public class TitanResultParse {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse.class);
+    public static List<String> includes = new ArrayList<>();
+
 
     /**
      * 解析资源
@@ -54,6 +60,7 @@ public class TitanResultParse {
      * @return
      */
     public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr) {
+        long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
 
@@ -82,6 +89,7 @@ public class TitanResultParse {
         }
 
         viewModels.setItems(items);
+        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
         return viewModels;
     }
 
@@ -245,10 +253,14 @@ public class TitanResultParse {
 
         for (String str : strInOneItem) {
             Map<String, String> fieldMap = toMap(str);
-            if (str.contains(ES_SearchField.ti_md5.toString())) { //tech_info
-                techInfoList.add(dealTI(fieldMap));
+            if (str.contains(ES_SearchField.ti_format.toString())) { //tech_info
+                if (includes.contains(IncludesConstant.INCLUDE_TI)) {
+                    techInfoList.add(dealTI(fieldMap));
+                }
             } else if (str.contains(ES_SearchField.cg_taxoncode.toString())) {// categoryList
-                categoryList.add(dealCG(fieldMap, taxOnPath));
+                if (includes.contains(IncludesConstant.INCLUDE_CG)) {
+                    categoryList.add(dealCG(fieldMap, taxOnPath));
+                }
             }
         }
         item.setTechInfoList(techInfoList);
@@ -265,13 +277,20 @@ public class TitanResultParse {
      * @param fieldMap
      */
     public static void dealMainResult(ResourceModel item, Map<String, String> fieldMap) {
-        item.setLifeCycle(dealLC(fieldMap));// LifeCycle
-        item.setCopyright(dealCR(fieldMap));// Copyright
-        item.setEducationInfo(dealEDU(fieldMap));// edu
+        if (includes.contains(IncludesConstant.INCLUDE_LC)) {
+            item.setLifeCycle(dealLC(fieldMap));// LifeCycle
+        }
+        if (includes.contains(IncludesConstant.INCLUDE_CR)) {
+            item.setCopyright(dealCR(fieldMap));// Copyright
+        }
+        if (includes.contains(IncludesConstant.INCLUDE_EDU)) {
+            item.setEducationInfo(dealEDU(fieldMap));// edu
+        }
         item.setIdentifier(fieldMap.get(ES_SearchField.identifier.toString()));
         item.setTitle(fieldMap.get(ES_SearchField.title.toString()));
         item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
         item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
+        item.setmIdentifier(fieldMap.get(ES_SearchField.m_identifier.toString()));
 
         String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
         if (customProperties != null) {
@@ -284,7 +303,12 @@ public class TitanResultParse {
             if (preview.startsWith("{\"") && preview.endsWith("\"}")) {
                 @SuppressWarnings("unchecked")
                 Map<String, String> previewMap = ObjectUtils.fromJson(preview, Map.class);
+                if(previewMap == null){
+                    previewMap = new HashMap<>();
+                }
                 item.setPreview(previewMap);
+            } else {
+                item.setPreview(new HashMap<String, String>());
             }
         }
         String tags = fieldMap.get(ES_SearchField.tags.toString());
