@@ -96,6 +96,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
 
+        TitanResultParse.includes = includes;
         return getListViewModel(resultSet,resType);
     }
 
@@ -155,6 +156,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
+        TitanResultParse.includes = includes;
         return getListViewModel(resultSet,resType);
     }
 
@@ -172,6 +174,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
         // 3、解析
+        TitanResultParse.includes = includes;
         return getListViewModel(resultSet, resType);
     }
 
@@ -238,6 +241,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
+        TitanResultParse.includes = includes;
         return getListViewModel(resultSet, resType);
     }
 
