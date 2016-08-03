@@ -14,6 +14,8 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -46,6 +48,7 @@ import java.util.*;
  */
 public class TitanResultParse {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse.class);
 
     /**
      * 解析资源
@@ -54,6 +57,7 @@ public class TitanResultParse {
      * @return
      */
     public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr) {
+        long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
 
@@ -82,6 +86,7 @@ public class TitanResultParse {
         }
 
         viewModels.setItems(items);
+        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
         return viewModels;
     }
 
