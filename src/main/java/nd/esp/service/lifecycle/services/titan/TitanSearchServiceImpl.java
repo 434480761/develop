@@ -96,7 +96,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModel(resultSet,resType);
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
@@ -155,7 +155,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModel(resultSet,resType);
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
@@ -172,7 +172,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
         // 3、解析
-        return getListViewModel(resultSet, resType);
+        return getListViewModel(resultSet, resType,includes);
     }
 
     @Override
@@ -238,7 +238,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModel(resultSet, resType);
+        return getListViewModel(resultSet, resType,includes);
     }
 
     /**
@@ -247,7 +247,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param resType
      * @return
      */
-    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType) {
+    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType,List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
             long getResultBegin = System.currentTimeMillis();
@@ -256,6 +256,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 resultStr.add(iterator.next().getString());
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
+            TitanResultParse.includes = includes;
             return TitanResultParse.parseToListView(resType, resultStr);
         }
         return null;
