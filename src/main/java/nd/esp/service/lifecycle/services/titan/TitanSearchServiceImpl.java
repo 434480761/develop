@@ -166,14 +166,15 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
         List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
+        if (resultSet != null) {
+            long getResultBegin = System.currentTimeMillis();
+            Iterator<Result> iterator = resultSet.iterator();
+            while (iterator.hasNext()) {
+                resultStr.add(iterator.next().getString());
+            }
+            //System.out.println(resultStr);
+            LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
         }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
-
         return TitanResultParse.parseToListView(resType,resultStr);
 
     }
@@ -199,13 +200,15 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
 
         List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
+        if (resultSet != null) {
+            long getResultBegin = System.currentTimeMillis();
+            Iterator<Result> iterator = resultSet.iterator();
+            while (iterator.hasNext()) {
+                resultStr.add(iterator.next().getString());
+            }
+            //System.out.println(resultStr);
+            LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
         }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
         return TitanResultParse.parseToListView(resType,resultStr);
     }

@@ -327,16 +327,18 @@ public class EsIndexQueryBuilder {
                 List<String> optList = optEntry.getValue();
                 int optSize = optMap.entrySet().size();// in ne like 有几个
                 int optListSize = optList.size();// 每个操作符的值的个数
+                query.append(base);
                 if ("in".equals(optName)) {
-                    query.append(base);
+                   // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
                         query.append(optList.get(i));
                         if (i != optListSize - 1) query.append(" OR ");
                     }
                     // query.append(")");
                 } else if ("ne".equals(optName)) {
+                   // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
-                        query.append(base).append("-").append(optList.get(i));
+                        query.append("-").append(optList.get(i));
                         if (i != optListSize - 1) query.append(" AND ");
                     }
                     // query.append(")");
@@ -348,9 +350,10 @@ public class EsIndexQueryBuilder {
                         if (i != optListSize - 1) query.append(" OR ");
                     }
                 }*/else if("gt,lt,ge,le".contains(optName)){
+                   // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
                         String range = toRangeByOpt(optName, optList.get(i));
-                        query.append(base).append(range);
+                        query.append(range);
                         if (i != optListSize - 1) query.append(" OR ");
                     }
                 }
