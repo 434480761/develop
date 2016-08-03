@@ -1,9 +1,9 @@
 package nd.esp.service.lifecycle.utils;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -18,6 +18,10 @@ import java.util.Date;
  * Created by liuran on 2016/5/26.
  */
 public class TitanScritpUtils {
+    public enum KeyWords {
+        script, params
+    }
+
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanScritpUtils.class);
 
@@ -557,6 +561,45 @@ public class TitanScritpUtils {
         }
 
         return result;
+    }
+
+    public static Map<KeyWords, Object> buildGetDetailScript(String primaryCategory,
+                                                             List<String> identifierList,
+                                                             List<String> includeList,
+                                                             boolean isAll){
+        StringBuilder scriptBuilder = new StringBuilder(
+                "g.V().has('identifier',");
+        StringBuffer withInScript = new StringBuffer("within(");
+
+        Map<String, Object> params = new HashMap<>();
+        int index = 0;
+        for (int i=0; i <identifierList.size() ;i ++){
+            String indentifierName = "identifier"+index;
+            if(i == 0){
+                withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
+            }
+            params.put(indentifierName, identifierList.get(i));
+
+            index ++;
+        }
+        withInScript.append(")");
+        scriptBuilder.append(withInScript.toString()).append(").has('primary_category',primary_category)");
+
+        if(!isAll){
+            scriptBuilder.append(".has('lc_enable',true)");
+        }
+
+        params.put("primary_category", primaryCategory);
+        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList));
+        scriptBuilder.append(".valueMap();");
+
+        Map<KeyWords, Object> result = new HashMap<>();
+        result.put(KeyWords.script, scriptBuilder.toString());
+        result.put(KeyWords.params, params);
+
+        return  result;
     }
 
     public static  void main(String[] args){
