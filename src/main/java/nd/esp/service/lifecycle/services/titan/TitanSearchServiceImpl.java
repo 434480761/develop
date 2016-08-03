@@ -96,15 +96,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
 
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
+        return getListViewModel(resultSet,resType);
     }
 
 
@@ -114,10 +106,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             Map<String, Map<String, List<String>>> params,
             Map<String, String> orderMap, int from, int size, boolean reverse,
             String words) {
-        /*System.out.println("params:" + params);
-        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
-        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
+
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
@@ -165,49 +154,25 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         long searchBegin = System.currentTimeMillis();
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
-        return TitanResultParse.parseToListView(resType,resultStr);
-
+        return getListViewModel(resultSet,resType);
     }
 
 
     @Override
-    public ListViewModel<ResourceModel> searchUseES(String resType,List<String> fields,
-                                               List<String> includes,
-                                               Map<String, Map<String, List<String>>> params,
-                                               Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-
-        EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
-        builder.setWords(words);
-        builder.setParams(params);
-        builder.setResType(resType);
-        builder.setRange(from,size);
-        builder.setIncludes(includes);
-        builder.setFields(fields);
-        String script=builder.generateScriptAfterEsUpdate();
-        LOG.info("script:"+script);
-
+    public ListViewModel<ResourceModel> searchUseES(String resType, List<String> fields,
+                                                    List<String> includes,
+                                                    Map<String, Map<String, List<String>>> params,
+                                                    Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
+        // 1、构建查询脚本
+        EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
+        builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
+        String script = builder.generateScriptAfterEsUpdate();
+        LOG.info("script:" + script);
+        // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
-
-
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
+        // 3、解析
+        return getListViewModel(resultSet, resType);
     }
 
     @Override
@@ -219,10 +184,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
          return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
 
-        System.out.println("params:" + params);
+        /*System.out.println("params:" + params);
         System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
         System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -273,20 +238,28 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
-
+        return getListViewModel(resultSet, resType);
     }
 
+    /**
+     * 解析查询结果
+     * @param resultSet
+     * @param resType
+     * @return
+     */
+    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType) {
+        List<String> resultStr = new ArrayList<>();
+        if (resultSet != null) {
+            long getResultBegin = System.currentTimeMillis();
+            Iterator<Result> iterator = resultSet.iterator();
+            while (iterator.hasNext()) {
+                resultStr.add(iterator.next().getString());
+            }
+            LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
+            return TitanResultParse.parseToListView(resType, resultStr);
+        }
+        return null;
+    }
 
 
     private void dealWithSearchCoverage(
