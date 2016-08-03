@@ -250,13 +250,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType,List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
-            TitanResultParse.includes = includes;
             long getResultBegin = System.currentTimeMillis();
             Iterator<Result> iterator = resultSet.iterator();
             while (iterator.hasNext()) {
                 resultStr.add(iterator.next().getString());
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
+            TitanResultParse.includes = includes;
             return TitanResultParse.parseToListView(resType, resultStr);
         }
         return null;
