@@ -343,13 +343,13 @@ public class EsIndexQueryBuilder {
                     }
                     // query.append(")");
                 }
-                //由于大写不支持like，暂时不支持like
-                /* else if ("like".equals(optName)) {
+                //由于大写不支持like，暂时不支持like,需要修改titan-es,升级后才支持
+                 else if ("like".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
-                        query.append(base).append("*").append(optList.get(i)).append("*");
+                        query.append("*").append(optList.get(i)).append("*");
                         if (i != optListSize - 1) query.append(" OR ");
                     }
-                }*/else if("gt,lt,ge,le".contains(optName)){
+                }else if("gt,lt,ge,le".contains(optName)){
                    // query.append(base);
                     for (int i = 0; i < optListSize; i++) {
                         String range = toRangeByOpt(optName, optList.get(i));
