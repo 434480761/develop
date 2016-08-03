@@ -246,6 +246,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return getListViewModel(resultSet, resType);
     }
 
+    /**
+     * 解析查询结果
+     * @param resultSet
+     * @param resType
+     * @return
+     */
     private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
@@ -254,8 +260,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             while (iterator.hasNext()) {
                 resultStr.add(iterator.next().getString());
             }
-            //System.out.println(resultStr);
-            LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
+            LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
             return TitanResultParse.parseToListView(resType, resultStr);
         }
         return null;
