@@ -1,0 +1,1 @@
+CREATE TABLE `recommended_resources` ( `recommended_id` CHAR(36) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`recommended_id`) ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT = '推荐资源列表';

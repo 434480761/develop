@@ -1,19 +1,24 @@
 package nd.esp.service.lifecycle.services.vrlife.impl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
+import nd.esp.service.lifecycle.daos.vrlife.VrLifeDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.vrlife.VrLifeService;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
+import nd.esp.service.lifecycle.support.vrlife.VrLifeType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewTags;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4In;
 import nd.esp.service.lifecycle.vos.vrlife.StatusReviewViewModel4Out;
@@ -33,6 +38,8 @@ public class VrLifeServiceImpl implements VrLifeService{
 	@Autowired()
     @Qualifier("lifecycleServiceV06")
     private LifecycleServiceV06 lifecycleService;
+	@Autowired
+    private VrLifeDao vrLifeDao;
 	
 	@Override
 	public StatusReviewViewModel4Out statusReview(StatusReviewViewModel4In inViewModel) {
@@ -119,5 +126,57 @@ public class VrLifeServiceImpl implements VrLifeService{
 		outViewModel.setTags(newResourceModel.getTags());
 		
 		return outViewModel;
+	}
+
+	@Override
+	public ListViewModel<ResourceModel> recommendResourceList(String skeletonId, String type, List<String> includeList) {
+		//获取推荐的资源id
+		List<String> recommendedList = new ArrayList<String>();
+		if(type.equals(VrLifeType.SKELETON.getName())){
+			recommendedList = vrLifeDao.getRecommendResources();
+		}else{
+			recommendedList = vrLifeDao.getRecommendResourcesBySkeleton(skeletonId, type);
+		}
+		
+		return getResourceInfos(recommendedList, includeList);
+	}
+
+	@Override
+	public ListViewModel<ResourceModel> dynamicComposition(String skeletonId, List<String> includeList) {
+		List<String> compositionIds = vrLifeDao.dynamicComposition(skeletonId);
+		
+		return getResourceInfos(compositionIds, includeList);
+	}
+	
+	/**
+	 * 获取资源信息
+	 * @author xiezy
+	 * @date 2016年8月3日
+	 * @param ids
+	 * @param includeList
+	 * @return
+	 */
+	private ListViewModel<ResourceModel> getResourceInfos(List<String> ids, List<String> includeList) {
+		ListViewModel<ResourceModel> result = new ListViewModel<ResourceModel>();
+
+		if (CollectionUtils.isEmpty(ids)) {
+			result.setTotal(0L);
+			result.setItems(new ArrayList<ResourceModel>());
+			return result;
+		}
+
+		List<ResourceModel> resourceModels = ndResourceService.batchDetail(
+				IndexSourceType.AssetType.getName(), new HashSet<String>(ids), includeList);
+
+		if (CollectionUtils.isEmpty(resourceModels)) {
+			result.setTotal(0L);
+			result.setItems(new ArrayList<ResourceModel>());
+			return result;
+		}
+
+		result.setTotal(new Long(resourceModels.size()));
+		result.setItems(resourceModels);
+		result.setLimit(null);
+		return result;
 	}
 }
