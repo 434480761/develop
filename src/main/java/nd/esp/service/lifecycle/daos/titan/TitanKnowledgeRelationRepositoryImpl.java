@@ -97,6 +97,22 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
     }
 
     @Override
+    public long batchCreateRelation4Tree(List<Chapter> knowledges) {
+        Long size = 0L;
+        for (Chapter knowledge : knowledges) {
+            if (createRelation4Tree(knowledge)) {
+                size++;
+            }
+        }
+        return size;
+    }
+
+    @Override
+    public void deleteRelation4Tree(Chapter knowledges) {
+
+    }
+
+    @Override
     public KnowledgeRelation add(KnowledgeRelation knowledgeRelation) {
         if(knowledgeRelation == null){
             return null;
