@@ -189,10 +189,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
          return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
 
-        System.out.println("params:" + params);
+        /*System.out.println("params:" + params);
         System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
         System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
 
@@ -243,18 +243,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
-
+        return getListViewModel(resultSet, resType);
     }
 
     private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType) {
