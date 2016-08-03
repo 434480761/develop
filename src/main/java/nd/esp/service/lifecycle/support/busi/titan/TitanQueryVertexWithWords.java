@@ -80,6 +80,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 //        }
 
         if (CollectionUtils.isNotEmpty(searchCodesConditions)) {
+            List<Object> neLikeCodeList = null;
             scriptBuffer.append(".").append(TitanKeyWords.or.toString()).append("(");
             for (Map.Entry<String, Object> entry : searchCodesConditions.entrySet()) {
                 String opt = entry.getKey();
@@ -112,13 +113,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
                     }
                 }else if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
-                    List<Object> neLikeCodeList = (List) entry.getValue();
-                    if (neLikeCodeList.size() > 0) {
-                        //String test=".hasNot"+Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".has", "");
-                        //System.out.println(test);
-                        scriptBuffer.append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
-                        //scriptBuffer.append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
-                    }
+                    neLikeCodeList = (List) entry.getValue();
                 } else {
                     List<String> inCodeList = (List) entry.getValue();
                     for (String code : inCodeList) {
@@ -128,13 +123,16 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         scriptBuffer.append("),");
                         scriptParamMap.put(uniqueKey, code.trim());
                     }
-
-
                 }
                 //System.out.println( entry.getKey() + " : " + entry.getValue());
             }
             scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
             scriptBuffer.append(")");
+
+            // ne like
+            if (CollectionUtils.isNotEmpty(neLikeCodeList)) {
+                    scriptBuffer.append(".not(").append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(")");
+            }
         }
 
         if (CollectionUtils.isNotEmpty(searchPathsConditions)) {
