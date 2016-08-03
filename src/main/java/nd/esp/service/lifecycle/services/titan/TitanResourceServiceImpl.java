@@ -783,7 +783,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				return true;
 			}
 
-			return false;
+			return true;
 		}
 
 		private boolean isScheduleTime(){
