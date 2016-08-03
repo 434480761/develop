@@ -1770,4 +1770,11 @@ public class CommonHelper {
             }
         }
     }
+
+	public static void includeFilter(List<String> includes, String primaryCategory){
+		if(ResourceNdCode.instructionalobjectives.toString().equals(primaryCategory)||
+				ResourceNdCode.knowledges.toString().equals(primaryCategory)){
+			includes.remove(IncludesConstant.INCLUDE_EDU);
+		}
+	}
 }

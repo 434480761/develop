@@ -1945,7 +1945,32 @@ public class NDResourceDaoImpl implements NDResourceDao{
         if(CollectionUtils.isNotEmpty(categoryExclude)){
             result = "SELECT ndex.identifier FROM ndresource ndex INNER JOIN resource_categories rcex ON ndex.identifier=rcex.resource";
             result += " WHERE ndex.enable=1 AND ndex.primary_category='" + resType + "'";
-            result += " AND rcex.taxOnCode IN (:" + paramHead + "cgexs)";
+            
+            List<String> cgex4Like = new ArrayList<String>();
+            List<String> cgex4In = new ArrayList<String>();
+            for(String cgex : categoryExclude){
+            	if(cgex.contains("*")){
+            		cgex4Like.add(cgex);
+            	}else{
+            		cgex4In.add(cgex);
+            	}
+            }
+            
+            List<String> excludeSqlList = new ArrayList<String>();
+            if(CollectionUtils.isNotEmpty(cgex4In)){
+            	String excludeSql = "rcex.taxOnCode IN (:" + paramHead + "cgexs)";
+            	excludeSqlList.add(excludeSql);
+            }
+            if(CollectionUtils.isNotEmpty(cgex4Like)){
+            	for(int i=0;i<cgex4Like.size();i++){
+            		String excludeSql = "rcex.taxOnCode LIKE :" + paramHead + "cgexlike" + i;
+            		excludeSqlList.add(excludeSql);
+            	}
+            }
+            
+            if(CollectionUtils.isNotEmpty(excludeSqlList)){
+            	result += " AND (" + StringUtils.join(excludeSqlList, " OR ") + ")";
+            }
         }
         
         return result;
@@ -2233,7 +2258,27 @@ public class NDResourceDaoImpl implements NDResourceDao{
         }
         //3.3 categoryExclude的参数处理
         if(CollectionUtils.isNotEmpty(categoryExclude)){
-            params.put(paramHead + "cgexs", categoryExclude);
+        	List<String> cgex4Like = new ArrayList<String>();
+            List<String> cgex4In = new ArrayList<String>();
+            for(String cgex : categoryExclude){
+            	if(cgex.contains("*")){
+            		cgex4Like.add(cgex);
+            	}else{
+            		cgex4In.add(cgex);
+            	}
+            }
+            
+            if(CollectionUtils.isNotEmpty(cgex4In)){
+            	params.put(paramHead + "cgexs", cgex4In);
+            }
+            if(CollectionUtils.isNotEmpty(cgex4Like)){
+            	int i = 0;
+            	for(String cgexlike : cgex4Like){
+            		params.put(paramHead + "cgexlike" + i, cgexlike.replaceAll("\\*", "\\%"));
+            		
+            		i++;
+            	}
+            }
         }
         
         //4.prop的参数处理

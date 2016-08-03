@@ -9,6 +9,7 @@ import java.util.Map;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.educommon.services.titanV07.NDResourceTitanService;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
@@ -48,6 +49,9 @@ public class TitanHelperController {
 
 	@Autowired
 	private CommonServiceHelper commonServiceHelper;
+
+	@Autowired
+	private NDResourceTitanService ndResourceTitanService;
 
 	/**
 	 * 用于查找结点的相关信息
@@ -119,8 +123,14 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		// 由于脚本中空格不影响查询(如："g.V().count()"可以写成"g.    V    (   ).   count   (   )")
+		// 需要把脚本中多余空格去掉，防止类似这样的失误：'xxx.drop()'==> 'xxx.    drop     ()'
+		script = CommonHelper.checkBlank(script);
+		// 检查脚本
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
+			LOG.info("running script:{}",script);
 			resultSet = titanCommonRepository.executeScriptResultSet(script);
 		} catch (Exception e) {
 			LOG.error(e.getLocalizedMessage());
@@ -130,6 +140,7 @@ public class TitanHelperController {
 		getResult(resultSet, result);
 		return result;
 	}
+
 
 	@Deprecated
 	@RequestMapping(value = "/actions/gremlin/script/param", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -147,6 +158,8 @@ public class TitanHelperController {
 			result.add("script is empty");
 			return result;
 		}
+		script = CommonHelper.checkBlank(script);
+		checkScript(script);
 		ResultSet resultSet = null;
 		try {
 			resultSet = titanCommonRepository.executeScriptResultSet(script, param);
@@ -174,53 +187,12 @@ public class TitanHelperController {
 			@PathVariable String resourceType,
 			@PathVariable String uuid,
 			@RequestParam(value = "include", required = false, defaultValue = "") String include) {
-
-		checkResourceTypeAndId(resourceType, uuid);
-		// check include;
+		//check include;
 		List<String> includeList = IncludesConstant.getValidIncludes(include);
 
-		StringBuilder scriptBuilder = new StringBuilder(
-				"g.V().has('identifier',identifier).has('primary_category',primary_category)");
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("primary_category", resourceType);
-		params.put("identifier", uuid);
-		scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList));
-		scriptBuilder.append(".valueMap();");
+		ResourceModel resourceModel = ndResourceTitanService.getDetail(resourceType,uuid,includeList,true);
 
-		System.out.println(scriptBuilder);
-		ResultSet resultSet = null;
-		try {
-			resultSet = titanCommonRepository.executeScriptResultSet(
-					scriptBuilder.toString(), params);
-		} catch (Exception e) {
-			LOG.error(e.getLocalizedMessage());
-			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"LC/TITAN", "submit script and has errors");
-		}
-
-		List<String> result = new ArrayList<String>();
-		getResult(resultSet, result);
-
-		String mainResult = null;
-		List<String> otherLines = new ArrayList<String>();
-		String taxOnPath = null;
-		for (String line : result) {
-			if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-				Map<String, String> map = TitanResultParse.toMap(line);
-				taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-			} else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-				System.out.println(line);
-				mainResult = line;
-			} else {
-				otherLines.add(line);
-			}
-		}
-		System.out.println(mainResult);
-		ResourceModel resourceModel = TitanResultParse.parseResource(
-				resourceType, mainResult, otherLines, taxOnPath);
-		return CommonHelper.changeToView(resourceModel, resourceType,
-				includeList, commonServiceHelper);
-
+		return CommonHelper.changeToView(resourceModel,resourceType,includeList,commonServiceHelper);
 	}
 
 	/**
@@ -256,5 +228,27 @@ public class TitanHelperController {
 			result.add(iterator.next().getString());
 		}
 
+	}
+
+	/**
+	 * 检查脚本
+	 * @param script
+     */
+	private void checkScript(String script) {
+		if (script != null) {
+			for (ShieldOpt opt : ShieldOpt.values()) {
+				if (script.contains("." + opt.toString() + "(") || script.contains(". " + opt.toString() + " (")) {
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+							"LC/TITAN", "脚本中带有非法操作");
+				}
+			}
+		}
+	}
+
+	/**
+	 * 屏蔽的操作
+	 */
+	private enum ShieldOpt {
+		drop, addVertex, addEdge, property, updateIndex, buildMixedIndex, buildCompositeIndex, buildIndex, addKey, makePropertyKey, openManagement
 	}
 }

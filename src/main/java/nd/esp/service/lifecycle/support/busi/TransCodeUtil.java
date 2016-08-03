@@ -759,7 +759,7 @@ public class TransCodeUtil {
      * @return
      * @since
      */
-    private boolean isImageTransCode(ResourceModel resourceModel, String resType) {
+    public boolean isImageTransCode(ResourceModel resourceModel, String resType) {
         if (!IndexSourceType.AssetType.getName().equals(resType)) {
             return false;
         }

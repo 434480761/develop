@@ -84,7 +84,7 @@ public class AssetControllerV06 {
 		//model入参转换,部分数据初始化
 		AssetModel am = CommonHelper.convertViewModelIn(avm, AssetModel.class,ResourceNdCode.assets);
 		boolean bTranscode = TransCodeManager.canTransCode(avm, IndexSourceType.AssetType.getName());
-		if(bTranscode) {
+		if(bTranscode || transCodeUtil.isImageTransCode(am, IndexSourceType.AssetType.getName())) {
 		    am.getLifeCycle().setStatus(TransCodeUtil.getTransIngStatus(true));
 		}
 		
@@ -94,7 +94,7 @@ public class AssetControllerV06 {
 		//model转换
 		avm = CommonHelper.convertViewModelOut(am,AssetViewModel.class,"assets_type");
 		
-		if (bTranscode) {
+		if (bTranscode || transCodeUtil.isImageTransCode(am, IndexSourceType.AssetType.getName())) {
             transCodeUtil.triggerTransCode(am, IndexSourceType.AssetType.getName());
         }
 		return avm;
