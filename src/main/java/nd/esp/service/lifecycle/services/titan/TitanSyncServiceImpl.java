@@ -115,10 +115,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     }
 
     private boolean delete(String primaryCategory, String identifier){
-        LOG.info("titan sync : delete resource start primaryCategory：{}  identifier:{}",primaryCategory,identifier);
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
-        LOG.info("titan sync : delete {} success",identifier);
+        if(techInfoDeleted && resourceDeleted){
+            LOG.info("titan_sync : delete {} success",identifier);
+        }
         return techInfoDeleted && resourceDeleted;
     }
 
@@ -129,7 +130,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(education == null){
             return true;
         }
-        LOG.info("titan sync : report resource start primaryCategory：{}  identifier:{}",
+        LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
@@ -170,7 +171,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
-        LOG.info("titan sync : report {} success",education.getIdentifier());
+        LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
 }
