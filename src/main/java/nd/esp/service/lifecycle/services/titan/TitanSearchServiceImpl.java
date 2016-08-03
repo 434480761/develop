@@ -96,8 +96,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
 
-        TitanResultParse.includes = includes;
-        return getListViewModel(resultSet,resType);
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
@@ -156,8 +155,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        TitanResultParse.includes = includes;
-        return getListViewModel(resultSet,resType);
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
@@ -174,8 +172,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
         // 3、解析
-        TitanResultParse.includes = includes;
-        return getListViewModel(resultSet, resType);
+        return getListViewModel(resultSet, resType,includes);
     }
 
     @Override
@@ -241,8 +238,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         LOG.info("titan search consume times:"
                 + (System.currentTimeMillis() - searchBegin));
 
-        TitanResultParse.includes = includes;
-        return getListViewModel(resultSet, resType);
+        return getListViewModel(resultSet, resType,includes);
     }
 
     /**
@@ -251,9 +247,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param resType
      * @return
      */
-    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType) {
+    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType,List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
+            TitanResultParse.includes = includes;
             long getResultBegin = System.currentTimeMillis();
             Iterator<Result> iterator = resultSet.iterator();
             while (iterator.hasNext()) {
