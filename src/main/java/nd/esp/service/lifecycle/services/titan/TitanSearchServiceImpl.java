@@ -166,12 +166,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                     Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
-        builder.setWords(words);
-        builder.setParams(params);
-        builder.setResType(resType);
-        builder.setRange(from, size);
-        builder.setIncludes(includes);
-        builder.setFields(fields);
+        builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
         String script = builder.generateScriptAfterEsUpdate();
         LOG.info("script:" + script);
         // 2、查询
