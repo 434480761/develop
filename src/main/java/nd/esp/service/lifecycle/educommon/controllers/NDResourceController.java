@@ -730,7 +730,7 @@ public class NDResourceController {
                                 orderMap, reverseBoolean);
                     }
             } else if (StaticDatas.QUERY_BY_TITAN_FIRST
-                    && canQueryByTitan(resType, relationsMap, orderMap, forceStatus, tags, showVersion)) {
+                    && canQueryByTitan(resType, relationsMap, orderMap, forceStatus, tags, showVersion,printable)) {
                 Map<String, Object> changeMap = changeKey(propsMap,
                         orderMap, false);
                 propsMap = (Map<String, Set<String>>) changeMap
@@ -1272,11 +1272,12 @@ public class NDResourceController {
      * @param forceStatus
      * @param tags
      * @param showVersion
+     * @param printable 是否可打印
      * @return
      */
     private boolean canQueryByTitan(String resType, List<Map<String, String>> relations, Map<String, String>orderMap,
-            boolean forceStatus,List<String> tags,boolean showVersion){
-        return  !forceStatus &&
+            boolean forceStatus,List<String> tags,boolean showVersion,Boolean printable){
+        return (printable==null) && !forceStatus &&
                 !showVersion &&
                 CollectionUtils.isEmpty(tags) &&
                 !resType.equals(Constant.RESTYPE_EDURESOURCE) &&
