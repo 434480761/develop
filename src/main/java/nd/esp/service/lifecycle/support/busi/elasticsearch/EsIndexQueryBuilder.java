@@ -60,34 +60,41 @@ public class EsIndexQueryBuilder {
     public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT:' + count;resultList";
     public static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
-    public void setIndex(String index) {
+    public EsIndexQueryBuilder setIndex(String index) {
         this.index = index;
+        return this;
     }
 
-    public void setWords(String words) {
+    public EsIndexQueryBuilder setWords(String words) {
         this.words = words;
+        return this;
     }
 
-    public void setResType(String resType) {
+    public EsIndexQueryBuilder setResType(String resType) {
         this.resType = resType;
+        return this;
     }
 
-    public void setParams(Map<String, Map<String, List<String>>> params) {
+    public EsIndexQueryBuilder setParams(Map<String, Map<String, List<String>>> params) {
         this.params = params;
+        return this;
     }
 
-    public void setRange(int from, int size) {
+    public EsIndexQueryBuilder setRange(int from, int size) {
         this.from = from;
         this.size = size;
         this.end = size + from;
+        return this;
     }
 
-    public void setIncludes(List<String> includes) {
+    public EsIndexQueryBuilder setIncludes(List<String> includes) {
         this.includes = includes;
+        return this;
     }
 
-    public void setFields(List<String> fields) {
+    public EsIndexQueryBuilder setFields(List<String> fields) {
         this.fields = fields;
+        return this;
     }
 
     /**
