@@ -309,14 +309,21 @@ public class TitanResultParse {
             } else {
                 item.setPreview(new HashMap<String, String>());
             }
+        } else {
+            //教学目标、知识点、课时没有这个值，但需要返回一个空的map集合
+            item.setPreview(new HashMap<String, String>());
         }
         String tags = fieldMap.get(ES_SearchField.tags.toString());
-        if (tags != null) {
+        if (StringUtils.isNotEmpty(tags)) {
             item.setTags(Arrays.asList(tags.replaceAll("\"", "").split(",")));
+        } else if(tags !=null){
+            item.setTags(new ArrayList<String>());
         }
         String keywords = fieldMap.get(ES_SearchField.keywords.toString());
-        if (keywords != null) {
+        if (StringUtils.isNotEmpty(keywords)) {
             item.setKeywords(Arrays.asList(keywords.replaceAll("\"", "").split(",")));
+        } else if(keywords != null){
+            item.setKeywords(new ArrayList<String>());
         }
     }
 
