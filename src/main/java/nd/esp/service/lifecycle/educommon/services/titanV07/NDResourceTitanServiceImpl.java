@@ -642,7 +642,8 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         while (iterator.hasNext()) {
             String line = iterator.next().getString();
             Map<String, String> valueMap = TitanResultParse.toMap(line);
-            if(valueMap.containsKey(ES_SearchField.preview.toString())){
+            if(valueMap.containsKey(ES_SearchField.lc_last_update.toString()) ||
+                    valueMap.containsKey(ES_SearchField.lc_create_time.toString())){
                 resultTemp = new ArrayList<>();
                 resultList.add(resultTemp);
             }

@@ -277,6 +277,7 @@ public class TitanResultParse {
         item.setTitle(fieldMap.get(ES_SearchField.title.toString()));
         item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
         item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
+        item.setmIdentifier(fieldMap.get(ES_SearchField.m_identifier.toString()));
 
         String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
         if (customProperties != null) {
