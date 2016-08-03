@@ -669,7 +669,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
                 continue;
             }
             resourceModelList.add(TitanResultParse.parseResource(
-                    resourceType, mainResult, otherLines, taxOnPath,IncludesConstant.getIncludesList()));
+                    resourceType, mainResult, otherLines, taxOnPath,includeList));
         }
 
         return resourceModelList;
