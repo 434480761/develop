@@ -20,7 +20,7 @@ public enum ES_SearchField {
 			ES_Field.preview, root), tags(ES_Field.tags, root), keywords(
 			ES_Field.keywords, root), custom_properties(
 			ES_Field.custom_properties, root), ndres_code(ES_Field.ndres_code,
-			root),
+			root),m_identifier(ES_Field.m_identifier, root),
 
 	// lifeCycle 9
 	life_cycle(ES_Field.life_cycle, root) {
