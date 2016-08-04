@@ -3,14 +3,27 @@ package nd.esp.service.lifecycle.support.busi.titan;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
 public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
+    private String resType;
+    private boolean isFilter;
     private String words;
     private Map<String, Object> searchCodesConditions;
     private Map<String, Object> searchPathsConditions;
+
+    public void setResType(String resType) {
+        this.resType = resType;
+    }
+
+    public void setIsFilter(String resType) {
+        this.isFilter = ResourceNdCode.lessons.toString().equals(resType) || ResourceNdCode.instructionalobjectives.toString().equals(resType);
+    }
+
+
 
     public void setSearchPathsConditions(Map<String, Object> searchPathsConditions) {
         this.searchPathsConditions = searchPathsConditions;
@@ -51,7 +64,8 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
             List<Object> values = new ArrayList<Object>();
             values.add(words);
             for (WordsCover wordsCover : WordsCover.values()) {
-
+                // 过滤
+                if (isFilter && wordsCover.equals(WordsCover.edu_description)) continue;
                 // remove the "."
                 scriptBuffer.append(Titan_OP.like.generateScipt(
                         wordsCover.toString(), values, scriptParamMap)
