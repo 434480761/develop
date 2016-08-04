@@ -262,7 +262,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return null;
     }
 
-
+    /**
+     * 处理coverage
+     * @param vertexPropertiesMap
+     * @param coverageConditions
+     */
     private void dealWithSearchCoverage(
             Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
             Map<String, List<String>> coverageConditions) {
@@ -303,6 +307,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
 
+    /**
+     * 处理category path
+     * @param resourceQueryVertex
+     * @param taxonpathConditions
+     */
     private void dealWithSearchPath(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> taxonpathConditions) {
         if (CollectionUtils.isEmpty(taxonpathConditions)) return;
@@ -344,7 +353,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     }
 
-
+    /**
+     * 处理category code
+     * @param resourceQueryVertex
+     * @param codeConditions
+     */
     private void dealWithSearchCode(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> codeConditions) {
         if (CollectionUtils.isEmpty(codeConditions)) return;
@@ -403,6 +416,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
 
+    /**
+     * 处理 order by/limit
+     * @param titanExpression
+     * @param orderMap
+     * @param from
+     * @param size
+     */
     private void dealWithOrderAndRange(TitanExpression titanExpression,
                                        Map<String, String> orderMap, int from, int size) {
         // 默认使用创建时间排序，desc
