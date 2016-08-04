@@ -264,7 +264,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 	private String addPath(String resource ,String resourcePrimaryCategory,String path ){
 		//检查path是否已经存在
-		String checkPathExist = "g.V().hasLabel('resourcePrimaryCategory').has('identifier',resource)" +
+		String checkPathExist = "g.V().hasLabel(resourcePrimaryCategory).has('identifier',resource)" +
 				".outE().hasLabel('has_categories_path').inV().has('cg_taxonpath',path).id()";
 		Map<String, Object> checkPathParam = new HashMap<>();
 		checkPathParam.put("resourcePrimaryCategory",resourcePrimaryCategory);
