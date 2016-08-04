@@ -348,6 +348,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     private void dealWithSearchCode(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> codeConditions) {
         if (CollectionUtils.isEmpty(codeConditions)) return;
+        Map<String, Object> conditionMap = new HashedMap<>();
 
         // ne
         List<Object> neLikeSearchCode = new ArrayList<Object>();
@@ -369,12 +370,14 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (CollectionUtils.isNotEmpty(searchCodeConditionMap)) resourceQueryVertex.getPropertiesMap().put("search_code", searchCodeConditionMap);
         }
 
+        if (CollectionUtils.isNotEmpty(neLikeSearchCode)) conditionMap.put(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE, neLikeSearchCode);
+
 
 
         // in
         List<String> eqConditions = codeConditions.get(ES_OP.eq.toString());
         if (CollectionUtils.isNotEmpty(eqConditions)) {
-            Map<String, Object> conditionMap = new HashedMap<>();
+
             List<Object> inSearchCode = new ArrayList<>();
             List<Object> andSearchCode = new ArrayList<>();
             List<Object> likeSearchCode = new ArrayList<>();
@@ -392,13 +395,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             }
             if (CollectionUtils.isNotEmpty(andSearchCode)) conditionMap.put(PropOperationConstant.OP_AND, andSearchCode);
             if (CollectionUtils.isNotEmpty(likeSearchCode)) conditionMap.put(PropOperationConstant.OP_LIKE, likeSearchCode);
-            if (CollectionUtils.isNotEmpty(neLikeSearchCode)) conditionMap.put(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE, neLikeSearchCode);
             if (CollectionUtils.isNotEmpty(inSearchCode)) conditionMap.put(PropOperationConstant.OP_IN, inSearchCode);
-            if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.setSearchCodesConditions(conditionMap);
-
         }
 
-
+        if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.setSearchCodesConditions(conditionMap);
 
     }
 
