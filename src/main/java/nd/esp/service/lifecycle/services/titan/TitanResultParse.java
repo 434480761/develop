@@ -431,7 +431,7 @@ public class TitanResultParse {
         }
         techInfo.setSecureKey(tmpMap.get(ES_SearchField.ti_secure_key.toString()));
 
-        String size = tmpMap.get(ES_SearchField.ti_size);
+        String size = tmpMap.get(ES_SearchField.ti_size.toString());
         if (size != null) {
             techInfo.setSize(Long.parseLong(size));
         }
