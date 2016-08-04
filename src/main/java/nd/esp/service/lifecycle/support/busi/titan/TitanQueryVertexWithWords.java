@@ -12,6 +12,7 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
     private boolean isFilter = false;
     private String words;
     private Map<String, Object> searchCodesConditions;
+    private Map<String, Object> neLikesearchCodesConditions;
     private Map<String, Object> searchPathsConditions;
 
 
@@ -29,6 +30,10 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
     public void setSearchCodesConditions(Map<String, Object> searchCodesConditions) {
         this.searchCodesConditions = searchCodesConditions;
+    }
+
+    public void setNeLikesearchCodesConditions(Map<String, Object> neLikesearchCodesConditions) {
+        this.neLikesearchCodesConditions = neLikesearchCodesConditions;
     }
 
     // FIXME 暂时放在一起
@@ -92,7 +97,6 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 //        }
 
         if (CollectionUtils.isNotEmpty(searchCodesConditions)) {
-            List<Object> neLikeCodeList = null;
             scriptBuffer.append(".").append(TitanKeyWords.or.toString()).append("(");
             for (Map.Entry<String, Object> entry : searchCodesConditions.entrySet()) {
                 String opt = entry.getKey();
@@ -124,9 +128,9 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                     if (likeCodeList.size() > 0) {
                         scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
                     }
-                }else if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
+                }/*else if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
                     neLikeCodeList = (List) entry.getValue();
-                } else {
+                }*/ else {
                     List<String> inCodeList = (List) entry.getValue();
                     for (String code : inCodeList) {
                         scriptBuffer.append("has('search_code',");
@@ -141,10 +145,19 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
             scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
             scriptBuffer.append(")");
 
-            // ne like
-            if (CollectionUtils.isNotEmpty(neLikeCodeList)) {
+
+        }
+
+        // ne like
+        if (CollectionUtils.isNotEmpty(neLikesearchCodesConditions)) {
+            for (Map.Entry<String, Object> entry : neLikesearchCodesConditions.entrySet()) {
+                String opt = entry.getKey();
+                if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
+                    List<Object>  neLikeCodeList = (List) entry.getValue();
                     scriptBuffer.append(".not(").append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(")");
+                }
             }
+
         }
 
         if (CollectionUtils.isNotEmpty(searchPathsConditions)) {
