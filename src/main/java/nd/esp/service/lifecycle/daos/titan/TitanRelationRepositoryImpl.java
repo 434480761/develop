@@ -148,32 +148,49 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 	}
 
 	private ResourceRelation addRelation(ResourceRelation resourceRelation){
-		StringBuffer scriptBuffer = new StringBuffer(
-				"g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
-						".addEdge('has_relation'," +
-						"g.V().hasLabel(target_primaryCategory).has('identifier',target_identifier).next(),'identifier',edgeIdentifier");
 
-		Map<String, Object> createRelationParams = TitanScritpUtils
-				.getParamAndChangeScript(scriptBuffer, resourceRelation);
-
-		scriptBuffer.append(").id()");
-
-		createRelationParams.put("source_primaryCategory", resourceRelation.getResType());
-		createRelationParams.put("source_identifier", resourceRelation.getSourceUuid());
-		createRelationParams.put("target_primaryCategory", resourceRelation.getResourceTargetType());
-		createRelationParams.put("target_identifier", resourceRelation.getTarget());
-		createRelationParams.put("edgeIdentifier", resourceRelation.getIdentifier());
-
-		String edgeId;
+		String checkRelationExist = "g.E().has('has_relation','identifier',edgeIdentifier).id()";
+		Map<String, Object> checkRelationParam = new HashMap<>();
+		checkRelationParam.put("edgeIdentifier", resourceRelation.getIdentifier());
+		String oldEdgeId = null;
 		try {
-			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), createRelationParams);
+			oldEdgeId = titanCommonRepository.executeScriptUniqueString(checkRelationExist,checkRelationParam);
 		} catch (Exception e) {
 			LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceRelation.getIdentifier());
 			//TODO titan sync
 			return null;
 		}
-		if(edgeId == null){
-			return null;
+
+		if(oldEdgeId == null){
+			StringBuffer scriptBuffer = new StringBuffer(
+					"g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
+							".addEdge('has_relation'," +
+							"g.V().hasLabel(target_primaryCategory).has('identifier',target_identifier).next(),'identifier',edgeIdentifier");
+
+			Map<String, Object> createRelationParams = TitanScritpUtils
+					.getParamAndChangeScript(scriptBuffer, resourceRelation);
+
+			scriptBuffer.append(").id()");
+
+			createRelationParams.put("source_primaryCategory", resourceRelation.getResType());
+			createRelationParams.put("source_identifier", resourceRelation.getSourceUuid());
+			createRelationParams.put("target_primaryCategory", resourceRelation.getResourceTargetType());
+			createRelationParams.put("target_identifier", resourceRelation.getTarget());
+			createRelationParams.put("edgeIdentifier", resourceRelation.getIdentifier());
+
+			String edgeId;
+			try {
+				edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), createRelationParams);
+			} catch (Exception e) {
+				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceRelation.getIdentifier());
+				//TODO titan sync
+				return null;
+			}
+			if(edgeId == null){
+				return null;
+			}
+		} else {
+			return updateRelation(resourceRelation);
 		}
 
 		return resourceRelation;
