@@ -535,7 +535,8 @@ public class EducationRelationControllerV06 {
                     LifeCircleErrorMessageMapper.GetEducationRelationListFail.getCode(),e.getMessage());
         }
         // 如果是教学目标，则根据教学目标类型与知识点设置title
-        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+        if ((!"true".equals(reverse) && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
+                || ("true".equals(reverse) && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
 
             Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<RelationForQueryViewModel, String>() {
                 @Nullable
@@ -596,7 +597,8 @@ public class EducationRelationControllerV06 {
         ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
 
         // 如果是教学目标，则根据教学目标类型与知识点设置title
-        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+        if ((reverse && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
+                || (!reverse && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
 
             Collection<String> ids = Collections2.transform(modelList.getItems(), new Function<RelationForQueryViewModel, String>() {
                 @Nullable
