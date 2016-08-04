@@ -119,6 +119,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         params.remove("relation");
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+        resourceQueryVertex.setIsFilter(resType);
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
