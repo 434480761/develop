@@ -378,20 +378,20 @@ public class EsIndexQueryBuilder {
     private String toRangeByOpt(String optName, String date) {
         long toTimeStamp = StringUtils.strDateToTimeStamp(date.trim());
         String range = null;
-        if ("gt".equals(optName)) {// 大于
+        if (PropOperationConstant.OP_GT.equals(optName)) {// 大于
             // [toTimeStamp+1 TO 9999999999999]
             toTimeStamp = toTimeStamp + 1;
             range = "[" + toTimeStamp + " TO 9999999999999]";
-        } else if ("lt".equals(optName)) {// 小于
+        } else if (PropOperationConstant.OP_LT.equals(optName)) {// 小于
             // [0 TO　toTimeStamp-1]
             toTimeStamp = toTimeStamp - 1;
             range = "[0 TO " + toTimeStamp + "]";
-        } else if ("ge".equals(optName)) {// 大于等于
+        } else if (PropOperationConstant.OP_GE.equals(optName)) {// 大于等于
             // [toTimeStamp TO 9999999999999]
             range = "[" + toTimeStamp + " TO 9999999999999]";
-        } else if ("lt".equals(optName)) {// 小于等于
+        } else if (PropOperationConstant.OP_LE.equals(optName)) {// 小于等于
             // [0 TO　toTimeStamp]
-            range = "[0 TO　" + toTimeStamp + "]";
+            range = "[0 TO " + toTimeStamp + "]";
         }
         return range;
     }
