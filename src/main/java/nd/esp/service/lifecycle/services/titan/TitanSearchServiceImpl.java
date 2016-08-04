@@ -361,12 +361,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     private void dealWithSearchCode(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> codeConditions) {
         if (CollectionUtils.isEmpty(codeConditions)) return;
-        Map<String, Object> conditionMap = new HashedMap<>();
+
 
         // ne
         List<Object> neLikeSearchCode = new ArrayList<Object>();
         List<String> nqConditions = codeConditions.get(ES_OP.ne.toString());
         if (CollectionUtils.isNotEmpty(nqConditions)) {
+            Map<String, Object> neLikeConditionMap = new HashedMap<>();
             List<Object> neSearchCode = new ArrayList<Object>();
             for (String neCondition : nqConditions) {
                 if (neCondition == null) continue;
@@ -377,20 +378,24 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     neSearchCode.add(neCondition);
                 }
             }
-            // 处理ne like
+            // 处理ne
             Map<Titan_OP, List<Object>> searchCodeConditionMap = new HashedMap<Titan_OP, List<Object>>();
             if (CollectionUtils.isNotEmpty(neSearchCode)) searchCodeConditionMap.put(Titan_OP.ne, neSearchCode);
             if (CollectionUtils.isNotEmpty(searchCodeConditionMap)) resourceQueryVertex.getPropertiesMap().put("search_code", searchCodeConditionMap);
+            // ne like
+            if (CollectionUtils.isNotEmpty(neLikeSearchCode)) neLikeConditionMap.put(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE, neLikeSearchCode);
+            if (CollectionUtils.isNotEmpty(neLikeConditionMap)) resourceQueryVertex.setNeLikesearchCodesConditions(neLikeConditionMap);
+
         }
 
-        if (CollectionUtils.isNotEmpty(neLikeSearchCode)) conditionMap.put(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE, neLikeSearchCode);
+
 
 
 
         // in
         List<String> eqConditions = codeConditions.get(ES_OP.eq.toString());
         if (CollectionUtils.isNotEmpty(eqConditions)) {
-
+            Map<String, Object> conditionMap = new HashedMap<>();
             List<Object> inSearchCode = new ArrayList<>();
             List<Object> andSearchCode = new ArrayList<>();
             List<Object> likeSearchCode = new ArrayList<>();
@@ -409,9 +414,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (CollectionUtils.isNotEmpty(andSearchCode)) conditionMap.put(PropOperationConstant.OP_AND, andSearchCode);
             if (CollectionUtils.isNotEmpty(likeSearchCode)) conditionMap.put(PropOperationConstant.OP_LIKE, likeSearchCode);
             if (CollectionUtils.isNotEmpty(inSearchCode)) conditionMap.put(PropOperationConstant.OP_IN, inSearchCode);
+            if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.setSearchCodesConditions(conditionMap);
         }
 
-        if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.setSearchCodesConditions(conditionMap);
+
 
     }
 
