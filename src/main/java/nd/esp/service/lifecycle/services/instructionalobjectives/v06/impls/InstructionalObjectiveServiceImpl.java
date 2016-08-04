@@ -1,7 +1,10 @@
 package nd.esp.service.lifecycle.services.instructionalobjectives.v06.impls;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
@@ -23,16 +26,20 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.coverage.v06.CoverageViewModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Nullable;
 
 /**
  * 业务实现类
@@ -283,4 +290,111 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		}
 	}
 
+	@Override
+	public String getInstructionalObjectiveTitle(String id) {
+		List<String> ids = new ArrayList<>();
+		ids.add(id);
+		return getInstructionalObjectiveTitle(ids).get(id);
+	}
+
+	@Override
+	public Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids) {
+
+		try {
+			Collection<String> idString = Collections2.transform(ids, new Function<String, String>() {
+				@Nullable
+				@Override
+				public String apply(@Nullable String s) {
+					return String.format("\"%s\"", s);
+				}
+			});
+
+			// 查找教学目标关联的教学目标类型
+			String SQLQueryInstructionalObjectiveType = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description AS description,rr.target AS target from `ndresource` AS ndr" +
+					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"assets\" and rr.resource_target_type=\"instructionalobjectives\"" +
+					" WHERE ndr.identifier in ( select resource from `resource_categories` where taxOnCode='$RA0503') AND rr.target in(%s)", StringUtils.join(idString, ","));
+			List<Map<String, Object>> instructionalObjectiveTypeList = jt.queryForList(SQLQueryInstructionalObjectiveType);
+			// 以教学目标Id为key的查询结果
+			Map<String, Map<String, Object>> instructionalObjective2TypeMap = new HashMap<>();
+			if(CollectionUtils.isNotEmpty(instructionalObjectiveTypeList)){
+				for (Map<String, Object> map : instructionalObjectiveTypeList) {
+					String target = (String) map.get("target");
+					instructionalObjective2TypeMap.put(target, map);
+				}
+			}
+
+			// 查找教学目标关联的知识点
+			String SQLQueryKnowledges = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description as description,rr.target AS target,rr.order_num as orderNum from `ndresource` AS ndr" +
+					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"knowledges\" and rr.resource_target_type=\"instructionalobjectives\"" +
+					" WHERE rr.target in (%s)", StringUtils.join(idString, ","));
+			List<Map<String, Object>> knowledgesList = jt.queryForList(SQLQueryKnowledges);
+			// 以教学目标Id为key的查询结果
+			Map<String, List<Map<String, Object>>> knowledgesMap = new HashMap<>();
+			if(CollectionUtils.isNotEmpty(knowledgesList)) {
+				for (Map<String, Object> map : knowledgesList) {
+					String target = (String) map.get("target");
+					List<Map<String, Object>> list = knowledgesMap.get(target);
+					if (null == list) {
+						list = new ArrayList<>();
+						knowledgesMap.put(target, list);
+					}
+					list.add(map);
+					// 多个知识点有排序
+					Collections.sort(list, new Comparator<Map<String, Object>>() {
+						@Override
+						public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+							Integer order1 = (Integer) o1.get("orderNum");
+							Integer order2 = (Integer) o2.get("orderNum");
+							return order1 - order2;
+						}
+					});
+				}
+			}
+
+			Map<String, String> results = new HashMap<>();
+
+			for (String id : ids) {
+				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
+				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
+				// 获取多个知识点的title
+				Collection<String> knowledgesTitle = Collections2.transform(knowledges, new Function<Map<String, Object>, String>() {
+					@Nullable
+					@Override
+					public String apply(Map<String, Object> stringObjectMap) {
+						return (String)stringObjectMap.get("title");
+					}
+				});
+
+				String typeString = (String) instructionalObjective2Type.get("description");
+				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle));
+			}
+
+			return results;
+		} catch (DataAccessException e) {
+			LOG.error("根据教学目标获取Title出错！", e);
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getLocalizedMessage());
+		}
+	}
+
+	/***
+	 * 根据教学目标类型与知识点拼接知识点title
+	 * @param typeString 教学目标类型描述
+	 * @param knowledgeTitle 知识点title
+	 * @return 拼接后的字符串
+	 */
+	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle) {
+		Pattern pattern = Pattern.compile("<span.*?>.*?</span>");
+		String[] split = pattern.split(typeString);
+		String[] knowledges = knowledgeTitle.toArray(new String[knowledgeTitle.size()]);
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0;i < split.length;i++) {
+			sb.append(split[i]);
+			sb.append(knowledges.length > i ? knowledges[i]:"");
+		}
+
+		return sb.toString();
+	}
 }

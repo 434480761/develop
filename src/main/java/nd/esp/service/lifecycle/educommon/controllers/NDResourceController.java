@@ -8,21 +8,14 @@ import java.net.URLDecoder;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
@@ -37,6 +30,7 @@ import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
@@ -62,6 +56,7 @@ import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
 
 import org.apache.commons.io.IOUtils;
+import org.elasticsearch.indices.cluster.IndicesClusterStateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,6 +142,9 @@ public class NDResourceController {
     @Autowired
     NotifyReportService nrs;
 
+    @Autowired
+    private InstructionalObjectiveService instructionalObjectiveService;
+
     /**
      * 资源获取详细接口
      * 
@@ -172,6 +170,10 @@ public class NDResourceController {
         List<String> includeList = IncludesConstant.getValidIncludes(includeString);
         //调用servicere
         ResourceModel modelResult = ndResourceService.getDetail(resourceType, uuid,includeList,isAll);
+        // 如果是教学目标，它的title实时计算
+        if (resourceType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+            modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(modelResult.getIdentifier()));
+        }
         // model出参转换
         return changeToView(modelResult, resourceType,includeList);
     }
@@ -367,7 +369,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
 
-		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,null, coverages, props,null, words, limit, true, true, reverse, printable, printableKey,firstKnLevel);
+		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, null, coverages, props, null, words, limit, true, true, reverse, printable, printableKey, firstKnLevel);
     }
 	
 	/**
@@ -463,18 +465,40 @@ public class NDResourceController {
             @RequestParam(required=false,value="printable_key") String printableKey,
             @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam String words,@RequestParam String limit){
+
+        ListViewModel<ResourceViewModel> resourceViewModelListViewModel = null;
+
     	if(CollectionUtils.isNotEmpty(props)){
     		List<String> newProps = new ArrayList<String>();
             for (String p : props) {
     			String s = URLDecoder.decode(p);
     			newProps.add(s);
     		}
-            return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+            resourceViewModelListViewModel = requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     	}else{
-    		return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+            resourceViewModelListViewModel = requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     	}
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+            
+            Collection<String> ids = Collections2.transform(resourceViewModelListViewModel.getItems(), new Function<ResourceViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(ResourceViewModel resourceViewModel) {
+                    return resourceViewModel.getIdentifier();
+                }
+            });
 
-        
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (ResourceViewModel model : resourceViewModelListViewModel.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+            
+        }
+
+        return resourceViewModelListViewModel;
     }
     
     /**
@@ -539,7 +563,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="coverage") Set<String> coverages,
             @RequestParam(required=false,value="prop") List<String> props,
             @RequestParam(value="groupby") String groupBy){
-        
+
         return requestCounting(resType, categories, coverages, props, true, groupBy);
     }
     
@@ -561,7 +585,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="coverage") Set<String> coverages,
             @RequestParam(required=false,value="prop") List<String> props,
             @RequestParam(value="groupby") String groupBy){
-        
+
         return requestCounting(resType, categories, coverages, props, false, groupBy);
     }
     

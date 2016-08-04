@@ -1,20 +1,21 @@
 package nd.esp.service.lifecycle.controllers.educationrelation.v06;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.models.v06.BatchAdjustRelationOrderModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
+import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -65,6 +66,9 @@ public class EducationRelationControllerV06 {
     @Autowired
     @Qualifier("educationRelationServiceForQuestionV06")
     private EducationRelationServiceForQuestionV06 educationRelationServiceForQuestion;
+
+    @Autowired
+    private InstructionalObjectiveService instructionalObjectiveService;
     
     /**
      * 创建资源关系
@@ -530,7 +534,26 @@ public class EducationRelationControllerV06 {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.GetEducationRelationListFail.getCode(),e.getMessage());
         }
-        
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+
+            Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<RelationForQueryViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(RelationForQueryViewModel model) {
+                    return model.getIdentifier();
+                }
+            });
+
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (RelationForQueryViewModel model : listViewModel.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+
+        }
+
         return listViewModel;
     }
     
@@ -570,7 +593,29 @@ public class EducationRelationControllerV06 {
         limit = CommonHelper.checkLimitMaxSize(limit);
         
 //        return educationRelationService.batchQueryResources(resType, sids, targetType, relationType, limit);
-        return educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+        ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+
+            Collection<String> ids = Collections2.transform(modelList.getItems(), new Function<RelationForQueryViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(RelationForQueryViewModel model) {
+                    return model.getIdentifier();
+                }
+            });
+
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (RelationForQueryViewModel model : modelList.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+
+        }
+
+        return modelList;
     }
     
     /**

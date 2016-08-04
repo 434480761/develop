@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.instructionalobjectives.v06;
 
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -35,5 +36,11 @@ public interface InstructionalObjectiveService{
 	 * @return
      */
 	List<Map<String, Object>> getChapterRelationById(String id);
-	
+
+	/***
+	 * 根据教学目标Id查询它的Title
+	 * @param ids 教学目标Id
+	 */
+	String getInstructionalObjectiveTitle(String ids);
+	Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids);
 }
