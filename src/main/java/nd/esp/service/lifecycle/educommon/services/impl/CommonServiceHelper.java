@@ -21,63 +21,13 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.models.courseware.v06.CoursewareModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
-import nd.esp.service.lifecycle.models.v06.AssetModel;
-import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
-import nd.esp.service.lifecycle.models.v06.CourseWareObjectTemplateModel;
-import nd.esp.service.lifecycle.models.v06.EbookModel;
-import nd.esp.service.lifecycle.models.v06.HomeworkModel;
-import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
-import nd.esp.service.lifecycle.models.v06.KnowledgeBaseModel;
-import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
-import nd.esp.service.lifecycle.models.v06.LearningPlanModel;
-import nd.esp.service.lifecycle.models.v06.LessonModel;
-import nd.esp.service.lifecycle.models.v06.LessonPlanModel;
-import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.models.v06.*;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Asset;
-import nd.esp.service.lifecycle.repository.model.Category;
-import nd.esp.service.lifecycle.repository.model.CategoryData;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.Courseware;
-import nd.esp.service.lifecycle.repository.model.CoursewareObject;
-import nd.esp.service.lifecycle.repository.model.CoursewareObjectTemplate;
-import nd.esp.service.lifecycle.repository.model.Ebook;
-import nd.esp.service.lifecycle.repository.model.HomeWork;
-import nd.esp.service.lifecycle.repository.model.InstructionalObjective;
-import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
-import nd.esp.service.lifecycle.repository.model.LearningPlan;
-import nd.esp.service.lifecycle.repository.model.Lesson;
-import nd.esp.service.lifecycle.repository.model.LessonPlan;
-import nd.esp.service.lifecycle.repository.model.Question;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.TeachingActivities;
-import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
-import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
-import nd.esp.service.lifecycle.repository.sdk.CategoryRepository;
-import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
-import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectRepository;
-import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectTemplateRepository;
-import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
-import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
-import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
-import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
-import nd.esp.service.lifecycle.repository.sdk.KnowledgeBaseRepository;
-import nd.esp.service.lifecycle.repository.sdk.LearningPlansRepository;
-import nd.esp.service.lifecycle.repository.sdk.LessonPlansRepository;
-import nd.esp.service.lifecycle.repository.sdk.LessonRepository;
-import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResCoverage4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceCategory4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceCategoryRepository;
-import nd.esp.service.lifecycle.repository.sdk.TeachingActivitiesRepository;
-import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
-import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
-import nd.esp.service.lifecycle.repository.sdk.ToolsRepository;
+import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.repository.sdk.*;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -96,6 +46,7 @@ import nd.esp.service.lifecycle.vos.learningplans.v06.LearningPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessonplans.v06.LessonPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessons.v06.LessonViewModel;
 import nd.esp.service.lifecycle.vos.questions.v06.QuestionViewModel;
+import nd.esp.service.lifecycle.vos.subinstruction.v06.SubInstructionViewModel;
 import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewModel;
 
 import org.slf4j.Logger;
@@ -161,6 +112,9 @@ public class CommonServiceHelper {
     //教学目标
     @Autowired
     InstructionalobjectiveRepository instructionalObjectiveRepository;
+    //子教学目标
+    @Autowired
+    SubInstructionRepository subInstructionRepository;
     
 	@Autowired
 	CategoryRepository categoryRepository;
@@ -277,6 +231,15 @@ public class CommonServiceHelper {
                                                                 InstructionalObjective.class,
                                                                 false,
                                                                 false));
+
+        // 子教学目标
+        repositoryAndModelMap.put("subInstruction",
+                new RepositoryAndModelAndView(subInstructionRepository,
+                        SubInstructionModel.class,
+                        SubInstructionViewModel.class,
+                        SubInstruction.class,
+                        false,
+                        false));
         
         //课件
         repositoryAndModelMap.put("coursewares", new RepositoryAndModelAndView(coursewareRepository,
