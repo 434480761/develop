@@ -9,18 +9,16 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 
 public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
-    private String resType;
-    private boolean isFilter;
+    private boolean isFilter = false;
     private String words;
     private Map<String, Object> searchCodesConditions;
     private Map<String, Object> searchPathsConditions;
 
-    public void setResType(String resType) {
-        this.resType = resType;
-    }
 
     public void setIsFilter(String resType) {
-        this.isFilter = ResourceNdCode.lessons.toString().equals(resType) || ResourceNdCode.instructionalobjectives.toString().equals(resType);
+        if (resType != null) {
+            this.isFilter = ResourceNdCode.lessons.toString().equals(resType) || ResourceNdCode.instructionalobjectives.toString().equals(resType);
+        }
     }
 
 
