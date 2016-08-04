@@ -38,9 +38,6 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private TitanTechInfoRepository titanTechInfoRepository;
 
     @Autowired
-    private TitanResourceRepository<Education> titanResourceRepository;
-
-    @Autowired
     private TitanRelationRepository titanRelationRepository;
 
     @Autowired
@@ -57,6 +54,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Autowired
     private TitanImportRepository titanImportRepository;
+
+    @Autowired
+    private TitanResourceRepository<Education> titanResourceRepository;
 
 
     @Override
@@ -107,6 +107,22 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             deleteResource(resource.getResourceType(), resource.getIdentifier());
         }
         return true;
+    }
+
+    @Override
+    public boolean syncEducation(String primaryCategory, String identifier) {
+        EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+        Education education;
+        try {
+            education = (Education) espRepository.get(identifier);
+        } catch (EspStoreException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        titanResourceRepository.update(education);
+
+        return false;
     }
 
     private boolean delete(String primaryCategory, String identifier){
