@@ -295,6 +295,8 @@ public class TitanResultParse {
         if (customProperties != null) {
             if (customProperties.startsWith("{\"") && customProperties.endsWith("\"}")) {
                 item.setCustomProperties(customProperties);
+            } else {
+                item.setCustomProperties("{}");
             }
         }
         String preview = fieldMap.get(ES_SearchField.preview.toString());
