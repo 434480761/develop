@@ -171,7 +171,7 @@ public class NDResourceController {
         //调用servicere
         ResourceModel modelResult = ndResourceService.getDetail(resourceType, uuid,includeList,isAll);
         // 如果是教学目标，它的title实时计算
-        if (resourceType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+        if (null != modelResult && resourceType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
             modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(modelResult.getIdentifier()));
         }
         // model出参转换

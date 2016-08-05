@@ -300,6 +300,10 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	@Override
 	public Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids) {
 
+		if (0 == ids.size()) {
+			return Collections.emptyMap();
+		}
+
 		try {
 			Collection<String> idString = Collections2.transform(ids, new Function<String, String>() {
 				@Nullable
