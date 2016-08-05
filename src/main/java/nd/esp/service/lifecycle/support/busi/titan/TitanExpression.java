@@ -18,6 +18,7 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
  */
 public class TitanExpression implements TitanScriptGenerator {
 
+    private String resType;
     private List<String> includes;
 
     public void setIncludes(List<String> includes) {
@@ -29,6 +30,10 @@ public class TitanExpression implements TitanScriptGenerator {
     private Map<String, String> orderMap;
     private int from;
     private int end;
+
+    public void setResType(String resType) {
+        this.resType = resType;
+    }
 
     public void setOrderMap(Map<String, String> orderMap) {
         this.orderMap = orderMap;
@@ -154,7 +159,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
         scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
