@@ -591,9 +591,9 @@ public class TitanScritpUtils {
         if(!isAll){
             scriptBuilder.append(".has('lc_enable',true)");
         }
-
         params.put("primary_category", primaryCategory);
-        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,null));
+
+        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,primaryCategory));
         scriptBuilder.append(".valueMap();");
 
         Map<KeyWords, Object> result = new HashMap<>();
