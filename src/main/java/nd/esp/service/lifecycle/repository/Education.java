@@ -107,7 +107,8 @@ public class Education extends EspEntity implements Serializable,
 	/**
 	 * 资源来源方式
 	 */
-	@Column(name = "provider_mode")
+	//@Column(name = "provider_mode")
+	@Transient
 	protected String providerMode;
 	
 	/** The version. */
@@ -141,13 +142,16 @@ public class Education extends EspEntity implements Serializable,
 
 	protected String author;
 	
-	@Column(name="right_start_date")
+//	@Column(name="right_start_date")
+	@Transient
 	protected BigDecimal rightStartDate;
 	
-	@Column(name="right_end_date")
+//	@Column(name="right_end_date")
+	@Transient
 	protected BigDecimal rightEndDate;
 	
-	@Column(name="has_right")
+//	@Column(name="has_right")
+	@Transient
 	protected boolean hasRight;
 	
 	/** * ******************* CR_ATTRIBUTES END *****************/
