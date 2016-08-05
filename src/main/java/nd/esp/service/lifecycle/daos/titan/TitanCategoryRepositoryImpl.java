@@ -198,9 +198,10 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		StringBuffer script;
 		Map<String, Object> graphParams;
 		//检查维度数据是否已经存在
-		String checkExistCategory = "g.E().hasLabel('has_category_code').has('identifier',edgeIdentifier).id()";
+		String checkExistCategory = "g.E().hasLabel('has_category_code').has('identifier',edgeIdentifier).inV().has('cg_taxoncode',taxoncode).id()";
 		Map<String, Object> checkParam = new HashMap<>();
 		checkParam.put("edgeIdentifier",resourceCategory.getIdentifier());
+		checkParam.put("taxoncode", resourceCategory.getTaxoncode());
 		String oldEdgeId = null;
 		try {
 			oldEdgeId = titanCommonRepository.executeScriptUniqueString(checkExistCategory,checkParam);
@@ -211,6 +212,13 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 
 		if(StringUtils.isNotEmpty(oldEdgeId)){
 			return resourceCategory;
+		} else {
+			try {
+				titanCommonRepository.deleteEdgeById(resourceCategory.getIdentifier());
+			} catch (Exception e) {
+				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
+				return null;
+			}
 		}
 
 		//检查code在数据库中是否已经存在
@@ -219,7 +227,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if (categoryCodeNodeId != null) {
 			script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).next()" +
 					".addEdge('has_category_code',g.V(categoryCodeNodeId).next(),'identifier',edgeIdentifier).id()");
-			graphParams = new HashMap<String, Object>();
+			graphParams = new HashMap<>();
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
 			graphParams.put("identifier", resourceCategory.getResource());
