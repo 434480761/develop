@@ -202,6 +202,9 @@ public class TitanScritpUtils {
         if(model instanceof KnowledgeRelation){
             return LifeCircleApplicationInitializer.db_titan_field_knowledgerelation;
         }
+        if(model instanceof ResCoverage){
+            return LifeCircleApplicationInitializer.db_titan_field_coverage;
+        }
 
         return new Properties();
     }
