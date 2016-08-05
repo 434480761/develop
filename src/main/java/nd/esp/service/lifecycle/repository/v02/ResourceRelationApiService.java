@@ -112,5 +112,4 @@ public interface ResourceRelationApiService extends SearchApi<ResourceRelation>{
 	public List<ResourceRelation> getByResTypeAndTargetTypeAndSourceId(String resType, String targetType,
 																	   String sourceId) throws EspStoreException;
 
-	public List<ResourceRelation> getByTargetId(Collection<String> ids);
 }

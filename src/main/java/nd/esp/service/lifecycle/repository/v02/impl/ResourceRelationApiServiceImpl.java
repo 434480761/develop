@@ -392,9 +392,4 @@ public class ResourceRelationApiServiceImpl extends BaseStoreApiImpl<ResourceRel
 		return resourceRelationList;
 	}
 
-	@Override
-	public List<ResourceRelation> getByTargetId(Collection<String> ids) {
-		return resourceRelationRepository.findByTarget(ids);
-	}
-
 }
