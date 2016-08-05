@@ -75,10 +75,15 @@ public class TitanResultParse2 {
                 // 解析一个item
                 // 把id和code放在一起
                 putIdCodeTogeter(taxOnCodeIdLinesMap,taxOnCodeLinesMap,techInfoLinesMap);
-                items.add(parseResource(resType, mainResultMap, taxOnCodeLinesMap, taxOnPath,includes,order,parent));
+                // order parent
+                if (CollectionUtils.isNotEmpty(mainResultMap)) {
+                    if (order != null) mainResultMap.put("order", order);
+                    if (parent != null) mainResultMap.put("parent", parent);
+                }
+                items.add(parseResource(resType, mainResultMap, taxOnCodeLinesMap, taxOnPath,includes));
                 taxOnPath = null;
-                parent=null;
-                order=null;
+                parent = null;
+                order = null;
             }
 
             if (tmpMap.size() == 1 && tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString())) {
@@ -95,8 +100,9 @@ public class TitanResultParse2 {
                 taxOnCodeIdLinesMap.add(tmpMap);
             } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
                 // order
+                //
                 order = tmpMap.get("order");
-            } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+            } else if (order != null &&ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category")||tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
                 parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
@@ -141,7 +147,7 @@ public class TitanResultParse2 {
 
 
 
-    public static ResourceModel parseResource(String resType, Map<String, String> mainResult, List<Map<String, String>> allOtherLinesMap, String taxOnPath,List<String> includes,String order,String parent) {
+    public static ResourceModel parseResource(String resType, Map<String, String> mainResult, List<Map<String, String>> allOtherLinesMap, String taxOnPath,List<String> includes) {
         if (ResourceNdCode.ebooks.toString().equals(resType)) {
             return generateEbookModel(mainResult, allOtherLinesMap, taxOnPath,includes);
         } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
@@ -150,7 +156,7 @@ public class TitanResultParse2 {
         } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
             return generateQuestionModel(mainResult, allOtherLinesMap, taxOnPath,includes);
         }else if (ResourceNdCode.knowledges.toString().equals(resType)) {
-            return generateKnowledgeModel(mainResult, allOtherLinesMap, taxOnPath,includes,order,parent);
+            return generateKnowledgeModel(mainResult, allOtherLinesMap, taxOnPath,includes);
         }
         return generateResourceModel(mainResult, allOtherLinesMap, taxOnPath,includes);
     }
@@ -163,21 +169,24 @@ public class TitanResultParse2 {
      * @param includes
      * @return
      */
-    private static KnowledgeModel generateKnowledgeModel(Map<String, String> mainResult, List<Map<String, String>> allOtherLinesMap, String taxOnPath, List<String> includes,String order,String parent) {
+    private static KnowledgeModel generateKnowledgeModel(Map<String, String> mainResult, List<Map<String, String>> allOtherLinesMap, String taxOnPath, List<String> includes) {
         KnowledgeModel item = new KnowledgeModel();
-        dealMainResult(item, mainResult, includes);
-        KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
+        if(CollectionUtils.isNotEmpty(mainResult)) {
+            dealMainResult(item, mainResult, includes);
+            KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
-        extProperties.setParent(parent);
-        if (order != null && !"".equals(order.trim())) {
-            extProperties.setOrder_num((int)Float.parseFloat(order));
+            extProperties.setParent(mainResult.get("parent"));
+            String order = mainResult.get("order");
+            if (order != null && !"".equals(order.trim())) {
+                extProperties.setOrder_num((int) Float.parseFloat(order));
+            }
+
+            //extProperties.setTarget(fieldMap.get("ext_target"));
+            //extProperties.setDirection(fieldMap.get("ext_direction"));
+            //extProperties.setRootNode(fieldMap.get("ext_rootnode"));
+
+            item.setExtProperties(extProperties);
         }
-
-        //extProperties.setTarget(fieldMap.get("ext_target"));
-        //extProperties.setDirection(fieldMap.get("ext_direction"));
-        //extProperties.setRootNode(fieldMap.get("ext_rootnode"));
-
-        item.setExtProperties(extProperties);
         generateModel(item, allOtherLinesMap, taxOnPath, includes);
         return item;
     }
