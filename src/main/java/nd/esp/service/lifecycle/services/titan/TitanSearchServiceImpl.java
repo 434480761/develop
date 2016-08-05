@@ -110,6 +110,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
+        titanExpression.setResType(resType);
         //dealWithInclude(titanExpression,includes);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
