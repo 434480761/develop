@@ -59,6 +59,10 @@ public class VrLifeServiceImpl implements VrLifeService{
 		//资源标签修改
 		List<String> dealTags = oldResourceModel.getTags();
 		if(CollectionUtils.isNotEmpty(inViewModel.getTags())){
+			if(dealTags == null){
+				dealTags = new ArrayList<String>();
+			}
+			
 			for(StatusReviewTags tags : inViewModel.getTags()){
 				if(tags.getOperation().equals("add")){
 					for(String tag : tags.getTags()){
