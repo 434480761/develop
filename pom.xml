@@ -331,7 +331,7 @@
                 <version>2.2</version>
                 <configuration>
                     <uriEncoding>UTF-8</uriEncoding>
-                    <path>/esp-lifecycle</path>
+                    <path>/</path>
                     <port>8080</port>
                     <!--<httpsPort>443</httpsPort> -->
                     <!-- 开发用，热部署 <hostName>debug.userapi.huayu.nd</hostName> -->
