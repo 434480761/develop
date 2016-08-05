@@ -360,7 +360,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			for (String id : ids) {
 				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
 				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
-				if (CollectionUtils.isEmpty(knowledges)) {
+				if (CollectionUtils.isEmpty(knowledges) || CollectionUtils.isEmpty(instructionalObjective2Type)) {
 					continue;
 				}
 				// 获取多个知识点的title
