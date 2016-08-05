@@ -534,6 +534,9 @@ public class EducationRelationControllerV06 {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.GetEducationRelationListFail.getCode(),e.getMessage());
         }
+        if (null == listViewModel.getItems()) {
+            return listViewModel;
+        }
         // 如果是教学目标，则根据教学目标类型与知识点设置title
         if ((!"true".equals(reverse) && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
                 || ("true".equals(reverse) && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
@@ -595,6 +598,10 @@ public class EducationRelationControllerV06 {
         
 //        return educationRelationService.batchQueryResources(resType, sids, targetType, relationType, limit);
         ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+
+        if (null == modelList.getItems()) {
+            return modelList;
+        }
 
         // 如果是教学目标，则根据教学目标类型与知识点设置title
         if ((reverse && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))

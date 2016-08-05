@@ -478,6 +478,9 @@ public class NDResourceController {
     	}else{
             resourceViewModelListViewModel = requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
     	}
+        if (null == resourceViewModelListViewModel.getItems()) {
+            return resourceViewModelListViewModel;
+        }
         // 如果是教学目标，则根据教学目标类型与知识点设置title
         if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
             
