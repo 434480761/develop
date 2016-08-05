@@ -1,2 +1,2 @@
 ALTER TABLE `ndresource` ADD `provider_mode` VARCHAR(512) NULL COMMENT '资源来源方式' AFTER `provider_source`;
-ALTER TABLE `ndresource` ADD `has_right` TINYINT(1) NULL COMMENT '是否有版权' AFTER `cr_description`, ADD `right_start_date` BIGINT(20) NULL COMMENT '版权开始时间' AFTER `has_right`, ADD `right_end_date` BIGINT(20) NULL COMMENT '版权结束时间' AFTER `right_start_date`;
+ALTER TABLE `ndresource` ADD `has_right` TINYINT(1) NULL DEFAULT '0' COMMENT '是否有版权' AFTER `cr_description`, ADD `right_start_date` BIGINT(20) NULL COMMENT '版权开始时间' AFTER `has_right`, ADD `right_end_date` BIGINT(20) NULL COMMENT '版权结束时间' AFTER `right_start_date`;
