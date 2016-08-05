@@ -32,6 +32,7 @@ learningTime	                edu_learning_time	        String
 dbEduDescription	            edu_description	            String
 eduLanguage	                    edu_language	            String
 publisher                       lc_publisher                String
+mIdentifier                     m_identifier                String
 Ndresource扩展字段
 Ebbok、TeachingMaterial、GuidanceBooks
 isbn                            ext_isbn                    String
@@ -59,6 +60,7 @@ modifiedDiscrimination          ext_modified_discrimination Float
 usedTime                        ext_used_time               Integer
 exposalDate                     ext_exposal_date            Long
 autoRemark                      ext_auto_remark             Boolean
+context                         edu_context                 String
 
 
 Coverage（Vertex）

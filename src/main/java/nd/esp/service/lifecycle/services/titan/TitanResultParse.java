@@ -5,10 +5,7 @@ import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookModel;
-import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
-import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.models.v06.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -108,9 +105,36 @@ public class TitanResultParse {
         } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
         } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
             return generateQuestionModel(mainResult, otherLines, taxOnPath,includes);
+        }else if (ResourceNdCode.knowledges.toString().equals(resType)) {
+            return generateKnowledgeModel(mainResult, otherLines, taxOnPath,includes);
         }
         return generateResourceModel(mainResult, otherLines, taxOnPath,includes);
     }
+
+    /**
+     * Ebook的扩展属性
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static KnowledgeModel generateKnowledgeModel(String mainResult, List<String> strInOneItem, String taxOnPath, List<String> includes) {
+        KnowledgeModel item = new KnowledgeModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap,includes);
+        KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
+
+        extProperties.setParent(fieldMap.get("ext_parent"));
+        extProperties.setTarget(fieldMap.get("ext_target"));
+        extProperties.setDirection(fieldMap.get("ext_direction"));
+        extProperties.setOrder_num(Integer.parseInt(fieldMap.get("ext_order_num")));
+        extProperties.setRootNode(fieldMap.get("ext_rootnode"));
+
+        item.setExtProperties(extProperties);
+        generateModel(item, strInOneItem, taxOnPath,includes);
+        return item;
+    }
+
 
     /**
      * TeachingMaterial的扩展属性

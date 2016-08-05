@@ -883,7 +883,13 @@ public class NDResourceController {
         
         String limitForTitan = modifyTitanLimit(moreOffset, begin, size);
         
-        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includes, categories,
+//        需要使用LifeCycle 字段，默认带上
+        List<String> includesList = cloner.deepClone(includes);
+        if (!includesList.contains("LC")) {
+            includesList.add("LC");
+        }
+        
+        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includesList, categories,
                 categoryExclude, relations, coverages, propsMap, orderMap, words, limitForTitan, isNotManagement, reverse,
                 printable, printableKey, excetorService);
         
@@ -903,10 +909,6 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
-        List<String> includesList = cloner.deepClone(includes);
-        if (!includesList.contains("LC")) {
-            includesList.add("LC");
-        }
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
