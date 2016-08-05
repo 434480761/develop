@@ -14,6 +14,7 @@ public class ES_ResLifeCycleModel {
 	private String publisher;
 	private String provider;
 	private String providerSource;
+	private String providerMode;
 	private Date createTime; // change to long
 	private Date lastUpdate; // change to long
 
@@ -101,6 +102,14 @@ public class ES_ResLifeCycleModel {
 
 	public void setLastUpdate(Date lastUpdate) {
 		this.lastUpdate = lastUpdate;
+	}
+
+	public String getProviderMode() {
+		return providerMode;
+	}
+
+	public void setProviderMode(String providerMode) {
+		this.providerMode = providerMode;
 	}
 
 }

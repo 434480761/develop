@@ -11,7 +11,7 @@ public enum ES_Field {
 	identifier, title, language, description, preview, tags, keywords, custom_properties,ndres_code,m_identifier,
 
 	// lifeCycle 9
-	life_cycle, version, status, enable, creator, publisher, provider, provider_source, create_time, last_update, education_info,
+	life_cycle, version, status, enable, creator, publisher, provider, provider_source,provider_mode, create_time, last_update, education_info,
 	// educationInfo 10
 	interactivity, interactivity_level, end_user_type, semantic_density, context, age_range, difficulty, learning_time, /*
 																														 * db_edu_description
@@ -20,7 +20,7 @@ public enum ES_Field {
 																														 * ,
 																														 */
 	// copyRight 3
-	copyright, right, /* cr_description, */author,
+	copyright, right, /* cr_description, */author,has_right,right_start_date,right_end_date,
 	/* primary_category, code, */
 
 	// category 7
