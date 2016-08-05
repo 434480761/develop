@@ -58,8 +58,8 @@ public class EsIndexQueryBuilder {
     private static final String DOUBLE_BLANK_AND = " AND ";
     private static final String DOUBLE_BLANK_OR = " OR ";
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
-    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
-    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT:' + count;resultList";
+    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT=' + count;resultList";
+    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT=' + count;resultList";
     public static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
     public EsIndexQueryBuilder setIndex(String index) {

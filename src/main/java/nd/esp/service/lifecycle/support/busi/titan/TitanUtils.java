@@ -29,11 +29,18 @@ public class TitanUtils {
 				scriptBuffer.append(",out('has_tech_info')");
 			} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
 				scriptBuffer.append(",out('has_category_code')");
+				// cg_taxoncode identifier
+				//scriptBuffer.append(",outE('has_category_code')");
 				scriptBuffer.append(",out('has_categories_path')");
 			}
 		}
 		if (ResourceNdCode.knowledges.toString().equals(resType)) {
-			//scriptBuffer.append(",outE('has_category_code')");
+
+			// order
+			//scriptBuffer.append(",inE('has_knowledge')");
+
+			// parent
+			//scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return "";
