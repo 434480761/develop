@@ -171,6 +171,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
     MoveKnowledgeFail("LC/MOVE_KNOWLEDGE_FAIL",""),
     KnowledgeParentNotFound("LC/KNOWLEDEG_PARENT_NOT_FOUND",getPropertyValue("knowledgeServiceImplV06.createKnowledge.checkParent.fail")),
     CheckResKnowledgeFail("LC/CHECK_RES_KNOWLEDGE_VALID_FAIL",getPropertyValue("knowledgeControllerV06.checkResKnowledgeFail.fail")),
+	checkResKnowledgeTitleUniqueFail("LC/CHECK_RES_KNOWLEDGE_TITLE_VALID_FAIL",getPropertyValue("knowledgeControllerV06.checkResKnowledgeTitleUniqueFail.fail")),
     CheckAddTagsOutlineParamFail("LC/CHECK_ADD_TAGS_OUTLINE_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsOutlineParam.fail")),
     CheckAddTagsKnowledgeParamFail("LC/CHECK_ADD_TAGS_KNOWLEDGE_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsKnowledgeParam.fail")),
     CheckAddTagsTagsParamFail("LC/CHECK_ADD_TAGS_TAGS_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsTagsParam.fail")),
