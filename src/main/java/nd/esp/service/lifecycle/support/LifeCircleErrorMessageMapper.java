@@ -442,6 +442,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	CheckTargetTypeError("LC/CHECKTARGETTYPEERROR",getPropertyValue("educationRelationController.searchByResType.check.targetType.error")),
 	
     //V0.6
+	CheckRightDateFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("commonHelper.inputParamValid.checkRightDate.fail")),
     CheckNdCodeFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("AssetServiceImplV06.dealCategories.checkParam.fail")),
     CheckRelationSourceFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("AssetServiceImplV06.dealRelations.checkParam.fail")),
     CheckTaxonpathFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("AssetServiceImplV06.create.checkTaxonpath.fail")),

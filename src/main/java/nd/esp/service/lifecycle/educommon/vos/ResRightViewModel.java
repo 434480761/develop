@@ -1,5 +1,12 @@
 package nd.esp.service.lifecycle.educommon.vos;
 
+import java.math.BigDecimal;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
+import nd.esp.service.lifecycle.vos.valid.CopyrightDefault;
+
 
 /**
  * @author johnny
@@ -20,6 +27,16 @@ public class ResRightViewModel {
 	 * 作者信息
 	 */
 	private String author;
+	
+	@Max(groups={CopyrightDefault.class},value=7258089600000l,message="{resourceViewModel.copyright.rightStartDate.maxValue.validmsg}")
+	@Min(groups={CopyrightDefault.class},value=946656000000l,message="{resourceViewModel.copyright.rightStartDate.minValue.validmsg}")
+	private BigDecimal rightStartDate;
+	
+	@Max(groups={CopyrightDefault.class},value=7258089600000l,message="{resourceViewModel.copyright.rightEndDate.maxValue.validmsg}")
+	@Min(groups={CopyrightDefault.class},value=946656000000l,message="{resourceViewModel.copyright.rightEndDate.minValue.validmsg}")
+	private BigDecimal rightEndDate;
+	
+	private boolean hasRight;
 
 	public ResRightViewModel(){
 
@@ -32,8 +49,6 @@ public class ResRightViewModel {
 	public void setRight(String right) {
 		this.right = right;
 	}
-
-
 
 	public String getAuthor() {
 		return author;
@@ -49,6 +64,30 @@ public class ResRightViewModel {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public BigDecimal getRightStartDate() {
+		return rightStartDate;
+	}
+
+	public void setRightStartDate(BigDecimal rightStartDate) {
+		this.rightStartDate = rightStartDate;
+	}
+
+	public BigDecimal getRightEndDate() {
+		return rightEndDate;
+	}
+
+	public void setRightEndDate(BigDecimal rightEndDate) {
+		this.rightEndDate = rightEndDate;
+	}
+
+	public boolean isHasRight() {
+		return hasRight;
+	}
+
+	public void setHasRight(boolean hasRight) {
+		this.hasRight = hasRight;
 	}
 
 }
