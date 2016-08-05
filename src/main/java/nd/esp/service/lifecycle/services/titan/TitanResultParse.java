@@ -5,10 +5,7 @@ import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.EbookModel;
-import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
-import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.models.v06.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -50,7 +47,6 @@ import java.util.*;
 public class TitanResultParse {
 
     private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse.class);
-    public static List<String> includes = new ArrayList<>();
 
 
     /**
@@ -59,7 +55,7 @@ public class TitanResultParse {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr) {
+    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
         long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
@@ -70,7 +66,7 @@ public class TitanResultParse {
         int count = 0;
         for (String line : resultStr) {
             if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
-                items.add(TitanResultParse.parseResource(resType, mainResult, otherLines, taxOnPath));
+                items.add(TitanResultParse.parseResource(resType, mainResult, otherLines, taxOnPath,includes));
                 otherLines.clear();
                 taxOnPath = null;
             }
@@ -101,17 +97,44 @@ public class TitanResultParse {
      * @param taxOnPath
      * @return
      */
-    public static ResourceModel parseResource(String resType, String mainResult, List<String> otherLines, String taxOnPath) {
+    public static ResourceModel parseResource(String resType, String mainResult, List<String> otherLines, String taxOnPath,List<String> includes) {
         if (ResourceNdCode.ebooks.toString().equals(resType)) {
-            return generateEbookModel(mainResult, otherLines, taxOnPath);
+            return generateEbookModel(mainResult, otherLines, taxOnPath,includes);
         } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
-            generateTeachingMaterialModel(mainResult, otherLines, taxOnPath);
+            generateTeachingMaterialModel(mainResult, otherLines, taxOnPath,includes);
         } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
         } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
-            return generateQuestionModel(mainResult, otherLines, taxOnPath);
+            return generateQuestionModel(mainResult, otherLines, taxOnPath,includes);
+        }else if (ResourceNdCode.knowledges.toString().equals(resType)) {
+            return generateKnowledgeModel(mainResult, otherLines, taxOnPath,includes);
         }
-        return generateResourceModel(mainResult, otherLines, taxOnPath);
+        return generateResourceModel(mainResult, otherLines, taxOnPath,includes);
     }
+
+    /**
+     * Ebook的扩展属性
+     * @param mainResult
+     * @param strInOneItem
+     * @param taxOnPath
+     * @return
+     */
+    private static KnowledgeModel generateKnowledgeModel(String mainResult, List<String> strInOneItem, String taxOnPath, List<String> includes) {
+        KnowledgeModel item = new KnowledgeModel();
+        Map<String, String> fieldMap = toMap(mainResult);
+        dealMainResult(item, fieldMap,includes);
+        KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
+
+        extProperties.setParent(fieldMap.get("ext_parent"));
+        extProperties.setTarget(fieldMap.get("ext_target"));
+        extProperties.setDirection(fieldMap.get("ext_direction"));
+        extProperties.setOrder_num(Integer.parseInt(fieldMap.get("ext_order_num")));
+        extProperties.setRootNode(fieldMap.get("ext_rootnode"));
+
+        item.setExtProperties(extProperties);
+        generateModel(item, strInOneItem, taxOnPath,includes);
+        return item;
+    }
+
 
     /**
      * TeachingMaterial的扩展属性
@@ -120,10 +143,10 @@ public class TitanResultParse {
      * @param taxOnPath
      * @return
      */
-    private static TeachingMaterialModel generateTeachingMaterialModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+    private static TeachingMaterialModel generateTeachingMaterialModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
         TeachingMaterialModel item = new TeachingMaterialModel();
         Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap);
+        dealMainResult(item, fieldMap,includes);
         TmExtPropertiesModel extProperties = new TmExtPropertiesModel();
         extProperties.setIsbn(fieldMap.get("ext_isbn"));
         extProperties.setCriterion(fieldMap.get("ext_criterion"));
@@ -132,7 +155,7 @@ public class TitanResultParse {
             extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
         }
         item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
+        generateModel(item, strInOneItem, taxOnPath,includes);
         return item;
     }
 
@@ -143,10 +166,10 @@ public class TitanResultParse {
      * @param taxOnPath
      * @return
      */
-    private static EbookModel generateEbookModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+    private static EbookModel generateEbookModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
         EbookModel item = new EbookModel();
         Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap);
+        dealMainResult(item, fieldMap,includes);
         EbookExtPropertiesModel extProperties = new EbookExtPropertiesModel();
         extProperties.setIsbn(fieldMap.get("ext_isbn"));
         extProperties.setCriterion(fieldMap.get("ext_criterion"));
@@ -155,7 +178,7 @@ public class TitanResultParse {
             extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
         }
         item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
+        generateModel(item, strInOneItem, taxOnPath,includes);
         return item;
     }
 
@@ -165,10 +188,10 @@ public class TitanResultParse {
      * @param taxOnPath
      * @return
      */
-    private static QuestionModel generateQuestionModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+    private static QuestionModel generateQuestionModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
         QuestionModel item = new QuestionModel();
         Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap);
+        dealMainResult(item, fieldMap,includes);
         QuestionExtPropertyModel extProperties = new QuestionExtPropertyModel();
 
         String discrimination = fieldMap.get("ext_discrimination");
@@ -225,7 +248,7 @@ public class TitanResultParse {
 
         item.setQuestionType(fieldMap.get("ext_question_type"));
         item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath);
+        generateModel(item, strInOneItem, taxOnPath,includes);
         return item;
     }
 
@@ -235,11 +258,11 @@ public class TitanResultParse {
      * @param taxOnPath
      * @return
      */
-    private static ResourceModel generateResourceModel(String mainResult, List<String> strInOneItem, String taxOnPath) {
+    private static ResourceModel generateResourceModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
         ResourceModel item = new ResourceModel();
         Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap);
-        generateModel(item, strInOneItem, taxOnPath);
+        dealMainResult(item, fieldMap,includes);
+        generateModel(item, strInOneItem, taxOnPath,includes);
         return item;
     }
 
@@ -247,7 +270,7 @@ public class TitanResultParse {
      * @param strInOneItem
      * @param taxOnPath
      */
-    private static void generateModel(ResourceModel item, List<String> strInOneItem, String taxOnPath) {
+    private static void generateModel(ResourceModel item, List<String> strInOneItem, String taxOnPath,List<String> includes) {
         List<ResTechInfoModel> techInfoList = new ArrayList<>();
         List<ResClassificationModel> categoryList = new ArrayList<>();
 
@@ -276,7 +299,7 @@ public class TitanResultParse {
      * @param item
      * @param fieldMap
      */
-    public static void dealMainResult(ResourceModel item, Map<String, String> fieldMap) {
+    public static void dealMainResult(ResourceModel item, Map<String, String> fieldMap,List<String> includes) {
         if (includes.contains(IncludesConstant.INCLUDE_LC)) {
             item.setLifeCycle(dealLC(fieldMap));// LifeCycle
         }
@@ -296,6 +319,8 @@ public class TitanResultParse {
         if (customProperties != null) {
             if (customProperties.startsWith("{\"") && customProperties.endsWith("\"}")) {
                 item.setCustomProperties(customProperties);
+            } else {
+                item.setCustomProperties("{}");
             }
         }
         String preview = fieldMap.get(ES_SearchField.preview.toString());
@@ -310,14 +335,21 @@ public class TitanResultParse {
             } else {
                 item.setPreview(new HashMap<String, String>());
             }
+        } else {
+            //教学目标、知识点、课时没有这个值，但需要返回一个空的map集合
+            item.setPreview(new HashMap<String, String>());
         }
         String tags = fieldMap.get(ES_SearchField.tags.toString());
-        if (tags != null) {
+        if (StringUtils.isNotEmpty(tags)) {
             item.setTags(Arrays.asList(tags.replaceAll("\"", "").split(",")));
+        } else if(tags !=null){
+            item.setTags(new ArrayList<String>());
         }
         String keywords = fieldMap.get(ES_SearchField.keywords.toString());
-        if (keywords != null) {
+        if (StringUtils.isNotEmpty(keywords)) {
             item.setKeywords(Arrays.asList(keywords.replaceAll("\"", "").split(",")));
+        } else if(keywords != null){
+            item.setKeywords(new ArrayList<String>());
         }
     }
 
@@ -425,7 +457,7 @@ public class TitanResultParse {
         }
         techInfo.setSecureKey(tmpMap.get(ES_SearchField.ti_secure_key.toString()));
 
-        String size = tmpMap.get(ES_SearchField.ti_size);
+        String size = tmpMap.get(ES_SearchField.ti_size.toString());
         if (size != null) {
             techInfo.setSize(Long.parseLong(size));
         }

@@ -24,6 +24,7 @@ import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
@@ -73,6 +74,7 @@ import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.titan.TitanSearchService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -127,7 +129,10 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     private static final Logger LOG = LoggerFactory.getLogger(NDResourceServiceImpl.class);
     private final static ExecutorService executorService = CommonHelper.getPrimaryExecutorService();
-    
+
+	@Autowired
+	private TitanSyncService titanSyncService;
+
     //忽略categoryList, techInfoList
     private final static ModelMapper specialModelMapper = new ModelMapper();
     static{
@@ -3345,6 +3350,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(ResourceTypeSupport.isValidEsResourceType(resType) && CollectionUtils.isNotEmpty(ids)){
 			for (String id : ids) {
 				esResourceOperation.asynAdd(new Resource(resType, id));
+				titanSyncService.syncEducation(resType,id);
 				offlineService.writeToCsAsync(resType, id);
 			}
 		}

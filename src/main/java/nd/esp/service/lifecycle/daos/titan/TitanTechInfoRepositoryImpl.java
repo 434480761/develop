@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
             return null;
         }
 
-        TechInfo techInfoNew = addTechInfo(techInfo);
+        TechInfo techInfoNew = addOrUpdateTechInfo(techInfo);
         if(techInfoNew == null){
             LOG.info("techInfo处理出错");
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
@@ -51,13 +52,9 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
             return new ArrayList<>();
         }
 
-        //FIXME 不是所有的添加都需要删除
-        TechInfo ti = techInfos.get(0);
-        deleteAll(ti.getResType(), ti.getResource());
-
         List<TechInfo> techInfoList = new ArrayList<>();
         for(TechInfo techInfo : techInfos){
-            if(addTechInfo(techInfo)!=null){
+            if(addOrUpdateTechInfo(techInfo)!=null){
                 techInfoList.add(techInfo);
             } else {
                 LOG.info("techInfo处理出错");
@@ -110,16 +107,38 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         return true;
     }
 
-    private TechInfo addTechInfo(TechInfo techInfo){
-        StringBuffer scriptBuffer = new StringBuffer("techinfo = graph.addVertex(T.label, type");
-        Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,techInfo);
+    private TechInfo addOrUpdateTechInfo(TechInfo techInfo){
+        String checkTechInfoExist = "g.E().hasLabel('has_tech_info').has('identifier',edgeIdentifier).id()";
+        Map<String, Object> checkTechInfoParam = new HashMap<>();
+        checkTechInfoParam.put("edgeIdentifier",techInfo.getIdentifier());
+        String oldTechInfoId = null;
+        try {
+            oldTechInfoId = titanCommonRepository.executeScriptUniqueString(checkTechInfoExist, checkTechInfoParam);
+        } catch (Exception e) {
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());
+            //TODO titan sync
+            return null;
+        }
 
-        scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier)");
-        scriptBuffer.append(".id()");
-        graphParams.put("type", "tech_info");
-        graphParams.put("primaryCategory",techInfo.getResType());
-        graphParams.put("sourceIdentifier",techInfo.getResource());
-        graphParams.put("edgeIdentifier",techInfo.getIdentifier());
+        StringBuffer scriptBuffer = null;
+        Map<String, Object> graphParams = null;
+
+        boolean isAdd = false;
+        if(StringUtils.isEmpty(oldTechInfoId)){
+            isAdd = true;
+            scriptBuffer = new StringBuffer("techinfo = graph.addVertex(T.label, type");
+            graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,techInfo);
+            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier)");
+            scriptBuffer.append(".id()");
+            graphParams.put("type", "tech_info");
+            graphParams.put("primaryCategory",techInfo.getResType());
+            graphParams.put("sourceIdentifier",techInfo.getResource());
+            graphParams.put("edgeIdentifier",techInfo.getIdentifier());
+        } else {
+            scriptBuffer = new StringBuffer("g.V().has('identifier',identifier)");
+            graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
+            graphParams.put("identifier",techInfo.getIdentifier());
+        }
 
         String techInfoEdgeId;
         try {
@@ -129,7 +148,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
             //TODO titan sync
             return null;
         }
-        if(techInfoEdgeId == null){
+        if(isAdd && StringUtils.isEmpty(techInfoEdgeId)){
             return null;
         }
 

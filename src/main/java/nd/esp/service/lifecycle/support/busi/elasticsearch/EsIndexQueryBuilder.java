@@ -55,6 +55,8 @@ public class EsIndexQueryBuilder {
     private List<String> includes;
     private List<String> fields;
 
+    private static final String DOUBLE_BLANK_AND = " AND ";
+    private static final String DOUBLE_BLANK_OR = " OR ";
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
     public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
     public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT:' + count;resultList";
@@ -112,7 +114,6 @@ public class EsIndexQueryBuilder {
         StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation=dealWithWordsContainsNot(this.words);
         String other=dealWithParams();
-       // System.out.println(dealWithProp());
         if("".endsWith(wordSegmentation.trim())){
             other=other.trim().replaceFirst("AND","");
         }
@@ -120,13 +121,10 @@ public class EsIndexQueryBuilder {
         baseQuery.append(other);
         baseQuery.append(dealWithResType());
 
-        //baseQuery.deleteCharAt(baseQuery.length()-1);
         baseQuery.append("\")");
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append(getRangeIds());
         baseQuery.append("results = g.V(rangeids.toArray())");
-        //baseQuery.append("results = g.V(ids.toArray()).range(").append(from).append(",").append(end).append(")");
-        //baseQuery.append(".as('v').union(select('v'),out('has_category_code'),out('has_categories_path'),out('has_tech_info')).valueMap();");
         baseQuery.append(TitanUtils.generateScriptForInclude(this.includes));
         baseQuery.append(".valueMap();");
 
@@ -160,7 +158,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(other);
         baseQuery.append(dealWithResType());
         if(!"".endsWith(property.trim())){
-            baseQuery.append(" AND ").append(property);
+            baseQuery.append(DOUBLE_BLANK_AND).append(property);
         }
         baseQuery.append("\")");
         baseQuery.append(".offset(").append(this.from).append(")");
@@ -180,8 +178,8 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithResType() {
         StringBuffer query = new StringBuffer();
-        query.append(" AND v.\\\"primary_category\\\":(").append(this.resType).append(")");
-        query.append(" AND v.\\\"lc_enable\\\":(true)");
+        query.append(DOUBLE_BLANK_AND).append("v.\\\"primary_category\\\":(").append(this.resType).append(")");
+        query.append(DOUBLE_BLANK_AND).append("v.\\\"lc_enable\\\":(true)");
 
         return query.toString();
     }
@@ -201,9 +199,9 @@ public class EsIndexQueryBuilder {
             query.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(words).append(")");
             if (i != fieldSize - 1) {
                 if (isOnlyNot) {
-                    query.append(" AND ");
+                    query.append(DOUBLE_BLANK_AND);
                 } else {
-                    query.append(" OR ");
+                    query.append(DOUBLE_BLANK_OR);
                 }
             }
         }
@@ -246,8 +244,8 @@ public class EsIndexQueryBuilder {
             queryNot.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(not).append(")");
             queryHas.append("v.\\\"").append(this.fields.get(i)).append("\\\":(").append(has).append(")");
             if (i != fieldSize - 1) {
-                queryNot.append(" AND ");
-                queryHas.append(" OR ");
+                queryNot.append(DOUBLE_BLANK_AND);
+                queryHas.append(DOUBLE_BLANK_OR);
             }
         }
         queryHas.append(")");
@@ -336,32 +334,32 @@ public class EsIndexQueryBuilder {
                 if ("in".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append(optList.get(i));
-                        if (i != optListSize - 1) query.append(" OR ");
+                        if (i != optListSize - 1) query.append(DOUBLE_BLANK_OR);
                     }
                 } else if ("ne".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append("-").append(optList.get(i));
-                        if (i != optListSize - 1) query.append(" AND ");
+                        if (i != optListSize - 1) query.append(DOUBLE_BLANK_AND);
                     }
                 }
                 //由于大写不支持like，暂时不支持like,需要修改titan-es,升级后才支持
                 else if ("like".equals(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         query.append("*").append(optList.get(i)).append("*");
-                        if (i != optListSize - 1) query.append(" OR ");
+                        if (i != optListSize - 1) query.append(DOUBLE_BLANK_OR);
                     }
                 } else if ("gt,lt,ge,le".contains(optName)) {
                     for (int i = 0; i < optListSize; i++) {
                         String range = toRangeByOpt(optName, optList.get(i));
                         query.append(range);
-                        if (i != optListSize - 1) query.append(" OR ");
+                        if (i != optListSize - 1) query.append(DOUBLE_BLANK_OR);
                     }
                 }
                 query.append(")");
-                if (optSizeCount != optSize - 1) query.append(" AND ");
+                if (optSizeCount != optSize - 1) query.append(DOUBLE_BLANK_AND);
                 optSizeCount++;
             }
-            if (paramCount != propSize - 1) query.append(" AND ");
+            if (paramCount != propSize - 1) query.append(DOUBLE_BLANK_AND);
             paramCount++;
 
         }
@@ -378,20 +376,20 @@ public class EsIndexQueryBuilder {
     private String toRangeByOpt(String optName, String date) {
         long toTimeStamp = StringUtils.strDateToTimeStamp(date.trim());
         String range = null;
-        if ("gt".equals(optName)) {// 大于
+        if (PropOperationConstant.OP_GT.equals(optName)) {// 大于
             // [toTimeStamp+1 TO 9999999999999]
             toTimeStamp = toTimeStamp + 1;
             range = "[" + toTimeStamp + " TO 9999999999999]";
-        } else if ("lt".equals(optName)) {// 小于
+        } else if (PropOperationConstant.OP_LT.equals(optName)) {// 小于
             // [0 TO　toTimeStamp-1]
             toTimeStamp = toTimeStamp - 1;
             range = "[0 TO " + toTimeStamp + "]";
-        } else if ("ge".equals(optName)) {// 大于等于
+        } else if (PropOperationConstant.OP_GE.equals(optName)) {// 大于等于
             // [toTimeStamp TO 9999999999999]
             range = "[" + toTimeStamp + " TO 9999999999999]";
-        } else if ("lt".equals(optName)) {// 小于等于
+        } else if (PropOperationConstant.OP_LE.equals(optName)) {// 小于等于
             // [0 TO　toTimeStamp]
-            range = "[0 TO　" + toTimeStamp + "]";
+            range = "[0 TO " + toTimeStamp + "]";
         }
         return range;
     }
@@ -410,13 +408,13 @@ public class EsIndexQueryBuilder {
         String coverageStr = dealWithSingleParam(TitanKeyWords.search_coverage_string.toString(), this.params.get(ES_SearchField.coverages.toString()));
         this.params.remove(ES_SearchField.coverages.toString());
         if(!"".equals(codeStr)){
-            query.append(" AND ").append(codeStr);
+            query.append(DOUBLE_BLANK_AND).append(codeStr);
         }
         if(!"".equals(pathStr)){
-            query.append(" AND ").append(pathStr);
+            query.append(DOUBLE_BLANK_AND).append(pathStr);
         }
         if(!"".equals(coverageStr)){
-            query.append(" AND ").append(coverageStr);
+            query.append(DOUBLE_BLANK_AND).append(coverageStr);
         }
         return query.toString();
     }
@@ -446,7 +444,7 @@ public class EsIndexQueryBuilder {
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (code.contains(PropOperationConstant.OP_AND)) {
                             String[] strs=code.split(PropOperationConstant.OP_AND);
-                            code = "(*" + strs[0].trim() + "*" + " AND " + "*" + strs[1].trim() + "*)";
+                            code = "(*" + strs[0].trim() + "*" + DOUBLE_BLANK_AND + "*" + strs[1].trim() + "*)";
                             //code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
 
                         }else{

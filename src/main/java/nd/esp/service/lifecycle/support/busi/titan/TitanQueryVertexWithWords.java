@@ -3,14 +3,26 @@ package nd.esp.service.lifecycle.support.busi.titan;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
 public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
+    private boolean isFilter = false;
     private String words;
     private Map<String, Object> searchCodesConditions;
+    private Map<String, Object> neLikesearchCodesConditions;
     private Map<String, Object> searchPathsConditions;
+
+
+    public void setIsFilter(String resType) {
+        if (resType != null) {
+            this.isFilter = ResourceNdCode.lessons.toString().equals(resType) || ResourceNdCode.instructionalobjectives.toString().equals(resType);
+        }
+    }
+
+
 
     public void setSearchPathsConditions(Map<String, Object> searchPathsConditions) {
         this.searchPathsConditions = searchPathsConditions;
@@ -18,6 +30,10 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
 
     public void setSearchCodesConditions(Map<String, Object> searchCodesConditions) {
         this.searchCodesConditions = searchCodesConditions;
+    }
+
+    public void setNeLikesearchCodesConditions(Map<String, Object> neLikesearchCodesConditions) {
+        this.neLikesearchCodesConditions = neLikesearchCodesConditions;
     }
 
     // FIXME 暂时放在一起
@@ -51,7 +67,8 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
             List<Object> values = new ArrayList<Object>();
             values.add(words);
             for (WordsCover wordsCover : WordsCover.values()) {
-
+                // 过滤
+                if (isFilter && wordsCover.equals(WordsCover.edu_description)) continue;
                 // remove the "."
                 scriptBuffer.append(Titan_OP.like.generateScipt(
                         wordsCover.toString(), values, scriptParamMap)
@@ -106,12 +123,14 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
                         scriptBuffer.append(",");
                     }
-                } else if (opt.contains(PropOperationConstant.OP_LIKE)) {
+                } else if (opt.equals(PropOperationConstant.OP_LIKE)) {
                     List<Object> likeCodeList = (List) entry.getValue();
                     if (likeCodeList.size() > 0) {
                         scriptBuffer.append(Titan_OP.like.generateScipt("search_code", likeCodeList, scriptParamMap).replaceFirst(".", "")).append(",");
                     }
-                } else {
+                }/*else if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
+                    neLikeCodeList = (List) entry.getValue();
+                }*/ else {
                     List<String> inCodeList = (List) entry.getValue();
                     for (String code : inCodeList) {
                         scriptBuffer.append("has('search_code',");
@@ -120,13 +139,25 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
                         scriptBuffer.append("),");
                         scriptParamMap.put(uniqueKey, code.trim());
                     }
-
-
                 }
                 //System.out.println( entry.getKey() + " : " + entry.getValue());
             }
             scriptBuffer.deleteCharAt(scriptBuffer.length() - 1);
             scriptBuffer.append(")");
+
+
+        }
+
+        // ne like
+        if (CollectionUtils.isNotEmpty(neLikesearchCodesConditions)) {
+            for (Map.Entry<String, Object> entry : neLikesearchCodesConditions.entrySet()) {
+                String opt = entry.getKey();
+                if (opt.equals(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE)) {
+                    List<Object>  neLikeCodeList = (List) entry.getValue();
+                    scriptBuffer.append(".not(").append(Titan_OP.like.generateScipt("search_code", neLikeCodeList, scriptParamMap).replaceFirst(".", "")).append(")");
+                }
+            }
+
         }
 
         if (CollectionUtils.isNotEmpty(searchPathsConditions)) {

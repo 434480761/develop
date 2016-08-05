@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.text.CollationElementIterator;
 import java.util.*;
 
 @Repository
@@ -37,7 +36,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if(resourceCategory == null){
 			return null;
 		}
-		ResourceCategory rc = addResourceCategory(resourceCategory);
+		ResourceCategory rc = addOrUpdateResourceCategory(resourceCategory);
 		if(rc == null){
 			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
@@ -94,7 +93,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		for(List<ResourceCategory> entryValueCategories:resourceCategoryMap.values()){
 			//FIXME 不是所有的添加都需要删除
 			ResourceCategory category = entryValueCategories.get(0);
-			deleteAll(category.getPrimaryCategory(), category.getResource());
 
 			//批量保存PATH
 			List<String> pathList = batchAddPath(entryValueCategories);
@@ -102,7 +100,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			//批量保存维度数据
 			Set<String> categorySet = new HashSet<>();
 			for (ResourceCategory resourceCategory : entryValueCategories) {
-				ResourceCategory rc = addResourceCategory(resourceCategory);
+				ResourceCategory rc = addOrUpdateResourceCategory(resourceCategory);
 				if(rc!=null){
 					list.add(rc);
 				} else {
@@ -196,16 +194,40 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return pathList;
 	}
 
-	private ResourceCategory addResourceCategory(ResourceCategory resourceCategory){
+	private ResourceCategory addOrUpdateResourceCategory(ResourceCategory resourceCategory){
 		StringBuffer script;
 		Map<String, Object> graphParams;
+		//检查维度数据是否已经存在
+		String checkExistCategory = "g.E().hasLabel('has_category_code').has('identifier',edgeIdentifier).inV().has('cg_taxoncode',taxoncode).id()";
+		Map<String, Object> checkParam = new HashMap<>();
+		checkParam.put("edgeIdentifier",resourceCategory.getIdentifier());
+		checkParam.put("taxoncode", resourceCategory.getTaxoncode());
+		String oldEdgeId = null;
+		try {
+			oldEdgeId = titanCommonRepository.executeScriptUniqueString(checkExistCategory,checkParam);
+		} catch (Exception e) {
+			LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
+			return null;
+		}
+
+		if(StringUtils.isNotEmpty(oldEdgeId)){
+			return resourceCategory;
+		} else {
+			try {
+				titanCommonRepository.deleteEdgeById(resourceCategory.getIdentifier());
+			} catch (Exception e) {
+				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
+				return null;
+			}
+		}
+
 		//检查code在数据库中是否已经存在
 		Long categoryCodeNodeId = getCategoryCodeId(resourceCategory);
 		String edgeId ;
 		if (categoryCodeNodeId != null) {
 			script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).next()" +
 					".addEdge('has_category_code',g.V(categoryCodeNodeId).next(),'identifier',edgeIdentifier).id()");
-			graphParams = new HashMap<String, Object>();
+			graphParams = new HashMap<>();
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
 			graphParams.put("identifier", resourceCategory.getResource());
@@ -248,8 +270,28 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return resourceCategory;
 	}
 
-	//TODO path没有加入
 	private String addPath(String resource ,String resourcePrimaryCategory,String path ){
+		//检查path是否已经存在
+		String checkPathExist = "g.V().hasLabel(resourcePrimaryCategory).has('identifier',resource)" +
+				".outE().hasLabel('has_categories_path').inV().has('cg_taxonpath',path).id()";
+		Map<String, Object> checkPathParam = new HashMap<>();
+		checkPathParam.put("resourcePrimaryCategory",resourcePrimaryCategory);
+		checkPathParam.put("resource",resource);
+		checkPathParam.put("path",path);
+
+		String oldPathId = null;
+		try {
+			oldPathId = titanCommonRepository.executeScriptUniqueString(checkPathExist, checkPathParam);
+		} catch (Exception e) {
+			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
+			//TODO titan sync
+			//获取ID不成功后直接返回，不进行后续的操作
+			return null;
+		}
+		if(StringUtils.isNotEmpty(oldPathId)){
+			return path;
+		}
+
 		String queryPathScript = "g.V().has('categories_path','cg_taxonpath',taxonpath).id()";
 		Map<String,Object> queryPathParams = new HashMap<>();
 		queryPathParams.put("taxonpath",path);

@@ -1,27 +1,37 @@
 package nd.esp.service.lifecycle.app;
 
 
-import com.nd.gaea.client.http.BearerAuthorizationProvider;
-import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
-import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.config.ApplicationConfig;
-import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthResolver;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
+import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.utils.JDomUtils;
+
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -30,8 +40,9 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.nd.gaea.client.http.BearerAuthorizationProvider;
+import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
+import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 
 @Configuration
 @EnableWebMvc
@@ -44,7 +55,7 @@ import java.util.List;
 @EnableScheduling
 //@PropertySource("classpath:config/worker.properties")
 @PropertySource(value = {"classpath:sdkdb/c3p0-config-main.properties","classpath:system.properties"})
-public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
+public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements SchedulingConfigurer{
 
 	private final static Logger LOG = LoggerFactory.getLogger(LifeCircleWebConfig.class);
 
@@ -223,5 +234,14 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter {
 	@Primary
 	public BearerAuthorizationProvider bearerAuthorizationProvider() {
 		return new DeliverBearerAuthorizationProvider();
+	}
+
+	/**
+	 * 配置定时任务线程池（spring 默认单线程，容易受其它任务影响）
+	 * @author linsm
+	 */
+	@Override
+	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+		taskRegistrar.setScheduler(Executors.newScheduledThreadPool(3));
 	}
 }

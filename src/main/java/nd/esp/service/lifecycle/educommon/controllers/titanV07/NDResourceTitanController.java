@@ -70,7 +70,7 @@ public class NDResourceTitanController {
                     LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                     LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
         }
-
+        commonServiceHelper.getRepository(resourceType);
         //check include;
         List<String> includeList = IncludesConstant.getValidIncludes(includeString);
 
@@ -92,7 +92,7 @@ public class NDResourceTitanController {
                         LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage()+"    invalid uuid: "+uuid);
             }
         }
-
+        commonServiceHelper.getRepository(resourceType);
         //check include
         List<String> includeList = IncludesConstant.getValidIncludes(includeString);
 
