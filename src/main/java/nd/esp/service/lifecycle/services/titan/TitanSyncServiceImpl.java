@@ -116,11 +116,16 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         try {
             education = (Education) espRepository.get(identifier);
         } catch (EspStoreException e) {
-            e.printStackTrace();
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+                    primaryCategory, identifier);
             return false;
         }
+        try{
+            titanResourceRepository.update(education);
+        } catch (Exception e){
+            LOG.info("titan_repository error");
+        }
 
-        titanResourceRepository.update(education);
 
         return false;
     }
