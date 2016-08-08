@@ -75,8 +75,10 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return true;
         }
 
-        delete(primaryCategory, identifier);
-
+        boolean deleteSuccess = delete(primaryCategory, identifier);
+        if(!deleteSuccess){
+            return false;
+        }
         EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
         Education education;
         try {
