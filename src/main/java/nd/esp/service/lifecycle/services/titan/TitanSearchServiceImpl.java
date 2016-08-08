@@ -193,7 +193,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 resultStr.add(iterator.next().getString());
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse.parseToListView(resType, resultStr,includes);
+            return TitanResultParse2.parseToListView(resType, resultStr,includes);
         }
         return null;
     }

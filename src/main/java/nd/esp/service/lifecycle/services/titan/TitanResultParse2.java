@@ -102,9 +102,13 @@ public class TitanResultParse2 {
                 // order
                 //
                 order = tmpMap.get("order");
-            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category")||tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
+            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
-                parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+                if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+                    parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+                } else if (tmpMap.containsKey("primary_category")) {
+                    parent = tmpMap.get("primary_category");
+                }
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
                 // tech_info
                 techInfoLinesMap.add(tmpMap);
