@@ -109,8 +109,10 @@ public class TitanResultParse2 {
                     parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
                 } else if (tmpMap.containsKey("primary_category")) {
                     String res = tmpMap.get("primary_category");
-                    if(ResourceNdCode.knowledges.toString().equals(res)){
+                    if (ResourceNdCode.knowledges.toString().equals(res)) {
                         parent = tmpMap.get(ES_SearchField.identifier.toString());
+                    } else if (ResourceNdCode.chapters.toString().equals(res)) {
+                        parent = "ROOT";
                     }
                 }
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
