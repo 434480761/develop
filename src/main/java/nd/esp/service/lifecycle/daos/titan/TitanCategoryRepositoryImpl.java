@@ -226,8 +226,15 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		String edgeId ;
 		if (categoryCodeNodeId != null) {
 			script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).next()" +
-					".addEdge('has_category_code',g.V(categoryCodeNodeId).next(),'identifier',edgeIdentifier).id()");
-			graphParams = new HashMap<>();
+					".addEdge('has_category_code',g.V(categoryCodeNodeId).next()");
+			graphParams = TitanScritpUtils.getParamAndChangeScript(script,resourceCategory);
+			script.append(",'identifier',edgeIdentifier");
+			//增加对taxonpath的null判断
+			if(resourceCategory.getTaxonpath() != null){
+				script.append(",'cg_taxonpath',cgTaxonpath");
+				graphParams.put("cgTaxonpath", resourceCategory.getTaxonpath());
+			}
+			script.append(").id()");
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
 			graphParams.put("identifier", resourceCategory.getResource());
@@ -247,10 +254,20 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			graphParams = TitanScritpUtils.getParamAndChangeScript(script, resourceCategory);
 			script.append(");");
 			script.append("g.V().hasLabel(primaryCategory).has('identifier',identifier).next()" +
-					".addEdge('has_category_code',category_code,'identifier',edgeIdentifier).id()");
+					".addEdge('has_category_code',category_code");
+			Map<String, Object> paramEdgeMap = TitanScritpUtils.getParamAndChangeScript(script, resourceCategory);
+			script.append(",'identifier',edgeIdentifier");
+			//增加对taxonpath的null判断
+			if(resourceCategory.getTaxonpath() != null){
+				script.append(",'cg_taxonpath',cgTaxonpath");
+				graphParams.put("cgTaxonpath", resourceCategory.getTaxonpath());
+			}
+			script.append(").id()");
 
 			graphParams.put("primaryCategory",
 					resourceCategory.getPrimaryCategory());
+			graphParams.putAll(paramEdgeMap);
+
 			graphParams.put("identifier", resourceCategory.getResource());
 			graphParams.put("edgeIdentifier",resourceCategory.getIdentifier());
 
