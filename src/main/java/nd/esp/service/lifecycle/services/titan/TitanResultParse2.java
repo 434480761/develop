@@ -76,7 +76,7 @@ public class TitanResultParse2 {
                 // 把id和code放在一起
                 putIdCodeTogeter(taxOnCodeIdLinesMap,taxOnCodeLinesMap,techInfoLinesMap);
                 // order parent
-                if (CollectionUtils.isNotEmpty(mainResultMap)) {
+                if (ResourceNdCode.knowledges.toString().equals(resType) && CollectionUtils.isNotEmpty(mainResultMap)) {
                     if (order != null) mainResultMap.put("order", order);
                     if (parent != null) mainResultMap.put("parent", parent);
                 }
@@ -102,7 +102,7 @@ public class TitanResultParse2 {
                 // order
                 //
                 order = tmpMap.get("order");
-            } else if (order != null &&ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category")||tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
+            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category")||tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
                 parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
