@@ -586,6 +586,11 @@ public class TitanResultParse2 {
      * @return
      */
     public static Map<String, String> toMap(String str) {
+        Map<String, String> tmpMap = new HashMap<>();
+        if (str.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+            tmpMap.put(TitanKeyWords.TOTALCOUNT.toString(), "1");
+            return tmpMap;
+        }
         str = str.replaceAll("==>", "").replaceAll("\\[", "");
         str = str.substring(1, str.length() - 1);
         String[] fields = null;
@@ -596,7 +601,7 @@ public class TitanResultParse2 {
         } else {
             return null;
         }
-        Map<String, String> tmpMap = new HashMap<>();
+
         for (String s : fields) {
             String kv = s.replaceAll("]", "");
             int begin = kv.indexOf("=");
