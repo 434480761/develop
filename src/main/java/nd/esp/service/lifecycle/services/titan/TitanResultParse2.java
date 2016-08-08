@@ -587,25 +587,27 @@ public class TitanResultParse2 {
      */
     public static Map<String, String> toMap(String str) {
         Map<String, String> tmpMap = new HashMap<>();
-        if (str.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-            tmpMap.put(TitanKeyWords.TOTALCOUNT.toString(), "1");
-            return tmpMap;
-        }
-        str = str.replaceAll("==>", "").replaceAll("\\[", "");
-        str = str.substring(1, str.length() - 1);
-        String[] fields = null;
-        if (str.contains("], ")) {
-            fields = str.split("], ");
-        } else if (str.contains(", ")) {
-            fields = str.split(", ");
-        } else {
-            return null;
-        }
+        if(StringUtils.isNotEmpty(str)) {
+            if (str.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                tmpMap.put(TitanKeyWords.TOTALCOUNT.toString(), "1");
+                return tmpMap;
+            }
+            str = str.replaceAll("==>", "").replaceAll("\\[", "");
+            str = str.substring(1, str.length() - 1);
+            String[] fields = null;
+            if (str.contains("], ")) {
+                fields = str.split("], ");
+            } else if (str.contains(", ")) {
+                fields = str.split(", ");
+            } else {
+                return null;
+            }
 
-        for (String s : fields) {
-            String kv = s.replaceAll("]", "");
-            int begin = kv.indexOf("=");
-            tmpMap.put(kv.substring(0, begin).trim(), kv.substring(begin + 1, kv.length()).trim());
+            for (String s : fields) {
+                String kv = s.replaceAll("]", "");
+                int begin = kv.indexOf("=");
+                tmpMap.put(kv.substring(0, begin).trim(), kv.substring(begin + 1, kv.length()).trim());
+            }
         }
         return tmpMap;
     }
