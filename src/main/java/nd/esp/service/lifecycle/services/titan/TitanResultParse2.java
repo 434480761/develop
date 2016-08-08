@@ -603,7 +603,10 @@ public class TitanResultParse2 {
             } else if (str.contains(", ")) {
                 fields = str.split(", ");
             } else {
-                return null;
+                String kv = str.replaceAll("]", "");
+                int begin = kv.indexOf("=");
+                tmpMap.put(kv.substring(0, begin).trim(), kv.substring(begin + 1, kv.length()).trim());
+                return tmpMap;
             }
 
             for (String s : fields) {
