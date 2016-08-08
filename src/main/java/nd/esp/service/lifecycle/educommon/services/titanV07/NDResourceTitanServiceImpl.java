@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResRepoInfo;
 import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
+import nd.esp.service.lifecycle.services.titan.TitanResultParse2;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -651,7 +652,31 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         }
 
         //解析资源
-        for (List<String> result : resultList){
+        for (List<String> result : resultList) {
+            Map<String, String> mainResult = null;
+            List<Map<String, String>> otherLines = new ArrayList<>();
+            String taxOnPath = null;
+            for (String line : result) {
+                Map<String, String> map = TitanResultParse2.toMap(line);
+
+                if (map.containsKey(ES_SearchField.cg_taxonpath.toString())) {
+                    taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
+                } else if (map.containsKey(ES_SearchField.lc_create_time.toString())) {
+                    mainResult = map;
+                } else {
+                    otherLines.add(map);
+                }
+            }
+            if (CollectionUtils.isEmpty(mainResult)) {
+                continue;
+            }
+            resourceModelList.add(TitanResultParse2.parseResource(
+                    resourceType, mainResult, otherLines, taxOnPath, includeList));
+        }
+
+
+        //解析资源
+        /*for (List<String> result : resultList){
             String mainResult = null;
             List<String> otherLines = new ArrayList<String>();
             String taxOnPath = null;
@@ -670,7 +695,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
             }
             resourceModelList.add(TitanResultParse.parseResource(
                     resourceType, mainResult, otherLines, taxOnPath,includeList));
-        }
+        }*/
 
         return resourceModelList;
     }
