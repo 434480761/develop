@@ -14,6 +14,9 @@ public class BigDecimalUtils {
     }
 
     public static BigDecimal toBigDecimal(Object db){
+        if(db == null){
+            return null;
+        }
         return new BigDecimal((String) db);
     }
 
