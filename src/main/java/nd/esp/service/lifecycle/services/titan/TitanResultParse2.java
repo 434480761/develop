@@ -99,7 +99,7 @@ public class TitanResultParse2 {
             } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
                 // code
                 taxOnCodeLinesMap.add(tmpMap);
-            } else if (tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) {
+            } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
                 // id
                 taxOnCodeIdLinesMap.add(tmpMap);
             } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
