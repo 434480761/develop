@@ -70,12 +70,15 @@ public class TitanResultParse2 {
         String order=null;
         int count = 0;
         for (String line : resultStr) {
+            if(StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
-            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString()))) {
+            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
                 // 解析一个item
                 // 把id和code放在一起
-                putIdCodeTogeter(taxOnCodeIdLinesMap,taxOnCodeLinesMap,techInfoLinesMap);
+                if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
+                    putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
+                }
                 // order parent
                 if (ResourceNdCode.knowledges.toString().equals(resType) && CollectionUtils.isNotEmpty(mainResultMap)) {
                     if (order != null) mainResultMap.put("order", order);
@@ -87,8 +90,8 @@ public class TitanResultParse2 {
                 order = null;
             }
 
-            if (tmpMap.size() == 1 && tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(tmpMap.get(TitanKeyWords.TOTALCOUNT.toString())));
+            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
             } else if (tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
@@ -103,9 +106,18 @@ public class TitanResultParse2 {
                 // order
                 //
                 order = tmpMap.get("order");
-            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category")||tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
+            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
-                parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+                if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+                    parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+                } else if (tmpMap.containsKey("primary_category")) {
+                    String res = tmpMap.get("primary_category");
+                    if (ResourceNdCode.knowledges.toString().equals(res)) {
+                        parent = tmpMap.get(ES_SearchField.identifier.toString());
+                    } else if (ResourceNdCode.chapters.toString().equals(res)) {
+                        parent = "ROOT";
+                    }
+                }
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
                 // tech_info
                 techInfoLinesMap.add(tmpMap);
@@ -132,15 +144,14 @@ public class TitanResultParse2 {
     private static List<Map<String, String>> putIdCodeTogeter(List<Map<String, String>> id, List<Map<String, String>> code, List<Map<String, String>> techInfoLinesMap) {
 
         if (CollectionUtils.isNotEmpty(id) && CollectionUtils.isNotEmpty(code)) {
-            if (id.size() == code.size()){
+            if (id.size() == code.size()) {
                 for (int i = 0; i < code.size(); i++) {
                     code.get(i).put(ES_SearchField.identifier.toString(), id.get(i).get(ES_SearchField.identifier.toString()));
                 }
             }
-        }
-
-        if (CollectionUtils.isNotEmpty(techInfoLinesMap) && CollectionUtils.isNotEmpty(code)) {
             code.addAll(techInfoLinesMap);
+        } else {
+            return techInfoLinesMap;
         }
 
         return code;
