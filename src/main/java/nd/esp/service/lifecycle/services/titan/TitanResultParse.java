@@ -72,7 +72,7 @@ public class TitanResultParse {
             }
 
             if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
                 Map<String, String> map = TitanResultParse.toMap(line);
                 taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
@@ -124,11 +124,15 @@ public class TitanResultParse {
         dealMainResult(item, fieldMap,includes);
         KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
-        extProperties.setParent(fieldMap.get("ext_parent"));
-        extProperties.setTarget(fieldMap.get("ext_target"));
-        extProperties.setDirection(fieldMap.get("ext_direction"));
-        extProperties.setOrder_num(Integer.parseInt(fieldMap.get("ext_order_num")));
-        extProperties.setRootNode(fieldMap.get("ext_rootnode"));
+        extProperties.setParent(fieldMap.get("parent"));
+        String order=fieldMap.get("order");
+        if (order != null && !"".equals(order.trim())) {
+            extProperties.setOrder_num((int)Float.parseFloat(order));
+        }
+
+        //extProperties.setTarget(fieldMap.get("ext_target"));
+        //extProperties.setDirection(fieldMap.get("ext_direction"));
+        //extProperties.setRootNode(fieldMap.get("ext_rootnode"));
 
         item.setExtProperties(extProperties);
         generateModel(item, strInOneItem, taxOnPath,includes);
@@ -314,6 +318,7 @@ public class TitanResultParse {
         item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
         item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
         item.setmIdentifier(fieldMap.get(ES_SearchField.m_identifier.toString()));
+        item.setNdresCode(fieldMap.get(ES_SearchField.ndres_code.toString()));
 
         String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
         if (customProperties != null) {

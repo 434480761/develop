@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.elasticsearch;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -294,6 +295,8 @@ public class ES_SearchImpl implements ES_Search {
 						.get(ES_Field.provider.toString())));
 				lifeCycle.setProviderSource((String) (lifecycleMap
 						.get(ES_Field.provider_source.toString())));
+				lifeCycle.setProviderMode((String) (lifecycleMap
+						.get(ES_Field.provider_mode.toString())));
 				lifeCycle.setPublisher((String) (lifecycleMap
 						.get(ES_Field.publisher.toString())));
 				lifeCycle.setStatus((String) (lifecycleMap.get(ES_Field.status
@@ -349,6 +352,15 @@ public class ES_SearchImpl implements ES_Search {
 																// copyright
 				copyright.setRight((String) (crMap.get(ES_Field.right
 						.toString())));
+				copyright.setHasRight(adaptBooleanToBool((crMap
+						.get(ES_Field.has_right.toString()))));
+				copyright.setRightStartDate(new BigDecimal(
+						adapterLongForDate(crMap
+								.get(ES_Field.right_start_date.toString()))));
+				copyright.setRightEndDate(new BigDecimal(
+						adapterLongForDate(crMap
+								.get(ES_Field.right_end_date.toString()))));
+				
 				item.setCopyright(copyright);
 			}
 			// cg

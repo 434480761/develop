@@ -7,6 +7,7 @@ import java.util.Map;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 /**
@@ -17,7 +18,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes) {
+	public static String generateScriptForInclude(List<String> includes, String resType) {
 		if (CollectionUtils.isEmpty(includes)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
@@ -28,8 +29,18 @@ public class TitanUtils {
 				scriptBuffer.append(",out('has_tech_info')");
 			} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
 				scriptBuffer.append(",out('has_category_code')");
+				// cg_taxoncode identifier
+				//scriptBuffer.append(",outE('has_category_code')");
 				scriptBuffer.append(",out('has_categories_path')");
 			}
+		}
+		if (ResourceNdCode.knowledges.toString().equals(resType)) {
+
+			// order
+			//scriptBuffer.append(",inE('has_knowledge')");
+
+			// parent
+			//scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return "";

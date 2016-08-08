@@ -58,8 +58,8 @@ public class EsIndexQueryBuilder {
     private static final String DOUBLE_BLANK_AND = " AND ";
     private static final String DOUBLE_BLANK_OR = " OR ";
     public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
-    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT:' + count;resultList";
-    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT:' + count;resultList";
+    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT=' + count;resultList";
+    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT=' + count;resultList";
     public static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
     public EsIndexQueryBuilder setIndex(String index) {
@@ -125,7 +125,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append(getRangeIds());
         baseQuery.append("results = g.V(rangeids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
         baseQuery.append(".valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
@@ -165,7 +165,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".limit(").append(this.size).append(");");
         baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append("results = g.V(ids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
         baseQuery.append(".valueMap();");
         query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 

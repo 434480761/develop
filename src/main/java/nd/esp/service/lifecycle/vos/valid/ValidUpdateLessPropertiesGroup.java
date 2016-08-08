@@ -8,7 +8,7 @@ import javax.validation.GroupSequence;
  * @author caocr
  *
  */
-@GroupSequence({ UpdateKnowledgeDefault.class, LifecycleDefault4Update.class, CategoriesDefault.class })
+@GroupSequence({ UpdateKnowledgeDefault.class, LifecycleDefault4Update.class, CategoriesDefault.class,CopyrightDefault.class })
 public interface ValidUpdateLessPropertiesGroup {
 
 }

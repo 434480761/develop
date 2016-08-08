@@ -25,25 +25,6 @@ public class FullModel {
     private String code;
     private Double statistics_num;
     
-    //**********************扩展属性**********************\\
-//    //习题
-//    private String ext_discrimination;
-//    private String ext_answer;
-//    private String ext_itemContent;
-//    private String ext_q_criterion;
-//    private String ext_score;
-//    private String ext_secrecy;
-//    private String ext_modifiedDifficulty;
-//    private String ext_modifiedDiscrimination;
-//    private String ext_usedTime;
-//    private String ext_exposalDate;
-//    private String ext_autoRemark;
-//    private String ext_extDifficulty;
-//    //教材,电子教材
-//    private String ext_isbn;
-//    private String ext_attachments;
-//    private String ext_criterion;
-    
     //**********************LC(生命周期)**********************\\
     private String lifeCycle_version;
     private String lifeCycle_status;
@@ -52,6 +33,7 @@ public class FullModel {
     private String lifeCycle_publisher;
     private String lifeCycle_provider;
     private String lifeCycle_providerSource;
+    private String lifeCycle_providerMode;
     private String lifeCycle_createTime;
     private String lifeCycle_lastUpdate;
     
@@ -71,6 +53,9 @@ public class FullModel {
     private String copyRight_right;
     private String copyRight_crDescription;
     private String copyRight_author;
+    private String copyRight_hasRight;
+    private String copyRight_rightStartDate;
+    private String copyRight_rightEndDate;
     
     //**********************Get and Set**********************\\
     public String getIdentifier() {
@@ -127,96 +112,6 @@ public class FullModel {
     public void setCode(String code) {
         this.code = code;
     }
-//    public String getExt_discrimination() {
-//        return ext_discrimination;
-//    }
-//    public void setExt_discrimination(String ext_discrimination) {
-//        this.ext_discrimination = ext_discrimination;
-//    }
-//    public String getExt_answer() {
-//        return ext_answer;
-//    }
-//    public void setExt_answer(String ext_answer) {
-//        this.ext_answer = ext_answer;
-//    }
-//    public String getExt_itemContent() {
-//        return ext_itemContent;
-//    }
-//    public void setExt_itemContent(String ext_itemContent) {
-//        this.ext_itemContent = ext_itemContent;
-//    }
-//    public String getExt_q_criterion() {
-//        return ext_q_criterion;
-//    }
-//    public void setExt_q_criterion(String ext_q_criterion) {
-//        this.ext_q_criterion = ext_q_criterion;
-//    }
-//    public String getExt_score() {
-//        return ext_score;
-//    }
-//    public void setExt_score(String ext_score) {
-//        this.ext_score = ext_score;
-//    }
-//    public String getExt_secrecy() {
-//        return ext_secrecy;
-//    }
-//    public void setExt_secrecy(String ext_secrecy) {
-//        this.ext_secrecy = ext_secrecy;
-//    }
-//    public String getExt_modifiedDifficulty() {
-//        return ext_modifiedDifficulty;
-//    }
-//    public void setExt_modifiedDifficulty(String ext_modifiedDifficulty) {
-//        this.ext_modifiedDifficulty = ext_modifiedDifficulty;
-//    }
-//    public String getExt_modifiedDiscrimination() {
-//        return ext_modifiedDiscrimination;
-//    }
-//    public void setExt_modifiedDiscrimination(String ext_modifiedDiscrimination) {
-//        this.ext_modifiedDiscrimination = ext_modifiedDiscrimination;
-//    }
-//    public String getExt_usedTime() {
-//        return ext_usedTime;
-//    }
-//    public void setExt_usedTime(String ext_usedTime) {
-//        this.ext_usedTime = ext_usedTime;
-//    }
-//    public String getExt_exposalDate() {
-//        return ext_exposalDate;
-//    }
-//    public void setExt_exposalDate(String ext_exposalDate) {
-//        this.ext_exposalDate = ext_exposalDate;
-//    }
-//    public String getExt_autoRemark() {
-//        return ext_autoRemark;
-//    }
-//    public void setExt_autoRemark(String ext_autoRemark) {
-//        this.ext_autoRemark = ext_autoRemark;
-//    }
-//    public String getExt_extDifficulty() {
-//        return ext_extDifficulty;
-//    }
-//    public void setExt_extDifficulty(String ext_extDifficulty) {
-//        this.ext_extDifficulty = ext_extDifficulty;
-//    }
-//    public String getExt_isbn() {
-//        return ext_isbn;
-//    }
-//    public void setExt_isbn(String ext_isbn) {
-//        this.ext_isbn = ext_isbn;
-//    }
-//    public String getExt_attachments() {
-//        return ext_attachments;
-//    }
-//    public void setExt_attachments(String ext_attachments) {
-//        this.ext_attachments = ext_attachments;
-//    }
-//    public String getExt_criterion() {
-//        return ext_criterion;
-//    }
-//    public void setExt_criterion(String ext_criterion) {
-//        this.ext_criterion = ext_criterion;
-//    }
     public String getLifeCycle_version() {
         return lifeCycle_version;
     }
@@ -360,5 +255,29 @@ public class FullModel {
 	}
 	public void setmIdentifier(String mIdentifier) {
 		this.mIdentifier = mIdentifier;
+	}
+	public String getLifeCycle_providerMode() {
+		return lifeCycle_providerMode;
+	}
+	public void setLifeCycle_providerMode(String lifeCycle_providerMode) {
+		this.lifeCycle_providerMode = lifeCycle_providerMode;
+	}
+	public String getCopyRight_hasRight() {
+		return copyRight_hasRight;
+	}
+	public void setCopyRight_hasRight(String copyRight_hasRight) {
+		this.copyRight_hasRight = copyRight_hasRight;
+	}
+	public String getCopyRight_rightStartDate() {
+		return copyRight_rightStartDate;
+	}
+	public void setCopyRight_rightStartDate(String copyRight_rightStartDate) {
+		this.copyRight_rightStartDate = copyRight_rightStartDate;
+	}
+	public String getCopyRight_rightEndDate() {
+		return copyRight_rightEndDate;
+	}
+	public void setCopyRight_rightEndDate(String copyRight_rightEndDate) {
+		this.copyRight_rightEndDate = copyRight_rightEndDate;
 	}
 }

@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.educommon.dao.impl;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -236,14 +237,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
                 + "ndr.code as code," + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
         //LC
-        String lifeCycleSelect = "ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate";
-        String lifeCycleSelect4Null = "null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate";
+        String lifeCycleSelect = "ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.provider_mode AS lifeCycle_providerMode,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate";
+        String lifeCycleSelect4Null = "null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_providerMode,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate";
         //EDU
         String educationInfoSelect = "ndr.interactivity AS educationInfo_interactivity,ndr.interactivity_level AS educationInfo_interactivityLevel,ndr.end_user_type AS educationInfo_endUserType,ndr.semantic_density AS educationInfo_semanticDensity,ndr.context AS educationInfo_context,ndr.age_range AS educationInfo_ageRange,ndr.difficulty AS educationInfo_difficulty,ndr.learning_time AS educationInfo_learningTime,ndr.edu_description AS educationInfo_description,ndr.edu_language AS educationInfo_language";
         String educationInfoSelect4Null = "null AS educationInfo_interactivity,null AS educationInfo_interactivityLevel,null AS educationInfo_endUserType,null AS educationInfo_semanticDensity,null AS educationInfo_context,null AS educationInfo_ageRange,null AS educationInfo_difficulty,null AS educationInfo_learningTime,null AS educationInfo_description,null AS educationInfo_language";
         //CR
-        String copyRightSelect = "ndr.cr_right AS copyRight_right,ndr.cr_description AS copyRight_crDescription,ndr.author AS copyRight_author";
-        String copyRightSelect4Null = "null AS copyRight_right,null AS copyRight_crDescription,null AS copyRight_author";
+        String copyRightSelect = "ndr.cr_right AS copyRight_right,ndr.cr_description AS copyRight_crDescription,ndr.author AS copyRight_author,ndr.has_right AS copyRight_hasRight,ndr.right_start_date AS copyRight_rightStartDate,ndr.right_end_date AS copyRight_rightEndDate";
+        String copyRightSelect4Null = "null AS copyRight_right,null AS copyRight_crDescription,null AS copyRight_author,null AS copyRight_hasRight,null AS copyRight_rightStartDate,null AS copyRight_rightEndDate";
         //*******各属性的select字段及别名,当不需要时用null代替的语句--End*******//
         
         //sql的SELECT
@@ -466,6 +467,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     rlc.setPublisher(fullModel.getLifeCycle_publisher());
                     rlc.setProvider(fullModel.getLifeCycle_provider());
                     rlc.setProviderSource(fullModel.getLifeCycle_providerSource());
+                    rlc.setProviderMode(fullModel.getLifeCycle_providerMode());
                     
                     long createTimeLong = StringUtils.isNotEmpty(fullModel.getLifeCycle_createTime()) ? Long.parseLong(fullModel.getLifeCycle_createTime()) : 0L;
                     rlc.setCreateTime(new Date(createTimeLong));
@@ -479,6 +481,15 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     rr.setRight(fullModel.getCopyRight_right());
                     rr.setDescription(fullModel.getCopyRight_crDescription());
                     rr.setAuthor(fullModel.getCopyRight_author());
+                    
+                    int hasRightInt = StringUtils.isNotEmpty(fullModel.getCopyRight_hasRight()) ? Integer.parseInt(fullModel.getCopyRight_hasRight()) : 0;
+                    rr.setHasRight(hasRightInt == 1 ? true : false);
+                    
+                    long rightStartDateLong = StringUtils.isNotEmpty(fullModel.getCopyRight_rightStartDate()) ? Long.parseLong(fullModel.getCopyRight_rightStartDate()) : 0L;
+                    rr.setRightStartDate(new BigDecimal(rightStartDateLong));
+                    
+                    long rightEndDateLong = StringUtils.isNotEmpty(fullModel.getCopyRight_rightEndDate()) ? Long.parseLong(fullModel.getCopyRight_rightEndDate()) : 0L;
+                    rr.setRightEndDate(new BigDecimal(rightEndDateLong));
 
                     resourceModel.setCopyright(rr);
                 }

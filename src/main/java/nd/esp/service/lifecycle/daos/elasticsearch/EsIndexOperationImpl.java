@@ -130,6 +130,7 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 							ElasticSearchReservedWords.Long)
 					.build(ES_Field.provider)
 					.build(ES_Field.provider_source)
+					.build(ES_Field.provider_mode)
 					.build(ES_Field.publisher)
 					.build(ES_Field.status)
 					.build(ES_Field.version)
@@ -220,6 +221,9 @@ public class EsIndexOperationImpl implements EsIndexOperation {
 					.build(ES_Field.author)
 					.build(ES_Field.description)
 					.build(ES_Field.right)
+					.build(ES_Field.has_right)
+					.build(ES_Field.right_start_date)
+					.build(ES_Field.right_end_date)
 					.endObject()
 					.field(ElasticSearchReservedWords.TYPE.toString(),
 							ElasticSearchReservedWords.NESTED.toString()).endObject();

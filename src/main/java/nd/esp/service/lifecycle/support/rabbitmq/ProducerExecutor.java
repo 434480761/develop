@@ -17,7 +17,7 @@ import com.lcmq.component.mq.RabbitMqProducer;
  * @author xiezy
  * @date 2016年8月1日
  */
-@Component
+//@Component
 public class ProducerExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(ProducerExecutor.class);
 	

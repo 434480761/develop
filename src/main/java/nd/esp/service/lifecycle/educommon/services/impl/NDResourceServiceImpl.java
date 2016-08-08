@@ -2392,6 +2392,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setPublisher(resLifeCycleModel.getPublisher());
             education.setProvider(resLifeCycleModel.getProvider());
             education.setProviderSource(resLifeCycleModel.getProviderSource());
+            education.setProviderMode(resLifeCycleModel.getProviderMode());
             if (resLifeCycleModel.getCreateTime() != null) {
                 education.setCreateTime(new Timestamp(resLifeCycleModel.getCreateTime().getTime()));
             }
@@ -2425,6 +2426,9 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setAuthor(resRightModel.getAuthor());
             education.setCrDescription(resRightModel.getDescription());
             education.setCrRight(resRightModel.getRight());
+            education.setHasRight(resRightModel.isHasRight());
+            education.setRightStartDate(resRightModel.getRightStartDate());
+            education.setRightEndDate(resRightModel.getRightEndDate());
         }
         // 扩展属性：
         try {
