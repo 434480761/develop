@@ -171,7 +171,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         try {
             titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),model.getIdentifier());
             //TODO titan sync
             return null;
         }
@@ -198,7 +198,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
 		}
 
 
@@ -213,7 +213,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
 		}
     }
 
