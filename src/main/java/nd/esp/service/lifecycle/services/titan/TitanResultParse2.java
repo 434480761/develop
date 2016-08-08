@@ -88,7 +88,7 @@ public class TitanResultParse2 {
             }
 
             if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split("=")[1]));
+                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
             } else if (tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
