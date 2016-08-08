@@ -36,7 +36,7 @@ public class ResRightViewModel {
 	@Min(groups={CopyrightDefault.class},value=946656000000l,message="{resourceViewModel.copyright.rightEndDate.minValue.validmsg}")
 	private BigDecimal rightEndDate;
 	
-	private boolean hasRight;
+	private Boolean hasRight = false;
 
 	public ResRightViewModel(){
 
@@ -82,11 +82,11 @@ public class ResRightViewModel {
 		this.rightEndDate = rightEndDate;
 	}
 
-	public boolean isHasRight() {
+	public Boolean isHasRight() {
 		return hasRight;
 	}
 
-	public void setHasRight(boolean hasRight) {
+	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
 	}
 

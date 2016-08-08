@@ -148,7 +148,7 @@ public class Education extends EspEntity implements Serializable,
 	protected BigDecimal rightEndDate;
 	
 	@Column(name="has_right")
-	protected boolean hasRight;
+	protected Boolean hasRight;
 	
 	/** * ******************* CR_ATTRIBUTES END *****************/
 
@@ -560,12 +560,11 @@ public class Education extends EspEntity implements Serializable,
 		this.rightEndDate = rightEndDate;
 	}
 
-	public boolean isHasRight() {
+	public Boolean isHasRight() {
 		return hasRight;
 	}
 
-	public void setHasRight(boolean hasRight) {
+	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
 	}
-	
 }
