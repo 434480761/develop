@@ -2040,7 +2040,13 @@ public class NDResourceController {
         commonServiceHelper.assertUploadable(res_type);
         return ndResourceService.getUploadUrl(res_type, uuid, uid, renew, coverage);
     }
-
+    
+    /**
+     * 获取下载地址
+     * @author xiezy
+     * @date 2016年8月8日
+     * @return
+     */
     @RequestMapping(value = "/{uuid}/downloadurl", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public AccessModel requestDownloading(@PathVariable String res_type,
                                           @PathVariable String uuid,
@@ -2049,7 +2055,6 @@ public class NDResourceController {
                                           @RequestParam(value = "coverage", required = false) String coverage,
                                           @AuthenticationPrincipal UserInfo userInfo,
                                           HttpServletRequest request) {
-        //        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         commonServiceHelper.assertDownloadable(res_type);
         //下载接口适配智能出题
         if (CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE.equals(coverage)) {
@@ -2060,35 +2065,94 @@ public class NDResourceController {
         AccessModel am = ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
 
         //同步至统计表中  add by xuzy 20160615
-        String bsyskey = request.getHeader("bsyskey");
+        String bsyskey = request.getHeader(Constant.BSYSKEY);
         syncResourceStatis(bsyskey,res_type,uuid);
 
         //同步至报表系统  add by xuzy 20160517
         if(nrs.checkCoverageIsNd(res_type,uuid)){
-            long time = System.currentTimeMillis();
-            ReportResourceUsing rru = new ReportResourceUsing();
-            rru.setResourceId(uuid);
-            rru.setBizSys(request.getHeader("bsyskey"));
-            rru.setIdentifier(UUID.randomUUID().toString());
-
-            rru.setCreateTime(new Timestamp(time));
-            rru.setLastUpdate(new BigDecimal(time));
-
-            if(userInfo != null){
-                rru.setUserId(userInfo.getUserId());
-                if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
-                    Map<String,Object> map = userInfo.getOrgExinfo();
-                    if(map.get("org_id") != null){
-                        rru.setOrgId(map.get("org_id").toString());
-                    }
-                    rru.setOrgName((String)map.get("org_name"));
-                    rru.setRealName((String)map.get("real_name"));
-                }
-            }
+        	ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
             nrs.addResourceUsing(rru);
         }
 
         return am;
+    }
+    
+    /**
+     * 批量获取下载地址
+     * @author xiezy
+     * @date 2016年8月8日
+     */
+    @RequestMapping(value = "/downloadurl/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String, AccessModel> batchRequestDownloading(@PathVariable String res_type,
+    									  @RequestParam(value = "uuid", required = true) Set<String> ids,
+                                          @RequestParam(value = "uid", required = true) String uid,
+                                          @RequestParam(value = "key", required = false) String key,
+                                          @AuthenticationPrincipal UserInfo userInfo,
+                                          HttpServletRequest request) {
+        commonServiceHelper.assertDownloadable(res_type);
+        
+        Map<String, AccessModel> resultMap = ndResourceService.batchGetDownloadUrl(res_type, ids, uid, key);
+
+        //同步至统计表中 
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	String bsyskey = request.getHeader(Constant.BSYSKEY);
+        	for(String uuid : resultMap.keySet()){
+        		syncResourceStatis(bsyskey,res_type,uuid);
+        	}
+        }
+
+        //同步至报表系统 
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	List<ReportResourceUsing> reportResourceUsings = new ArrayList<ReportResourceUsing>();
+        	
+        	for(String uuid : resultMap.keySet()){
+        		if(nrs.checkCoverageIsNd(res_type,uuid)){
+        			ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
+        			reportResourceUsings.add(rru);
+        		}
+        	}
+        	
+        	if(CollectionUtils.isNotEmpty(reportResourceUsings)){
+        		nrs.batchAddResourceUsing(reportResourceUsings);
+        	}
+        }
+
+        return resultMap;
+    }
+    
+    /**
+     * 获取 同步至报表系统 的Model
+     * @author xiezy
+     * @date 2016年8月8日
+     * @param uuid
+     * @param userInfo
+     * @param request
+     * @return
+     */
+    private ReportResourceUsing getReportResourceUsingModel(String uuid,UserInfo userInfo,
+            HttpServletRequest request){
+    	long time = System.currentTimeMillis();
+        ReportResourceUsing rru = new ReportResourceUsing();
+        rru.setResourceId(uuid);
+        rru.setBizSys(request.getHeader(Constant.BSYSKEY));
+        rru.setIdentifier(UUID.randomUUID().toString());
+
+        rru.setCreateTime(new Timestamp(time));
+        rru.setLastUpdate(new BigDecimal(time));
+
+        if(userInfo != null){
+            rru.setUserId(userInfo.getUserId());
+            if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
+                Map<String,Object> map = userInfo.getOrgExinfo();
+                if(map.get("org_id") != null){
+                    rru.setOrgId(map.get("org_id").toString());
+                }
+                rru.setOrgName((String)map.get("org_name"));
+                rru.setRealName((String)map.get("real_name"));
+            }
+        }
+        
+		return rru;
     }
 
     /**

@@ -30,7 +30,6 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.enums.OperationType;
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -392,6 +391,17 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 		}
 	}
 	
+	@Override
+	public void batchAddResourceUsing(List<ReportResourceUsing> rrus) {
+		if(!StaticDatas.SYNC_REPORT_DATA){return;}
+		try {
+			rrur.batchAdd(rrus);
+		} catch (EspStoreException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getMessage());
+		}
+	}
+	
 	private ReportNdResource convertResource(String resType, ResourceModel rm){
 		ReportNdResource rnd = new ReportNdResource();
 		rnd.setIdentifier(rm.getIdentifier());
@@ -449,5 +459,4 @@ public class NotifyReportServiceImpl implements NotifyReportService {
 		}
 		
 	}
-
 }

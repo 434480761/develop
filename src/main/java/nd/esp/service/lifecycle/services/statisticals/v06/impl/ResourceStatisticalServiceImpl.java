@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.daos.statisticals.ResourceStatisticalsDao;
+import nd.esp.service.lifecycle.educommon.support.StatisticsPlatform;
 import nd.esp.service.lifecycle.models.statisticals.v06.ResourceStatisticalModel;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
-import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
@@ -226,7 +226,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
                 dbStatistical.setResource(resourceId);
                 dbStatistical.setKeyTitle(keyTitle);
                 dbStatistical.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                dbStatistical.setDataFrom("TOTAL");
+                dbStatistical.setDataFrom(StatisticsPlatform.TOTAL.getName());
                 dbStatistical.setResType(resType);
                 dbStatistical.setKeyValue(valuesum);
 
@@ -254,11 +254,11 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 		boolean pptFlag = false;
 		if(CollectionUtils.isNotEmpty(rsList)){
 			for (ResourceStatistical rs : rsList) {
-				if("TOTAL".equals(rs.getDataFrom())){
+				if(StatisticsPlatform.TOTAL.getName().equals(rs.getDataFrom())){
 					totalFlag = true;
 					rs.setKeyValue(rs.getKeyValue()+1);
 					datas.add(rs);
-				}else if(flag && "101PPT".equals(rs.getDataFrom())){
+				}else if(flag && StatisticsPlatform.NDPPT.getName().equals(rs.getDataFrom())){
 					pptFlag = true;
 					rs.setKeyValue(rs.getKeyValue()+1);
 					datas.add(rs);
@@ -271,7 +271,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
             dbStatistical.setResource(id);
             dbStatistical.setKeyTitle("downloads");
             dbStatistical.setUpdateTime(ts);
-            dbStatistical.setDataFrom("TOTAL");
+            dbStatistical.setDataFrom(StatisticsPlatform.TOTAL.getName());
             dbStatistical.setResType(resType);
             dbStatistical.setKeyValue(1.0);
             datas.add(dbStatistical);
@@ -282,7 +282,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 			tmp.setResource(id);
 			tmp.setKeyTitle("downloads");
 			tmp.setUpdateTime(ts);
-			tmp.setDataFrom("101PPT");
+			tmp.setDataFrom(StatisticsPlatform.NDPPT.getName());
 			tmp.setResType(resType);
 			tmp.setKeyValue(1.0);
             datas.add(tmp);
@@ -357,7 +357,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
             }else{
             	ResourceStatistical rs = new ResourceStatistical();
             	rs.setIdentifier(UUID.randomUUID().toString());
-            	rs.setDataFrom("TOTAL");
+            	rs.setDataFrom(StatisticsPlatform.TOTAL.getName());
             	rs.setKeyTitle("top");
             	rs.setKeyValue(max+0.01);
             	rs.setResource(uuid);
