@@ -69,6 +69,7 @@ public class TitanResultParse2 {
         String order=null;
         int count = 0;
         for (String line : resultStr) {
+            if(StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
             if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString()))) {
@@ -86,8 +87,8 @@ public class TitanResultParse2 {
                 order = null;
             }
 
-            if (tmpMap.size() == 1 && tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(tmpMap.get(TitanKeyWords.TOTALCOUNT.toString())));
+            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(line.split("=")[1]));
             } else if (tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
@@ -107,7 +108,10 @@ public class TitanResultParse2 {
                 if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
                     parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
                 } else if (tmpMap.containsKey("primary_category")) {
-                    parent = tmpMap.get("primary_category");
+                    String res = tmpMap.get("primary_category");
+                    if(ResourceNdCode.knowledges.toString().equals(res)){
+                        parent = tmpMap.get(ES_SearchField.identifier.toString());
+                    }
                 }
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
                 // tech_info
