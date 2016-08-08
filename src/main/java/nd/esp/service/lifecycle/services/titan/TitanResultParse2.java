@@ -588,7 +588,14 @@ public class TitanResultParse2 {
     public static Map<String, String> toMap(String str) {
         str = str.replaceAll("==>", "").replaceAll("\\[", "");
         str = str.substring(1, str.length() - 1);
-        String[] fields = str.split("], ");
+        String[] fields = null;
+        if (str.contains("], ")) {
+            fields = str.split("], ");
+        } else if (str.contains(", ")) {
+            fields = str.split(", ");
+        } else {
+            return null;
+        }
         Map<String, String> tmpMap = new HashMap<>();
         for (String s : fields) {
             String kv = s.replaceAll("]", "");
