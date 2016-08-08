@@ -98,7 +98,7 @@ public class TitanResultParse2 {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
                 mainResultMap = tmpMap;
-            } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+            } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code
                 taxOnCodeLinesMap.add(tmpMap);
             } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
