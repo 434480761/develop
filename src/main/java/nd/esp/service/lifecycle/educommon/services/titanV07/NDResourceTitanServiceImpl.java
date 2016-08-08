@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -619,7 +620,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
      * 通过ID和资源类型从titan中批量获取数据
      * */
     private List<ResourceModel> batchGetDetail(String resourceType, Set<String> uuidSet, List<String> includeList, boolean isAll){
-        List<ResourceModel> resourceModelList = new ArrayList<>();
+//        List<ResourceModel> resourceModelList = new ArrayList<>();
 
         List<String> uuids = new ArrayList<>();
         uuids.addAll(uuidSet);
@@ -637,42 +638,44 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         }
 
         //分组查询返回结
-        List<List<String>> resultList = new ArrayList<>();
+//        List<List<String>> resultList = new ArrayList<>();
+        List<String> resultList = new ArrayList<>();
         Iterator<Result> iterator = resultSet.iterator();
         List<String> resultTemp = new ArrayList<>();
         while (iterator.hasNext()) {
             String line = iterator.next().getString();
-            Map<String, String> valueMap = TitanResultParse.toMap(line);
-            if(valueMap.containsKey(ES_SearchField.lc_last_update.toString()) ||
-                    valueMap.containsKey(ES_SearchField.lc_create_time.toString())){
-                resultTemp = new ArrayList<>();
-                resultList.add(resultTemp);
-            }
-            resultTemp.add(line);
+//            Map<String, String> valueMap = TitanResultParse.toMap(line);
+//            if(valueMap.containsKey(ES_SearchField.lc_last_update.toString()) ||
+//                    valueMap.containsKey(ES_SearchField.lc_create_time.toString())){
+//                resultTemp = new ArrayList<>();
+//                resultList.add(resultTemp);
+//            }
+            resultList.add(line);
         }
+        resultList.add(TitanKeyWords.TOTALCOUNT.toString()+"=999");
 
-        //解析资源
-        for (List<String> result : resultList) {
-            Map<String, String> mainResult = null;
-            List<Map<String, String>> otherLines = new ArrayList<>();
-            String taxOnPath = null;
-            for (String line : result) {
-                Map<String, String> map = TitanResultParse2.toMap(line);
-
-                if (map.containsKey(ES_SearchField.cg_taxonpath.toString())) {
-                    taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-                } else if (map.containsKey(ES_SearchField.lc_create_time.toString())) {
-                    mainResult = map;
-                } else {
-                    otherLines.add(map);
-                }
-            }
-            if (CollectionUtils.isEmpty(mainResult)) {
-                continue;
-            }
-            resourceModelList.add(TitanResultParse2.parseResource(
-                    resourceType, mainResult, otherLines, taxOnPath, includeList));
-        }
+//        //解析资源
+//        for (List<String> result : resultList) {
+//            Map<String, String> mainResult = null;
+//            List<Map<String, String>> otherLines = new ArrayList<>();
+//            String taxOnPath = null;
+//            for (String line : result) {
+//                Map<String, String> map = TitanResultParse2.toMap(line);
+//
+//                if (map.containsKey(ES_SearchField.cg_taxonpath.toString())) {
+//                    taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
+//                } else if (map.containsKey(ES_SearchField.lc_create_time.toString())) {
+//                    mainResult = map;
+//                } else {
+//                    otherLines.add(map);
+//                }
+//            }
+//            if (CollectionUtils.isEmpty(mainResult)) {
+//                continue;
+//            }
+//            resourceModelList.add(TitanResultParse2.parseResource(
+//                    resourceType, mainResult, otherLines, taxOnPath, includeList));
+//        }
 
 
         //解析资源
@@ -697,7 +700,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
                     resourceType, mainResult, otherLines, taxOnPath,includeList));
         }*/
 
-        return resourceModelList;
+        return TitanResultParse2.parseToListView(resourceType,resultList,includeList).getItems();
     }
 
 
