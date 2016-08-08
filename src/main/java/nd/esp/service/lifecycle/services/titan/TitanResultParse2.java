@@ -72,7 +72,7 @@ public class TitanResultParse2 {
             if(StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
-            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || tmpMap.containsKey(TitanKeyWords.TOTALCOUNT.toString()))) {
+            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
                 // 解析一个item
                 // 把id和code放在一起
                 putIdCodeTogeter(taxOnCodeIdLinesMap,taxOnCodeLinesMap,techInfoLinesMap);
