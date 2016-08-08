@@ -12,4 +12,5 @@ public interface TitanRepositoryUtils {
     public void titanSync4MysqlDelete(TitanSyncType errorType, String primaryCategory, String source);
     public void titanSync4MysqlDeleteAll(String primaryCategory, String source);
     public boolean checkRelationExistInMysql(ResourceRelation resourceRelation);
+    public void titanSync4MysqlImportAdd(TitanSyncType errorType, String primaryCategory, String source);
 }

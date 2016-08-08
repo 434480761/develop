@@ -92,6 +92,8 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             boolean reportSuccess = report(education);
             if(reportSuccess){
                 titanRepositoryUtils.titanSync4MysqlDelete(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
+            } else {
+                titanRepositoryUtils.titanSync4MysqlImportAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
             }
         }
 
