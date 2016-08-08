@@ -38,7 +38,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		}
 		ResourceCategory rc = addOrUpdateResourceCategory(resourceCategory);
 		if(rc == null){
-			LOG.info("Category处理出错");
+//			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 		}
@@ -47,7 +47,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if(path !=null && !path.equals("")){
 			String resultPath = addPath(resourceCategory.getResource(), resourceCategory.getPrimaryCategory(), path);
 			if(resultPath == null){
-				LOG.info("Category处理出错");
+//				LOG.info("Category处理出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 						resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 			}
@@ -104,7 +104,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				if(rc!=null){
 					list.add(rc);
 				} else {
-					LOG.info("Category处理出错");
+//					LOG.info("Category处理出错");
 					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 							resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 				}
@@ -149,7 +149,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		} catch (Exception e) {
 			e.printStackTrace();
 			//TODO titan sync
-			LOG.info("Category处理出错");
+//			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					primaryCategory, identifier);
 		}
@@ -184,7 +184,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 					if(p != null){
 						pathList.add(p);
 					} else {
-						LOG.info("Category处理出错");
+//						LOG.info("Category处理出错");
 						titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 								primaryCategory,key);
 					}

@@ -39,7 +39,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
 
         TechInfo techInfoNew = addOrUpdateTechInfo(techInfo);
         if(techInfoNew == null){
-            LOG.info("techInfo处理出错");
+//            LOG.info("techInfo处理出错");
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                     techInfo.getResType(),techInfo.getResource());
         }
@@ -57,7 +57,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
             if(addOrUpdateTechInfo(techInfo)!=null){
                 techInfoList.add(techInfo);
             } else {
-                LOG.info("techInfo处理出错");
+//                LOG.info("techInfo处理出错");
                 titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                         techInfo.getResType(),techInfo.getResource());
             }

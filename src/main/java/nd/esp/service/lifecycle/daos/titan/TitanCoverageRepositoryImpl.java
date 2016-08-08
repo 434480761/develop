@@ -55,7 +55,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 		ResCoverage result = addCoverage(resCoverage);
 		if(result == null){
-			LOG.info("coverage处理出错");
+//			LOG.info("coverage处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resCoverage.getResType(),resCoverage.getResource());
 		}
