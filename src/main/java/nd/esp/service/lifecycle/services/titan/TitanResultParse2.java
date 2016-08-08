@@ -84,6 +84,9 @@ public class TitanResultParse2 {
                     if (parent != null) mainResultMap.put("parent", parent);
                 }
                 items.add(parseResource(resType, mainResultMap, taxOnCodeLinesMap, taxOnPath,includes));
+                taxOnCodeLinesMap.clear();
+                taxOnCodeIdLinesMap.clear();
+                techInfoLinesMap.clear();
                 taxOnPath = null;
                 parent = null;
                 order = null;
@@ -91,7 +94,7 @@ public class TitanResultParse2 {
 
             if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
-            } else if (tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
+            } else if (!tmpMap.containsKey(ES_SearchField.identifier.toString()) && tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
                 mainResultMap = tmpMap;
