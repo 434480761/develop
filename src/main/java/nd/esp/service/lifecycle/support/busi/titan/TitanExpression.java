@@ -176,7 +176,7 @@ public class TitanExpression implements TitanScriptGenerator {
                 .append("List<Object> countsList="
                         + TitanKeyWords.TOTALCOUNT.toString() +
                         ".toList();")
-                .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + ":'+" +
+                .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" +
                         "countsList[0];").toString();
     }
 

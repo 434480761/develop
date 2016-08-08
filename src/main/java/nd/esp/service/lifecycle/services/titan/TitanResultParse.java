@@ -72,7 +72,7 @@ public class TitanResultParse {
             }
 
             if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split(":")[1].trim()));
+                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
             } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
                 Map<String, String> map = TitanResultParse.toMap(line);
                 taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
@@ -127,7 +127,7 @@ public class TitanResultParse {
         extProperties.setParent(fieldMap.get("parent"));
         String order=fieldMap.get("order");
         if (order != null && !"".equals(order.trim())) {
-            extProperties.setOrder_num(Integer.parseInt(order));
+            extProperties.setOrder_num((int)Float.parseFloat(order));
         }
 
         //extProperties.setTarget(fieldMap.get("ext_target"));
