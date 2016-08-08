@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.models.v06.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.BigDecimalUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
@@ -545,6 +546,9 @@ public class TitanResultParse2 {
         copyright.setAuthor(tmpMap.get(ES_SearchField.cr_author.toString()));
         copyright.setRight(tmpMap.get(ES_SearchField.cr_right.toString()));
         copyright.setDescription(tmpMap.get(ES_SearchField.cr_description.toString()));
+        copyright.setHasRight("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString())));
+        copyright.setRightStartDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_start_date.toString())));
+        copyright.setRightEndDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_end_date.toString())));
         return copyright;
     }
 
@@ -566,6 +570,7 @@ public class TitanResultParse2 {
         lifeCycle.setProviderSource(tmpMap.get(ES_SearchField.lc_provider_source.toString()));
         lifeCycle.setCreateTime(StringUtils.strTimeStampToDate(tmpMap.get(ES_SearchField.lc_create_time.toString())));
         lifeCycle.setLastUpdate(StringUtils.strTimeStampToDate(tmpMap.get(ES_SearchField.lc_last_update.toString())));
+        lifeCycle.setProviderMode(tmpMap.get(ES_SearchField.lc_provider_mode.toString()));
         return lifeCycle;
     }
 
