@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.instructionalobjectives.v06;
 
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,4 +44,13 @@ public interface InstructionalObjectiveService{
 	 */
 	String getInstructionalObjectiveTitle(String ids);
 	Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids);
+
+	/***
+	 * 获取未关联到章节/课时的教学目标
+	 * @param limit 分页
+	 * @param unrelationCategory 未关联的category ""表示同时未关联章节和课时"chapters"/"lessons"/""
+	 * @param knowledgeTypeCode 知识点类型维度编码
+	 * @param instructionalObjectiveTypeId 教学目标类型Id
+	 */
+	ListViewModel<InstructionalObjectiveModel> getUnRelationInstructionalObjective(String knowledgeTypeCode, String instructionalObjectiveTypeId, String unrelationCategory, String limit);
 }

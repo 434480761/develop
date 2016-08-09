@@ -1,28 +1,39 @@
 package nd.esp.service.lifecycle.controllers.instructionalobjectives.v06;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.ParamCheckUtil;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.instructionalobjectives.v06.InstructionalObjectiveViewModel;
 import nd.esp.service.lifecycle.vos.valid.ValidInstructionalObjectiveDefault4UpdateGroup;
 import nd.esp.service.lifecycle.vos.valid.ValidInstructionalObjectiveDefaultGroup;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Nullable;
 
 /**
  * 教学目标V0.6API
@@ -133,5 +144,46 @@ public class InstructionalObjectiveControllerV06 {
 
         List<Map<String, Object>> result = instructionalObjectiveService.getChapterRelationById(objectiveId);
         return result;
+    }
+
+    /***
+     * 查询没有被关联到章节或课时的教学目标
+     * @param limit 分页参数
+     * @param unrelationCategory 没有被关联的category，chapters或lessons，不填默认为同时没有被关联到章节和课时
+     * @param knowledgeTypeCode 知识点类型维度code
+     * @param instructionalObjectiveTypeId 教学目标类型Id
+     */
+    @RequestMapping(value = "/unrelation2chapters", method = RequestMethod.GET)
+    public Object getUnrelation2Chapters(
+            @RequestParam(value = "limit", defaultValue = "(0,15)") String limit,
+            @RequestParam(value = "unrelationCategory", defaultValue = "") String unrelationCategory,
+            @RequestParam(value = "knowledgeTypeCode", defaultValue = "") String knowledgeTypeCode,
+            @RequestParam(value = "instructionalObjectiveTypeId",defaultValue = "") String instructionalObjectiveTypeId) {
+
+        if (!"".equals(unrelationCategory) && !IndexSourceType.ChapterType.getName().equals(unrelationCategory) && !IndexSourceType.LessonType.getName().equals(unrelationCategory)) {
+            throw new LifeCircleException(HttpStatus.BAD_REQUEST,
+                    LifeCircleErrorMessageMapper.InvalidArgumentsError);
+        }
+
+        limit = CommonHelper.checkLimitMaxSize(limit);
+
+        ListViewModel<InstructionalObjectiveModel> listViewModel = instructionalObjectiveService.getUnRelationInstructionalObjective(knowledgeTypeCode, instructionalObjectiveTypeId, unrelationCategory, limit);
+
+        Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<InstructionalObjectiveModel, String>() {
+            @Nullable
+            @Override
+            public String apply(InstructionalObjectiveModel instructionalObjectiveModel) {
+                return instructionalObjectiveModel.getIdentifier();
+            }
+        });
+
+        Map<String, String> titles = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+        for (InstructionalObjectiveModel model : listViewModel.getItems()) {
+            String title = titles.get(model.getIdentifier());
+            model.setTitle(null == title ? model.getTitle():title);
+        }
+
+        return listViewModel;
     }
 }

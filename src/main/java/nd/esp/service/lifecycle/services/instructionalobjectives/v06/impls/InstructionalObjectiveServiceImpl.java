@@ -26,7 +26,9 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
+import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.coverage.v06.CoverageViewModel;
 
 import org.slf4j.Logger;
@@ -379,6 +381,59 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			return results;
 		} catch (DataAccessException e) {
 			LOG.error("根据教学目标获取Title出错！", e);
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	public ListViewModel<InstructionalObjectiveModel> getUnRelationInstructionalObjective(String knowledgeTypeCode, String instructionalObjectiveTypeId, String unrelationCategory, String limit) {
+
+		try {
+
+			IndexSourceType[] unrelationType = new IndexSourceType[]{IndexSourceType.ChapterType,IndexSourceType.LessonType};
+			Collection<String> unrelationCategoryString = new ArrayList<>();
+			for (IndexSourceType indexSourceType : unrelationType) {
+				if (!indexSourceType.getName().equals(unrelationCategory)) {
+					unrelationCategoryString.add(String.format("res_type=\"%s\"",indexSourceType.getName()));
+				}
+			}
+
+			String SQLFmt = "SELECT %s from `ndresource` as ndr LEFT join  `resource_relations` as rr ON ndr.identifier=rr.target" +
+					" AND rr.enable=1 AND rr.resource_target_type=\"instructionalobjectives\" AND (" + StringUtils.join(unrelationCategoryString, " or ") + ")" +
+					" WHERE ndr.enable=1 AND rr.res_type is null\n";
+			if (org.apache.commons.lang3.StringUtils.isNotBlank(knowledgeTypeCode)) {
+				SQLFmt += String.format(" and ndr.identifier in (SELECT target FROM `resource_relations` WHERE ENABLE=1 and res_type=\"knowledges\"" +
+						" AND resource_target_type=\"instructionalobjectives\" AND source_uuid in (select resource from `resource_categories` WHERE taxonCode=\"%s\"))", knowledgeTypeCode);
+			}
+			if (org.apache.commons.lang3.StringUtils.isNotBlank(instructionalObjectiveTypeId)) {
+				SQLFmt += String.format("and ndr.identifier in (SELECT target from `resource_relations` WHERE ENABLE=1 AND resource_target_type=\"instructionalobjectives\"" +
+						" and source_uuid=\"%s\")", instructionalObjectiveTypeId);
+			}
+
+			Integer[] limits = ParamCheckUtil.checkLimit(limit);
+
+			// result
+			List<Map<String, Object>> sqlResults = jt.queryForList(String.format(SQLFmt + String.format(" LIMIT %d,%d", limits[0], limits[1]), "ndr.*"));
+
+			List<InstructionalObjectiveModel> results = new ArrayList<>();
+			for (Map<String, Object> result : sqlResults) {
+				InstructionalObjectiveModel instructionalObjectiveModel = BeanMapperUtils.mapper(result, InstructionalObjectiveModel.class);
+
+				results.add(instructionalObjectiveModel);
+			}
+			// count
+			Map<String, Object> count = jt.queryForMap(String.format(SQLFmt, "count(*) as count"));
+
+			ListViewModel<InstructionalObjectiveModel> listViewModel = new ListViewModel<>();
+			listViewModel.setLimit(limit);
+			listViewModel.setItems(results);
+			listViewModel.setTotal((Long) count.get("count"));
+
+			return listViewModel;
+		} catch (Exception e) {
+			LOG.error("查询未关联教学目标出错！", e);
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
 					e.getLocalizedMessage());
