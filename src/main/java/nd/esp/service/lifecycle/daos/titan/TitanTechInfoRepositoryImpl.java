@@ -39,7 +39,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
 
         TechInfo techInfoNew = addOrUpdateTechInfo(techInfo);
         if(techInfoNew == null){
-            LOG.info("techInfo处理出错");
+//            LOG.info("techInfo处理出错");
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                     techInfo.getResType(),techInfo.getResource());
         }
@@ -57,7 +57,7 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
             if(addOrUpdateTechInfo(techInfo)!=null){
                 techInfoList.add(techInfo);
             } else {
-                LOG.info("techInfo处理出错");
+//                LOG.info("techInfo处理出错");
                 titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                         techInfo.getResType(),techInfo.getResource());
             }
@@ -124,30 +124,46 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         Map<String, Object> graphParams = null;
 
         boolean isAdd = false;
+        String techInfoEdgeId = null;
         if(StringUtils.isEmpty(oldTechInfoId)){
             isAdd = true;
             scriptBuffer = new StringBuffer("techinfo = graph.addVertex(T.label, type");
             graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,techInfo);
-            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier)");
-            scriptBuffer.append(".id()");
+            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier");
+
+            graphParams.putAll(TitanScritpUtils.getParamAndChangeScript(scriptBuffer, techInfo));
+
+            scriptBuffer.append(").id();");
             graphParams.put("type", "tech_info");
             graphParams.put("primaryCategory",techInfo.getResType());
             graphParams.put("sourceIdentifier",techInfo.getResource());
             graphParams.put("edgeIdentifier",techInfo.getIdentifier());
+            try {
+                techInfoEdgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), graphParams);
+            } catch (Exception e) {
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());
+                //TODO titan sync
+                return null;
+            }
         } else {
             scriptBuffer = new StringBuffer("g.V().has('identifier',identifier)");
             graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
+            scriptBuffer.append(";");
             graphParams.put("identifier",techInfo.getIdentifier());
+
+            StringBuffer updateEdge = new StringBuffer("g.E().has('identifier',identifier)");
+            Map<String, Object>  updateEdgeParam = TitanScritpUtils.getParamAndChangeScript4Update(updateEdge,techInfo);
+
+            try {
+                titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
+                titanCommonRepository.executeScript(updateEdge.toString(), updateEdgeParam);
+            } catch (Exception e) {
+                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());
+                //TODO titan sync
+                return null;
+            }
         }
 
-        String techInfoEdgeId;
-        try {
-            techInfoEdgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString(), graphParams);
-        } catch (Exception e) {
-            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());
-            //TODO titan sync
-            return null;
-        }
         if(isAdd && StringUtils.isEmpty(techInfoEdgeId)){
             return null;
         }

@@ -55,7 +55,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 		ResCoverage result = addCoverage(resCoverage);
 		if(result == null){
-			LOG.info("coverage处理出错");
+//			LOG.info("coverage处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resCoverage.getResType(),resCoverage.getResource());
 		}
@@ -250,8 +250,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			StringBuffer scriptBuffer = new StringBuffer(
 					"coverageNodeId = graph.addVertex(T.label,'coverage','target_type',target_type,'strategy',strategy,'target',target).id();");
 			scriptBuffer.append("g.V().has(primaryCategory,'identifier',identifier).next()" +
-					".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier).id()");
-			Map<String, Object> innerGraphParams = new HashMap<String, Object>();
+					".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier");
+			Map<String, Object> innerGraphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer, resCoverage);
+			scriptBuffer.append(").id()");
 			innerGraphParams.put(ES_Field.target_type.toString(),
 					resCoverage.getTargetType());
 			innerGraphParams.put(ES_Field.target.toString(),
@@ -270,16 +271,17 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 				return null;
 			}
 		} else {
-			String script = "g.V().has(primaryCategory,'identifier',identifier).next()" +
-					".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier).id()";
-			Map<String, Object> graphParams = new HashMap<String, Object>();
+			StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).next()" +
+					".addEdge('has_coverage',g.V(coverageNodeId).next(),'identifier',edgeIdentifier");
+			Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript(script, resCoverage);
+			script.append(").id()");
 			graphParams.put("primaryCategory", resCoverage.getResType());
 			graphParams.put("identifier", resCoverage.getResource());
 			graphParams.put("coverageNodeId", coverageNodeId);
 			graphParams.put("edgeIdentifier",resCoverage.getIdentifier());
 
 			try {
-				coveragePathId = titanCommonRepository.executeScriptUniqueString(script , graphParams);
+				coveragePathId = titanCommonRepository.executeScriptUniqueString(script.toString() , graphParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{} identifier:{}" ,e.getMessage(),resCoverage.getResource());
 				//TODO titan sync

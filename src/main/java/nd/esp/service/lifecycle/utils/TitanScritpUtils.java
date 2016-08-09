@@ -4,6 +4,8 @@ import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
+import nd.esp.service.lifecycle.utils.titan.script.ScriptAbstract;
+import nd.esp.service.lifecycle.utils.titan.script.ScriptEducation;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ public class TitanScritpUtils {
     }
 
     //获取所有不为null的属性
-    private static Map<String, Object> getParam4NotNull(Object model) {
+    public static Map<String, Object> getParam4NotNull(Object model) {
         Map<String, Object> graphParams = new HashMap<String, Object>();
         if(model == null){
             return graphParams;
@@ -202,6 +204,9 @@ public class TitanScritpUtils {
         if(model instanceof KnowledgeRelation){
             return LifeCircleApplicationInitializer.db_titan_field_knowledgerelation;
         }
+        if(model instanceof ResCoverage){
+            return LifeCircleApplicationInitializer.db_titan_field_coverage;
+        }
 
         return new Properties();
     }
@@ -325,7 +330,6 @@ public class TitanScritpUtils {
                 if(StringUtils.isNotEmpty(category.getTaxoncode())){
                     categoryCodes.add(category.getTaxoncode());
                 }
-
             }
         }
 

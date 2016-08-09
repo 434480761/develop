@@ -38,7 +38,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		ResourceRelation result = addRelation(resourceRelation);
 		if(result == null){
 			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
-				LOG.info("resourceRelation出错");
+//				LOG.info("resourceRelation出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
 			} else {
 				return resourceRelation;
@@ -60,7 +60,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 				resourceRelationList.add(rr);
 			} else {
 				if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
-					LOG.info("resourceRelation出错");
+//					LOG.info("resourceRelation出错");
 					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
 				} else {
 					resourceRelationList.add(resourceRelation);
@@ -79,7 +79,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		ResourceRelation result = updateRelation(resourceRelation);
 		if(result == null){
 			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
-				LOG.info("resourceRelation出错");
+//				LOG.info("resourceRelation出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
 			} else {
 				return resourceRelation;
@@ -100,7 +100,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 				resourceRelationList.add(result);
 			} else {
 				if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
-					LOG.info("resourceRelation出错");
+//					LOG.info("resourceRelation出错");
 					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, resourceRelation);
 				} else {
 					resourceRelationList.add(resourceRelation);
@@ -122,7 +122,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 			titanCommonRepository.executeScript(script, paramMap);
 		} catch (Exception e) {
 			e.printStackTrace();
-			LOG.info("resourceRelation出错");
+//			LOG.info("resourceRelation出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					primaryCategory,identifier);
 		}
