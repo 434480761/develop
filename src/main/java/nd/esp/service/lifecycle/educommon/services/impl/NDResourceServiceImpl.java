@@ -2460,7 +2460,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setAuthor(resRightModel.getAuthor());
             education.setCrDescription(resRightModel.getDescription());
             education.setCrRight(resRightModel.getRight());
-            education.setHasRight(resRightModel.isHasRight());
+            education.setHasRight(resRightModel.getHasRight());
             education.setRightStartDate(resRightModel.getRightStartDate());
             education.setRightEndDate(resRightModel.getRightEndDate());
         }
