@@ -49,13 +49,14 @@ public class TitanResultParse2 {
 
     private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse2.class);
 
+
     /**
      * 解析资源
      * @param resType
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
+    public static ListViewModel<ResourceModel> parseToListViewWithLabel(String resType, List<String> resultStr,List<String> includes) {
         long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
@@ -73,6 +74,101 @@ public class TitanResultParse2 {
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
             if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
+                // 解析一个item
+                // 把id和code放在一起
+                if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
+                    putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
+                }
+                // order parent
+                if (ResourceNdCode.knowledges.toString().equals(resType) && CollectionUtils.isNotEmpty(mainResultMap)) {
+                    if (order != null) mainResultMap.put("order", order);
+                    if (parent != null) mainResultMap.put("parent", parent);
+                }
+                items.add(parseResource(resType, mainResultMap, taxOnCodeLinesMap, taxOnPath,includes));
+                taxOnCodeLinesMap.clear();
+                taxOnCodeIdLinesMap.clear();
+                techInfoLinesMap.clear();
+                taxOnPath = null;
+                parent = null;
+                order = null;
+            }
+            String label=tmpMap.get("label");
+
+            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
+            } else if ("categories_path".equals(label)) {
+                //path
+                taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
+            } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
+                mainResultMap = tmpMap;
+            } else if (order==null && "category_code".equals(label)) {
+                // code
+                taxOnCodeLinesMap.add(tmpMap);
+            } else if ("has_category_code".equals(label)) {
+                // id
+                taxOnCodeIdLinesMap.add(tmpMap);
+            } else if ("has_knowledge".equals(label)) {
+                // order
+                order = tmpMap.get("order");
+            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
+                // parent
+                if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+                    parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+                } else if (tmpMap.containsKey("primary_category")) {
+                    String res = tmpMap.get("primary_category");
+                    if (ResourceNdCode.knowledges.toString().equals(res)) {
+                        parent = tmpMap.get(ES_SearchField.identifier.toString());
+                    } else if (ResourceNdCode.chapters.toString().equals(res)) {
+                        parent = "ROOT";
+                    }
+                }
+            } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
+                // tech_info
+                techInfoLinesMap.add(tmpMap);
+            }else {
+                LOG.warn("异常数据");
+            }
+            count++;
+
+
+        }
+
+        viewModels.setItems(items);
+        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
+        return viewModels;
+    }
+    /**
+     * 解析资源
+     * @param resType
+     * @param resultStr
+     * @return
+     */
+    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
+        ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
+        List<ResourceModel> items = new ArrayList<>();
+        if (CollectionUtils.isEmpty(resultStr) || resultStr.size() == 1) {
+            viewModels.setItems(items);
+            return viewModels;
+        }
+        long start = System.currentTimeMillis();
+
+
+        Map<String, String> mainResultMap = null;
+        List<Map<String, String>> taxOnCodeLinesMap = new ArrayList<>();
+        List<Map<String, String>> taxOnCodeIdLinesMap = new ArrayList<>();
+        List<Map<String, String>> techInfoLinesMap = new ArrayList<>();
+        String taxOnPath = null;
+        String parent=null;
+        String order=null;
+        int count = 0;
+        for (String line : resultStr) {
+            if(StringUtils.isEmpty(line)) continue;
+            Map<String, String> tmpMap = toMap(line);
+            if (CollectionUtils.isEmpty(tmpMap)) continue;
+            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
+                // 如果是knowlege，需要判断order和parent
+                if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
+
                 // 解析一个item
                 // 把id和code放在一起
                 if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
@@ -115,10 +211,13 @@ public class TitanResultParse2 {
                 } else if (tmpMap.containsKey("primary_category")) {
                     String res = tmpMap.get("primary_category");
                     if (ResourceNdCode.knowledges.toString().equals(res)) {
-                        parent = tmpMap.get(ES_SearchField.identifier.toString());
+                        if (tmpMap.containsKey(ES_SearchField.identifier.toString()))
+                            parent = tmpMap.get(ES_SearchField.identifier.toString());
                     } else if (ResourceNdCode.chapters.toString().equals(res)) {
                         parent = "ROOT";
                     }
+                } else {
+                    parent = "";
                 }
             } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
                 // tech_info
