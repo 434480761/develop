@@ -652,7 +652,7 @@ public class NDResourceController {
         }
 
         //对接安全接口中需要过滤掉的category code
-        String bsyskey = httpServletRequest.getHeader("bsyskey");
+        String bsyskey = httpServletRequest.getHeader(Constant.BSYSKEY);
         Set<String> excludeCategories4bsyskey = ServiceAuthorAspect.getExcludeCategories(bsyskey);
         if(CollectionUtils.isNotEmpty(categoryExclude)){
             categoryExclude.addAll(excludeCategories4bsyskey);

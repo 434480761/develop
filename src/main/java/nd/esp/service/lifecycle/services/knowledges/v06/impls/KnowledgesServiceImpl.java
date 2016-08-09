@@ -12,10 +12,19 @@ import java.util.UUID;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.common.KnowledgeRelationType;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
+import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -34,17 +43,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-import nd.esp.service.lifecycle.repository.common.KnowledgeRelationType;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
-import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
-import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 
 /**
  * 知识点业务service层

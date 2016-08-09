@@ -559,8 +559,7 @@ public class Education extends EspEntity implements Serializable,
 	public void setRightEndDate(BigDecimal rightEndDate) {
 		this.rightEndDate = rightEndDate;
 	}
-
-	public Boolean isHasRight() {
+	public Boolean getHasRight() {
 		return hasRight;
 	}
 

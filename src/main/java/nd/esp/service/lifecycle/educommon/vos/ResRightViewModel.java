@@ -81,13 +81,11 @@ public class ResRightViewModel {
 	public void setRightEndDate(BigDecimal rightEndDate) {
 		this.rightEndDate = rightEndDate;
 	}
-
-	public Boolean isHasRight() {
+	public Boolean getHasRight() {
 		return hasRight;
 	}
 
 	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
 	}
-
 }

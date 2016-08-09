@@ -91,7 +91,7 @@ public class ResRightModel {
 		this.rightEndDate = rightEndDate;
 	}
 
-	public Boolean isHasRight() {
+	public Boolean getHasRight() {
 		return hasRight;
 	}
 
