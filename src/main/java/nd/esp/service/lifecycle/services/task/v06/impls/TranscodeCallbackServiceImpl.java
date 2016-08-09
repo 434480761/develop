@@ -95,8 +95,30 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
         }
         try {
             int status = argument.getStatus();
+            String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
+            if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
+                lifecycleService.addLifecycleStep(resType, id, status==1,
+                        status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
+                //恢复原状态
+                if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
+                    ResContributeModel contributeModel = new ResContributeModel();
+                    contributeModel.setTargetId("777");
+                    contributeModel.setTargetName("LCMS");
+                    contributeModel.setTargetType("USER");
+                    contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
+                    contributeModel.setLifecycleStatus(taskInfo.getDescription());
+                    contributeModel.setProcess(100.0f);
+                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
+                    MDC.put("resource", id);
+                    MDC.put("res_type", resType);
+                    MDC.put("operation_type", "转码完成");
+                    MDC.put("remark", "历史转码完成："+taskInfo.getErrMsg());
+                }
+                MDC.clear();
+            }
+
             if (1 == status) {
-                if(TransCodeUtil.SUBTYPE_VIDEO.equals(argument.getTranscodeType()) 
+                if(TransCodeUtil.SUBTYPE_VIDEO.equals(argument.getTranscodeType())
                         || TransCodeUtil.SUBTYPE_AUDIO.equals(argument.getTranscodeType())) {
                     updateVideoTechInfos(resource, argument, resType);
                     updateVideoPreview(resource, argument, resType);
@@ -116,29 +138,6 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             } else {
                 taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
                 taskInfo.setErrMsg(argument.getErrMsg());
-            }
-            
-            //update by lsm (只是移动顺序，保证生命周期最后改变（数据库）)
-            String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
-            if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
-                lifecycleService.addLifecycleStep(resType, id, status==1, 
-                        status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
-                //恢复原状态
-                if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
-                    ResContributeModel contributeModel = new ResContributeModel();
-                    contributeModel.setTargetId("777");
-                    contributeModel.setTargetName("LCMS");
-                    contributeModel.setTargetType("USER");
-                    contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
-                    contributeModel.setLifecycleStatus(taskInfo.getDescription());
-                    contributeModel.setProcess(100.0f);
-                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
-                    MDC.put("resource", id);
-                    MDC.put("res_type", IndexSourceType.AssetType.getName());
-                    MDC.put("operation_type", "转码完成");
-                    MDC.put("remark", "历史视频转码完成："+taskInfo.getErrMsg());
-                }
-                MDC.clear();
             }
         } catch (Exception e) {
             LOG.error("转码任务回调失败", e);
@@ -168,17 +167,6 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
         }
         try {
             int status = argument.getStatus();
-            if (1 == status) {
-                updateImageTechInfos(resource, argument, resType);
-
-                taskInfo.setStatus(PackageUtil.PackStatus.READY.getStatus());
-                taskInfo.setErrMsg(argument.getErrMsg());
-            } else {
-                taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
-                taskInfo.setErrMsg(argument.getErrMsg());
-            }
-
-            //update by lsm (只是移动顺序，保证生命周期最后改变（数据库）)
             String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
             if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
                 lifecycleService.addLifecycleStep(resType, id, status==1,
@@ -194,12 +182,23 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                     contributeModel.setProcess(100.0f);
                     lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
                     MDC.put("resource", id);
-                    MDC.put("res_type", IndexSourceType.AssetType.getName());
+                    MDC.put("res_type", resType);
                     MDC.put("operation_type", "转码完成");
-                    MDC.put("remark", "历史视频转码完成："+taskInfo.getErrMsg());
+                    MDC.put("remark", "历史转码完成："+taskInfo.getErrMsg());
                 }
                 MDC.clear();
             }
+
+            if (1 == status) {
+                updateImageTechInfos(resource, argument, resType);
+
+                taskInfo.setStatus(PackageUtil.PackStatus.READY.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            } else {
+                taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            }
+
         } catch (Exception e) {
             LOG.error("转码任务回调失败", e);
         }

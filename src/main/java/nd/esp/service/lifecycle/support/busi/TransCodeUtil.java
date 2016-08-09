@@ -1045,20 +1045,23 @@ public class TransCodeUtil {
             
             // 暂时与source 放在同一个目录
             String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
-            
+
+            List<String> commands = new ArrayList<>();
             if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
                 targetPath = targetPath.substring(0, targetPath.lastIndexOf(".pkg")+4);
                 for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
                     String cmd = iter.next();
-                    if(cmd.startsWith("ffmpeg -i")) {
-                        iter.remove();
+                    if(cmd.startsWith("ffmpeg2theora")) {
+                        commands.add("ffmpeg2theora \"#src#\" "+cmd.substring(cmd.indexOf("--")));
                     }
                 }
+            } else {
+                commands = scripts;
             }
 
-            LOG.info("视频转码脚本:" + scripts);
+            LOG.info("视频转码脚本:" + commands);
 
-            arg.put("commands", scripts);
+            arg.put("commands", commands);
 
             LOG.info("视频转码后目标目录：" + targetPath);
 
