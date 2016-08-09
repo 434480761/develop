@@ -144,7 +144,7 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
+    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes,Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
         if (CollectionUtils.isEmpty(resultStr) || resultStr.size() == 1) {
@@ -221,7 +221,11 @@ public class TitanResultParse2 {
                         if (tmpMap.containsKey(ES_SearchField.identifier.toString()))
                             parent = tmpMap.get(ES_SearchField.identifier.toString());
                     } else if (ResourceNdCode.chapters.toString().equals(res)) {
-                        parent = "ROOT";
+                        if (isCommonQuery) {
+                            parent = tmpMap.get(ES_SearchField.identifier.toString());
+                        } else {
+                            parent = "ROOT";
+                        }
                     }
                 } else {
                     parent = "";
