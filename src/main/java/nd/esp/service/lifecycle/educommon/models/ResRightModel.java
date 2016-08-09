@@ -35,7 +35,7 @@ public class ResRightModel {
 	/**
 	 * 是否有版权
 	 */
-	private boolean hasRight;
+	private Boolean hasRight;
 	
 	public ResourceModel m_ResourceModel;
 
@@ -91,11 +91,11 @@ public class ResRightModel {
 		this.rightEndDate = rightEndDate;
 	}
 
-	public boolean isHasRight() {
+	public Boolean getHasRight() {
 		return hasRight;
 	}
 
-	public void setHasRight(boolean hasRight) {
+	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
 	}
 }

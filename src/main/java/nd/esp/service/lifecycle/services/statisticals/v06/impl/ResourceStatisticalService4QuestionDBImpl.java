@@ -25,6 +25,7 @@ import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.sdk.ResourceStatistical4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.daos.statisticals.ResourceStatisticalsDao;
+import nd.esp.service.lifecycle.educommon.support.StatisticsPlatform;
 import nd.esp.service.lifecycle.models.statisticals.v06.ResourceStatisticalModel;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.impls.CourseWareObjectServiceImplV06;
 import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
@@ -224,7 +225,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
                 dbStatistical.setResource(resourceId);
                 dbStatistical.setKeyTitle(keyTitle);
                 dbStatistical.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-                dbStatistical.setDataFrom("TOTAL");
+                dbStatistical.setDataFrom(StatisticsPlatform.TOTAL.getName());
                 dbStatistical.setResType(resType);
                 dbStatistical.setKeyValue(valuesum);
 
@@ -252,11 +253,11 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
 		boolean pptFlag = false;
 		if(CollectionUtils.isNotEmpty(rsList)){
 			for (ResourceStatistical rs : rsList) {
-				if("TOTAL".equals(rs.getDataFrom())){
+				if(StatisticsPlatform.TOTAL.getName().equals(rs.getDataFrom())){
 					totalFlag = true;
 					rs.setKeyValue(rs.getKeyValue()+1);
 					datas.add(rs);
-				}else if(flag && "101PPT".equals(rs.getDataFrom())){
+				}else if(flag && StatisticsPlatform.NDPPT.getName().equals(rs.getDataFrom())){
 					pptFlag = true;
 					rs.setKeyValue(rs.getKeyValue()+1);
 					datas.add(rs);
@@ -269,7 +270,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
             dbStatistical.setResource(id);
             dbStatistical.setKeyTitle("downloads");
             dbStatistical.setUpdateTime(ts);
-            dbStatistical.setDataFrom("TOTAL");
+            dbStatistical.setDataFrom(StatisticsPlatform.TOTAL.getName());
             dbStatistical.setResType(resType);
             dbStatistical.setKeyValue(1.0);
             datas.add(dbStatistical);
@@ -280,7 +281,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
 			tmp.setResource(id);
 			tmp.setKeyTitle("downloads");
 			tmp.setUpdateTime(ts);
-			tmp.setDataFrom("101PPT");
+			tmp.setDataFrom(StatisticsPlatform.NDPPT.getName());
 			tmp.setResType(resType);
 			tmp.setKeyValue(1.0);
             datas.add(tmp);
@@ -355,7 +356,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
             }else{
             	ResourceStatistical rs = new ResourceStatistical();
             	rs.setIdentifier(UUID.randomUUID().toString());
-            	rs.setDataFrom("TOTAL");
+            	rs.setDataFrom(StatisticsPlatform.TOTAL.getName());
             	rs.setKeyTitle("top");
             	rs.setKeyValue(max+0.01);
             	rs.setResource(uuid);
@@ -385,5 +386,4 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
         	}
         }
 	}
-
 }

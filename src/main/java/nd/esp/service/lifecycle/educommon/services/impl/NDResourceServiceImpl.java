@@ -24,7 +24,6 @@ import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
@@ -1500,7 +1499,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
     @Override
     public AccessModel getDownloadUrl(String resourceType, String uuid, String uid, String key) {
-        CSInstanceInfo csInstanceInfo = null;
         // 逻辑校验 uuid,只能是已存在的资源
         // check exist resource
         ResourceModel resourceModel = getDetail(resourceType, uuid, Arrays.asList(IncludesConstant.INCLUDE_TI));
@@ -1512,9 +1510,46 @@ public class NDResourceServiceImpl implements NDResourceService{
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CSResourceNotFound);
         }
-        // 获取到目录
+        
+        return getDownloadAccessModel(resourceModel, resourceType, uuid, uid, key);
+    }
+
+    @Override
+	public Map<String, AccessModel> batchGetDownloadUrl(String resourceType,
+			Set<String> ids, String uid, String key) {
+    	Map<String, AccessModel> resultMap = new HashMap<String, AccessModel>();
+    	
+    	//批量获取资源信息
+    	List<ResourceModel> resourceModels = batchDetail(resourceType, ids, Arrays.asList(IncludesConstant.INCLUDE_TI));
+    	
+    	if(CollectionUtils.isNotEmpty(resourceModels)){
+    		for(ResourceModel resourceModel : resourceModels){
+    			AccessModel accessModel = getDownloadAccessModel(
+    					resourceModel, resourceType, resourceModel.getIdentifier(), uid, key);
+    			resultMap.put(resourceModel.getIdentifier(), accessModel);
+    		}
+    	}
+    	
+		return resultMap;
+	}
+    
+    /**
+     * 获取下载的AccessModel
+     * @author xiezy
+     * @date 2016年8月8日
+     * @param resourceModel
+     * @param resourceType
+     * @param uuid
+     * @param uid
+     * @param key
+     * @return
+     */
+    private AccessModel getDownloadAccessModel(ResourceModel resourceModel,String resourceType,String uuid,String uid, String key){
+    	CSInstanceInfo csInstanceInfo = null;
+    	
+    	// 获取到目录
         String location = "";
-        boolean isPpt2Html = PPT_LOCATION_KEY.equals(key)&&"coursewares".equals(resourceType);
+        boolean isPpt2Html = PPT_LOCATION_KEY.equals(key) && IndexSourceType.SourceCourseWareType.getName().equals(resourceType);
         if (StringUtils.isEmpty(key)||isPpt2Html) {
             //都使用转码后的实例
             location = getLocation(resourceModel);
@@ -1558,8 +1593,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         
         return accessModel;
     }
-
-
+    
 	/**
      * 
      * @param uuid
@@ -2426,7 +2460,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setAuthor(resRightModel.getAuthor());
             education.setCrDescription(resRightModel.getDescription());
             education.setCrRight(resRightModel.getRight());
-            education.setHasRight(resRightModel.isHasRight());
+            education.setHasRight(resRightModel.getHasRight());
             education.setRightStartDate(resRightModel.getRightStartDate());
             education.setRightEndDate(resRightModel.getRightEndDate());
         }

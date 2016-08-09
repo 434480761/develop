@@ -311,4 +311,7 @@ public class Constant {
     
     //101PPT业务方ID
     public static final String BSYSKEY_101PPT = "6ed3fc00-5a24-4daf-9700-42e044e872ee";
+    
+    //bsyskey
+    public static final String BSYSKEY = "bsyskey";
 }
