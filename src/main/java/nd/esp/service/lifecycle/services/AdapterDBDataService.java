@@ -82,4 +82,5 @@ public interface AdapterDBDataService {
     
     public Map<String,Integer> adapterInstructionalobjectives();
 
+    public Map<String,String> adapterCoverage(String oldUserId,String newUserId);
 }
