@@ -45,6 +45,12 @@ public class AdapterDBDataController {
     @Autowired
     private StaticDataService staticDataService;
     
+    @RequestMapping(value = "/coverage", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String,String> adapterCoverage(@RequestParam(value="oldUserId",required=true) String oldUserId,@RequestParam(value="newUserId",required=true) String newUserId){
+    	adapterDBDataService.adapterCoverage(oldUserId, newUserId);
+    	return null;
+    } 
+    
     @RequestMapping(value = "/objective/fix_title", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public @ResponseBody Map<String,Integer> fixKnowledgeObjective() {
         return adapterDBDataService.adapterInstructionalobjectives();
