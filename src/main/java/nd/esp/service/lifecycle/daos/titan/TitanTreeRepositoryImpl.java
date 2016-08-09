@@ -181,4 +181,19 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         return null;
     }
 
+    @Override
+    public Long getKnowledgeRootId(String root) {
+        String script = "s = g.V().has('identifier',root).id();Long last =0;" +
+                "while(s.iterator().hasNext()){last = s.iterator().next();s = g.V(last).in(has_knowledge).id();};last;";
+        Map<String, Object> param = new HashMap<>();
+        param.put("root", root);
+        param.put("has_knowledge",TitanTreeType.knowledges.relation());
+        try {
+            return titanCommonRepository.executeScriptUniqueLong(script, param);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

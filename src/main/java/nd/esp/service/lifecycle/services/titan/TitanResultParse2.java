@@ -166,9 +166,11 @@ public class TitanResultParse2 {
             if(StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
+            // 如果是knowlege，需要判断order和parent
+            if ((ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent!=null)) || !ResourceNdCode.knowledges.toString().equals(resType) ) {
             if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
                 // 如果是knowlege，需要判断order和parent
-                if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
+                //if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
 
                 // 解析一个item
                 // 把id和code放在一起
@@ -187,13 +189,13 @@ public class TitanResultParse2 {
                 taxOnPath = null;
                 parent = null;
                 order = null;
-            }
+            }}
 
             if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
             } else if (!tmpMap.containsKey(ES_SearchField.identifier.toString()) && tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
-            } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
+            } else if (order==null && tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
                 mainResultMap = tmpMap;
             } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code

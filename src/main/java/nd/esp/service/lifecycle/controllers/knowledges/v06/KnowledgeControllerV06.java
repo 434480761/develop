@@ -127,7 +127,7 @@ public class KnowledgeControllerV06 {
         extPropertiesModel.setRootNode(viewModel.getPosition().getRootNode());
         model.setExtProperties(extPropertiesModel);
 
-        model = knowledgeService.createKnowledge(model);
+
         
      // TODO titan保存章节树
         TitanTreeModel titanTreeModel = new TitanTreeModel();
@@ -143,6 +143,7 @@ public class KnowledgeControllerV06 {
         // FIXME 有多个学科的时候只取其中一个
         if(org.apache.commons.lang3.StringUtils.isNotBlank(model.getExtProperties().getRootNode())){
         	titanTreeModel.setRoot(model.getExtProperties().getRootNode());
+            titanTreeModel.setParent("ROOT");
         }else{
         	 List<ResClassificationModel> categories = model.getCategoryList();
              for(ResClassificationModel category : categories){
@@ -151,6 +152,8 @@ public class KnowledgeControllerV06 {
                  }
              }
         }
+
+        model = knowledgeService.createKnowledge(model);
        
         titanTreeMoveService.addNode(titanTreeModel);
 

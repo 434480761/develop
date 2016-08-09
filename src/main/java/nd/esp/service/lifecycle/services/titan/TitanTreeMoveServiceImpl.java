@@ -25,7 +25,7 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
     public void addNode(TitanTreeModel titanTreeModel) {
         try{
         	if(StringUtils.isEmpty(titanTreeModel.getTarget())&&titanTreeModel.getTreeType()==TitanTreeType.knowledges){
-        		Long titanRootId= getKnowledgeRootId(titanTreeModel.getRoot());
+        		Long titanRootId= titanTreeRepository.getKnowledgeRootId(titanTreeModel.getRoot());
             	titanTreeModel.setTitanRootId(titanRootId);
         	}
             createNewRelation(titanTreeModel);
@@ -44,7 +44,16 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
     public void moveNode(TitanTreeModel titanTreeModel) {
         try{
         	if(StringUtils.isEmpty(titanTreeModel.getTarget())&&titanTreeModel.getTreeType()==TitanTreeType.knowledges){
-        		Long titanRootId = getTitanRootId(titanTreeModel.getSource());
+                if(titanTreeModel.getRoot() == null){
+                    return;
+                }
+                Long titanRootId ;
+                if(titanTreeModel.getRoot().contains("$SB")){
+                    titanRootId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+                } else {
+                    titanRootId = titanTreeRepository.getNodeId("chapters", titanTreeModel.getRoot());
+                }
+
         		titanTreeModel.setTitanRootId(titanRootId);
         	}
             deleteOldRelation(titanTreeModel);
