@@ -32,7 +32,7 @@ public class EducationRelationControllerV07 {
     private final static Logger LOG = LoggerFactory.getLogger(EducationRelationControllerV07.class);
     
     @Autowired
-    @Qualifier("educationRelationServiceV06")
+
     private TitanSearchService titanSearchService;
 
     
