@@ -41,7 +41,7 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-//    @Scheduled(fixedDelay=300000)
+    @Scheduled(fixedDelay=300000)
     public void syncTask(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_closed");
