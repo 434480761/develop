@@ -157,6 +157,7 @@ public class TitanResultParse2 {
         Map<String, String> mainResultMap = null;
         List<Map<String, String>> taxOnCodeLinesMap = new ArrayList<>();
         List<Map<String, String>> taxOnCodeIdLinesMap = new ArrayList<>();
+        List<Map<String, String>> taxOnCodeAndIdLinesMap = new ArrayList<>();
         List<Map<String, String>> techInfoLinesMap = new ArrayList<>();
         String taxOnPath = null;
         String parent=null;
@@ -173,6 +174,7 @@ public class TitanResultParse2 {
                 //if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
 
                 // 解析一个item
+                separateCodeId(taxOnCodeAndIdLinesMap,taxOnCodeIdLinesMap,taxOnCodeLinesMap);
                 // 把id和code放在一起
                 if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
                     putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
@@ -199,10 +201,12 @@ public class TitanResultParse2 {
                 mainResultMap = tmpMap;
             } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code
-                taxOnCodeLinesMap.add(tmpMap);
+                taxOnCodeAndIdLinesMap.add(tmpMap);
+                //taxOnCodeLinesMap.add(tmpMap);
             } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
                 // id
-                taxOnCodeIdLinesMap.add(tmpMap);
+                taxOnCodeAndIdLinesMap.add(tmpMap);
+                //taxOnCodeIdLinesMap.add(tmpMap);
             } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
                 // order
                 //
@@ -259,6 +263,19 @@ public class TitanResultParse2 {
         }
 
         return code;
+    }
+
+    private static void  separateCodeId(List<Map<String, String>> idAndCode,List<Map<String, String>> id,List<Map<String, String>> code){
+        if (CollectionUtils.isNotEmpty(idAndCode)) {
+            int size = idAndCode.size();
+            int middle = size / 2;
+            if (id != null) {
+                id.addAll(idAndCode.subList(0, middle - 1));
+            }
+            if (code != null) {
+                code.addAll(idAndCode.subList(middle - 1, size - 1));
+            }
+        }
     }
 
 
