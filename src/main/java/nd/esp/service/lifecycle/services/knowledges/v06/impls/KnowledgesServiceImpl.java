@@ -109,7 +109,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
 
     @Override
     public boolean isExistKnowledgeTitle(String title) {
-        String sql = "SELECT identifier FROM `ndresource` WHERE enable = 1 AND primary_category=? AND title=?";
+        String sql = "SELECT identifier FROM `ndresource` WHERE enable = 1 AND primary_category=? AND title= binary ?";
         List<String> idList = jt.queryForList(sql, new Object[]{IndexSourceType.KnowledgeType.getName(), title}, String.class);
         return idList.size() > 0;
     }
