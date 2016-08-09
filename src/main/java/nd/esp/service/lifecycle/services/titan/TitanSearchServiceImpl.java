@@ -7,6 +7,7 @@ import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
 import nd.esp.service.lifecycle.support.busi.titan.TitanDirection;
@@ -29,6 +30,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
+import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -175,6 +177,21 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(script, null);
         // 3、解析
         return getListViewModel(resultSet, resType,includes);
+    }
+
+    @Override
+    public ListViewModel<RelationForQueryViewModel> queryListByResType(String resType, String sourceUuid, String categories, String targetType, String label, String tags, String relationType, String limit, boolean reverse, String coverage) {
+        return null;
+    }
+
+    @Override
+    public ListViewModel<RelationForQueryViewModel> recursionQueryResources(String resType, String sourceUuid, String categories, String targetType, String label, String tags, String relationType, String limit, String coverage) throws EspStoreException {
+        return null;
+    }
+
+    @Override
+    public ListViewModel<RelationForQueryViewModel> batchQueryResources(String resType, Set<String> sids, String targetType, String label, String tags, String relationType, String limit, boolean reverse) {
+        return null;
     }
 
 
