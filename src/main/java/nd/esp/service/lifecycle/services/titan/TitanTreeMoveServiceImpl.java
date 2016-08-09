@@ -41,11 +41,6 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         }
     }
 
-    private Long getKnowledgeRootId(String root) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@Override
     public void moveNode(TitanTreeModel titanTreeModel) {
         try{
@@ -70,12 +65,6 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         }
 
     }
-
-    private Long getTitanRootId(String source) {
-		String script = "s = g.V().has('identifier','000901ca-7c6c-4c80-8b1c-4408f8b11d15').id();Long last =0;while(s.iterator().hasNext()){last = s.iterator().next();s = g.V(last).in('has_chapter').id();};last;";
-		
-		return null;
-	}
 
 	private void deleteOldRelation(TitanTreeModel titanTreeModel){
         titanTreeRepository.deleteOldRelation(titanTreeModel.getTreeType(), titanTreeModel.getSource());
