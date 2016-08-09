@@ -167,7 +167,7 @@ public class TitanResultParse2 {
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
             // 如果是knowlege，需要判断order和parent
-            if ((ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent!=null)) || !ResourceNdCode.knowledges.toString().equals(resType) ) {
+            if ((ResourceNdCode.knowledges.toString().equals(resType) && (order == null && parent==null)) || (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent!=null)) || !ResourceNdCode.knowledges.toString().equals(resType) ) {
             if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
                 // 如果是knowlege，需要判断order和parent
                 //if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
