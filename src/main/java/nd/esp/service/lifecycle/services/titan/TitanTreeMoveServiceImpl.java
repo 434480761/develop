@@ -25,7 +25,13 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
     public void addNode(TitanTreeModel titanTreeModel) {
         try{
         	if(StringUtils.isEmpty(titanTreeModel.getTarget())&&titanTreeModel.getTreeType()==TitanTreeType.knowledges){
-        		Long titanRootId= titanTreeRepository.getKnowledgeRootId(titanTreeModel.getRoot());
+                Long titanRootId ;
+                if(titanTreeModel.getRoot().contains("$SB")){
+                    titanRootId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+                } else {
+                    titanRootId = titanTreeRepository.getKnowledgeRootId(titanTreeModel.getRoot());
+                }
+
             	titanTreeModel.setTitanRootId(titanRootId);
         	}
             createNewRelation(titanTreeModel);
