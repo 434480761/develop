@@ -227,19 +227,17 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
+        if(techInfos.size()!=resultTechInfos.size()){
+            return false;
+        }
+
         List<ResourceRelation> resourceRelations =
                 educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
         List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
         if(resourceRelations.size() != resultResourceRelations.size()){
             return false;
         }
-
-
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
-        if(techInfos.size()!=resultTechInfos.size()){
-            return false;
-        }
-
         LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
