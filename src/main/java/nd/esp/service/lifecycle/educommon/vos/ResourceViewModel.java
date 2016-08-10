@@ -75,14 +75,18 @@ public class ResourceViewModel {
 	 * 关键字
 	 */
 	private List<String> keywords;
-	
 	/**
 	 * 资源编码
 	 */
 	@Length(message="{resourceViewModel.ndresCode.maxlength.validmsg}",max=100,groups={BasicInfoDefault.class, CoursewareObjectBasicInfo.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class,InstructionalObjectiveDefault.class})
 	@JsonInclude(Include.NON_NULL)
 	private String ndresCode;
-	
+	/**
+	 * 资源关系
+	 */
+	@JsonInclude(Include.NON_NULL)
+	private String relationId;
+
 	/**
 	 * 自定义扩展属性
 	 */
@@ -262,5 +266,13 @@ public class ResourceViewModel {
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+	
+	public String getRelationId() {
+		return relationId;
+	}
+
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
 	}
 }

@@ -46,8 +46,10 @@ public class ResourceModel {
 	 * 资源编号
 	 */
 	private String ndresCode;
-	
-	
+	/**
+	 * 资源关系
+	 */
+	private String relationId;
 	/**
 	 * 自定义扩展属性
 	 */
@@ -214,6 +216,14 @@ public class ResourceModel {
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+
+	public String getRelationId() {
+		return relationId;
+	}
+
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
 	}
 
 
