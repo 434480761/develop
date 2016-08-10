@@ -35,6 +35,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
+    /**
+     * Sync导入失败增加一条数据
+     * */
     public void titanSync4MysqlImportAdd(TitanSyncType errorType, String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -88,6 +91,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 数据保存到titan中失败，保存一条数据到同步表中，如果表中已经存在数据则不进行操作
+     * */
     @Override
     public void titanSync4MysqlAdd(TitanSyncType errorType, String primaryCategory, String source) {
         TitanSync example = new TitanSync();
@@ -147,6 +153,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 删除同步表中的一条数据
+     * */
     public void titanSync4MysqlDelete(TitanSyncType errorType, String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -163,6 +172,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 删除一个资源在同步表中的所有数据
+     * */
     public void titanSync4MysqlDeleteAll(String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -174,6 +186,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 检查关系在mysql中是否存在
+     * */
     @Override
     public boolean checkRelationExistInMysql(ResourceRelation resourceRelation) {
         if(checkEducationExistInMySql(resourceRelation.getResType(), resourceRelation.getSourceUuid())
