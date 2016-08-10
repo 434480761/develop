@@ -210,7 +210,11 @@ public class TitanResultParse2 {
             } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
                 // order
                 //
-                order = tmpMap.get("order");
+                if(isCommonQuery){
+                    order = "null";
+                }else {
+                    order = tmpMap.get("order");
+                }
             } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
                 if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
@@ -316,10 +320,10 @@ public class TitanResultParse2 {
             KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
             extProperties.setParent(mainResult.get("parent"));
-           /* String order = mainResult.get("order");
-            if (order != null && !"".equals(order.trim())) {
+            String order = mainResult.get("order");
+            if (order != null && !"".equals(order.trim())&& !"null".equals(order.trim())) {
                 extProperties.setOrder_num((int) Float.parseFloat(order));
-            }*/
+            }
 
             //extProperties.setTarget(fieldMap.get("ext_target"));
             //extProperties.setDirection(fieldMap.get("ext_direction"));
