@@ -316,10 +316,10 @@ public class TitanResultParse2 {
             KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
             extProperties.setParent(mainResult.get("parent"));
-            String order = mainResult.get("order");
+           /* String order = mainResult.get("order");
             if (order != null && !"".equals(order.trim())) {
                 extProperties.setOrder_num((int) Float.parseFloat(order));
-            }
+            }*/
 
             //extProperties.setTarget(fieldMap.get("ext_target"));
             //extProperties.setDirection(fieldMap.get("ext_direction"));
