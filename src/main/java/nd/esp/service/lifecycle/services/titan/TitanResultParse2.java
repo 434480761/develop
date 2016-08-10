@@ -267,10 +267,7 @@ public class TitanResultParse2 {
             }
             code.addAll(techInfoLinesMap);
         } else {
-            if(code!=null){
-                code.addAll(techInfoLinesMap);
-            }
-            //return techInfoLinesMap;
+            return techInfoLinesMap;
         }
 
         return code;
