@@ -11,12 +11,12 @@
 		<fileType>wma, m4a, aac, wav, flac, mp3, ogg</fileType>
 		<command name="main">
 			<os name="Default">
-				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#destDir#/#fileNameNoEx#.mp3"
+				ffmpeg -i "#src#" -y -ab 128k -c:a libmp3lame -vn "#target#"
 			</os>
 		</command>
 		<command name="ogg">
 			<os name="Default">
-				ffmpeg -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#destDir#/#fileNameNoEx#.ogg"
+				ffmpeg -i "#src#" -acodec pcm_s16le -f wav - | oggenc2 -q 2 --raw - -o "#target#"
 			</os>
 		</command>
 	</rule>
@@ -25,120 +25,22 @@
 		<fileType>flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, 3gp, m4v, vob, ts, ogv</fileType>
 		<command name="1080p">
 			<os name="Default">
-				ffmpeg -i "#src#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/1080p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#src#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
 			</os>
 		</command>
 		<command name="720p">
 			<os name="Default">
-				ffmpeg -i "#src#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/720p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#src#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
 			</os>
 		</command>
 		<command name="480p">
 			<os name="Default">
-				ffmpeg -i "#src#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/480p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#src#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
 			</os>
 		</command>
 		<command name="360p">
 			<os name="Default">
-				ffmpeg -i "#src#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/360p/#fileNameNoEx#.mp4"
-			</os>
-		</command>
-		<command name="1080p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/1080p/#fileNameNoEx#.mp4" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o "#destDir#/1080p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="720p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/720p/#fileNameNoEx#.mp4" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o "#destDir#/720p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="480p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/480p/#fileNameNoEx#.mp4" --width 720 --height 480 --videoquality 7 --audioquality 5 -o "#destDir#/480p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="360p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/360p/#fileNameNoEx#.mp4" --width 640 --height 360 --videoquality 7 --audioquality 5 -o "#destDir#/360p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-	</rule>
-
-	<rule id="swfConvert" nextRuleRef="thumbnail">
-		<fileType>swf</fileType>
-		<command name="mp4First">
-			<os name="Default">
-				mswf2avi /f "#src#" /o "#tmpMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
-			</os>
-		</command>
-		<command name="1080p">
-			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/1080p/#fileNameNoEx#.mp4"
-			</os>
-		</command>
-		<command name="720p">
-			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/720p/#fileNameNoEx#.mp4"
-			</os>
-		</command>
-		<command name="480p">
-			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/480p/#fileNameNoEx#.mp4"
-			</os>
-		</command>
-		<command name="360p">
-			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/360p/#fileNameNoEx#.mp4"
-			</os>
-		</command>
-		<command name="1080p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/1080p/#fileNameNoEx#.mp4" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o "#destDir#/1080p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="720p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/720p/#fileNameNoEx#.mp4" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o "#destDir#/720p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="480p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/480p/#fileNameNoEx#.mp4" --width 720 --height 480 --videoquality 7 --audioquality 5 -o "#destDir#/480p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-		<command name="360p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#destDir#/360p/#fileNameNoEx#.mp4" --width 640 --height 360 --videoquality 7 --audioquality 5 -o "#destDir#/360p-ogv/#fileNameNoEx#.ogv"
-			</os>
-		</command>
-	</rule>
-
-	<rule id="swfConvert" nextRuleRef="swfThumbnail">
-		<fileType>swf</fileType>
-		<command name="swf2mp4">
-			<os name="Default">
-				mswf2avi /f "#src#" /o "#tempMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
-			</os>
-		</command>
-		<command name="1080p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="720p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="480p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="360p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
+				ffmpeg -i "#src#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
 			</os>
 		</command>
 		<command name="1080p-ogv">
@@ -162,30 +64,22 @@
 			</os>
 		</command>
 	</rule>
-
-	<rule id="swfThumbnail" nextRuleRef="swfCutFrame1">
-		<fileType></fileType>
-		<command name="cutCover">
-			<os name="Default">thumbnail -in "#tempMp4#" -picint #intervalTime# -s 160x120 -out "#targetCover#" -join 4x4</os>
-		</command>
-	</rule>
 	
 	<rule id="thumbnail" nextRuleRef="cutFrame1">
 		<fileType></fileType>
+		<!-- <command name="main">
+			<os name="Default">thumbnail -in "#target#" -picint 6 -s 160x120 -out "#targetPreview#" -join 10x10</os>
+		</command> -->
 		<command name="cutCover">
             <os name="Default">thumbnail -in "#src#" -picint #intervalTime# -s 160x120 -out "#targetCover#" -join 4x4</os>
         </command>
 	</rule>
-
-	<rule id="swfCutFrame1">
-		<fileType></fileType>
-		<command name="cutFrame">
-			<os name="Default">ffmpeg -y -ss 5 -i "#tempMp4#" -frames 1 -f image2 #targetPreview#/frame1.jpg</os>
-		</command>
-	</rule>
 	
 	<rule id="cutFrame1">
 		<fileType></fileType>
+		<!-- <command name="main">
+			<os name="Default">thumbnail -in "#target#" -picint 6 -s 160x120 -out "#targetPreview#" -join 10x10</os>
+		</command> -->
 		<command name="cutFrame">
             <os name="Default">ffmpeg -y -ss 5 -i "#src#" -frames 1 -f image2 #targetPreview#/frame1.jpg</os>
         </command>
