@@ -700,7 +700,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
                     resourceType, mainResult, otherLines, taxOnPath,includeList));
         }*/
 
-        return TitanResultParse2.parseToListView(resourceType,resultList,includeList).getItems();
+        return TitanResultParse2.parseToListView(resourceType,resultList,includeList,true).getItems();
     }
 
 

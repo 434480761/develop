@@ -181,6 +181,15 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     @Override
     public ListViewModel<RelationForQueryViewModel> queryListByResType(String resType, String sourceUuid, String categories, String targetType, String label, String tags, String relationType, String limit, boolean reverse, String coverage) {
+        long generateScriptBegin = System.currentTimeMillis();
+        //g.V().has('primary_category','chapters')
+        // .has('identifier','ee1227c7-ba92-4aa9-93da-e07981226e24')
+        // .has('lc_enable',true)
+        // .out('has_relation')
+        // .has('primary_category','lessons')
+        // .has('lc_enable',true)
+        // .has('search_code','$C0100').values()
+        StringBuffer scriptBuffer = new StringBuffer("g.V().has('primary_category','");
         return null;
     }
 
@@ -210,7 +219,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 resultStr.add(iterator.next().getString());
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse2.parseToListView(resType, resultStr,includes);
+            return TitanResultParse2.parseToListView(resType, resultStr,includes,false);
         }
         return null;
     }

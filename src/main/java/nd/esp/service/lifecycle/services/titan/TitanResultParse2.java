@@ -144,7 +144,7 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
+    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes,Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
         if (CollectionUtils.isEmpty(resultStr) || resultStr.size() == 1) {
@@ -157,6 +157,7 @@ public class TitanResultParse2 {
         Map<String, String> mainResultMap = null;
         List<Map<String, String>> taxOnCodeLinesMap = new ArrayList<>();
         List<Map<String, String>> taxOnCodeIdLinesMap = new ArrayList<>();
+        List<Map<String, String>> taxOnCodeAndIdLinesMap = new ArrayList<>();
         List<Map<String, String>> techInfoLinesMap = new ArrayList<>();
         String taxOnPath = null;
         String parent=null;
@@ -173,6 +174,7 @@ public class TitanResultParse2 {
                 //if (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent==null)) continue;
 
                 // 解析一个item
+                separateCodeId(taxOnCodeAndIdLinesMap,taxOnCodeIdLinesMap,taxOnCodeLinesMap);
                 // 把id和code放在一起
                 if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
                     putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
@@ -199,14 +201,20 @@ public class TitanResultParse2 {
                 mainResultMap = tmpMap;
             } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code
-                taxOnCodeLinesMap.add(tmpMap);
+                taxOnCodeAndIdLinesMap.add(tmpMap);
+                //taxOnCodeLinesMap.add(tmpMap);
             } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
                 // id
-                taxOnCodeIdLinesMap.add(tmpMap);
+                taxOnCodeAndIdLinesMap.add(tmpMap);
+                //taxOnCodeIdLinesMap.add(tmpMap);
             } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
                 // order
                 //
-                order = tmpMap.get("order");
+                if(isCommonQuery){
+                    order = "null";
+                }else {
+                    order = tmpMap.get("order");
+                }
             } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
                 // parent
                 if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
@@ -217,7 +225,11 @@ public class TitanResultParse2 {
                         if (tmpMap.containsKey(ES_SearchField.identifier.toString()))
                             parent = tmpMap.get(ES_SearchField.identifier.toString());
                     } else if (ResourceNdCode.chapters.toString().equals(res)) {
-                        parent = "ROOT";
+                        if (isCommonQuery) {
+                            parent = tmpMap.get(ES_SearchField.identifier.toString());
+                        } else {
+                            parent = "ROOT";
+                        }
                     }
                 } else {
                     parent = "";
@@ -255,10 +267,29 @@ public class TitanResultParse2 {
             }
             code.addAll(techInfoLinesMap);
         } else {
-            return techInfoLinesMap;
+            if(code != null){
+                code.addAll(techInfoLinesMap);
+            }
+//            return techInfoLinesMap;
         }
 
         return code;
+    }
+
+    private static void  separateCodeId(List<Map<String, String>> idAndCode,List<Map<String, String>> id,List<Map<String, String>> code){
+        if (CollectionUtils.isNotEmpty(idAndCode)) {
+            int size = idAndCode.size();
+            if (size % 2 == 0) {
+                int middle = size / 2;
+                // 前半部分为code
+                if (code != null) {
+                    code.addAll(idAndCode.subList(0, middle));
+                }
+                if (id != null) {
+                    id.addAll(idAndCode.subList(middle, size));
+                }
+            }
+        }
     }
 
 
@@ -293,7 +324,7 @@ public class TitanResultParse2 {
 
             extProperties.setParent(mainResult.get("parent"));
             String order = mainResult.get("order");
-            if (order != null && !"".equals(order.trim())) {
+            if (order != null && !"".equals(order.trim())&& !"null".equals(order.trim())) {
                 extProperties.setOrder_num((int) Float.parseFloat(order));
             }
 
