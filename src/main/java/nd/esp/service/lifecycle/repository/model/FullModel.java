@@ -22,6 +22,7 @@ public class FullModel {
     private String keywords;
     private String customProperties;
     private String code;
+    private String relationId;
     
     //**********************扩展属性**********************\\
 //    //习题
@@ -42,7 +43,13 @@ public class FullModel {
 //    private String ext_attachments;
 //    private String ext_criterion;
     
-    //**********************LC(生命周期)**********************\\
+    public String getRelationId() {
+		return relationId;
+	}
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
+	}
+	//**********************LC(生命周期)**********************\\
     private String lifeCycle_version;
     private String lifeCycle_status;
     private String lifeCycle_enable;
