@@ -65,11 +65,11 @@
 		</command>
 	</rule>
 
-	<rule id="swfConvert" nextRuleRef="thumbnail">
+	<rule id="swfConvert" nextRuleRef="swfThumbnail">
 		<fileType>swf</fileType>
 		<command name="mp4First">
 			<os name="Default">
-				mswf2avi /f "#src#" /o "#tmpMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
+				mswf2avi /f "#src#" /o "#tempMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
 			</os>
 		</command>
 		<command name="1080p">
@@ -114,54 +114,6 @@
 		</command>
 	</rule>
 
-	<rule id="swfConvert" nextRuleRef="swfThumbnail">
-		<fileType>swf</fileType>
-		<command name="swf2mp4">
-			<os name="Default">
-				mswf2avi /f "#src#" /o "#tempMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
-			</os>
-		</command>
-		<command name="1080p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="720p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="480p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="360p">
-			<os name="Default">
-				ffmpeg -i "#tempMp4#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#target#"
-			</os>
-		</command>
-		<command name="1080p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#src#" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o "#target#"
-			</os>
-		</command>
-		<command name="720p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#src#" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o "#target#"
-			</os>
-		</command>
-		<command name="480p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#src#" --width 720 --height 480 --videoquality 7 --audioquality 5 -o "#target#"
-			</os>
-		</command>
-		<command name="360p-ogv">
-			<os name="Default">
-				ffmpeg2theora "#src#" --width 640 --height 360 --videoquality 7 --audioquality 5 -o "#target#"
-			</os>
-		</command>
-	</rule>
 
 	<rule id="swfThumbnail" nextRuleRef="swfCutFrame1">
 		<fileType></fileType>
