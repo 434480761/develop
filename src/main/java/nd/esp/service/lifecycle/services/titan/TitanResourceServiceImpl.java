@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
 import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
@@ -23,11 +24,15 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -66,6 +71,17 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Autowired
 	private TitanImportRepository titanImportRepository;
+
+	@Autowired
+	private CategoryDataRepository categoryDataRepository;
+
+
+	@Autowired
+	private TitanUpdateDataRepository titanUpdateDataRepository;
+
+	@Autowired
+	@Qualifier(value = "defaultJdbcTemplate")
+	private JdbcTemplate jdbcTemplate;
 
 	@Override
 	public long importData4Script(String primaryCategory) {
@@ -177,6 +193,35 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	@Override
 	public String importStatus() {
 		return "primaryCategory:" +s_primaryCategory +"  totalPage:" + s_totalPage +"  page"+ s_page;
+	}
+
+	@Override
+	public void code() {
+		String sql = "select nd_code from category_datas";
+		List<String> codes =  jdbcTemplate.queryForList(sql, String.class);
+		for(String code : codes){
+			String script = "g.V().has('cg_taxoncode',code).has('identifier')";
+			Map<String, Object> param = new HashMap<>();
+			param.put("code", code);
+			try {
+				ResultSet resultSet = titanCommonRepository.executeScriptResultSet(script, param);
+				Iterator<Result> iterator = resultSet.iterator();
+				if (iterator.hasNext()) {
+					Integer id = iterator.next().getInt();
+					if(id > 1){
+						LOG.info(code);
+					}
+				}
+			} catch (Exception e) {
+
+			}
+		}
+	}
+
+	@Override
+	public void updateData(String primaryCategory) {
+		AbstractPageQuery abstractPageQuery = new UpdateData4ScriptPageQuery();
+		abstractPageQuery.doing(primaryCategory);
 	}
 
 	@Override
@@ -598,6 +643,73 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 	}
 
+	public class UpdateData4ScriptPageQuery extends AbstractPageQuery{
+
+		@Override
+		long operate(List<Education> educations, String primaryCategory) {
+			return updateData(educations, primaryCategory);
+		}
+	}
+
+	private long updateData(List<Education> educations, String primaryCategory){
+		if(CollectionUtils.isEmpty(educations)){
+			return 0L;
+		}
+		Set<String> uuids = new HashSet<String>();
+		for (Education education : educations) {
+			uuids.add(education.getIdentifier());
+		}
+
+		List<ResCoverage> resCoverageList =getResCoverage(
+				coverageDao.queryCoverageByResource(primaryCategory, uuids));
+		Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
+		for (ResCoverage resCoverage : resCoverageList){
+			List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
+			if(resCoverages == null){
+				resCoverages = new ArrayList<>();
+				resCoverageMap.put(resCoverage.getResource(), resCoverages);
+			}
+
+			resCoverages.add(resCoverage);
+		}
+
+		List<String> resourceTypes = new ArrayList<String>();
+		resourceTypes.add(primaryCategory);
+		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
+		for (ResourceCategory resourceCategory : resourceCategoryList){
+			List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
+			if(resourceCategories == null){
+				resourceCategories = new ArrayList<>();
+				resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
+			}
+
+			resourceCategories.add(resourceCategory);
+		}
+
+		List<String> primaryCategorys = new ArrayList<>();
+		primaryCategorys.add(primaryCategory);
+		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+		Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
+		for (TechInfo techInfo : techInfos){
+			List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
+			if(techInfoList == null){
+				techInfoList = new ArrayList<>();
+				techInfoMap.put(techInfo.getResource(), techInfoList);
+			}
+
+			techInfoList.add(techInfo);
+		}
+		for (Education education : educations){
+			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
+			List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+			List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
+			titanUpdateDataRepository.updateOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
+		}
+
+		return educations.size();
+	}
+
 	private long importData(Education education, String primaryCategory){
 		if(education == null){
 			return 0L;
@@ -988,6 +1100,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				}
 			}
 
+			String dropScript = "g.V().has(primaryCategory,'identifier',identifier)." +
+					"properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string').drop()";
+			Map<String, Object> dropParam = new HashMap<>();
+			dropParam.put("primaryCategory",primaryCategory);
+			dropParam.put("identifier",education.getIdentifier());
 
             StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
             Map<String, Object> param = new HashMap<>();
@@ -998,7 +1115,28 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             addSetProperty("search_code",categoryCodes,script,param);
             addSetProperty("search_path",paths,script,param);
 
+			if(CollectionUtils.isNotEmpty(paths)){
+				String searchPathString = StringUtils.join(paths, ",").toLowerCase();
+				script.append(".property('search_path_string',searchPathString)");
+				param.put("searchPathString", searchPathString);
+
+			}
+
+			if(CollectionUtils.isNotEmpty(categoryCodes)){
+				String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
+				script.append(".property('search_code_string',searchCodeString)");
+				param.put("searchCodeString", searchCodeString);
+			}
+
+			if(CollectionUtils.isNotEmpty(resCoverages)){
+				String searchCoverageString = StringUtils.join(resCoverages,",").toLowerCase();
+				script.append(".property('search_coverage_string',searchCoverageString)");
+				param.put("searchCoverageString", searchCoverageString);
+			}
+
+
             try {
+				titanCommonRepository.executeScript(dropScript, dropParam);
                 titanCommonRepository.executeScript(script.toString(),param);
             } catch (Exception e) {
 				LOG.error("titan_repository error:{}" ,e.getMessage());

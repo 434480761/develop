@@ -43,6 +43,13 @@ public class TitanResourceController {
 		titanResourceService.importKnowledgeRelation();
 	}
 
+	@RequestMapping(value = "/all/update/script", method = RequestMethod.GET)
+	public void indexAllUpdate() {
+//		titanResourceService.updateData(ResourceNdCode.chapters.toString());
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.updateData(resourceType);
+		}
+	}
 
 	@RequestMapping(value = "/all/time/script", method = RequestMethod.GET)
 	public void indexAllTime(@RequestParam Integer page , @RequestParam String type) {
@@ -121,5 +128,12 @@ public class TitanResourceController {
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public String importStatus(){
 		return titanResourceService.importStatus();
+	}
+
+	@RequestMapping(value = "code", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String importCode(){
+	   	titanResourceService.code();
+		return null;
 	}
 }

@@ -25,4 +25,6 @@ public interface TitanResourceService {
 
 	void checkAllData(String primaryCategory);
 	String importStatus();
+	void code();
+	void updateData(String primaryCategory);
 }
