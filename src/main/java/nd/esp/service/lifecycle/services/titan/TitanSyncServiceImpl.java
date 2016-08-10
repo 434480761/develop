@@ -58,6 +58,12 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Autowired
     private TitanResourceRepository<Education> titanResourceRepository;
 
+    @Autowired
+    private TitanCoverageRepository titanCoverageRepository;
+
+    @Autowired
+    private TitanCategoryRepository titanCategoryRepository;
+
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -160,21 +166,35 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
 
+        Education resultEducation = titanResourceRepository.add(education);
+        if(resultEducation == null){
+            return false;
+        }
+
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(resCoverageList);
+        if(resCoverageList.size() != resultCoverage.size()){
+            return false;
+        }
+
+
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
+        if(resourceCategoryList.size()!=resultCategory.size()){
+            return false;
+        }
 
         List<ResourceRelation> resourceRelations =
                 educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
-
-        boolean educationSuccess = titanImportRepository
-                .importOneData(education,resCoverageList,resourceCategoryList,techInfos);
-        if(!educationSuccess){
-            return false;
-        }
         List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
         if(resourceRelations.size() != resultResourceRelations.size()){
-            return  false;
+            return false;
+        }
+
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfos);
+        if(techInfos.size()!=resultTechInfos.size()){
+            return false;
         }
 
         LOG.info("titan_sync : report {} success",education.getIdentifier());
