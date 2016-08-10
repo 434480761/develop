@@ -1,10 +1,17 @@
 package nd.esp.service.lifecycle.services.instructionalobjectives.v06.impls;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
@@ -38,8 +45,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ReflectionUtils;
 
 import javax.annotation.Nullable;
 
@@ -415,14 +426,44 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			Integer[] limits = ParamCheckUtil.checkLimit(limit);
 
 			// result
-			List<Map<String, Object>> sqlResults = jt.queryForList(String.format(SQLFmt + String.format(" LIMIT %d,%d", limits[0], limits[1]), "ndr.*"));
+			final List<InstructionalObjectiveModel> results = new ArrayList<>();
+			jt.query(String.format(SQLFmt + String.format(" LIMIT %d,%d", limits[0], limits[1]), "ndr.*"), new RowCallbackHandler() {
+				@Override
+				public void processRow(ResultSet resultSet) throws SQLException {
+					Collection<String> array = new ArrayList<>();
 
-			List<InstructionalObjectiveModel> results = new ArrayList<>();
-			for (Map<String, Object> result : sqlResults) {
-				InstructionalObjectiveModel instructionalObjectiveModel = BeanMapperUtils.mapper(result, InstructionalObjectiveModel.class);
+					ResultSetMetaData rsmd = resultSet.getMetaData();
+					int columnCount = rsmd.getColumnCount();
 
-				results.add(instructionalObjectiveModel);
-			}
+					for (int i = 1; i <= columnCount; i++) {
+						String columnName = JdbcUtils.lookupColumnName(rsmd, i);
+						Field field = ReflectionUtils.findField(InstructionalObjectiveModel.class, StringUtils.toCamelCase(columnName));
+						if (null != field) {
+							if (String.class == field.getType()) {
+								String content = resultSet.getString(i);
+								if (StringUtils.isNotEmpty(content) && content.contains("\"")) {
+									content = StringUtils.replace(content, "\"", "\\\"");
+								}
+								StringUtils.hasText("\"");
+								array.add(String.format("\"%s\":\"%s\"", columnName, content));
+							} else {
+								array.add(String.format("\"%s\":%s", columnName, JdbcUtils.getResultSetValue(resultSet, i)));
+							}
+						}
+					}
+
+					String jsonString = String.format("{%s}", StringUtils.join(array, ","));
+
+					try {
+						JacksonCustomObjectMapper mapper = new JacksonCustomObjectMapper();
+						InstructionalObjectiveModel instructionalObjectiveModel = mapper.readValue(jsonString, InstructionalObjectiveModel.class);
+
+						results.add(instructionalObjectiveModel);
+					} catch (IOException e) {
+						LOG.error("查询未关联教学目标转换InstructionalObjectiveModel出错！", e);
+					}
+				}
+			});
 			// count
 			Map<String, Object> count = jt.queryForMap(String.format(SQLFmt, "count(*) as count"));
 
