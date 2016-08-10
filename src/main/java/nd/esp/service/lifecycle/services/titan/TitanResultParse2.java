@@ -272,12 +272,15 @@ public class TitanResultParse2 {
     private static void  separateCodeId(List<Map<String, String>> idAndCode,List<Map<String, String>> id,List<Map<String, String>> code){
         if (CollectionUtils.isNotEmpty(idAndCode)) {
             int size = idAndCode.size();
-            int middle = size / 2;
-            if (id != null) {
-                id.addAll(idAndCode.subList(0, middle - 1));
-            }
-            if (code != null) {
-                code.addAll(idAndCode.subList(middle - 1, size - 1));
+            if (size % 2 == 0) {
+                int middle = size / 2;
+                // 前半部分为code
+                if (code != null) {
+                    code.addAll(idAndCode.subList(0, middle));
+                }
+                if (id != null) {
+                    id.addAll(idAndCode.subList(middle, size));
+                }
             }
         }
     }
