@@ -24,10 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by liuran on 2016/7/6.
@@ -169,23 +166,63 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         Set<String> uuids = new HashSet<>();
         uuids.add(education.getIdentifier());
 
+
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
+
+        List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+        List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+
+
+        Map<String,ResCoverage> coverageMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resCoverageList)){
+            for(ResCoverage coverage : resCoverageList){
+                String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
+                if(coverageMap.get(key)==null){
+                    coverageMap.put(key, coverage);
+                }
+            }
+        }
+
+        Map<String, ResourceCategory> categoryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resourceCategoryList)){
+            for (ResourceCategory resourceCategory : resourceCategoryList){
+                if(categoryMap.get(resourceCategory.getTaxoncode())==null){
+                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
+                }
+
+            }
+        }
+
+        Map<String, TechInfo> techInfoMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(techInfos)){
+            for (TechInfo techInfo : techInfos){
+                if(techInfoMap.get(techInfo.getTitle()) == null){
+                    techInfoMap.put(techInfo.getTitle(), techInfo);
+                }
+            }
+        }
+
+        List<ResCoverage> coverageList = new ArrayList<>();
+        coverageList.addAll(coverageMap.values());
+        List<ResourceCategory> categoryList = new ArrayList<>();
+        categoryList.addAll(categoryMap.values());
+        List<TechInfo> techInfoList = new ArrayList<>();
+        techInfoList.addAll(techInfoMap.values());
 
         Education resultEducation = titanResourceRepository.add(education);
         if(resultEducation == null){
             return false;
         }
 
-        List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(resCoverageList);
+
+        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
         if(resCoverageList.size() != resultCoverage.size()){
             return false;
         }
 
-
-        List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
+        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(categoryList);
         if(resourceCategoryList.size()!=resultCategory.size()){
             return false;
         }
@@ -197,8 +234,8 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
-        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfos);
+
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
         if(techInfos.size()!=resultTechInfos.size()){
             return false;
         }
