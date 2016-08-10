@@ -64,6 +64,7 @@ public interface TitanSearchService {
 																		   String relationType,
 																		   String limit,
 																		   boolean reverse,
+																	       boolean recursion,
 																		   String coverage);
 
 	/**
