@@ -68,29 +68,6 @@ public interface TitanSearchService {
 																		   String coverage);
 
 	/**
-	 *
-	 * @param resType
-	 * @param sourceUuid
-	 * @param categories
-	 * @param targetType
-	 * @param label
-	 * @param tags
-	 * @param relationType
-	 * @param limit
-	 * @param coverage
-     * @return
-     * @throws EspStoreException
-     */
-	public ListViewModel<RelationForQueryViewModel> recursionQueryResources(String resType,
-																				String sourceUuid,
-																				String categories,
-																				String targetType,
-																				String label,
-																				String tags,
-																				String relationType,
-																				String limit,
-																				String coverage) throws EspStoreException;
-	/**
 	 * 在有些情景下，单个的获取源资源的目标资源列表的接口，业务系统使用起来过于频繁。此时业务方提出需要能够进行设置批量的源资源ID，
 	 * 通过源资源的ID快速的查询目标资源的列表。
 	 1.接口提供设置源资源ID的列表进行批量查询
