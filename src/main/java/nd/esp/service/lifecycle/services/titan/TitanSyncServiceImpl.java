@@ -18,6 +18,7 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +95,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
+
         if(education == null){
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
         } else {
@@ -155,6 +157,10 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private boolean report(Education education){
         if(education == null){
             return true;
+        }
+
+        if(StringUtils.isEmpty(education.getPrimaryCategory())){
+            return false;
         }
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
