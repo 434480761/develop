@@ -143,7 +143,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             titanSync4MysqlAdd(errorType, resourceRelation.getResourceTargetType(), resourceRelation.getTarget());
         }
         if(!checkEducationExistInTitan(resourceRelation.getResType(), resourceRelation.getSourceUuid())){
-            titanSync4MysqlAdd(errorType, resourceRelation.getResourceTargetType(), resourceRelation.getTarget());
+            titanSync4MysqlAdd(errorType, resourceRelation.getResType(), resourceRelation.getSourceUuid());
         }
     }
 

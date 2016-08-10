@@ -126,7 +126,7 @@ public class EducationRelationControllerV07 {
         try {
             if(!recursionBoolean){
                 listViewModel = titanSearchService.queryListByResType(
-                                   resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean, coverage);
+                                   resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean,recursionBoolean, coverage);
             }else if(IndexSourceType.ChapterType.getName().equals(resType)){
                 listViewModel = titanSearchService.recursionQueryResources(
                         resType, sourceUuid, categories, targetType, label, tags, relationType, limit,coverage);
