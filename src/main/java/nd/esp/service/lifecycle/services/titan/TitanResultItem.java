@@ -42,39 +42,45 @@ public class TitanResultItem {
         return resource;
     }
 
-    public void setResource(Map<String, String> resource) {
+    public TitanResultItem setResource(Map<String, String> resource) {
         this.resource = resource;
+        return this;
     }
 
     public List<Map<String, String>> getTaxOnCodeLines() {
         return taxOnCodeLines;
     }
 
-    public void setTaxOnCodeLines(List<Map<String, String>> taxOnCodeLines) {
+    public TitanResultItem setTaxOnCodeLines(List<Map<String, String>> taxOnCodeLines) {
         this.taxOnCodeLines = taxOnCodeLines;
+        return this;
     }
 
     public List<Map<String, String>> getTaxOnCodeIdLines() {
         return taxOnCodeIdLines;
     }
 
-    public void setTaxOnCodeIdLines(List<Map<String, String>> taxOnCodeIdLines) {
+    public TitanResultItem setTaxOnCodeIdLines(List<Map<String, String>> taxOnCodeIdLines) {
         this.taxOnCodeIdLines = taxOnCodeIdLines;
+        return this;
     }
 
     public List<Map<String, String>> getTechInfoLines() {
         return techInfoLines;
     }
 
-    public void setTechInfoLines(List<Map<String, String>> techInfoLines) {
+    public TitanResultItem setTechInfoLines(List<Map<String, String>> techInfoLines) {
         this.techInfoLines = techInfoLines;
+        return this;
     }
 
     public String getTaxOnPath() {
         return taxOnPath;
     }
 
-    public void setTaxOnPath(String taxOnPath) {
+    public TitanResultItem setTaxOnPath(String taxOnPath) {
         this.taxOnPath = taxOnPath;
+        return this;
     }
+
 }

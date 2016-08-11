@@ -51,64 +51,60 @@ public class TitanResultParse2 {
     private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse2.class);
 
 
+
     /**
      * titan查询返回的数据切割成一个item
+     *
      * @return
      */
-    private List<TitanResultItem> getItemsFormResultLines(String resType, List<String> resultStr,Boolean isCommonQuery) {
-        List<TitanResultItem> items = new ArrayList<>();
-
-
-
+    public static TitanResultItem getItemFormResult(String resType, List<String> resultStr, Boolean isCommonQuery) {
+        TitanResultItem item = new TitanResultItem();
 
         Map<String, String> mainResultMap = null;
         List<Map<String, String>> codes = new ArrayList<>();
         List<Map<String, String>> ids = new ArrayList<>();
+        List<Map<String, String>> codesAndId = new ArrayList<>();
         List<Map<String, String>> techInfo = new ArrayList<>();
         String taxOnPath = null;
-        String parent=null;
-        String order=null;
-        int count = 0;
-        for (String line : resultStr) {
+        String parent = null;
+        String order = null;
+        int size = resultStr.size();
+        for (int i = 0; i < size; i++) {
+            String line = resultStr.get(i);
             if (StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
-            // 根据label判断
-            String label = tmpMap.get("label");
             // 如果是knowlege，需要判断order和parent
             if ((ResourceNdCode.knowledges.toString().equals(resType) && (order == null && parent == null)) || (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent != null)) || !ResourceNdCode.knowledges.toString().equals(resType)) {
-                if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
-                   //FIXME
-                    codes.clear();
-                    ids.clear();
-                    techInfo.clear();
-                    taxOnPath = null;
-                    parent = null;
-                    order = null;
+                if (i > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || i==size-1 || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
+                    separateCodeId(codesAndId, ids, codes);
+                    //FIXME
+                    item.setResource(mainResultMap).setTaxOnCodeIdLines(ids).setTaxOnCodeLines(codes).setTechInfoLines(techInfo).setTaxOnPath(taxOnPath);
+                    return item;
                 }
             }
 
-            if ("categories_path".equals(label)) {
+            if (!tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString()) && tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
             } else if (order == null && tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
                 mainResultMap = tmpMap;
-            } else if ("category_code".equals(label)) {
+            } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code
-                codes.add(tmpMap);
-            } else if ("has_category_code".equals(label)) {
+                codesAndId.add(tmpMap);
+            } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
                 // id
-                ids.add(tmpMap);
-            } else if ("has_knowledge".equals(label)) {
-                // order  has_knowledge
+                codesAndId.add(tmpMap);
+            } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
+                // order
                 if (isCommonQuery) {
                     order = "null";
                 } else {
                     order = tmpMap.get("order");
-                    if (CollectionUtils.isNotEmpty(mainResultMap) && order != null) mainResultMap.put("order", order);
                 }
+                if (CollectionUtils.isNotEmpty(mainResultMap) && order != null) mainResultMap.put("order", order);
             } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType)) {
                 // parent
-                if ("category_code".equals(label)) {
+                if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
                     parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
                 } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
                     String res = tmpMap.get("primary_category");
@@ -120,32 +116,48 @@ public class TitanResultParse2 {
                 }
                 if (CollectionUtils.isNotEmpty(mainResultMap) && parent != null) mainResultMap.put("parent", parent);
 
-            } else if ("tech_info".equals(label)) {
-                    // tech_info
-                    techInfo.add(tmpMap);
-                } else {
-                    LOG.warn("异常数据");
-                }
-                count++;
-
+            } else if (tmpMap.containsKey(ES_SearchField.ti_format.toString())) {
+                // tech_info
+                techInfo.add(tmpMap);
+            } else {
+                LOG.warn("异常数据");
             }
+        }
 
-
-
-        return items;
+        return item;
     }
- /*   *//**
+
+/**
      * 解析资源
      * @param resType
      * @param resultStr
      * @return
-     *//*
-    public static ListViewModel<ResourceModel> parseToListViewWithLabel(String resType, List<String> resultStr,List<String> includes) {
+     */
+    public static ListViewModel<ResourceModel> parseToListViewAfterCut(String resType, List<String> resultStr,List<String> includes,Boolean isCommonQuery) {
         long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(resultStr)) {
+            int resultSize = resultStr.size();
+            // 处理count
+            String countStr = resultStr.get(resultSize - 1);
+            if (StringUtils.isNotEmpty(countStr) && countStr.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
+                resultStr.remove(resultSize - 1);
+            }
+            // FIXME 切割资源
+            List<TitanResultItem> titanResultItems=new ArrayList<>();
+            while (CollectionUtils.isNotEmpty(resultStr)) {
+                titanResultItems.add(getItemFormResult(resType, resultStr, isCommonQuery));
+            }
+
+        }
+
+
+        viewModels.setItems(items);
         return viewModels;
-    }*/
+    }
+
     /**
      * 解析资源
      * @param resType
@@ -763,5 +775,46 @@ public class TitanResultParse2 {
         return tmpMap;
     }
 
+    /**
+     * @param str
+     * @return
+     */
+    public static Map<String, String> toMap2(String str) {
+        Map<String, String> tmpMap = new HashMap<>();
+        if(StringUtils.isNotEmpty(str)) {
+            if (str.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                tmpMap.put(TitanKeyWords.TOTALCOUNT.toString(), "1");
+                return tmpMap;
+            }
+            str = str.replaceAll("==>", "").replaceAll("\\[", "");
+            str = str.substring(1, str.length() - 1);
+           List<String> fields = new ArrayList<>();
+            if (str.contains("], ")) {
+                String [] fs1= str.split("], ");
+                if (str.contains(", ")) {
+                    for (String s1 : fs1) {
+                        String[] fs2 = str.split(", ");
+                        fields.addAll(Arrays.asList(fs2));
+                    }
+                } else {
+                    fields.addAll(Arrays.asList(fs1));
+                }
+            } else if (str.contains(", ")) {
+                fields.addAll(Arrays.asList(str.split(", ")));
+            } else {
+                String kv = str.replaceAll("]", "");
+                int begin = kv.indexOf("=");
+                tmpMap.put(kv.substring(0, begin).trim(), kv.substring(begin + 1, kv.length()).trim());
+                return tmpMap;
+            }
+
+            for (String s : fields) {
+                String kv = s.replaceAll("]", "");
+                int begin = kv.indexOf("=");
+                tmpMap.put(kv.substring(0, begin).trim(), kv.substring(begin + 1, kv.length()).trim());
+            }
+        }
+        return tmpMap;
+    }
 
 }
