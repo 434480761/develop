@@ -2097,7 +2097,9 @@ public class NDResourceController {
         if(CollectionUtils.isNotEmpty(resultMap)){
         	String bsyskey = request.getHeader(Constant.BSYSKEY);
         	for(String uuid : resultMap.keySet()){
-        		syncResourceStatis(bsyskey,res_type,uuid);
+        		if(resultMap.get(uuid) != null && resultMap.get(uuid).getErrorMessage() == null){
+        			syncResourceStatis(bsyskey,res_type,uuid);
+        		}
         	}
         }
 
@@ -2106,9 +2108,11 @@ public class NDResourceController {
         	List<ReportResourceUsing> reportResourceUsings = new ArrayList<ReportResourceUsing>();
         	
         	for(String uuid : resultMap.keySet()){
-        		if(nrs.checkCoverageIsNd(res_type,uuid)){
-        			ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
-        			reportResourceUsings.add(rru);
+        		if(resultMap.get(uuid) != null && resultMap.get(uuid).getErrorMessage() == null){
+        			if(nrs.checkCoverageIsNd(res_type,uuid)){
+            			ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
+            			reportResourceUsings.add(rru);
+            		}
         		}
         	}
         	

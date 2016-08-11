@@ -56,7 +56,10 @@ public class AccessModel implements Serializable{
 	 */
 	private String distPath;
 	
-	
+	/**
+	 * 错误提示信息
+	 */
+	private String errorMessage;
 
 	public String getSessionId() {
         return sessionId;
@@ -122,4 +125,11 @@ public class AccessModel implements Serializable{
 		this.expireTime = expireTime;
 	}
 
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
 }

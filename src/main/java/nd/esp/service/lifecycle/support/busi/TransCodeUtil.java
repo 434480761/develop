@@ -790,7 +790,7 @@ public class TransCodeUtil {
      * @since
      */
     private boolean isVideoTransCode(ResourceModel resourceModel, String resType) {
-        if (!IndexSourceType.AssetType.getName().equals(resType)) {
+        if (!(IndexSourceType.AssetType.getName().equals(resType) || IndexSourceType.TeachingMaterialType.getName().equals(resType))) {
             return false;
         }
         List<ResClassificationModel> categories = resourceModel.getCategoryList();
@@ -1102,7 +1102,7 @@ public class TransCodeUtil {
                 }
             }
             TaskStatusInfo taskInfo = new TaskStatusInfo();
-            taskInfo.setResType("assets");
+            taskInfo.setResType(codeParam.getResType());
             taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_TRANSCODE);
             taskInfo.setBussId(codeParam.getResId());
             taskInfo.setTaskId(taskId);

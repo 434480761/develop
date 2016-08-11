@@ -18,15 +18,13 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by liuran on 2016/7/6.
@@ -58,6 +56,12 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Autowired
     private TitanResourceRepository<Education> titanResourceRepository;
 
+    @Autowired
+    private TitanCoverageRepository titanCoverageRepository;
+
+    @Autowired
+    private TitanCategoryRepository titanCategoryRepository;
+
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -87,6 +91,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             e.printStackTrace();
             return false;
         }
+
 
         if(education == null){
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
@@ -150,12 +155,17 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(education == null){
             return true;
         }
+
+        if(StringUtils.isEmpty(education.getPrimaryCategory())){
+            return false;
+        }
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
         Set<String> uuids = new HashSet<>();
         uuids.add(education.getIdentifier());
+
 
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
@@ -164,19 +174,70 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
         List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
 
-        List<ResourceRelation> resourceRelations =
-                educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
 
-        boolean educationSuccess = titanImportRepository
-                .importOneData(education,resCoverageList,resourceCategoryList,techInfos);
-        if(!educationSuccess){
+        Map<String,ResCoverage> coverageMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resCoverageList)){
+            for(ResCoverage coverage : resCoverageList){
+                String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
+                if(coverageMap.get(key)==null){
+                    coverageMap.put(key, coverage);
+                }
+            }
+        }
+
+        Map<String, ResourceCategory> categoryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resourceCategoryList)){
+            for (ResourceCategory resourceCategory : resourceCategoryList){
+                if(categoryMap.get(resourceCategory.getTaxoncode())==null){
+                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
+                }
+
+            }
+        }
+
+        Map<String, TechInfo> techInfoMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(techInfos)){
+            for (TechInfo techInfo : techInfos){
+                if(techInfoMap.get(techInfo.getTitle()) == null){
+                    techInfoMap.put(techInfo.getTitle(), techInfo);
+                }
+            }
+        }
+
+        List<ResCoverage> coverageList = new ArrayList<>();
+        coverageList.addAll(coverageMap.values());
+        List<ResourceCategory> categoryList = new ArrayList<>();
+        categoryList.addAll(categoryMap.values());
+        List<TechInfo> techInfoList = new ArrayList<>();
+        techInfoList.addAll(techInfoMap.values());
+
+        Education resultEducation = titanResourceRepository.add(education);
+        if(resultEducation == null){
             return false;
         }
-        List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
-        if(resourceRelations.size() != resultResourceRelations.size()){
-            return  false;
+
+
+        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
+        if(resCoverageList.size() != resultCoverage.size()){
+            return false;
         }
 
+        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(categoryList);
+        if(resourceCategoryList.size()!=resultCategory.size()){
+            return false;
+        }
+
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
+        if(techInfos.size()!=resultTechInfos.size()){
+            return false;
+        }
+
+        List<ResourceRelation> resourceRelations =
+                educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
+        List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
+        if(resourceRelations.size() != resultResourceRelations.size()){
+            return false;
+        }
         LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
