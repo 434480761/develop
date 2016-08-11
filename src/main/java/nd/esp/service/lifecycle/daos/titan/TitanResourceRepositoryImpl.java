@@ -39,7 +39,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         }
         M modelNew = addResource(model);
         if(modelNew == null){
-            LOG.info("resource保存出错");
+//            LOG.info("resource保存出错");
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                     model.getPrimaryCategory(), model.getIdentifier());
         }
@@ -54,7 +54,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
         M modelNew = updateResource(model);
         if(modelNew == null){
-            LOG.info("resource保存出错");
+//            LOG.info("resource保存出错");
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
                     model.getPrimaryCategory(), model.getIdentifier());
         }
@@ -140,7 +140,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             }
 
             if (nodeId == null){
-                LOG.error("资源保存到titan失败");
+//                LOG.error("资源保存到titan失败");
                 //TODO titan sync
                 return null;
             }
@@ -155,7 +155,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             id = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
         } catch (Exception e) {
             e.printStackTrace();
-            LOG.error("资源更新到titan失败");
+//            LOG.error("资源更新到titan失败");
             //TODO titan sync
             return null;
         }
@@ -171,7 +171,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         try {
             titanCommonRepository.executeScript(scriptBuffer.toString() ,graphParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),model.getIdentifier());
             //TODO titan sync
             return null;
         }
@@ -198,7 +198,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
 		}
 
 
@@ -213,7 +213,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
 		}
     }
 

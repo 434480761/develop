@@ -13,7 +13,10 @@ public class BigDecimalUtils {
             return db;
     }
 
-    public static Object toBigDecimal(Object db){
+    public static BigDecimal toBigDecimal(Object db){
+        if(db == null){
+            return null;
+        }
         return new BigDecimal((String) db);
     }
 

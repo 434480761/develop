@@ -18,6 +18,8 @@ public class TitanTreeModel {
     private TreeDirection treeDirection;
     //树形结构的类型，章节、知识点
     private TitanTreeType treeType;
+    
+    private Long titanRootId;
 
     public void setRoot(String root) {
         this.root = root;
@@ -66,4 +68,12 @@ public class TitanTreeModel {
     public void setTreeType(TitanTreeType treeType) {
         this.treeType = treeType;
     }
+
+	public Long getTitanRootId() {
+		return titanRootId;
+	}
+
+	public void setTitanRootId(Long titanRootId) {
+		this.titanRootId = titanRootId;
+	}
 }

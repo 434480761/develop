@@ -53,6 +53,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
+import com.ibm.icu.math.BigDecimal;
 import com.nd.gaea.rest.security.authens.UserInfo;
 
 /**
@@ -80,6 +81,8 @@ public class ToolController2 {
 	
 	@Autowired
 	private ToolServiceV06 toolService;
+	
+	public static Map<String,String> userIdMap = new HashMap<String, String>();
 	
 
 	/**
@@ -247,7 +250,7 @@ public class ToolController2 {
 	}
 	
 	/**
-	 * 导入excel
+	 * 导入excel(模板：99u家具用户关系对应表.xlsx)
 	 * 
 	 * @author:xuzy
 	 * @date:2015年12月29日
@@ -258,9 +261,6 @@ public class ToolController2 {
 	public void resolveExcel(HttpServletRequest request) throws IOException{
 		CommonsMultipartResolver resolver = new CommonsMultipartResolver(request.getSession().getServletContext());
 		if (resolver.isMultipart(request)) {
-			File outFile = new File("d://aa.txt");
-			BufferedWriter outputStream = new BufferedWriter(new FileWriter(outFile));
-			
 			MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest) request;
 			MultipartFile file = multiRequest.getFile("material");
 			InputStream in = file.getInputStream();
@@ -270,37 +270,19 @@ public class ToolController2 {
 			
 			for (int sheetIndex = 0; sheetIndex < wb.getNumberOfSheets(); sheetIndex++) {
 				Sheet st = wb.getSheetAt(sheetIndex);
-				for (int rowIndex = 0; rowIndex <= st.getLastRowNum(); rowIndex++) {
+				for (int rowIndex = 1; rowIndex <= st.getLastRowNum(); rowIndex++) {
 					Row row = st.getRow(rowIndex);
 					if (row == null) {
 						continue;
 					}
-					StringBuilder sb = new StringBuilder();
-//					//课件id
-//					String cid = row.getCell(0).getStringCellValue();
-//					//语种
-//					String lang = row.getCell(1).getStringCellValue();
-//					//地区
-//					String al = row.getCell(2).getStringCellValue();
-					
-					String resource = row.getCell(0).getStringCellValue();
-					String taxOnCode = row.getCell(3).getStringCellValue();
-					String taxOnName = row.getCell(4).getStringCellValue();
-					String category_code = row.getCell(5).getStringCellValue();
-					String category_name = row.getCell(6).getStringCellValue();
-					String short_name = row.getCell(7).getStringCellValue();
-					String taxoncodeid = row.getCell(8).getStringCellValue();
-					
-					sb.append("insert into resource_categories (identifier,resource,taxOnCode,taxOnName,category_code,category_name,short_name,taxoncodeid) values ('")
-					.append(UUID.randomUUID().toString()).append("','").append(resource).append("','").append(taxOnCode).append("','").append(taxOnName).append("','").append(category_code).append("','")
-					.append(category_name).append("','").append(short_name).append("','").append(taxoncodeid).append("');");
-//					sb.append("update ndresource set elanguage = '").append(lang).append("',edu_language = '").append(al).append("' where primary_category = 'coursewares' and identifier = '").append(cid).append("';");
-					outputStream.write(sb.toString());
-					outputStream.newLine();
+					if(row.getCell(2) == null){
+						continue;
+					}
+					String code = String.valueOf(new BigDecimal(row.getCell(2).getNumericCellValue()).toBigInteger());
+					String userId = String.valueOf(new BigDecimal(row.getCell(1).getNumericCellValue()).toBigInteger());
+					userIdMap.put(code, userId);
 				}
 			}
-			outputStream.flush();
-			outputStream.close();
 		}
 	}
 	

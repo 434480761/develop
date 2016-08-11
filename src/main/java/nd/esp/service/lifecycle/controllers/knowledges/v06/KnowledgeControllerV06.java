@@ -7,9 +7,8 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-
-import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
@@ -128,7 +127,7 @@ public class KnowledgeControllerV06 {
         extPropertiesModel.setRootNode(viewModel.getPosition().getRootNode());
         model.setExtProperties(extPropertiesModel);
 
-        model = knowledgeService.createKnowledge(model);
+
         
      // TODO titan保存章节树
         TitanTreeModel titanTreeModel = new TitanTreeModel();
@@ -142,12 +141,20 @@ public class KnowledgeControllerV06 {
         titanTreeModel.setSource(model.getIdentifier());
 
         // FIXME 有多个学科的时候只取其中一个
-        List<ResClassificationModel> categories = model.getCategoryList();
-        for(ResClassificationModel category : categories){
-            if(category.getTaxoncode()!=null && category.getTaxoncode().contains("$S")){
-                titanTreeModel.setRoot(category.getTaxoncode());
-            }
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(model.getExtProperties().getRootNode())){
+        	titanTreeModel.setRoot(model.getExtProperties().getRootNode());
+            titanTreeModel.setParent("ROOT");
+        }else{
+        	 List<ResClassificationModel> categories = model.getCategoryList();
+             for(ResClassificationModel category : categories){
+                 if(category.getTaxoncode()!=null && category.getTaxoncode().contains("$S")){
+                     titanTreeModel.setRoot(category.getTaxoncode());
+                 }
+             }
         }
+
+        model = knowledgeService.createKnowledge(model);
+       
         titanTreeMoveService.addNode(titanTreeModel);
 
         KnowledgeViewModel4Out viewModelOut = CommonHelper.convertViewModelOut(model, KnowledgeViewModel4Out.class);

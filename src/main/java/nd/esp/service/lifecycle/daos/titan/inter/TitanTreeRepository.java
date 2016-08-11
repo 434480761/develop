@@ -18,4 +18,5 @@ public interface TitanTreeRepository {
     public Long getParentByTarget(TitanTreeType treeType, String identifier);
     public Long getKnowledgeRoot(TitanTreeType treeType, String identifier);
     public String getKnowledgeSubjectCode(TitanTreeType treeType, String identifier);
+    public Long getKnowledgeRootId(String root);
 }

@@ -49,6 +49,7 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties db_titan_field_techinfo=null;
 	public static Properties db_titan_field_category=null;
 	public static Properties db_titan_field_knowledgerelation=null;
+	public static Properties db_titan_field_coverage=null;
 	
 
 	static {
@@ -90,6 +91,8 @@ public class LifeCircleApplicationInitializer extends
 					.loadAllProperties("config/props/db_titan_field_category.properties");
 			db_titan_field_knowledgerelation = PropertiesLoaderUtils
 					.loadAllProperties("config/props/db_titan_field_knowledgerelation.properties");
+			db_titan_field_coverage = PropertiesLoaderUtils
+					.loadAllProperties("config/props/db_titan_field_coverage.properties");
 		} catch (IOException e) {
 
 			LOG.warn("加载配置文件失败", e);

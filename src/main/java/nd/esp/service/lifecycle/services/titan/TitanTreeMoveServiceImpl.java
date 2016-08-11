@@ -4,6 +4,8 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanTreeRepository;
 import nd.esp.service.lifecycle.support.busi.titan.TitanTreeModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanTreeType;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
+import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,16 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
     @Override
     public void addNode(TitanTreeModel titanTreeModel) {
         try{
+        	if(StringUtils.isEmpty(titanTreeModel.getTarget())&&titanTreeModel.getTreeType()==TitanTreeType.knowledges){
+                Long titanRootId ;
+                if(titanTreeModel.getRoot().contains("$SB")){
+                    titanRootId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+                } else {
+                    titanRootId = titanTreeRepository.getKnowledgeRootId(titanTreeModel.getRoot());
+                }
+
+            	titanTreeModel.setTitanRootId(titanRootId);
+        	}
             createNewRelation(titanTreeModel);
         }catch (Exception e){
             e.printStackTrace();
@@ -29,9 +41,27 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         }
     }
 
-    @Override
+    private Long getKnowledgeRootId(String root) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
     public void moveNode(TitanTreeModel titanTreeModel) {
         try{
+        	if(StringUtils.isEmpty(titanTreeModel.getTarget())&&titanTreeModel.getTreeType()==TitanTreeType.knowledges){
+                if(titanTreeModel.getRoot() == null){
+                    return;
+                }
+                Long titanRootId ;
+                if(titanTreeModel.getRoot().contains("$SB")){
+                    titanRootId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+                } else {
+                    titanRootId = titanTreeRepository.getNodeId("chapters", titanTreeModel.getRoot());
+                }
+
+        		titanTreeModel.setTitanRootId(titanRootId);
+        	}
             deleteOldRelation(titanTreeModel);
             createNewRelation(titanTreeModel);
         }catch (Exception e){
@@ -41,7 +71,13 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
 
     }
 
-    private void deleteOldRelation(TitanTreeModel titanTreeModel){
+    private Long getTitanRootId(String source) {
+		String script = "s = g.V().has('identifier','000901ca-7c6c-4c80-8b1c-4408f8b11d15').id();Long last =0;while(s.iterator().hasNext()){last = s.iterator().next();s = g.V(last).in('has_chapter').id();};last;";
+		
+		return null;
+	}
+
+	private void deleteOldRelation(TitanTreeModel titanTreeModel){
         titanTreeRepository.deleteOldRelation(titanTreeModel.getTreeType(), titanTreeModel.getSource());
     }
 
@@ -51,13 +87,13 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         Long parentNodeId = null;
         Long nodeId = null;
         Double order = 100D;
-        //TODO 在移动知识点的时候无法获取学科，暂时从titan中根据知识点获取学科维度数据
-        if(TitanTreeType.knowledges ==  titanTreeModel.getTreeType()
-                && "ROOT".equals(titanTreeModel.getParent())
-                && (titanTreeModel.getRoot()==null
-                || titanTreeModel.getRoot().equals(""))){
-            titanTreeModel.setRoot(titanTreeRepository.getKnowledgeSubjectCode(titanTreeModel.getTreeType(),titanTreeModel.getSource()));
-        }
+//        //TODO 在移动知识点的时候无法获取学科，暂时从titan中根据知识点获取学科维度数据
+//        if(TitanTreeType.knowledges ==  titanTreeModel.getTreeType()
+//                && "ROOT".equals(titanTreeModel.getParent())
+//                && (titanTreeModel.getRoot()==null
+//                || titanTreeModel.getRoot().equals(""))){
+//            titanTreeModel.setRoot(titanTreeRepository.getKnowledgeSubjectCode(titanTreeModel.getTreeType(),titanTreeModel.getSource()));
+//        }
         //TODO 指定默认方向
         if(titanTreeModel.getTreeDirection() == null){
             titanTreeModel.setTreeDirection(TreeDirection.next);
@@ -108,7 +144,8 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
                 case knowledges:
                     //父节点是学科
                     if ("ROOT".equals(parent)) {
-                        parentNodeId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+//                        parentNodeId = titanTreeRepository.getSubjectId(titanTreeModel.getRoot());
+                    	parentNodeId = titanTreeModel.getTitanRootId();
                     }
                     //父节点是知识点
                     else {
