@@ -205,9 +205,6 @@ public class TeachingMaterialControllerV06 {
 		//model转换
 		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
 
-		//教材没有techInfo属性
-		tmvm.setTechInfo(null);
-
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.teachingmaterials.toString(), id);
 		}
