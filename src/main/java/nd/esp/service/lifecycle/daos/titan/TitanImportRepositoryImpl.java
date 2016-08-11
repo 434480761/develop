@@ -238,7 +238,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
 
         if(id == null){
-            LOG.info("数据校验：数据有误 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());
+            LOG.info("数据校验：数据不存在 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());
             return false;
         }
 
@@ -255,6 +255,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
 
         //category在保存的时候没有做去重处理，在导入数据的时候有做去重处理
+        if(CollectionUtils.isEmpty(resourceCategoryList)){
+            resourceCategoryList = new ArrayList<>();
+        }
         Integer edgeCountMysql = coverageMap.size() + techInfoMap.size() + resourceCategoryList.size() + categoryPathSet.size();
         if (edgeCount == null || edgeCount.intValue() > edgeCountMysql ){
             LOG.info("数据校验：数据有误 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());

@@ -43,10 +43,40 @@ public class TitanResourceController {
 		titanResourceService.importKnowledgeRelation();
 	}
 
+	@RequestMapping(value = "/all/repair/data", method = RequestMethod.GET)
+	public void repairAllData() {
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.repairData(resourceType);
+		}
+	}
+
+	@RequestMapping(value = "/all/repair/relation", method = RequestMethod.GET)
+	public void repairAllRelation() {
+
+		titanResourceService.repairAllRelation();
+	}
+
+	@RequestMapping(value = "/all/repair/dataandrelation", method = RequestMethod.GET)
+	public void repairAll() {
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.repairData(resourceType);
+		}
+		titanResourceService.repairAllRelation();
+	}
+
+	@RequestMapping(value = "/{resourceType}/{id}/repair", method = RequestMethod.GET)
+	public void repairOne(@PathVariable String resourceType, @PathVariable String id){
+		titanResourceService.repairOne(resourceType, id);
+	}
 
 	@RequestMapping(value = "/all/time/script", method = RequestMethod.GET)
 	public void indexAllTime(@RequestParam Integer page , @RequestParam String type) {
 		titanResourceService.timeTaskImport(page, type);
+	}
+
+	@RequestMapping(value = "/all/time/repair", method = RequestMethod.GET)
+	public void indexAllTimeRepair(@RequestParam Integer page , @RequestParam String type) {
+		titanResourceService.timeTaskRepair(page, type);
 	}
 
 	@RequestMapping(value = "/all/relation", method = RequestMethod.GET)
@@ -121,5 +151,12 @@ public class TitanResourceController {
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public String importStatus(){
 		return titanResourceService.importStatus();
+	}
+
+	@RequestMapping(value = "code", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String importCode(){
+	   	titanResourceService.code();
+		return null;
 	}
 }

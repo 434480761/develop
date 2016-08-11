@@ -202,9 +202,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private ResultSet submitScriptResultRet(String script, Map<String, Object> params) throws Exception{
-        if(!StaticDatas.TITAN_SWITCH){
-            return null;
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         ResultSet resultSet = null;
         try {
             resultSet = client().submit(script, params);
@@ -221,9 +221,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private Long submitUniqueLong(String script, Map<String, Object> params) throws Exception {
-        if(!StaticDatas.TITAN_SWITCH){
-            return null;
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         Long id = null;
         try {
             ResultSet resultSet = client().submit(script, params);
@@ -244,9 +244,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private String submitUniqueString(String script, Map<String, Object> params) throws Exception {
-        if(!StaticDatas.TITAN_SWITCH){
-            return null;
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         String id = null;
         try {
             ResultSet resultSet = client().submit(script, params);
