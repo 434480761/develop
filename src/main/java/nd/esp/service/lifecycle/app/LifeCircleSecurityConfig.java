@@ -108,7 +108,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		//忽略的url地址
 		//web.ignoring().antMatchers("/**");
-		web.ignoring() .antMatchers(HttpMethod.GET,"/**");
+		//web.ignoring() .antMatchers(HttpMethod.GET,"/**");
 		web.ignoring() .antMatchers(HttpMethod.POST,"/v0.6/resources/tools2/resolveExcel");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/*.html");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/*.favicon.ico");
