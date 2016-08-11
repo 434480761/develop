@@ -51,15 +51,86 @@ public class TitanResultParse2 {
     private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse2.class);
 
 
+    /**
+     * 返回数据切割的index
+     *
+     * @return
+     */
+    public static List<Integer> getIndex(String resType, List<String> resultStr) {
+        List<Integer> indexArray=new ArrayList<>();
+        indexArray.add(0);
+        boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+        boolean existParent = false;
+        boolean existOrder = false;
+        int size = resultStr.size();
+        for (int i = 0; i < size; i++) {
+            String line = resultStr.get(i);
+            if (StringUtils.isEmpty(line)) continue;
+            if(isKnowledge){
+                Map<String, String> tmpMap = new HashMap<>();
+                if (line.contains("order")) tmpMap = toMap(line);
+                if (tmpMap.containsKey("order")) {// order
+                    existOrder = true;
+                } else if (existOrder) {// parent
+                    existParent = true;
+                } else {
+                    //LOG.warn("异常数据");
+                }
+            }
+
+            boolean isEnd = checkBreak(isKnowledge, existOrder, existParent, i, size, i + 1 < size ? resultStr.get(i + 1) : "");
+            if (isEnd) {
+                if (isKnowledge) {
+                    existParent = false;
+                    existOrder = false;
+                }
+                indexArray.add(i + 1);
+              //  System.out.println("==>cut:"+i);
+            }
+        }
+        return indexArray;
+    }
+
+    private static boolean checkBreak(boolean isKnowledge, String order, String parent, int index, int size, String nextLine) {
+        // 1、如果index=size-1,break,这时候已经到最后一条数据了
+        // 2、如果没到最后一条数据，需要根据下一条数据判断
+        // 2.1、不是knowledge时，只要下一条数据有：lc_create_time
+        // 2.2、是knowledge时，要parent和order同时为null或同时不为null
+
+        if ((isKnowledge && ((order == null && parent == null) || (order != null && parent != null)))) {
+            if (index > 0 && (nextLine.contains(ES_SearchField.lc_create_time.toString()) || index == size - 1)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean checkBreak(boolean isKnowledge, boolean order, boolean parent, int index, int size, String nextLine) {
+        // 1、如果index=size-1,break,这时候已经到最后一条数据了
+        // 2、如果没到最后一条数据，需要根据下一条数据判断
+        // 2.1、不是knowledge时，只要下一条数据有：lc_create_time
+        // 2.2、是knowledge时，要parent和order同时为null或同时不为null
+
+
+        if ((isKnowledge && ((order && parent) || (!order && !parent))) || !isKnowledge) {
+            if (index > 0 && (nextLine.contains(ES_SearchField.lc_create_time.toString()) || index == size - 1)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * titan查询返回的数据切割成一个item
      *
      * @return
      */
-    public static TitanResultItem getItemFormResult(String resType, List<String> resultStr, Boolean isCommonQuery) {
-        TitanResultItem item = new TitanResultItem();
-
+    public static List<TitanResultItem> getItemFormResult(String resType, List<String> resultStr, Boolean isCommonQuery) {
+        List<TitanResultItem> titanResultItems=new ArrayList<>();
+        boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+        // 取到切割的index
         Map<String, String> mainResultMap = null;
         List<Map<String, String>> codes = new ArrayList<>();
         List<Map<String, String>> ids = new ArrayList<>();
@@ -74,15 +145,7 @@ public class TitanResultParse2 {
             if (StringUtils.isEmpty(line)) continue;
             Map<String, String> tmpMap = toMap(line);
             if (CollectionUtils.isEmpty(tmpMap)) continue;
-            // 如果是knowlege，需要判断order和parent
-            if ((ResourceNdCode.knowledges.toString().equals(resType) && (order == null && parent == null)) || (ResourceNdCode.knowledges.toString().equals(resType) && (order != null && parent != null)) || !ResourceNdCode.knowledges.toString().equals(resType)) {
-                if (i > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || i==size-1 || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
-                    separateCodeId(codesAndId, ids, codes);
-                    //FIXME
-                    item.setResource(mainResultMap).setTaxOnCodeIdLines(ids).setTaxOnCodeLines(codes).setTechInfoLines(techInfo).setTaxOnPath(taxOnPath);
-                    return item;
-                }
-            }
+
 
             if (!tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString()) && tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
                 taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
@@ -91,10 +154,10 @@ public class TitanResultParse2 {
             } else if (order == null && tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // code
                 codesAndId.add(tmpMap);
-            } else if ((tmpMap.size() == 1 && tmpMap.containsKey(ES_SearchField.identifier.toString())) || (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && tmpMap.containsKey(ES_SearchField.identifier.toString()))) {
+            } else if ((tmpMap.size() == 1 || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) && tmpMap.containsKey(ES_SearchField.identifier.toString())) {
                 // id
                 codesAndId.add(tmpMap);
-            } else if (ResourceNdCode.knowledges.toString().equals(resType) && tmpMap.containsKey("order")) {
+            } else if (isKnowledge && tmpMap.containsKey("order")) {
                 // order
                 if (isCommonQuery) {
                     order = "null";
@@ -102,7 +165,7 @@ public class TitanResultParse2 {
                     order = tmpMap.get("order");
                 }
                 if (CollectionUtils.isNotEmpty(mainResultMap) && order != null) mainResultMap.put("order", order);
-            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType)) {
+            } else if (order != null && isKnowledge) {
                 // parent
                 if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
                     parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
@@ -122,9 +185,62 @@ public class TitanResultParse2 {
             } else {
                 LOG.warn("异常数据");
             }
+
+            boolean isEnd = checkBreak(isKnowledge, order, parent, i, size, i + 1 < size ? resultStr.get(i + 1) : "");
+            if(isEnd){
+                separateCodeId(codesAndId, ids, codes);
+                //FIXME
+
+                Map<String,List<Map<String,String>>> itemMap=new HashMap<>();
+
+                TitanResultItem item = new TitanResultItem();
+                setResource(mainResultMap,codes,ids,techInfo,taxOnPath,item);
+                clearResource(mainResultMap,codes,ids,codesAndId,techInfo,taxOnPath,parent,order);
+               // item.setResource(mainResultMap).setTaxOnCodeIdLines(ids).setTaxOnCodeLines(codes).setTechInfoLines(techInfo).setTaxOnPath(taxOnPath);
+                titanResultItems.add(item);
+
+            }
         }
 
-        return item;
+        return titanResultItems;
+    }
+
+    private static void setResource(Map<String, String> mainResultMap,
+                             List<Map<String, String>> codes,
+                             List<Map<String, String>> ids,
+                             List<Map<String, String>> techInfo,
+                             String taxOnPath, TitanResultItem item) {
+        Map<String, String> resource = new HashMap<>();
+        List<Map<String, String>> codes1 = new ArrayList<>();
+        List<Map<String, String>> ids1 = new ArrayList<>();
+        List<Map<String, String>> techInfo1 = new ArrayList<>();
+        //resource.putAll(mainResultMap);
+        for (Map.Entry<String, String> entry : mainResultMap.entrySet()) {
+            resource.put(entry.getKey(), entry.getValue());
+        }
+        codes1.addAll(codes);
+        ids1.addAll(ids);
+        techInfo1.addAll(techInfo);
+        String taxOnPath1 = "";
+        taxOnPath1 = taxOnPath;
+        item.setResource(resource).setTaxOnCodeIdLines(ids1).setTaxOnCodeLines(codes1).setTechInfoLines(techInfo1).setTaxOnPath(taxOnPath1);
+
+    }
+
+    private static void clearResource(Map<String, String> mainResultMap,
+                                      List<Map<String, String>> codes,
+                                      List<Map<String, String>> ids,
+                                      List<Map<String, String>> codesAndId,
+                                      List<Map<String, String>> techInfo,
+                                      String taxOnPath, String parent, String order) {
+        if (CollectionUtils.isNotEmpty(mainResultMap)) mainResultMap.clear();
+        if (CollectionUtils.isNotEmpty(codes)) codes.clear();
+        if (CollectionUtils.isNotEmpty(ids)) ids.clear();
+        if (CollectionUtils.isNotEmpty(codesAndId)) codesAndId.clear();
+        if (CollectionUtils.isNotEmpty(techInfo)) techInfo.clear();
+        taxOnPath = null;
+        parent = null;
+        order = null;
     }
 
 /**
@@ -146,17 +262,38 @@ public class TitanResultParse2 {
                 resultStr.remove(resultSize - 1);
             }
             // FIXME 切割资源
-            List<TitanResultItem> titanResultItems=new ArrayList<>();
-            while (CollectionUtils.isNotEmpty(resultStr)) {
-                titanResultItems.add(getItemFormResult(resType, resultStr, isCommonQuery));
+            List<Integer> indexArray = getIndex(resType, resultStr);
+            List<List<String>> strItems=new ArrayList<>();
+            for (int i = 0; i < indexArray.size() - 1; i++) {
+                int begin = indexArray.get(i);
+                int end = indexArray.get(i + 1);
+                strItems.add(resultStr.subList(begin,end));
+            }
+            // FIXME 解析资源
+            for(List<String> strItem:strItems) {
+                items.add(parseResource(resType,strItem,includes,isCommonQuery));
             }
 
         }
 
-
         viewModels.setItems(items);
         return viewModels;
     }
+
+    /**
+     *
+     * @param resType
+     * @param resultStr
+     * @param includes
+     * @param isCommonQuery
+     * @return
+     */
+    private static ResourceModel parseResource(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+
+        return null;
+
+    }
+
 
     /**
      * 解析资源
