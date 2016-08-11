@@ -15,7 +15,8 @@ public enum  TitanSyncType {
     IMPORT_DATA_ERROR,
     FIELD_LENGTH_TOO_LONG,
     SYNC_SUCCESS,
-    UPDATE_DATA_RESOURCE_NOT_EXIST,
+    UPDATE_DATA_RESOURCE,
+    UPDATE_DATA_RELATION,
     UPDATE_DATA_OTHER;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();

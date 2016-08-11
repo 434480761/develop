@@ -117,16 +117,51 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Override
 	public void timeTaskImport(Integer page, String type) {
-		TimeTaskPageQuery timeTaskPageQuery = new TimeTaskPageQuery(page, type);
+		TimeTaskPageQuery timeTaskPageQuery = new TimeTaskPageQuery4Import(page, type);
 		timeTaskPageQuery.schedule();
 	}
 
 	@Override
 	public long importAllRelation() {
 		long size = 0L;
-		size =  pageQueryRelation(resourceRelationRepository);
-		size = size + pageQueryRelation(resourceRelation4QuestionDBRepository);
+		AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCreate();
+		size =  abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+		size = size + abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
 		return size;
+	}
+
+	@Override
+	public void repairAllRelation() {
+		AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationRepair();
+		abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+		abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
+	}
+
+	@Override
+	public void repairOne(String primaryCategory, String id) {
+
+		EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+		Education educationOld = null;
+		try {
+			educationOld = (Education) espRepository.get(id);
+		} catch (EspStoreException e) {
+			e.printStackTrace();
+		}
+
+		if (educationOld == null){
+			return;
+		}
+
+		List<Education> educations = new ArrayList<>();
+		educations.add(educationOld);
+
+		repairData(educations, primaryCategory);
+	}
+
+	@Override
+	public void timeTaskRepair(Integer page, String type) {
+		TimeTaskPageQuery timeTaskPageQuery = new TimeTaskPageQuery4Repair(page, type);
+		timeTaskPageQuery.schedule();
 	}
 
 	@Override
@@ -219,8 +254,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
-	public void updateData(String primaryCategory) {
-		AbstractPageQuery abstractPageQuery = new UpdateData4ScriptPageQuery();
+	public void repairData(String primaryCategory) {
+		AbstractPageQuery abstractPageQuery = new RepairDataPageQuery();
 		abstractPageQuery.doing(primaryCategory);
 	}
 
@@ -391,53 +426,75 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return total;
 	}
 
-	public long pageQueryRelation(ResourceRepository resourceRepository) {
-		String fieldName = "identifier";
+	public abstract class AbstractPageQueryRelation{
+		public long pageQueryRelation(ResourceRepository resourceRepository) {
+			String fieldName = "identifier";
 
-		long indexNum = 0;
-		// 分页
-		int page = 0;
-		int row = 500;
-		@SuppressWarnings("rawtypes")
-		Page resourcePage = new PageImpl(new ArrayList());;
-		@SuppressWarnings("rawtypes")
-		List entitylist = null;
+			long indexNum = 0;
+			// 分页
+			int page = 0;
+			int row = 500;
+			@SuppressWarnings("rawtypes")
+			Page resourcePage = new PageImpl(new ArrayList());;
+			@SuppressWarnings("rawtypes")
+			List entitylist = null;
 
-		List<Item<? extends Object>> items = new ArrayList<>();
+			List<Item<? extends Object>> items = new ArrayList<>();
 
-		Sort sort = new Sort(Direction.ASC, fieldName);
-		do {
-			Pageable pageable = new PageRequest(page, row, sort);
+			Sort sort = new Sort(Direction.ASC, fieldName);
+			do {
+				Pageable pageable = new PageRequest(page, row, sort);
 
-			try {
-				resourcePage = resourceRepository.findByItems(items, pageable);
-				if (resourcePage == null) {
-					break;
+				try {
+					resourcePage = resourceRepository.findByItems(items, pageable);
+					if (resourcePage == null) {
+						break;
+					}
+					entitylist = resourcePage.getContent();
+					if (entitylist == null) {
+						continue;
+					}
+					List<ResourceRelation> resourceRelations = new ArrayList<ResourceRelation>();
+					for (Object object : entitylist) {
+						ResourceRelation relation = (ResourceRelation) object;
+						resourceRelations.add(relation);
+					}
+					if(entitylist.size()==0){
+						continue;
+					}
+					method(resourceRelations);
+					LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
+				} catch (Exception e) {
+					e.printStackTrace();
+					LOG.error(e.getMessage());
 				}
-				entitylist = resourcePage.getContent();
-				if (entitylist == null) {
-					continue;
-				}
-				List<ResourceRelation> resourceRelations = new ArrayList<ResourceRelation>();
-				for (Object object : entitylist) {
-					ResourceRelation relation = (ResourceRelation) object;
-					resourceRelations.add(relation);
-				}
-				if(entitylist.size()==0){
-					continue;
-				}
-				titanImportRepository.batchImportRelation(resourceRelations);
+				setStatisticParam("relations", resourcePage.getTotalPages(), page);
+			} while (++page < resourcePage.getTotalPages());
 
-				LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
-			} catch (Exception e) {
-				e.printStackTrace();
-				LOG.error(e.getMessage());
-			}
-			setStatisticParam("relations", resourcePage.getTotalPages(), page);
-		} while (++page < resourcePage.getTotalPages());
+			return indexNum;
+		}
 
-		return indexNum;
+		public abstract void method(List<ResourceRelation> resourceRelations);
 	}
+
+ 	public class AbstractPageQueryRelationCreate extends AbstractPageQueryRelation{
+
+		@Override
+		public void method(List<ResourceRelation> resourceRelations) {
+			titanImportRepository.batchImportRelation(resourceRelations);
+		}
+	}
+
+	public class AbstractPageQueryRelationRepair extends AbstractPageQueryRelation{
+
+		@Override
+		public void method(List<ResourceRelation> resourceRelations) {
+			titanUpdateDataRepository.batchUpdateRelation(resourceRelations);
+		}
+	}
+
+
+
 
 	abstract class  AbstractPageQuery{
 		public long doing(String primaryCategory) {
@@ -575,9 +632,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 	}
 
-	private  long importDataOperate(List<Education> educations,String primaryCategory){
-		return importData(educations, primaryCategory);
-	}
+
 
 
 	/**
@@ -643,15 +698,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 	}
 
-	public class UpdateData4ScriptPageQuery extends AbstractPageQuery{
+	public class RepairDataPageQuery extends AbstractPageQuery{
 
 		@Override
 		long operate(List<Education> educations, String primaryCategory) {
-			return updateData(educations, primaryCategory);
+			return repairData(educations, primaryCategory);
 		}
 	}
 
-	private long updateData(List<Education> educations, String primaryCategory){
+	private long repairData(List<Education> educations, String primaryCategory){
 		if(CollectionUtils.isEmpty(educations)){
 			return 0L;
 		}
@@ -780,7 +835,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 
-	private class TimeTaskPageQuery{
+	abstract private class TimeTaskPageQuery{
 
 		private String primaryCategory = null;
 		private Integer page =0;
@@ -905,8 +960,33 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			}
 			return false;
 		}
+
+		abstract   long importDataOperate(List<Education> educations,String primaryCategory);
 	}
 
+	public class TimeTaskPageQuery4Import extends TimeTaskPageQuery{
+
+		public TimeTaskPageQuery4Import(Integer page, String type) {
+			super(page, type);
+		}
+
+		@Override
+		long importDataOperate(List<Education> educations, String primaryCategory) {
+			return 0;
+		}
+	}
+
+	public class TimeTaskPageQuery4Repair extends TimeTaskPageQuery{
+
+		public TimeTaskPageQuery4Repair(Integer page, String type) {
+			super(page, type);
+		}
+
+		@Override
+		long importDataOperate(List<Education> educations, String primaryCategory) {
+			return repairData(educations, primaryCategory);
+		}
+	}
 
 	private class TimeTaskPageQuery4Update{
 

@@ -147,6 +147,13 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 	}
 
+	@Override
+	public void batchUpdate4Import(List<ResourceRelation> resourceRelations) {
+		for (ResourceRelation resourceRelation : resourceRelations){
+			updateRelation(resourceRelation);
+		}
+	}
+
 	private ResourceRelation addRelation(ResourceRelation resourceRelation){
 
 		String checkRelationExist = "g.E().has('has_relation','identifier',edgeIdentifier).id()";

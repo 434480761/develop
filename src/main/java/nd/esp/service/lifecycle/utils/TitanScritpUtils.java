@@ -159,6 +159,15 @@ public class TitanScritpUtils {
         return graphParams;
     }
 
+    public static Map<String, Object> getParamAndChangeScript4Repair(StringBuffer scriptBuffer, Object model){
+        Map<String, Object> graphParams = getParam4NotNull(model);
+        for (String key : graphParams.keySet()) {
+            scriptBuffer.append(".property('").append(key).append("', ").append(key).append(")");
+        }
+
+        return graphParams;
+    }
+
     public static void getSetScriptAndParam(StringBuffer scriptBuffer,Map<String, Object> params,
                                             String fieldName, Set<String> values){
         if(values == null){
