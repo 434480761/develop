@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <convert-rules>
-<!--  	<rule id="audioNotConvert">
-		<fileType>mp3</fileType>
-		<command name="main">
-			<os name="Default"/>
-		</command>
-	</rule>-->
 
 	<rule id="audioConvert">
 		<fileType>wma, m4a, aac, wav, flac, mp3, ogg</fileType>
@@ -69,27 +63,27 @@
 		<fileType>swf</fileType>
 		<command name="mp4First">
 			<os name="Default">
-				mswf2avi /f "#src#" /o "#tempMp4#" /pi ini\mp4.ini /pn Mp4 video normal quality -de 1
+				mswf2avi /f #src# /o #tempMp4# /pi ini\mp4.ini /pn Mp4 video normal quality /de 1
 			</os>
 		</command>
 		<command name="1080p">
 			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/1080p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#tempMp4#" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/1080p/#fileNameNoEx#.mp4"
 			</os>
 		</command>
 		<command name="720p">
 			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/720p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#tempMp4#" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/720p/#fileNameNoEx#.mp4"
 			</os>
 		</command>
 		<command name="480p">
 			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/480p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#tempMp4#" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/480p/#fileNameNoEx#.mp4"
 			</os>
 		</command>
 		<command name="360p">
 			<os name="Default">
-				ffmpeg -i "#tmpMp4#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/360p/#fileNameNoEx#.mp4"
+				ffmpeg -i "#tempMp4#" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 "#destDir#/360p/#fileNameNoEx#.mp4"
 			</os>
 		</command>
 		<command name="1080p-ogv">
