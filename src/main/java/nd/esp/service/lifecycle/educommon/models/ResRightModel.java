@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.educommon.models;
 
+import java.math.BigDecimal;
+
 
 /**
  * @author johnny
@@ -20,6 +22,21 @@ public class ResRightModel {
 	 * 作者信息
 	 */
 	private String author;
+	/**
+	 * 版权开始时间，值为时间戳（精确到毫秒）
+	 */
+	private BigDecimal rightStartDate;
+	
+	/**
+	 * 版权结束时间，值为时间戳（精确到毫秒）
+	 */
+	private BigDecimal rightEndDate;
+	
+	/**
+	 * 是否有版权
+	 */
+	private Boolean hasRight;
+	
 	public ResourceModel m_ResourceModel;
 
 	public ResRightModel(){
@@ -58,4 +75,27 @@ public class ResRightModel {
 		this.description = description;
 	}
 
+	public BigDecimal getRightStartDate() {
+		return rightStartDate;
+	}
+
+	public void setRightStartDate(BigDecimal rightStartDate) {
+		this.rightStartDate = rightStartDate;
+	}
+
+	public BigDecimal getRightEndDate() {
+		return rightEndDate;
+	}
+
+	public void setRightEndDate(BigDecimal rightEndDate) {
+		this.rightEndDate = rightEndDate;
+	}
+
+	public Boolean getHasRight() {
+		return hasRight;
+	}
+
+	public void setHasRight(Boolean hasRight) {
+		this.hasRight = hasRight;
+	}
 }

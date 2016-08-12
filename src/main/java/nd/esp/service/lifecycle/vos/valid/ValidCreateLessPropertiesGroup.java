@@ -8,7 +8,7 @@ import javax.validation.GroupSequence;
  * @author caocr
  *
  */
-@GroupSequence({ LessPropertiesDefault.class, LifecycleDefault.class, CategoriesDefault.class, RelationsDefault.class })
+@GroupSequence({ LessPropertiesDefault.class, LifecycleDefault.class, CategoriesDefault.class, RelationsDefault.class,CopyrightDefault.class })
 public interface ValidCreateLessPropertiesGroup {
 
 }

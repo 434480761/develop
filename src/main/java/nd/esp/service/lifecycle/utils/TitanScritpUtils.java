@@ -1,9 +1,11 @@
 package nd.esp.service.lifecycle.utils;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
+import nd.esp.service.lifecycle.utils.titan.script.ScriptAbstract;
+import nd.esp.service.lifecycle.utils.titan.script.ScriptEducation;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -18,6 +20,10 @@ import java.util.Date;
  * Created by liuran on 2016/5/26.
  */
 public class TitanScritpUtils {
+    public enum KeyWords {
+        script, params
+    }
+
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanScritpUtils.class);
 
@@ -34,7 +40,7 @@ public class TitanScritpUtils {
     }
 
     //获取所有不为null的属性
-    private static Map<String, Object> getParam4NotNull(Object model) {
+    public static Map<String, Object> getParam4NotNull(Object model) {
         Map<String, Object> graphParams = new HashMap<String, Object>();
         if(model == null){
             return graphParams;
@@ -198,6 +204,9 @@ public class TitanScritpUtils {
         if(model instanceof KnowledgeRelation){
             return LifeCircleApplicationInitializer.db_titan_field_knowledgerelation;
         }
+        if(model instanceof ResCoverage){
+            return LifeCircleApplicationInitializer.db_titan_field_coverage;
+        }
 
         return new Properties();
     }
@@ -264,7 +273,8 @@ public class TitanScritpUtils {
         if(CollectionUtils.isNotEmpty(techInfoParamMap)){
             script.append("createTechInfo(educationId);");
         }
-        script.append("}");
+        script.append("};");
+        script.append("g.V().hasLabel(primaryCategory_ck).has('identifier',identifier_ck).id()");
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
@@ -320,7 +330,6 @@ public class TitanScritpUtils {
                 if(StringUtils.isNotEmpty(category.getTaxoncode())){
                     categoryCodes.add(category.getTaxoncode());
                 }
-
             }
         }
 
@@ -557,6 +566,45 @@ public class TitanScritpUtils {
         }
 
         return result;
+    }
+
+    public static Map<KeyWords, Object> buildGetDetailScript(String primaryCategory,
+                                                             List<String> identifierList,
+                                                             List<String> includeList,
+                                                             boolean isAll){
+        StringBuilder scriptBuilder = new StringBuilder(
+                "g.V().has('identifier',");
+        StringBuffer withInScript = new StringBuffer("within(");
+
+        Map<String, Object> params = new HashMap<>();
+        int index = 0;
+        for (int i=0; i <identifierList.size() ;i ++){
+            String indentifierName = "identifier"+index;
+            if(i == 0){
+                withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
+            }
+            params.put(indentifierName, identifierList.get(i));
+
+            index ++;
+        }
+        withInScript.append(")");
+        scriptBuilder.append(withInScript.toString()).append(").has('primary_category',primary_category)");
+
+        if(!isAll){
+            scriptBuilder.append(".has('lc_enable',true)");
+        }
+        params.put("primary_category", primaryCategory);
+
+        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,primaryCategory));
+        scriptBuilder.append(".valueMap();");
+
+        Map<KeyWords, Object> result = new HashMap<>();
+        result.put(KeyWords.script, scriptBuilder.toString());
+        result.put(KeyWords.params, params);
+
+        return  result;
     }
 
     public static  void main(String[] args){

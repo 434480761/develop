@@ -262,6 +262,18 @@ public interface NDResourceService {
     AccessModel getDownloadUrl(String resourceType, String uuid, String uid, String key);
     
     /**
+     * 批量下载
+     * @author xiezy
+     * @date 2016年8月8日
+     * @param resourceType
+     * @param ids
+     * @param uid
+     * @param key
+     * @return
+     */
+    Map<String, AccessModel> batchGetDownloadUrl(String resourceType, Set<String> ids, String uid, String key);
+    
+    /**
      * 获取资源的预览列表
      * 
      * @author:xuzy

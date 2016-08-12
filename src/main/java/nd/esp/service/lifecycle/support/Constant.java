@@ -282,7 +282,6 @@ public class Constant {
 	// public final static String
 	// ES_INDEX_NAME="test_full_function_dev_just_for_test";
 	
-
 	//titan configure
 	public final static String TITAN_DOMAIN = LifeCircleApplicationInitializer.properties
 			.getProperty("titan.domain");
@@ -294,7 +293,7 @@ public class Constant {
     //智能出题获取详情url
     public final static String INTELLI_DETAIL_URL="v0.2/api/lcmsquestions/detail/{chapterId}/K1206_en/{questionId}";
     
-    public static final   Map<String,AdapterTaskResult>ADAPTER_TASK_RESULT=new HashMap ();
+    public static final   Map<String,AdapterTaskResult>ADAPTER_TASK_RESULT= new HashMap<String, AdapterTaskResult> ();
 
     public static boolean ADAPTER_TASK_CHARGE=false;
 
@@ -312,5 +311,7 @@ public class Constant {
     
     //101PPT业务方ID
     public static final String BSYSKEY_101PPT = "6ed3fc00-5a24-4daf-9700-42e044e872ee";
-
+    
+    //bsyskey
+    public static final String BSYSKEY = "bsyskey";
 }

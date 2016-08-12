@@ -22,8 +22,9 @@ public class ResLifeCycleModel {
 	private List<ResContributeModel> resContributes;
 	private String creator;
 	private String publisher;
-	private String provider;
 	private String providerSource;
+	private String providerMode;
+	private String provider;
 	private Date createTime;
 	private Date lastUpdate;
 
@@ -93,6 +94,14 @@ public class ResLifeCycleModel {
 
 	public void setPublisher(String publisher) {
 		this.publisher = publisher;
+	}
+
+	public String getProviderMode() {
+		return providerMode;
+	}
+
+	public void setProviderMode(String providerMode) {
+		this.providerMode = providerMode;
 	}
 
 	public String getProvider() {

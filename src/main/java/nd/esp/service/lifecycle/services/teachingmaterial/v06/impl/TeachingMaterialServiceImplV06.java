@@ -8,7 +8,6 @@ import java.util.Set;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.TeachingMaterialDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
@@ -48,7 +47,6 @@ public class TeachingMaterialServiceImplV06 implements
 		
 		
 		//2、调用通用创建接口
-		tmm.setTechInfoList(null);
 		return (TeachingMaterialModel)ndResourceService.create(resType, tmm);
 	}
 
@@ -60,7 +58,6 @@ public class TeachingMaterialServiceImplV06 implements
 		
 		
 		//2、调用通用创建接口
-		tmm.setTechInfoList(null);
 		return (TeachingMaterialModel)ndResourceService.update(resType, tmm);
 	}
 
@@ -72,9 +69,7 @@ public class TeachingMaterialServiceImplV06 implements
 			checkTeachingMaterial(resType, tmm, UPDATE_TYPE);
 		}
 
-
 		//2、调用通用创建接口
-		tmm.setTechInfoList(null);
 		return (TeachingMaterialModel)ndResourceService.patch(resType, tmm);
 	}
 

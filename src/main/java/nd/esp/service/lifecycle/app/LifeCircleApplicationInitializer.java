@@ -36,6 +36,7 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties message_properties=null;
 	public static Properties worker_properties=null;
 	public static Properties props_properties_es=null;
+	public static Properties props_properties_es_retrieve=null;
 	public static Properties props_properties_db=null;
 	public static Properties tablenames_properties=null;
 	public static Properties ndCode_properties=null;
@@ -48,6 +49,7 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties db_titan_field_techinfo=null;
 	public static Properties db_titan_field_category=null;
 	public static Properties db_titan_field_knowledgerelation=null;
+	public static Properties db_titan_field_coverage=null;
 	
 
 	static {
@@ -60,6 +62,8 @@ public class LifeCircleApplicationInitializer extends
 			        .loadAllProperties("config/worker/worker.properties");
 			props_properties_es = PropertiesLoaderUtils
                     .loadAllProperties("config/props/resource_props_range_es.properties");
+			props_properties_es_retrieve = PropertiesLoaderUtils
+					.loadAllProperties("config/props/resource_props_range_es-retrieve.properties");
 			props_properties_db = PropertiesLoaderUtils
 			        .loadAllProperties("config/props/resource_props_range_db.properties");
 			tablenames_properties = PropertiesLoaderUtils
@@ -87,6 +91,8 @@ public class LifeCircleApplicationInitializer extends
 					.loadAllProperties("config/props/db_titan_field_category.properties");
 			db_titan_field_knowledgerelation = PropertiesLoaderUtils
 					.loadAllProperties("config/props/db_titan_field_knowledgerelation.properties");
+			db_titan_field_coverage = PropertiesLoaderUtils
+					.loadAllProperties("config/props/db_titan_field_coverage.properties");
 		} catch (IOException e) {
 
 			LOG.warn("加载配置文件失败", e);

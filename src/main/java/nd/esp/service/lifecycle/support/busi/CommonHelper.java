@@ -876,6 +876,14 @@ public class CommonHelper {
 				}
 			}
 		}
+		
+		//校验版权的起始与结束时间合法性
+		if(viewModel.getCopyright() != null){
+			ResRightViewModel vm = viewModel.getCopyright();
+			if(vm.getRightStartDate() != null && vm.getRightEndDate() != null && vm.getRightEndDate().longValue() < vm.getRightStartDate().longValue()){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckRightDateFail);
+			}
+		}
 	}
 	
 	/**
@@ -1770,4 +1778,11 @@ public class CommonHelper {
             }
         }
     }
+
+	public static void includeFilter(List<String> includes, String primaryCategory){
+		if(ResourceNdCode.instructionalobjectives.toString().equals(primaryCategory)||
+				ResourceNdCode.knowledges.toString().equals(primaryCategory)){
+			includes.remove(IncludesConstant.INCLUDE_EDU);
+		}
+	}
 }

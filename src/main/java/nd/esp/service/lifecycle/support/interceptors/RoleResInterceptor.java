@@ -109,14 +109,14 @@ public class RoleResInterceptor implements HandlerInterceptor {
 								isResconsumerMatcher(request, userInfo.getUserId());
 							}
 							// 其他情况，视为异常。这个分支是不会进入的，如果进入即存在异常。
-							else{
-								return false;
-							}
+//							else{
+//								return false;
+//							}
 							return true;
 						}
-						else{
-							return false;
-						}
+//						else{
+//							return false;
+//						}
 					}
 				}
 	        }

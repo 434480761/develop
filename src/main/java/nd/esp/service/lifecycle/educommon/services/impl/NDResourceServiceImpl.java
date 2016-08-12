@@ -73,6 +73,7 @@ import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.titan.TitanSearchService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
@@ -127,7 +128,10 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     private static final Logger LOG = LoggerFactory.getLogger(NDResourceServiceImpl.class);
     private final static ExecutorService executorService = CommonHelper.getPrimaryExecutorService();
-    
+
+	@Autowired
+	private TitanSyncService titanSyncService;
+
     //忽略categoryList, techInfoList
     private final static ModelMapper specialModelMapper = new ModelMapper();
     static{
@@ -1495,7 +1499,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
     @Override
     public AccessModel getDownloadUrl(String resourceType, String uuid, String uid, String key) {
-        CSInstanceInfo csInstanceInfo = null;
         // 逻辑校验 uuid,只能是已存在的资源
         // check exist resource
         ResourceModel resourceModel = getDetail(resourceType, uuid, Arrays.asList(IncludesConstant.INCLUDE_TI));
@@ -1507,9 +1510,53 @@ public class NDResourceServiceImpl implements NDResourceService{
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CSResourceNotFound);
         }
-        // 获取到目录
+        
+        return getDownloadAccessModel(resourceModel, resourceType, uuid, uid, key);
+    }
+
+    @Override
+	public Map<String, AccessModel> batchGetDownloadUrl(String resourceType,
+			Set<String> ids, String uid, String key) {
+    	Map<String, AccessModel> resultMap = new HashMap<String, AccessModel>();
+    	
+    	//批量获取资源信息
+    	List<ResourceModel> resourceModels = batchDetail(resourceType, ids, Arrays.asList(IncludesConstant.INCLUDE_TI));
+    	
+    	if(CollectionUtils.isNotEmpty(resourceModels)){
+    		for(ResourceModel resourceModel : resourceModels){
+    			AccessModel accessModel = new AccessModel();
+    			try {
+    				accessModel = getDownloadAccessModel(
+        					resourceModel, resourceType, resourceModel.getIdentifier(), uid, key);
+				} catch (Exception e) {
+					accessModel.setAccessMethod(null);
+					accessModel.setErrorMessage(e.getLocalizedMessage());
+				}
+    			
+    			resultMap.put(resourceModel.getIdentifier(), accessModel);
+    		}
+    	}
+    	
+		return resultMap;
+	}
+    
+    /**
+     * 获取下载的AccessModel
+     * @author xiezy
+     * @date 2016年8月8日
+     * @param resourceModel
+     * @param resourceType
+     * @param uuid
+     * @param uid
+     * @param key
+     * @return
+     */
+    private AccessModel getDownloadAccessModel(ResourceModel resourceModel,String resourceType,String uuid,String uid, String key){
+    	CSInstanceInfo csInstanceInfo = null;
+    	
+    	// 获取到目录
         String location = "";
-        boolean isPpt2Html = PPT_LOCATION_KEY.equals(key)&&"coursewares".equals(resourceType);
+        boolean isPpt2Html = PPT_LOCATION_KEY.equals(key) && IndexSourceType.SourceCourseWareType.getName().equals(resourceType);
         if (StringUtils.isEmpty(key)||isPpt2Html) {
             //都使用转码后的实例
             location = getLocation(resourceModel);
@@ -1539,7 +1586,6 @@ public class NDResourceServiceImpl implements NDResourceService{
         // 获得session
         String sessionid = getSessionIdFromCS(csInstanceInfo.getUrl() + "/sessions", param);
 
-        
         LOG.debug("session:"+sessionid);
         
         AccessModel accessModel = new AccessModel();
@@ -1550,11 +1596,11 @@ public class NDResourceServiceImpl implements NDResourceService{
         accessModel.setUuid(UUID.fromString(uuid));
         accessModel.setExpireTime(CommonHelper.fileOperationExpireDate());
         accessModel.setSessionId(sessionid);
+        accessModel.setErrorMessage(null);
         
         return accessModel;
     }
-
-
+    
 	/**
      * 
      * @param uuid
@@ -2387,6 +2433,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setPublisher(resLifeCycleModel.getPublisher());
             education.setProvider(resLifeCycleModel.getProvider());
             education.setProviderSource(resLifeCycleModel.getProviderSource());
+            education.setProviderMode(resLifeCycleModel.getProviderMode());
             if (resLifeCycleModel.getCreateTime() != null) {
                 education.setCreateTime(new Timestamp(resLifeCycleModel.getCreateTime().getTime()));
             }
@@ -2420,6 +2467,9 @@ public class NDResourceServiceImpl implements NDResourceService{
             education.setAuthor(resRightModel.getAuthor());
             education.setCrDescription(resRightModel.getDescription());
             education.setCrRight(resRightModel.getRight());
+            education.setHasRight(resRightModel.getHasRight());
+            education.setRightStartDate(resRightModel.getRightStartDate());
+            education.setRightEndDate(resRightModel.getRightEndDate());
         }
         // 扩展属性：
         try {
@@ -3341,6 +3391,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(ResourceTypeSupport.isValidEsResourceType(resType) && CollectionUtils.isNotEmpty(ids)){
 			for (String id : ids) {
 				esResourceOperation.asynAdd(new Resource(resType, id));
+				titanSyncService.syncEducation(resType,id);
 				offlineService.writeToCsAsync(resType, id);
 			}
 		}

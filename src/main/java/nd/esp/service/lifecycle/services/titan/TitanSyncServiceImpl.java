@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
+import nd.esp.service.lifecycle.daos.titan.TitanResourceRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
@@ -17,15 +18,13 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by liuran on 2016/7/6.
@@ -35,15 +34,6 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncServiceImpl.class);
     @Autowired
     private TitanTechInfoRepository titanTechInfoRepository;
-
-    @Autowired
-    private TitanResourceRepository<Education> titanResourceRepository;
-
-    @Autowired
-    private TitanCoverageRepository titanCoverageRepository;
-
-    @Autowired
-    private TitanCategoryRepository titanCategoryRepository;
 
     @Autowired
     private TitanRelationRepository titanRelationRepository;
@@ -61,7 +51,16 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private TitanRepositoryUtils titanRepositoryUtils;
 
     @Autowired
-    private TitanChapterRelationRepository titanChapterRelationRepository;
+    private TitanImportRepository titanImportRepository;
+
+    @Autowired
+    private TitanResourceRepository<Education> titanResourceRepository;
+
+    @Autowired
+    private TitanCoverageRepository titanCoverageRepository;
+
+    @Autowired
+    private TitanCategoryRepository titanCategoryRepository;
 
 
     @Override
@@ -80,8 +79,10 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return true;
         }
 
-        delete(primaryCategory, identifier);
-
+        boolean deleteSuccess = delete(primaryCategory, identifier);
+        if(!deleteSuccess){
+            return false;
+        }
         EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
         Education education;
         try {
@@ -91,12 +92,15 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
+
         if(education == null){
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
         } else {
             boolean reportSuccess = report(education);
             if(reportSuccess){
                 titanRepositoryUtils.titanSync4MysqlDelete(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
+            } else {
+                titanRepositoryUtils.titanSync4MysqlImportAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
             }
         }
 
@@ -114,11 +118,33 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         return true;
     }
 
+    @Override
+    public boolean syncEducation(String primaryCategory, String identifier) {
+        EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+        Education education;
+        try {
+            education = (Education) espRepository.get(identifier);
+        } catch (EspStoreException e) {
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+                    primaryCategory, identifier);
+            return false;
+        }
+        try{
+            titanResourceRepository.update(education);
+        } catch (Exception e){
+            LOG.info("titan_repository error");
+        }
+
+
+        return false;
+    }
+
     private boolean delete(String primaryCategory, String identifier){
-        LOG.info("titan sync : delete resource start primaryCategory：{}  identifier:{}",primaryCategory,identifier);
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
-        LOG.info("titan sync : delete {} success",identifier);
+        if(techInfoDeleted && resourceDeleted){
+            LOG.info("titan_sync : delete {} success",identifier);
+        }
         return techInfoDeleted && resourceDeleted;
     }
 
@@ -129,31 +155,80 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(education == null){
             return true;
         }
-        LOG.info("titan sync : report resource start primaryCategory：{}  identifier:{}",
+
+        if(StringUtils.isEmpty(education.getPrimaryCategory())){
+            return false;
+        }
+        LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
         Set<String> uuids = new HashSet<>();
         uuids.add(education.getIdentifier());
 
+
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
+
+        List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+        List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+
+
+        Map<String,ResCoverage> coverageMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resCoverageList)){
+            for(ResCoverage coverage : resCoverageList){
+                String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
+                if(coverageMap.get(key)==null){
+                    coverageMap.put(key, coverage);
+                }
+            }
+        }
+
+        Map<String, ResourceCategory> categoryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(resourceCategoryList)){
+            for (ResourceCategory resourceCategory : resourceCategoryList){
+                if(categoryMap.get(resourceCategory.getTaxoncode())==null){
+                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
+                }
+
+            }
+        }
+
+        Map<String, TechInfo> techInfoMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(techInfos)){
+            for (TechInfo techInfo : techInfos){
+                if(techInfoMap.get(techInfo.getTitle()) == null){
+                    techInfoMap.put(techInfo.getTitle(), techInfo);
+                }
+            }
+        }
+
+        List<ResCoverage> coverageList = new ArrayList<>();
+        coverageList.addAll(coverageMap.values());
+        List<ResourceCategory> categoryList = new ArrayList<>();
+        categoryList.addAll(categoryMap.values());
+        List<TechInfo> techInfoList = new ArrayList<>();
+        techInfoList.addAll(techInfoMap.values());
 
         Education resultEducation = titanResourceRepository.add(education);
         if(resultEducation == null){
             return false;
         }
 
-        List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(resCoverageList);
+
+        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
         if(resCoverageList.size() != resultCoverage.size()){
             return false;
         }
 
-
-        List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
+        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(categoryList);
         if(resourceCategoryList.size()!=resultCategory.size()){
+            return false;
+        }
+
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
+        if(techInfos.size()!=resultTechInfos.size()){
             return false;
         }
 
@@ -163,14 +238,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(resourceRelations.size() != resultResourceRelations.size()){
             return false;
         }
-
-        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfos);
-        if(techInfos.size()!=resultTechInfos.size()){
-            return false;
-        }
-
-        LOG.info("titan sync : report {} success",education.getIdentifier());
+        LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
 }

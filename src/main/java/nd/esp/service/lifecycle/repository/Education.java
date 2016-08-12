@@ -96,15 +96,20 @@ public class Education extends EspEntity implements Serializable,
 	@Column(name="code")
 	private String ndresCode;
 	
+	/** * ******************* LIFE_CYCLE_ATTRIBUTES START *****************/
 
 	/**
-	* 
+	* 资源来源
 	*/
 	@Column(name = "provider_source")
 	protected String providerSource;
-
-	/** * ******************* LIFE_CYCLE_ATTRIBUTES START *****************/
-
+	
+	/**
+	 * 资源来源方式
+	 */
+	@Column(name = "provider_mode")
+	protected String providerMode;
+	
 	/** The version. */
 	protected String version;
 
@@ -135,6 +140,15 @@ public class Education extends EspEntity implements Serializable,
 	protected String crDescription;
 
 	protected String author;
+	
+	@Column(name="right_start_date")
+	protected BigDecimal rightStartDate;
+	
+	@Column(name="right_end_date")
+	protected BigDecimal rightEndDate;
+	
+	@Column(name="has_right")
+	protected Boolean hasRight;
 	
 	/** * ******************* CR_ATTRIBUTES END *****************/
 
@@ -520,5 +534,36 @@ public class Education extends EspEntity implements Serializable,
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+
+	public String getProviderMode() {
+		return providerMode;
+	}
+
+	public void setProviderMode(String providerMode) {
+		this.providerMode = providerMode;
+	}
+
+	public BigDecimal getRightStartDate() {
+		return rightStartDate;
+	}
+
+	public void setRightStartDate(BigDecimal rightStartDate) {
+		this.rightStartDate = rightStartDate;
+	}
+
+	public BigDecimal getRightEndDate() {
+		return rightEndDate;
+	}
+
+	public void setRightEndDate(BigDecimal rightEndDate) {
+		this.rightEndDate = rightEndDate;
+	}
+	public Boolean getHasRight() {
+		return hasRight;
+	}
+
+	public void setHasRight(Boolean hasRight) {
+		this.hasRight = hasRight;
 	}
 }

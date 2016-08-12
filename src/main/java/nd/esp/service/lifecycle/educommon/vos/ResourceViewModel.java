@@ -145,6 +145,7 @@ public class ResourceViewModel {
 	 * 资源的版权信息
 	 */
 	@JsonInclude(Include.NON_NULL)
+	@Valid
 	private ResRightViewModel copyright;
 
 	public String getIdentifier() {

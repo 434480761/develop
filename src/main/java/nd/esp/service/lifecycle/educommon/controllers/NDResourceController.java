@@ -652,7 +652,7 @@ public class NDResourceController {
         }
 
         //对接安全接口中需要过滤掉的category code
-        String bsyskey = httpServletRequest.getHeader("bsyskey");
+        String bsyskey = httpServletRequest.getHeader(Constant.BSYSKEY);
         Set<String> excludeCategories4bsyskey = ServiceAuthorAspect.getExcludeCategories(bsyskey);
         if(CollectionUtils.isNotEmpty(categoryExclude)){
             categoryExclude.addAll(excludeCategories4bsyskey);
@@ -721,27 +721,54 @@ public class NDResourceController {
                                 resType, includesList, categories, categoryExclude,
                                 relationsMap, coveragesList, propsMap, orderMap,
                                 words, limit, isNotManagement, reverseBoolean,printable,printableKey);
+                        LOG.warn("ES 查询完成");
                     } catch (Exception e) {// 如果ES出错,通过数据库查一遍
                         LOG.error("ES查询出错,通用DB查询");
-                        Map<String, Object> changeMap = changeKey(propsMap,
-                                orderMap, true);
-                        propsMap = (Map<String, Set<String>>) changeMap
-                                .get("propsMapNew");
-                        orderMap = (Map<String, String>) changeMap
-                                .get("orderMapNew");
-                        rListViewModel = ndResourceService.resourceQueryByDB(
-                                resType, resCodes, includesList, categories,
-                                categoryExclude, relationsMap, coveragesList,
-                                propsMap, orderMap, words, limit, isNotManagement,
-                                reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                        rListViewModel = resourceQueryByDB(resType, resCodes, categories, categoryExclude, words,
+                                limit, isNotManagement, printable, printableKey, statisticsType, statisticsPlatform,
+                                forceStatus, tags, showVersion, includesList, relationsMap, coveragesList, propsMap,
+                                orderMap, reverseBoolean);
                     }
-                } else {
-                    rListViewModel = ndResourceService.resourceQueryByDB(resType,
-                            resCodes, includesList, categories, categoryExclude,
-                            relationsMap, coveragesList, propsMap, orderMap, words,
-                            limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+            } else if (StaticDatas.QUERY_BY_TITAN_FIRST
+                    && canQueryByTitan(resType, relationsMap, orderMap, forceStatus, tags, showVersion,printable)) {
+                Map<String, Object> changeMap = changeKey(propsMap,
+                        orderMap, false);
+                propsMap = (Map<String, Set<String>>) changeMap
+                        .get("propsMapNew");
+                orderMap = (Map<String, String>) changeMap
+                        .get("orderMapNew");
+                try {
+                    if (mustQueryByTitanRT(coveragesList, isNotManagement)) {
+                        rListViewModel = resourceQueryByTitanRealTime(resType,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean, printable, printableKey, statisticsType,
+                                statisticsPlatform, forceStatus, tags, showVersion);
+                        LOG.warn("Titan 实时查询完成");
+                    } else {
+                        rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean, printable, printableKey);
+                        LOG.warn("Titan 查询完成");
+                    }
+
+                } catch (Exception e) {
+                    LOG.error("Titan 查询出错,通用DB查询");
+                    rListViewModel = resourceQueryByDB(resType, resCodes, categories, categoryExclude, words,
+                            limit, isNotManagement, printable, printableKey, statisticsType,
+                            statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,
+                            coveragesList, propsMap, orderMap, reverseBoolean);
                 }
-                break;
+            }
+            else {
+                rListViewModel = ndResourceService.resourceQueryByDB(resType,
+                        resCodes, includesList, categories, categoryExclude,
+                        relationsMap, coveragesList, propsMap, orderMap, words,
+                        limit, isNotManagement, reverseBoolean, printable, printableKey, statisticsType,
+                        statisticsPlatform, forceStatus, tags, showVersion);
+            }
+            break;
             case ES:
                 rListViewModel = ndResourceService.resourceQueryByEla(resType,
                         includesList, categories, categoryExclude, relationsMap,
@@ -785,6 +812,28 @@ public class NDResourceController {
         result.setItems(items);
 
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ListViewModel<ResourceModel> resourceQueryByDB(String resType, String resCodes, Set<String> categories,
+            Set<String> categoryExclude, String words, String limit, boolean isNotManagement, Boolean printable,
+            String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus,
+            List<String> tags, boolean showVersion, List<String> includesList, List<Map<String, String>> relationsMap,
+            List<String> coveragesList, Map<String, Set<String>> propsMap, Map<String, String> orderMap,
+            boolean reverseBoolean) {
+        ListViewModel<ResourceModel> rListViewModel;
+        Map<String, Object> changeMap = changeKey(propsMap,
+                orderMap, true);
+        propsMap = (Map<String, Set<String>>) changeMap
+                .get("propsMapNew");
+        orderMap = (Map<String, String>) changeMap
+                .get("orderMapNew");
+        rListViewModel = ndResourceService.resourceQueryByDB(
+                resType, resCodes, includesList, categories,
+                categoryExclude, relationsMap, coveragesList,
+                propsMap, orderMap, words, limit, isNotManagement,
+                reverseBoolean, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+        return rListViewModel;
     }
     /**
      * 实现实时检索titan方案
@@ -834,7 +883,13 @@ public class NDResourceController {
         
         String limitForTitan = modifyTitanLimit(moreOffset, begin, size);
         
-        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includes, categories,
+//        需要使用LifeCycle 字段，默认带上
+        List<String> includesList = cloner.deepClone(includes);
+        if (!includesList.contains("LC")) {
+            includesList.add("LC");
+        }
+        
+        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includesList, categories,
                 categoryExclude, relations, coverages, propsMap, orderMap, words, limitForTitan, isNotManagement, reverse,
                 printable, printableKey, excetorService);
         
@@ -854,10 +909,6 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
-        List<String> includesList = cloner.deepClone(includes);
-        if (!includesList.contains("LC")) {
-            includesList.add("LC");
-        }
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
@@ -1190,6 +1241,57 @@ public class NDResourceController {
     }
 
     /**
+     * 判断走数据库的通用查询是否必须通过 Titan 实时查询
+     * @param coveragesList
+     * @param isNotManagement
+     * @return
+     */
+    private boolean mustQueryByTitanRT(List<String> coveragesList, boolean isNotManagement){
+        boolean haveUserCoverage = false;
+        if(CollectionUtils.isNotEmpty(coveragesList)){
+            for(String coverage : coveragesList){
+                if(StringUtils.isNotEmpty(coverage)){
+                    if(coverage.startsWith("User")){
+                        haveUserCoverage = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(!isNotManagement || haveUserCoverage){
+            return true;
+        }
+
+        return false;
+    }
+    
+    /**
+     * 判断走数据库的通用查询是否必须通过 Titan 查询
+     * @param resType
+     * @param relations
+     * @param orderMap
+     * @param forceStatus
+     * @param tags
+     * @param showVersion
+     * @param printable 是否可打印
+     * @return
+     */
+    private boolean canQueryByTitan(String resType, List<Map<String, String>> relations, Map<String, String>orderMap,
+            boolean forceStatus,List<String> tags,boolean showVersion,Boolean printable){
+        return (printable==null) && !forceStatus &&
+                !showVersion &&
+                CollectionUtils.isEmpty(tags) &&
+                !resType.equals(Constant.RESTYPE_EDURESOURCE) &&
+                CollectionUtils.isNotEmpty(relations) &&
+                (CollectionUtils.isEmpty(orderMap) ||
+                        (CollectionUtils.isNotEmpty(orderMap) &&
+                                !(orderMap.containsKey("size") || orderMap.containsKey("key_value") ||
+                                        orderMap.containsKey("top") || orderMap.containsKey("scores") ||
+                                        orderMap.containsKey("votes") || orderMap.containsKey("views") ||
+                                        orderMap.containsKey("sort_num") || orderMap.containsKey("taxOnCode"))));
+    }
+    /**
      * ES和DB prop和orderby之间key的转换
      * <p>Create Time: 2016年4月6日   </p>
      * <p>Create author: xiezy   </p>
@@ -1466,7 +1568,7 @@ public class NDResourceController {
                 properties = LifeCircleApplicationInitializer.props_properties_es;
                 break;
             case TITAN_ES:
-                properties = LifeCircleApplicationInitializer.props_properties_es;
+                properties = LifeCircleApplicationInitializer.props_properties_es_retrieve;
                 break;
             default:
                 break;
@@ -1938,7 +2040,13 @@ public class NDResourceController {
         commonServiceHelper.assertUploadable(res_type);
         return ndResourceService.getUploadUrl(res_type, uuid, uid, renew, coverage);
     }
-
+    
+    /**
+     * 获取下载地址
+     * @author xiezy
+     * @date 2016年8月8日
+     * @return
+     */
     @RequestMapping(value = "/{uuid}/downloadurl", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public AccessModel requestDownloading(@PathVariable String res_type,
                                           @PathVariable String uuid,
@@ -1947,7 +2055,6 @@ public class NDResourceController {
                                           @RequestParam(value = "coverage", required = false) String coverage,
                                           @AuthenticationPrincipal UserInfo userInfo,
                                           HttpServletRequest request) {
-        //        ResourceTypesUtil.checkResType(res_type, LifeCircleErrorMessageMapper.CSResourceTypeNotSupport);
         commonServiceHelper.assertDownloadable(res_type);
         //下载接口适配智能出题
         if (CoverageConstant.INTELLI_KNOWLEDGE_COVERAGE.equals(coverage)) {
@@ -1958,35 +2065,98 @@ public class NDResourceController {
         AccessModel am = ndResourceService.getDownloadUrl(res_type, uuid, uid, key);
 
         //同步至统计表中  add by xuzy 20160615
-        String bsyskey = request.getHeader("bsyskey");
+        String bsyskey = request.getHeader(Constant.BSYSKEY);
         syncResourceStatis(bsyskey,res_type,uuid);
 
         //同步至报表系统  add by xuzy 20160517
         if(nrs.checkCoverageIsNd(res_type,uuid)){
-            long time = System.currentTimeMillis();
-            ReportResourceUsing rru = new ReportResourceUsing();
-            rru.setResourceId(uuid);
-            rru.setBizSys(request.getHeader("bsyskey"));
-            rru.setIdentifier(UUID.randomUUID().toString());
-
-            rru.setCreateTime(new Timestamp(time));
-            rru.setLastUpdate(new BigDecimal(time));
-
-            if(userInfo != null){
-                rru.setUserId(userInfo.getUserId());
-                if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
-                    Map<String,Object> map = userInfo.getOrgExinfo();
-                    if(map.get("org_id") != null){
-                        rru.setOrgId(map.get("org_id").toString());
-                    }
-                    rru.setOrgName((String)map.get("org_name"));
-                    rru.setRealName((String)map.get("real_name"));
-                }
-            }
+        	ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
             nrs.addResourceUsing(rru);
         }
 
         return am;
+    }
+    
+    /**
+     * 批量获取下载地址
+     * @author xiezy
+     * @date 2016年8月8日
+     */
+    @RequestMapping(value = "/downloadurl/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String, AccessModel> batchRequestDownloading(@PathVariable String res_type,
+    									  @RequestParam(value = "uuid", required = true) Set<String> ids,
+                                          @RequestParam(value = "uid", required = true) String uid,
+                                          @RequestParam(value = "key", required = false) String key,
+                                          @AuthenticationPrincipal UserInfo userInfo,
+                                          HttpServletRequest request) {
+        commonServiceHelper.assertDownloadable(res_type);
+        
+        Map<String, AccessModel> resultMap = ndResourceService.batchGetDownloadUrl(res_type, ids, uid, key);
+
+        //同步至统计表中 
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	String bsyskey = request.getHeader(Constant.BSYSKEY);
+        	for(String uuid : resultMap.keySet()){
+        		if(resultMap.get(uuid) != null && resultMap.get(uuid).getErrorMessage() == null){
+        			syncResourceStatis(bsyskey,res_type,uuid);
+        		}
+        	}
+        }
+
+        //同步至报表系统 
+        if(CollectionUtils.isNotEmpty(resultMap)){
+        	List<ReportResourceUsing> reportResourceUsings = new ArrayList<ReportResourceUsing>();
+        	
+        	for(String uuid : resultMap.keySet()){
+        		if(resultMap.get(uuid) != null && resultMap.get(uuid).getErrorMessage() == null){
+        			if(nrs.checkCoverageIsNd(res_type,uuid)){
+            			ReportResourceUsing rru = getReportResourceUsingModel(uuid, userInfo, request);
+            			reportResourceUsings.add(rru);
+            		}
+        		}
+        	}
+        	
+        	if(CollectionUtils.isNotEmpty(reportResourceUsings)){
+        		nrs.batchAddResourceUsing(reportResourceUsings);
+        	}
+        }
+
+        return resultMap;
+    }
+    
+    /**
+     * 获取 同步至报表系统 的Model
+     * @author xiezy
+     * @date 2016年8月8日
+     * @param uuid
+     * @param userInfo
+     * @param request
+     * @return
+     */
+    private ReportResourceUsing getReportResourceUsingModel(String uuid,UserInfo userInfo,
+            HttpServletRequest request){
+    	long time = System.currentTimeMillis();
+        ReportResourceUsing rru = new ReportResourceUsing();
+        rru.setResourceId(uuid);
+        rru.setBizSys(request.getHeader(Constant.BSYSKEY));
+        rru.setIdentifier(UUID.randomUUID().toString());
+
+        rru.setCreateTime(new Timestamp(time));
+        rru.setLastUpdate(new BigDecimal(time));
+
+        if(userInfo != null){
+            rru.setUserId(userInfo.getUserId());
+            if(CollectionUtils.isNotEmpty(userInfo.getOrgExinfo())){
+                Map<String,Object> map = userInfo.getOrgExinfo();
+                if(map.get("org_id") != null){
+                    rru.setOrgId(map.get("org_id").toString());
+                }
+                rru.setOrgName((String)map.get("org_name"));
+                rru.setRealName((String)map.get("real_name"));
+            }
+        }
+        
+		return rru;
     }
 
     /**

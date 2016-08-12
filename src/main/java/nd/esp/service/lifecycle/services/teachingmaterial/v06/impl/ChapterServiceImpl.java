@@ -157,6 +157,9 @@ public class ChapterServiceImpl implements ChapterService{
             if(teachingMaterial == null || (!teachingMaterial.getEnable())){
                 return false;
             }
+            if(!teachingMaterial.getPrimaryCategory().equals(resourceType)){
+            	return false;
+            }
         } catch (EspStoreException e) {
             LOG.error("教材章节V0.6获取教材出错", e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,

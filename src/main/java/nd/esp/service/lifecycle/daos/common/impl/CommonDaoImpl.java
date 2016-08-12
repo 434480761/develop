@@ -5,8 +5,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.daos.common.CommonDao;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
 import nd.esp.service.lifecycle.support.DbName;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 /**
  * 公共DAO实现类
@@ -22,6 +25,12 @@ public class CommonDaoImpl implements CommonDao {
 	
 	@PersistenceContext(unitName="questionEntityManagerFactory")
 	EntityManager questionEm;
+
+	@Autowired
+	private TitanTechInfoRepository titanTechInfoRepository;
+
+	@Autowired
+	private TitanCategoryRepository titanCategoryRepository;
 	
 	@Override
 	public int deleteTechInfoByResource(String resType,String resourceId,DbName name) {
@@ -32,6 +41,7 @@ public class CommonDaoImpl implements CommonDao {
 			query = questionEm.createNamedQuery("deleteTechInfoByResource");
 		}
 		query.setParameter("resourceId", resourceId);
+		titanTechInfoRepository.deleteAllByResource(resType,resourceId);
 		return query.executeUpdate();
 	}
 
@@ -45,6 +55,7 @@ public class CommonDaoImpl implements CommonDao {
 		}
 		query.setParameter("resourceId", resourceId);
 		query.setParameter("rts", resType);
+		titanCategoryRepository.deleteAll(resType, resourceId);
 		return query.executeUpdate();
 	}
 

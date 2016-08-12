@@ -34,6 +34,8 @@ public class ResLifeCycleViewModel {
 	private String provider;
 	@Length(message="{resourceViewModel.lifeCycle.providerSource.maxLength.validmsg}",max=500, groups={LifecycleDefault.class,LifecycleDefault4Update.class})
 	private String providerSource;
+	@Length(message="{resourceViewModel.lifeCycle.providerMode.maxLength.validmsg}",max=500, groups={LifecycleDefault.class,LifecycleDefault4Update.class})
+	private String providerMode;
 	private Date createTime;
 	private Date lastUpdate;
 
@@ -112,4 +114,13 @@ public class ResLifeCycleViewModel {
 	public void setLastUpdate(Date lastUpdate) {
 		this.lastUpdate = lastUpdate;
 	}
+
+	public String getProviderMode() {
+		return providerMode;
+	}
+
+	public void setProviderMode(String providerMode) {
+		this.providerMode = providerMode;
+	}
+	
 }

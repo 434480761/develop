@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.daos.titan.TitanCoverageRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgePathViewModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
@@ -170,7 +171,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
             String line = iterator.next().getString();
             Map<String, String> map = TitanResultParse.toMap(line);
             KnowledgeModel node = new KnowledgeModel();
-            TitanResultParse.dealMainResult(node, map);
+            TitanResultParse.dealMainResult(node, map, IncludesConstant.getIncludesList());
             if (!set.contains(node.getIdentifier())) {
                 // System.out.println(line);
                 nodes.add(node);
@@ -215,7 +216,7 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
             String line = iterator.next().getString();
             Map<String, String> map = TitanResultParse.toMap(line);
             KnowledgeModel node = new KnowledgeModel();
-            TitanResultParse.dealMainResult(node, map);
+            TitanResultParse.dealMainResult(node, map,IncludesConstant.getIncludesList());
             if (!set.contains(node.getIdentifier())) {
                 nodes.add(node);
                 set.add(node.getIdentifier());
@@ -312,9 +313,9 @@ public class TitanKnowledgeResourceServiceImpl implements TitanKnowledgeResource
         KnowledgeRelationsModel relation = new KnowledgeRelationsModel();
         KnowledgeModel targetModel = new KnowledgeModel();
         //source
-        if (source.size() > 0) TitanResultParse.dealMainResult(sourceModel, source);
+        if (source.size() > 0) TitanResultParse.dealMainResult(sourceModel, source,IncludesConstant.getIncludesList());
         // target
-        if (target.size() > 0) TitanResultParse.dealMainResult(targetModel, target);
+        if (target.size() > 0) TitanResultParse.dealMainResult(targetModel, target,IncludesConstant.getIncludesList());
 
         // relation
         relation.setIdentifier(edge.get(ES_SearchField.identifier.toString()));

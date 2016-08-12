@@ -34,6 +34,8 @@ public interface NotifyReportService {
 	
 	public void addResourceUsing(ReportResourceUsing rru);
 	
+	public void batchAddResourceUsing(List<ReportResourceUsing> rrus);
+	
 	public void notifyReport4Resource(String resourceType,ResourceModel rm,OperationType ot);
 	
 	public void notifyReport4AddCoverage(String resType,List<CoverageModel> cmList);

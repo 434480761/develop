@@ -487,6 +487,25 @@ public class AdapterDBDataController {
         return message;
     }
 
+    @RequestMapping(value = "/titan/first/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String changeTitanFirstSwitch(@RequestParam String open){
+        String message = "";
+
+        if(open.equals("false") && StaticDatas.QUERY_BY_TITAN_FIRST){
+            message = "关闭通用查询优先通过Titan查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUERY_BY_TITAN_FIRST",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUERY_BY_TITAN_FIRST = false;
+        }else if(open.equals("true") && !StaticDatas.QUERY_BY_TITAN_FIRST){
+            message = "开启通用查询优先通过Titan查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUERY_BY_TITAN_FIRST",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUERY_BY_TITAN_FIRST = true;
+        }
+
+        return message;
+    }
+    
     @RequestMapping(value = "/titan/switch/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public String titanSwitchChange(@RequestParam String open){
         String message = "";

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 /**
@@ -17,19 +18,31 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes) {
-		if (CollectionUtils.isEmpty(includes)) return "";
+	public static String generateScriptForInclude(List<String> includes, String resType) {
+		if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
 		String end = ")";
 
-		for (String include : includes) {
-			if (include.equals(IncludesConstant.INCLUDE_TI)) {
-				scriptBuffer.append(",out('has_tech_info')");
-			} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
-				scriptBuffer.append(",out('has_category_code')");
-				scriptBuffer.append(",out('has_categories_path')");
+		if(CollectionUtils.isNotEmpty(includes)) {
+			for (String include : includes) {
+				if (include.equals(IncludesConstant.INCLUDE_TI)) {
+					scriptBuffer.append(",out('has_tech_info')");
+				} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
+					scriptBuffer.append(",out('has_category_code')");
+					// cg_taxoncode identifier
+					scriptBuffer.append(",outE('has_category_code')");
+					scriptBuffer.append(",out('has_categories_path')");
+				}
 			}
+		}
+		if (ResourceNdCode.knowledges.toString().equals(resType)) {
+
+			// order
+			scriptBuffer.append(",inE('has_knowledge')");
+
+			// parent
+			scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return "";

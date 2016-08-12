@@ -7,6 +7,7 @@ import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
 import nd.esp.service.lifecycle.support.busi.titan.TitanDirection;
@@ -29,6 +30,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
+import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -96,15 +98,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
 
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
@@ -114,13 +108,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             Map<String, Map<String, List<String>>> params,
             Map<String, String> orderMap, int from, int size, boolean reverse,
             String words) {
-        /*System.out.println("params:" + params);
-        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
-        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*/
+
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
+        titanExpression.setResType(resType);
         //dealWithInclude(titanExpression,includes);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
@@ -130,6 +122,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         params.remove("relation");
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+        resourceQueryVertex.setIsFilter(resType);
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
@@ -165,130 +158,133 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         long searchBegin = System.currentTimeMillis();
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
 
-        return TitanResultParse.parseToListView(resType,resultStr);
-
+        return getListViewModel(resultSet,resType,includes);
     }
 
 
     @Override
-    public ListViewModel<ResourceModel> searchUseES(String resType,List<String> fields,
-                                               List<String> includes,
-                                               Map<String, Map<String, List<String>>> params,
-                                               Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-
-        EsIndexQueryBuilder builder=new EsIndexQueryBuilder();
-        builder.setWords(words);
-        builder.setParams(params);
-        builder.setResType(resType);
-        builder.setRange(from,size);
-        builder.setIncludes(includes);
-        builder.setFields(fields);
-        String script=builder.generateScriptAfterEsUpdate();
-        LOG.info("script:"+script);
-
+    public ListViewModel<ResourceModel> searchUseES(String resType, List<String> fields,
+                                                    List<String> includes,
+                                                    Map<String, Map<String, List<String>>> params,
+                                                    Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
+        // 1、构建查询脚本
+        EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
+        builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
+        String script = builder.generateScriptAfterEsUpdate();
+        LOG.info("script:" + script);
+        // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
-
-
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:" + (System.currentTimeMillis() - getResultBegin));
-
-        return TitanResultParse.parseToListView(resType,resultStr);
+        // 3、解析
+        return getListViewModel(resultSet, resType,includes);
     }
 
     @Override
-    public ListViewModel<ResourceModel> searchWithAdditionPropertiesUseES(
-            String resType, List<String> includes,
-            Map<String, Map<String, List<String>>> params,
-            Map<String, String> orderMap, int from, int size, boolean reverse,
-            String words) {
-        if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
-         return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
+    public ListViewModel<RelationForQueryViewModel> queryListByResType(String resType, String sourceUuid, String categories, String targetType, String label, String tags, String relationType, String limit, boolean reverse,boolean recursion, String coverage) {
+        //g.V().has('primary_category','chapters')
+        // .has('identifier','ee1227c7-ba92-4aa9-93da-e07981226e24')
+        // .has('lc_enable',true)
+        // .out('has_relation')
+        // .has('primary_category','lessons')
+        // .has('lc_enable',true)
+        // .has('search_code','$C0100').values()
+       /* Map<String, Object> scriptParamMap = new HashMap<String, Object>();
+        String resTypeKey=TitanUtils.generateKey(scriptParamMap,"primary_category");
+        scriptParamMap.put(resTypeKey,resType);
+        String sourceUuidKey=TitanUtils.generateKey(scriptParamMap,ES_SearchField.identifier.toString());
+        scriptParamMap.put(sourceUuidKey,sourceUuid);
+        StringBuffer scriptBuffer = new StringBuffer("g.V()");
+        scriptBuffer.append(".has('primary_category','").append(resTypeKey).append("')");
+        scriptBuffer.append(".has('identifier','").append(sourceUuidKey).append("')");*/
 
-        System.out.println("params:" + params);
-        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
-        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
-        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
+        titanExpression.setIncludes(null);
+        titanExpression.setResType(resType);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
 
-        dealWithOrderAndRange(titanExpression, orderMap, from, size);
+        dealWithOrderAndRange(titanExpression, null, 0, 10);
+        Map<String, List<String>> relationConditions=new HashMap<String, List<String>>();
+        List relation=new ArrayList<String>();
+        relation.add(resType+"/"+sourceUuid+"/"+relationType);
+        relationConditions.put(PropOperationConstant.OP_EQ.toString(),relation);
+        // FIXME chapters/ecddb468-af10-4465-aa4e-6c4115c52de8/ASSOCIATE
+        dealWithRelation(titanExpression,relationConditions, reverse);
 
-        TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+        TitanQueryVertex resourceQueryVertex = new TitanQueryVertex();
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
-        // for now only deal with code
-        dealWithSearchCode(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxoncode.toString()));
-        params.remove(ES_SearchField.cg_taxoncode.toString());
+        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", targetType));
+        //resourceVertexPropertyMap.put("identifier",generateFieldCondtion("identifier", sourceUuid));
+        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
 
-        dealWithSearchPath(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxonpath.toString()));
-        params.remove(ES_SearchField.cg_taxonpath.toString());
+        // Map<String, Map<String, List<String>>> params
 
-        dealWithSearchCoverage(resourceVertexPropertyMap,
-                params.get(ES_SearchField.coverages.toString()));
-        params.remove(ES_SearchField.coverages.toString());
+        // 处理维度 ES_OP.eq
+        dealWithSearchCode2(resourceQueryVertex,Arrays.asList(categories.split(",")));
+        //Map<String, List<String>> coverageConditions
+        Map<String, List<String>> coverageConditions=new HashMap<>();
+        List<String> coverages=new ArrayList();
+        coverages.add(coverage);
+        coverageConditions.put(ES_OP.in.toString(),coverages);
+        dealWithSearchCoverage(resourceVertexPropertyMap,coverageConditions);
 
-        //resourceQueryVertex.setWords(words);
-        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
-        resourceVertexPropertyMap
-                .put(ES_SearchField.lc_enable.toString(),
-                        generateFieldCondtion(
-                                ES_SearchField.lc_enable.toString(), true));
-        dealWithResource(resourceQueryVertex, params);
+       // dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
         // for count and result
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
-        EsIndexQueryForTitanSearch esIndexQueryForTitanSearch=new EsIndexQueryForTitanSearch();
-        esIndexQueryForTitanSearch.setWords(words);
-        String forIndexQuery=esIndexQueryForTitanSearch.generateScript();
-        scriptForResultAndCount=scriptForResultAndCount.replaceAll("g.V\\(\\)","g.V(vertexList)");
+        LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
 
-        LOG.info("titan generate script consume times:"
-                + (System.currentTimeMillis() - generateScriptBegin));
-
-        System.out.println(forIndexQuery+scriptForResultAndCount);
+        System.out.println(scriptForResultAndCount);
         System.out.println(scriptParamMap);
         long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(forIndexQuery+scriptForResultAndCount, scriptParamMap);
-        LOG.info("titan search consume times:"
-                + (System.currentTimeMillis() - searchBegin));
+        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
+        LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        List<String> resultStr = new ArrayList<>();
-        long getResultBegin = System.currentTimeMillis();
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            resultStr.add(iterator.next().getString());
-        }
-        //System.out.println(resultStr);
-        LOG.info("get resultset consume times:"
-                + (System.currentTimeMillis() - getResultBegin));
 
-        return TitanResultParse.parseToListView(resType,resultStr);
 
+        return null;
+    }
+
+    @Override
+    public ListViewModel<RelationForQueryViewModel> recursionQueryResources(String resType, String sourceUuid, String categories, String targetType, String label, String tags, String relationType, String limit, String coverage) throws EspStoreException {
+        return null;
+    }
+
+    @Override
+    public ListViewModel<RelationForQueryViewModel> batchQueryResources(String resType, Set<String> sids, String targetType, String label, String tags, String relationType, String limit, boolean reverse) {
+        return null;
     }
 
 
+    /**
+     * 解析查询结果
+     * @param resultSet
+     * @param resType
+     * @return
+     */
+    private ListViewModel<ResourceModel> getListViewModel(ResultSet resultSet, String resType,List<String> includes) {
+        List<String> resultStr = new ArrayList<>();
+        if (resultSet != null) {
+            long getResultBegin = System.currentTimeMillis();
+            Iterator<Result> iterator = resultSet.iterator();
+            while (iterator.hasNext()) {
+                resultStr.add(iterator.next().getString());
+            }
+            LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
+            return TitanResultParse2.parseToListView(resType, resultStr,includes,false);
+        }
+        return null;
+    }
 
+    /**
+     * 处理coverage
+     * @param vertexPropertiesMap
+     * @param coverageConditions
+     */
     private void dealWithSearchCoverage(
             Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
             Map<String, List<String>> coverageConditions) {
@@ -329,6 +325,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
 
+    /**
+     * 处理category path
+     * @param resourceQueryVertex
+     * @param taxonpathConditions
+     */
     private void dealWithSearchPath(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> taxonpathConditions) {
         if (CollectionUtils.isEmpty(taxonpathConditions)) return;
@@ -371,9 +372,66 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
 
+    /**
+     *
+     * @param resourceQueryVertex
+     * @param eqConditions
+     */
+    private void dealWithSearchCode2(TitanQueryVertex resourceQueryVertex,
+                                    List<String> eqConditions) {
+        if (CollectionUtils.isEmpty(eqConditions)) return;
+
+        // in
+        if (CollectionUtils.isNotEmpty(eqConditions)) {
+            Map<Titan_OP, List<Object>> conditionMap = new HashedMap<Titan_OP, List<Object>>();
+            List<Object> codes = new ArrayList<Object>();
+            for (String neCondition : eqConditions) {
+                if (neCondition == null) continue;
+                codes.add(neCondition);
+            }
+            if (CollectionUtils.isNotEmpty(codes)) conditionMap.put(Titan_OP.eq, codes);
+            if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.getPropertiesMap().put("search_code", conditionMap);
+        }
+
+    }
+    /**
+     * 处理category code
+     * @param resourceQueryVertex
+     * @param codeConditions
+     */
     private void dealWithSearchCode(TitanQueryVertexWithWords resourceQueryVertex,
                                     Map<String, List<String>> codeConditions) {
         if (CollectionUtils.isEmpty(codeConditions)) return;
+
+
+        // ne
+        List<Object> neLikeSearchCode = new ArrayList<Object>();
+        List<String> nqConditions = codeConditions.get(ES_OP.ne.toString());
+        if (CollectionUtils.isNotEmpty(nqConditions)) {
+            Map<String, Object> neLikeConditionMap = new HashedMap<>();
+            List<Object> neSearchCode = new ArrayList<Object>();
+            for (String neCondition : nqConditions) {
+                if (neCondition == null) continue;
+                if (neCondition.contains("*")) {
+                    // ne like
+                    neLikeSearchCode.add(neCondition);
+                } else {
+                    neSearchCode.add(neCondition);
+                }
+            }
+            // 处理ne
+            Map<Titan_OP, List<Object>> searchCodeConditionMap = new HashedMap<Titan_OP, List<Object>>();
+            if (CollectionUtils.isNotEmpty(neSearchCode)) searchCodeConditionMap.put(Titan_OP.ne, neSearchCode);
+            if (CollectionUtils.isNotEmpty(searchCodeConditionMap)) resourceQueryVertex.getPropertiesMap().put("search_code", searchCodeConditionMap);
+            // ne like
+            if (CollectionUtils.isNotEmpty(neLikeSearchCode)) neLikeConditionMap.put(PropOperationConstant.OP_NE+PropOperationConstant.OP_LIKE, neLikeSearchCode);
+            if (CollectionUtils.isNotEmpty(neLikeConditionMap)) resourceQueryVertex.setNeLikesearchCodesConditions(neLikeConditionMap);
+
+        }
+
+
+
+
 
         // in
         List<String> eqConditions = codeConditions.get(ES_OP.eq.toString());
@@ -398,26 +456,20 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (CollectionUtils.isNotEmpty(likeSearchCode)) conditionMap.put(PropOperationConstant.OP_LIKE, likeSearchCode);
             if (CollectionUtils.isNotEmpty(inSearchCode)) conditionMap.put(PropOperationConstant.OP_IN, inSearchCode);
             if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.setSearchCodesConditions(conditionMap);
-
         }
 
-        // ne
-        List<String> nqConditions = codeConditions.get(ES_OP.ne.toString());
-        if (CollectionUtils.isNotEmpty(nqConditions)) {
-            List<Object> neSearchCode = new ArrayList<Object>();
-            for (String neCondition : nqConditions) {
-                if (neCondition == null) continue;
-                neSearchCode.add(neCondition);
-            }
-            Map<Titan_OP, List<Object>> searchCodeConditionMap = new HashedMap<Titan_OP, List<Object>>();
-            if (CollectionUtils.isNotEmpty(neSearchCode)) searchCodeConditionMap.put(Titan_OP.ne, neSearchCode);
-            if (CollectionUtils.isNotEmpty(searchCodeConditionMap)) resourceQueryVertex.getPropertiesMap().put("search_code", searchCodeConditionMap);
 
-        }
 
     }
 
 
+    /**
+     * 处理 order by/limit
+     * @param titanExpression
+     * @param orderMap
+     * @param from
+     * @param size
+     */
     private void dealWithOrderAndRange(TitanExpression titanExpression,
                                        Map<String, String> orderMap, int from, int size) {
         // 默认使用创建时间排序，desc
@@ -537,6 +589,65 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     }
 
+
+    private void dealWithRelation2(TitanExpression titanExpression,
+                                   String resType,
+                                   String sourceUuid,
+                                   String targetType,
+                                   String label,
+                                   String tags,
+                                   String relationType,
+                                   boolean reverse,
+                                   boolean recursionBoolean) {
+
+        TitanEdgeExpression relationTitanEdgeExpression = new TitanEdgeExpression();
+        relationTitanEdgeExpression.setTitanOp(TitanEdgeExpression.TitanOp.and);
+        titanExpression.addCondition(relationTitanEdgeExpression);
+        TitanQueryEdgeAndVertex eqRelationTitanEdgeAndVertexExpression = new TitanQueryEdgeAndVertex();
+        if (reverse) {
+            eqRelationTitanEdgeAndVertexExpression.setTitanDirection(TitanDirection.out);
+        } else {
+            eqRelationTitanEdgeAndVertexExpression.setTitanDirection(TitanDirection.in);
+        }
+
+        TitanQueryEdge titanQueryEdge = new TitanQueryEdge();
+        eqRelationTitanEdgeAndVertexExpression
+                .setTitanQueryEdge(titanQueryEdge);
+        titanQueryEdge.setEdgeLabel(TitanKeyWords.has_relation.toString());
+        TitanQueryVertex titanQueryVertex = null;
+        // 关系递归（考虑章节与知识点）
+        if (recursionBoolean) {
+            titanQueryVertex = new TitanQueryVertexForTree();
+            if (ResourceNdCode.chapters.toString().equals(resType)) {
+                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_chapter.toString());
+            } else if (ResourceNdCode.knowledges.toString().equals(resType)) {
+                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_knowledge.toString());
+            }
+        } else {
+            titanQueryVertex = new TitanQueryVertex();
+        }
+
+        eqRelationTitanEdgeAndVertexExpression.setTitanQueryVertex(titanQueryVertex);
+        Map<String, Map<Titan_OP, List<Object>>> edgePropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
+        edgePropertiesMap.put(ES_Field.enable.toString(),generateFieldCondtion(ES_Field.enable.toString(), true));
+        // target_type-->relation_type
+        // if(!"*".equals(chunks[2])){
+        // edgePropertiesMap.put(key, chunks[2]);
+        // }
+        titanQueryEdge.setPropertiesMap(edgePropertiesMap);
+        Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
+        titanQueryVertex.setPropertiesMap(vertexPropertiesMap);
+        vertexPropertiesMap.put("primary_category",generateFieldCondtion("primary_category", resType));
+        vertexPropertiesMap.put(ES_Field.identifier.toString(),generateFieldCondtion(ES_Field.identifier.toString(),sourceUuid));
+        vertexPropertiesMap.put(ES_SearchField.lc_enable.toString(),generateFieldCondtion(ES_SearchField.lc_enable.toString(), true));
+        if (titanExpression.getFirstTitanQueryEdgeAndVertex() == null) {
+            titanExpression.setFirstTitanQueryEdgeAndVertex(eqRelationTitanEdgeAndVertexExpression);
+        }
+        else {
+            relationTitanEdgeExpression.addCondition(eqRelationTitanEdgeAndVertexExpression);
+        }
+
+    }
     /**
      * @param titanExpression
      * @param relationConditions
@@ -899,3 +1010,72 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
 
 }
+/*
+
+    @Override
+    public ListViewModel<ResourceModel> searchWithAdditionPropertiesUseES(
+            String resType, List<String> includes,
+            Map<String, Map<String, List<String>>> params,
+            Map<String, String> orderMap, int from, int size, boolean reverse,
+            String words) {
+        if (words == null || "".equals(words.trim()) || ",".equals(words.trim()))
+            return searchWithAdditionProperties(resType, includes, params, orderMap, from, size, reverse, words);
+
+        */
+/*System.out.println("params:" + params);
+        System.out.println("cg_taxoncode:" + params.get(ES_SearchField.cg_taxoncode.toString()));
+        System.out.println("cg_taxonpath:" + params.get(ES_SearchField.cg_taxonpath.toString()));
+        System.out.println("coverages:" + params.get(ES_SearchField.coverages.toString()));*//*
+
+        long generateScriptBegin = System.currentTimeMillis();
+        TitanExpression titanExpression = new TitanExpression();
+
+        Map<String, Object> scriptParamMap = new HashMap<String, Object>();
+
+        dealWithOrderAndRange(titanExpression, orderMap, from, size);
+
+        TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
+
+        Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
+        resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
+        // for now only deal with code
+        dealWithSearchCode(resourceQueryVertex,
+                params.get(ES_SearchField.cg_taxoncode.toString()));
+        params.remove(ES_SearchField.cg_taxoncode.toString());
+
+        dealWithSearchPath(resourceQueryVertex,
+                params.get(ES_SearchField.cg_taxonpath.toString()));
+        params.remove(ES_SearchField.cg_taxonpath.toString());
+
+        dealWithSearchCoverage(resourceVertexPropertyMap,
+                params.get(ES_SearchField.coverages.toString()));
+        params.remove(ES_SearchField.coverages.toString());
+
+        //resourceQueryVertex.setWords(words);
+        resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", resType));
+        resourceVertexPropertyMap
+                .put(ES_SearchField.lc_enable.toString(),
+                        generateFieldCondtion(
+                                ES_SearchField.lc_enable.toString(), true));
+        dealWithResource(resourceQueryVertex, params);
+        titanExpression.addCondition(resourceQueryVertex);
+
+        // for count and result
+        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
+        EsIndexQueryForTitanSearch esIndexQueryForTitanSearch=new EsIndexQueryForTitanSearch();
+        esIndexQueryForTitanSearch.setWords(words);
+        String forIndexQuery=esIndexQueryForTitanSearch.generateScript();
+        scriptForResultAndCount=scriptForResultAndCount.replaceAll("g.V\\(\\)","g.V(vertexList)");
+
+        LOG.info("titan generate script consume times:"
+                + (System.currentTimeMillis() - generateScriptBegin));
+
+        System.out.println(forIndexQuery+scriptForResultAndCount);
+        System.out.println(scriptParamMap);
+        long searchBegin = System.currentTimeMillis();
+        ResultSet resultSet = titanResourceRepository.search(forIndexQuery+scriptForResultAndCount, scriptParamMap);
+        LOG.info("titan search consume times:"
+                + (System.currentTimeMillis() - searchBegin));
+
+        return getListViewModel(resultSet, resType,includes);
+    }*/

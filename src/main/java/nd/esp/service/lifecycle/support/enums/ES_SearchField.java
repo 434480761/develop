@@ -20,7 +20,7 @@ public enum ES_SearchField {
 			ES_Field.preview, root), tags(ES_Field.tags, root), keywords(
 			ES_Field.keywords, root), custom_properties(
 			ES_Field.custom_properties, root), ndres_code(ES_Field.ndres_code,
-			root),
+			root),m_identifier(ES_Field.m_identifier, root),
 
 	// lifeCycle 9
 	life_cycle(ES_Field.life_cycle, root) {
@@ -34,7 +34,8 @@ public enum ES_SearchField {
 			life_cycle), lc_enable(ES_Field.enable, life_cycle), lc_creator(
 			ES_Field.creator, life_cycle), lc_publisher(ES_Field.publisher,
 			life_cycle), lc_provider(ES_Field.provider, life_cycle), lc_provider_source(
-			ES_Field.provider_source, life_cycle), lc_create_time(
+			ES_Field.provider_source, life_cycle), lc_provider_mode(
+					ES_Field.provider_mode, life_cycle),lc_create_time(
 			ES_Field.create_time, life_cycle), lc_last_update(
 			ES_Field.last_update, life_cycle),
 	// educationInfo 10
@@ -65,7 +66,8 @@ public enum ES_SearchField {
 		}
 	},
 	cr_right(ES_Field.right, copyright), cr_description(ES_Field.description,
-			copyright), cr_author(ES_Field.author, copyright),
+			copyright), cr_author(ES_Field.author, copyright),cr_has_right(ES_Field.has_right, copyright),
+			cr_right_start_date(ES_Field.right_start_date, copyright),cr_right_end_date(ES_Field.right_end_date, copyright),
 	/* primary_category, code, */
 
 	// category 7  (category 为了实现 taxoncode and 操作，将nested放置在es_op中
