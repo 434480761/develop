@@ -146,6 +146,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
      * 1、校验资源是否存在  2、检验关系的条数是否合理  3、校验mysql对应的关系是否存在
      * */
     @Override
+    //FIXME 现在边上都有ID，后面通过ID对边进行检测
     public boolean checkResourceAllInTitan(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
         String baseScript = "g.V().has(primaryCategory,'identifier',identifier)";
         Map<String,ResCoverage> coverageMap = new HashMap<>();
