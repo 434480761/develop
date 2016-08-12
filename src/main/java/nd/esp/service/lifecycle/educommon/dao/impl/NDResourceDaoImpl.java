@@ -482,14 +482,26 @@ public class NDResourceDaoImpl implements NDResourceDao{
                     rr.setDescription(fullModel.getCopyRight_crDescription());
                     rr.setAuthor(fullModel.getCopyRight_author());
                     
-                    int hasRightInt = StringUtils.isNotEmpty(fullModel.getCopyRight_hasRight()) ? Integer.parseInt(fullModel.getCopyRight_hasRight()) : 0;
-                    rr.setHasRight(hasRightInt == 1 ? true : false);
+                    if(fullModel.getCopyRight_hasRight() == null){
+                    	rr.setHasRight(null);
+                    }else{
+                    	int hasRightInt = StringUtils.hasText(fullModel.getCopyRight_hasRight()) ? Integer.parseInt(fullModel.getCopyRight_hasRight()) : 0;
+                        rr.setHasRight(hasRightInt == 1 ? true : false);
+                    }
                     
-                    long rightStartDateLong = StringUtils.isNotEmpty(fullModel.getCopyRight_rightStartDate()) ? Long.parseLong(fullModel.getCopyRight_rightStartDate()) : 0L;
-                    rr.setRightStartDate(new BigDecimal(rightStartDateLong));
+                    if(fullModel.getCopyRight_rightStartDate() == null){
+                    	rr.setRightStartDate(null);
+                    }else{
+                    	long rightStartDateLong = StringUtils.hasText(fullModel.getCopyRight_rightStartDate()) ? Long.parseLong(fullModel.getCopyRight_rightStartDate()) : 0L;
+                        rr.setRightStartDate(new BigDecimal(rightStartDateLong));
+                    }
                     
-                    long rightEndDateLong = StringUtils.isNotEmpty(fullModel.getCopyRight_rightEndDate()) ? Long.parseLong(fullModel.getCopyRight_rightEndDate()) : 0L;
-                    rr.setRightEndDate(new BigDecimal(rightEndDateLong));
+                    if(fullModel.getCopyRight_rightEndDate() == null){
+                    	rr.setRightEndDate(null);
+                    }else{
+                    	long rightEndDateLong = StringUtils.hasText(fullModel.getCopyRight_rightEndDate()) ? Long.parseLong(fullModel.getCopyRight_rightEndDate()) : 0L;
+                        rr.setRightEndDate(new BigDecimal(rightEndDateLong));
+                    }
 
                     resourceModel.setCopyright(rr);
                 }
