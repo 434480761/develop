@@ -39,6 +39,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
      * */
     public boolean importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
         Map<String,ResCoverage> coverageMap = new HashMap<>();
+        //对资源的techInfo、coverage、category进行去重处理
         if(CollectionUtils.isNotEmpty(resCoverageList)){
             for(ResCoverage coverage : resCoverageList){
                 String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
@@ -93,7 +94,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                 educationId = titanCommonRepository.executeScriptUniqueLong(script, param);
             } catch (Exception e) {
                 LOG.error("titanImportErrorData:{}" ,education.getIdentifier());
-                e.printStackTrace();
                 return  false;
             }
             if(educationId == null){
@@ -104,12 +104,18 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return true;
     }
 
+    /**
+     * 导入关系，使用创建关系脚本
+     * */
     @Override
     public boolean batchImportRelation(List<ResourceRelation> resourceRelation) {
         titanRelationRepository.batchAdd4Import(resourceRelation);
         return false;
     }
 
+    /**
+     * 检查资源在titan中是否存在
+     * */
     @Override
     public boolean checkResourceExistInTitan(Education education) {
         String script = "g.V().has(primaryCategory,'identifier',identifier).count();";
@@ -135,6 +141,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return false;
     }
 
+    /**
+     * 检查资源的coverage、techInfo、category是否存在
+     * 1、校验资源是否存在  2、检验关系的条数是否合理  3、校验mysql对应的关系是否存在
+     * */
     @Override
     public boolean checkResourceAllInTitan(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
         String baseScript = "g.V().has(primaryCategory,'identifier',identifier)";
@@ -171,6 +181,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             }
         }
 
+        //产生资源校验的脚本
         List<String> innerScriptList = new ArrayList<>();
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("primaryCategory", education.getPrimaryCategory());
