@@ -363,22 +363,17 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		if(list == null){
 			return false;
 		}
-		boolean exist = false;
-		for(ResCoverage source : list){
-			if(source.getResType().equals(target.getResType())
-					&&source.getResource().equals(target.getResource())
-					&&source.getTarget().equals(target.getTarget())
-					&&source.getTargetType().equals(target.getTargetType())
-					&&source.getStrategy().equals(target.getStrategy())){
-				exist = true;
-				break;
-			} else {
-				exist = false;
-
+		for (ResCoverage source : list) {
+			if (source.getResType().equals(target.getResType())
+					&& source.getResource().equals(target.getResource())
+					&& source.getTarget().equals(target.getTarget())
+					&& source.getTargetType().equals(target.getTargetType())
+					&& source.getStrategy().equals(target.getStrategy())) {
+				return true;
 			}
 		}
 
-		return exist;
+		return false;
 	}
 
 	public long pageQueryKnowledgeRelation(ResourceRepository resourceRepository) {
@@ -468,8 +463,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					method(resourceRelations);
 					LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
 				} catch (Exception e) {
-					e.printStackTrace();
-					LOG.error(e.getMessage());
+					LOG.error(e.getLocalizedMessage());
 				}
 				setStatisticParam("relations", resourcePage.getTotalPages(), page);
 			} while (++page < resourcePage.getTotalPages());

@@ -58,8 +58,7 @@ public class TitanScritpUtils {
                 field.setAccessible(true);
                 value = field.get(model);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOG.error(e.getLocalizedMessage());
             }
             if (value == null)
                 continue;
@@ -72,9 +71,10 @@ public class TitanScritpUtils {
                         f.setAccessible(true);
                         if("identifier".equals(f.getName())){
                             try {
+                            	//FIXME (需要进一步处理，保存下来)
                                 LOG.info("field_length_too_long :{} ;class:{}",f.get(model),model.getClass().getName());
                             } catch (IllegalAccessException e) {
-                                e.printStackTrace();
+                            	LOG.error(e.getLocalizedMessage());
                             }
                         }
                     }
