@@ -1,17 +1,6 @@
 package nd.esp.service.lifecycle.support.rabbitmq;
 
-import nd.esp.service.lifecycle.support.rabbitmq.ConsumerExecutor;
-import nd.esp.service.lifecycle.support.rabbitmq.ProducerExecutor;
-import nd.esp.service.lifecycle.support.rabbitmq.RabbitMqConstant;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.alibaba.fastjson.JSONObject;
-import com.lcmq.component.exception.MqException;
 import com.lcmq.component.listener.OnMessageListener;
 import com.lcmq.component.model.MqMessage;
 
@@ -25,8 +14,8 @@ public class TestController {
 	//@Autowired
 	private ProducerExecutor producerExecutor;
 	
-	@RequestMapping(value = "/mq/p",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public void testSend() throws MqException {
+//	@RequestMapping(value = "/mq/p",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public void testSend() throws Exception {
 		
 		for(int i=0;i<1000;i++){
 			JSONObject object = new JSONObject();
@@ -35,7 +24,7 @@ public class TestController {
 		}
 	}
 	
-	@RequestMapping(value = "/mq",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//	@RequestMapping(value = "/mq",method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public void testMq(){
 		consumerExecutor.startConsumer(RabbitMqConstant.QUEUE_NAME, new OnMessageListener() {
 			
