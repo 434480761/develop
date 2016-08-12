@@ -33,9 +33,13 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
 
+    /**
+     * 更新资源的相关属性
+     * */
     @Override
     public boolean updateOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
         Map<String, ResCoverage> coverageMap = new HashMap<>();
+        //对资源的techInfo、coverage、category进行去重处理
         if (CollectionUtils.isNotEmpty(resCoverageList)) {
             for (ResCoverage coverage : resCoverageList) {
                 String key = coverage.getTarget() + coverage.getStrategy() + coverage.getTargetType();
@@ -75,6 +79,7 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         List<TechInfo> techInfoList = new ArrayList<>();
         techInfoList.addAll(techInfoMap.values());
 
+        //更新资源并检查资源在titan中是否存在，不存在不进行后续的操作
         if(!updateEducation(education)){
             titanSync(TitanSyncType.UPDATE_DATA_RESOURCE,education.getPrimaryCategory(),education.getIdentifier());
         }else {
@@ -85,6 +90,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         return false;
     }
 
+    /**
+     * 修复关系
+     * */
     public void batchUpdateRelation(List<ResourceRelation> relationList){
         for (ResourceRelation resourceRelation : relationList){
             boolean success = repairEdge(resourceRelation,TitanKeyWords.has_relation.toString());
@@ -94,6 +102,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         }
     }
 
+    /**
+     * 修复资源自定字段
+     * */
     private boolean updateEducation(Education education){
         Education repairEducation = new Education();
         repairEducation.setmIdentifier(education.getmIdentifier());
@@ -103,6 +114,7 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         repairEducation.setRightEndDate(education.getRightEndDate());
         repairEducation.setContext(education.getContext());
         repairEducation.setProviderMode(education.getProviderMode());
+        //Education中enable和preview有默认值需要重设置
         repairEducation.setEnable(education.getEnable());
         repairEducation.setPreview(null);
         return repairNode(repairEducation,education.getPrimaryCategory(),education.getIdentifier());
@@ -118,20 +130,23 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         return null;
     }
 
+    /**
+     * 修复TechInfo
+     * */
     private TechInfo updateTechInfo(TechInfo techInfo){
-        StringBuffer scriptBuffer;
-        Map<String, Object> graphParams;
-        scriptBuffer = new StringBuffer("g.V().has('identifier',identifier)");
-        graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
-        scriptBuffer.append(";");
-        graphParams.put("identifier", techInfo.getIdentifier());
+//        StringBuffer scriptBuffer;
+//        Map<String, Object> graphParams;
+//        scriptBuffer = new StringBuffer("g.V().has('identifier',identifier)");
+//        graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
+//        scriptBuffer.append(";");
+//        graphParams.put("identifier", techInfo.getIdentifier());
 
-        try {
-            titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
-        } catch (Exception e) {
-            //TODO titan sync
-            return null;
-        }
+//        try {
+//            titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
+//        } catch (Exception e) {
+//            //TODO titan sync
+//            return null;
+//        }
 
         boolean success =  repairEdge(techInfo, TitanKeyWords.has_tech_info.toString());
         if(!success){
@@ -166,7 +181,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         return null;
     }
 
-
+    /**
+     * 修复边
+     * */
     private boolean repairEdge(EspEntity entity, String label){
         StringBuffer script = new StringBuffer("g.E().has(edgeLabel,'identifier',identifier)");
         Map<String, Object> graphParams;
@@ -189,9 +206,13 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         return true;
     }
 
+    /**
+     * 修复一个节点，通过增量的方式修复
+     * */
     private boolean repairNode(Education entity, String label ,String identifier){
         StringBuffer script = new StringBuffer("g.V().has(edgeLabel,'identifier',identifier)");
         Map<String, Object> graphParams;
+        //获取Education中不为null的属性
         graphParams = TitanScritpUtils.getParamAndChangeScript4Repair(script, entity);
         graphParams.put("edgeLabel",label);
         graphParams.put("identifier",identifier);
@@ -211,6 +232,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         return true;
     }
 
+    /**
+     * 保存异常数据到titan sync表中
+     * */
     private void titanSync(TitanSyncType syncType, String parmaryCategory, String identifier){
         titanRepositoryUtils.titanSync4MysqlAdd(syncType, parmaryCategory, identifier,999);
     }
