@@ -126,8 +126,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("primaryCategory", education.getPrimaryCategory());
         paramMap.put("identifier",education.getIdentifier());
-        int index = 0;
-        for(ResCoverage coverage : coverageList){
+        for(int index = 0; index < coverageList.size() ;index ++){
+            ResCoverage coverage = coverageList.get(index);
             String targetType = "target_type"+index;
             String strategy = "strategy" + index;
             String target = "target" +index;
@@ -140,8 +140,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             index ++;
         }
 
-        index = 0;
-        for (TechInfo techInfo : techInfoList){
+        for (int index =0 ;index < techInfoList.size() ;index++){
+            TechInfo techInfo = techInfoList.get(index);
             String techInfoTitle = "techInfoTitle"+index;
             String script = "outE().hasLabel('has_tech_info').inV().has('ti_title',"+techInfoTitle+")";
             paramMap.put(techInfoTitle,techInfo.getTitle());
@@ -149,8 +149,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             index ++;
         }
 
-        index = 0;
-        for (ResourceCategory resourceCategory : categoryList){
+        for (int index =0 ;index <categoryList.size() ;index++){
+            ResourceCategory resourceCategory = categoryList.get(index);
             String taxoncode = "taxoncode" + index;
             String script = "outE().hasLabel('has_category_code').inV().has('cg_taxoncode',"+taxoncode+")";
 
@@ -159,8 +159,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             index ++;
         }
 
-        index = 0;
-        for(String path : categoryPathSet){
+        for(int index =0 ;index <categoryPathSet.size() ;index ++){
+            String path = categoryPathSet.get(index);
             String categoryPath = "path" + index;
             String script = "outE().hasLabel('has_categories_path').inV().has('cg_taxonpath',"+categoryPath+")";
             paramMap.put(categoryPath, path);
