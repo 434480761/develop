@@ -73,4 +73,17 @@ public class TitanResourceUtils {
 
         return new ArrayList<>(path);
     }
+
+    public static Set<String> distinctCategoryCode(List<ResourceCategory> categoryList){
+        Set<String> codes = new HashSet<>();
+        if(CollectionUtils.isNotEmpty(categoryList)){
+            for(ResourceCategory category : categoryList){
+                if(StringUtils.isNotEmpty(category.getTaxoncode())){
+                    codes.add(category.getTaxoncode());
+                }
+            }
+        }
+
+        return codes;
+    }
 }

@@ -25,6 +25,7 @@ import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
+import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -943,34 +944,17 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         for(Education education : educations){
             String uuid = education.getIdentifier();
             Set<String> resCoverages = new HashSet<>() ;
-            Set<String> categoryCodes = new HashSet<>();
-            Set<String> paths = new HashSet<>();
+
             List<ResCoverage> tempCoverageList = coverageMap.get(uuid);
             List<ResourceCategory> tempCategoryList = categoryMap.get(uuid);
 			if(CollectionUtils.isNotEmpty(tempCoverageList)){
 				for(ResCoverage resCoverage : tempCoverageList){
-					String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
-					String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
-					String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
-					String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
-					resCoverages.add(setValue1);
-					resCoverages.add(setValue2);
-					resCoverages.add(setValue3);
-					resCoverages.add(setValue4);
+					resCoverages.addAll(TitanScritpUtils.getAllResourceCoverage(resCoverage, education.getStatus()));
 				}
 			}
 
-			if(CollectionUtils.isNotEmpty(tempCategoryList)){
-				for(ResourceCategory category : tempCategoryList){
-					if(StringUtils.isNotEmpty(category.getTaxonpath())){
-						paths.add(category.getTaxonpath());
-					}
-					if(StringUtils.isNotEmpty(category.getTaxoncode())){
-						categoryCodes.add(category.getTaxoncode());
-					}
-
-				}
-			}
+			Set<String> paths = new HashSet<>(TitanResourceUtils.distinctCategoryPath(tempCategoryList));
+			Set<String> categoryCodes = new HashSet<>(TitanResourceUtils.distinctCategoryCode(tempCategoryList));
 
 			String dropScript = "g.V().has(primaryCategory,'identifier',identifier)." +
 					"properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string').drop()";

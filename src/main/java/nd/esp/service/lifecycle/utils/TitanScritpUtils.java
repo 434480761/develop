@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.ScriptAbstract;
 import nd.esp.service.lifecycle.utils.titan.script.ScriptEducation;
@@ -183,6 +184,28 @@ public class TitanScritpUtils {
         }
     }
 
+    public static Set<String> getAllResourceCoverage(ResCoverage resCoverage,
+                                               String status) {
+        Set<String> searchCoverages = new HashSet<>();
+        String value1 = resCoverage.getTargetType() + "/"
+                + resCoverage.getTarget() + "/" + resCoverage.getStrategy()
+                + "/" + status;
+        String value2 = resCoverage.getTargetType() + "/"
+                + resCoverage.getTarget() + "//" + status;
+        String value3 = resCoverage.getTargetType() + "/"
+                + resCoverage.getTarget() + "/" + resCoverage.getStrategy()
+                + "/";
+        String value4 = resCoverage.getTargetType() + "/"
+                + resCoverage.getTarget() + "//";
+
+        searchCoverages.add(value1);
+        searchCoverages.add(value2);
+        searchCoverages.add(value3);
+        searchCoverages.add(value4);
+
+        return searchCoverages;
+    }
+
     static private void getAllDeclareField(Class<?> className,
                                            List<Field> fields) {
         if (className == null) {
@@ -326,32 +349,13 @@ public class TitanScritpUtils {
         }
 
         Set<String> resCoverages = new HashSet<>() ;
-        Set<String> categoryCodes = new HashSet<>();
-        Set<String> paths = new HashSet<>();
+        Set<String> categoryCodes = new HashSet<>(TitanResourceUtils.distinctCategoryCode(categories));
+        Set<String> paths = new HashSet<>(TitanResourceUtils.distinctCategoryPath(categories));
         if(CollectionUtils.isNotEmpty(coverages)){
             for(ResCoverage resCoverage : coverages){
-                String setValue4 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/"+education.getStatus();
-                String setValue3 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//"+education.getStatus();
-                String setValue2 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"/"+resCoverage.getStrategy()+"/";
-                String setValue1 = resCoverage.getTargetType()+"/"+resCoverage.getTarget()+"//";
-                resCoverages.add(setValue1);
-                resCoverages.add(setValue2);
-                resCoverages.add(setValue3);
-                resCoverages.add(setValue4);
+                resCoverages.addAll(getAllResourceCoverage(resCoverage,education.getStatus()));
             }
         }
-
-        if(CollectionUtils.isNotEmpty(categories)){
-            for(ResourceCategory category : categories){
-                if(StringUtils.isNotEmpty(category.getTaxonpath())){
-                    paths.add(category.getTaxonpath());
-                }
-                if(StringUtils.isNotEmpty(category.getTaxoncode())){
-                    categoryCodes.add(category.getTaxoncode());
-                }
-            }
-        }
-
 
         setProperty(educationScript, result, resCoverages, TitanKeyWords.search_coverage, TitanKeyWords.search_coverage_string);
         setProperty(educationScript, result ,categoryCodes, TitanKeyWords.search_code , TitanKeyWords.search_code_string);
