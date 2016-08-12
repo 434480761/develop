@@ -32,55 +32,31 @@ import java.util.Map;
  * @date 2016/8/10
  */
 public class TitanResultItem {
-    Map<String, String> resource;
-    List<Map<String, String>> taxOnCodeLines;
-    List<Map<String, String>> taxOnCodeIdLines;
-    List<Map<String, String>> techInfoLines;
-    String taxOnPath;
+    private Map<String, String> resource;
+    private List<Map<String, String>> category;// code/id/path
+    private List<Map<String, String>> techInfo;
 
     public Map<String, String> getResource() {
         return resource;
     }
 
-    public TitanResultItem setResource(Map<String, String> resource) {
+    public void setResource(Map<String, String> resource) {
         this.resource = resource;
-        return this;
     }
 
-    public List<Map<String, String>> getTaxOnCodeLines() {
-        return taxOnCodeLines;
+    public List<Map<String, String>> getCategory() {
+        return category;
     }
 
-    public TitanResultItem setTaxOnCodeLines(List<Map<String, String>> taxOnCodeLines) {
-        this.taxOnCodeLines = taxOnCodeLines;
-        return this;
+    public void setCategory(List<Map<String, String>> category) {
+        this.category = category;
     }
 
-    public List<Map<String, String>> getTaxOnCodeIdLines() {
-        return taxOnCodeIdLines;
+    public List<Map<String, String>> getTechInfo() {
+        return techInfo;
     }
 
-    public TitanResultItem setTaxOnCodeIdLines(List<Map<String, String>> taxOnCodeIdLines) {
-        this.taxOnCodeIdLines = taxOnCodeIdLines;
-        return this;
+    public void setTechInfo(List<Map<String, String>> techInfo) {
+        this.techInfo = techInfo;
     }
-
-    public List<Map<String, String>> getTechInfoLines() {
-        return techInfoLines;
-    }
-
-    public TitanResultItem setTechInfoLines(List<Map<String, String>> techInfoLines) {
-        this.techInfoLines = techInfoLines;
-        return this;
-    }
-
-    public String getTaxOnPath() {
-        return taxOnPath;
-    }
-
-    public TitanResultItem setTaxOnPath(String taxOnPath) {
-        this.taxOnPath = taxOnPath;
-        return this;
-    }
-
 }
