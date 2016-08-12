@@ -208,7 +208,6 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
 				resourceRelation);
 		graphParams.put("identifier", resourceRelation.getIdentifier());
-		System.out.println(scriptBuffer.toString());
 		String edgeId;
 		try {
 			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() ,graphParams);
