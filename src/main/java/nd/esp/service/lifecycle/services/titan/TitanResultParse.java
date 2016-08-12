@@ -118,7 +118,9 @@ public class TitanResultParse {
             }
             // FixMe 分成两种 检查是否是分割点
             if (isKnowledge) {
+
             } else {
+
             }
 
             // !isKnowledge
@@ -150,6 +152,10 @@ public class TitanResultParse {
         }
 
         return false;
+    }
+
+    private static boolean checkBreak(int index, int size, boolean hasNext) {
+        return index > 0 && (hasNext || index == size - 1);
     }
 
     /**
