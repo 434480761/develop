@@ -712,7 +712,14 @@ public class TitanResultParse2 {
         copyright.setAuthor(tmpMap.get(ES_SearchField.cr_author.toString()));
         copyright.setRight(tmpMap.get(ES_SearchField.cr_right.toString()));
         copyright.setDescription(tmpMap.get(ES_SearchField.cr_description.toString()));
-        copyright.setHasRight("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString())));
+        if("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString()))){
+            copyright.setHasRight(true);
+        } else if("false".equals(tmpMap.get(ES_SearchField.cr_has_right.toString()))){
+            copyright.setHasRight(false);
+        } else {
+            copyright.setHasRight(null);
+        }
+
         copyright.setRightStartDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_start_date.toString())));
         copyright.setRightEndDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_end_date.toString())));
         return copyright;
