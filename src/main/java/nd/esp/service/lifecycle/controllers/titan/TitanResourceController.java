@@ -23,13 +23,18 @@ public class TitanResourceController {
 	@Autowired
 	private TitanResourceService titanResourceService;
 
+	/**
+	 * 通过脚本导入数据
+	 * */
 	@RequestMapping(value = "/{resourceType}/script", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long import4Script(@PathVariable String resourceType) {
 		return titanResourceService.importData4Script(resourceType);
 	}
 
-
+	/**
+	 * 导入所有数据
+	 * */
 	@RequestMapping(value = "/all/script", method = RequestMethod.GET)
 	public void indexAllScript() {
 		titanResourceService.importData4Script(ResourceNdCode.chapters.toString());
@@ -43,6 +48,9 @@ public class TitanResourceController {
 		titanResourceService.importKnowledgeRelation();
 	}
 
+	/**
+	 * 修复数据
+	 * */
 	@RequestMapping(value = "/all/repair/data", method = RequestMethod.GET)
 	public void repairAllData() {
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
@@ -50,14 +58,21 @@ public class TitanResourceController {
 		}
 	}
 
+	/**
+	 * 修复所有关系
+	 * */
 	@RequestMapping(value = "/all/repair/relation", method = RequestMethod.GET)
 	public void repairAllRelation() {
 
 		titanResourceService.repairAllRelation();
 	}
 
+	/**
+	 * 修复所有的关系和数据
+	 * */
 	@RequestMapping(value = "/all/repair/dataandrelation", method = RequestMethod.GET)
 	public void repairAll() {
+		titanResourceService.repairData(ResourceNdCode.chapters.toString());
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
 			titanResourceService.repairData(resourceType);
 		}
@@ -74,16 +89,25 @@ public class TitanResourceController {
 		titanResourceService.timeTaskImport(page, type);
 	}
 
+	/**
+	 * 指定分页的方式修复数据
+	 * */
 	@RequestMapping(value = "/all/time/repair", method = RequestMethod.GET)
 	public void indexAllTimeRepair(@RequestParam Integer page , @RequestParam String type) {
 		titanResourceService.timeTaskRepair(page, type);
 	}
 
+	/**
+	 * 导入所有的关系
+	 * */
 	@RequestMapping(value = "/all/relation", method = RequestMethod.GET)
 	public void indexAllRelation() {
 		titanResourceService.importAllRelation();
 	}
 
+	/**
+	 * 创建章节和知识点关系
+	 * */
 	@RequestMapping(value = "/relation/{resourceType}", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long chapterCreateRelation(@PathVariable String resourceType) {
@@ -110,12 +134,18 @@ public class TitanResourceController {
 		return ;
 	}
 
+	/**
+	 * 创建知识点关系
+	 * */
 	@RequestMapping(value = "/relation/knowledgerelation", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long updateKnowledgeRelation(){
 		return titanResourceService.importKnowledgeRelation();
 	}
 
+	/**
+	 * 修复检索字段数据
+	 * */
 	@RequestMapping(value = "/all/time/update_source_property", method = RequestMethod.GET)
 	public void indexAllTimeUpdate(@RequestParam Integer page , @RequestParam String type) {
 		titanResourceService.timeTaskImport4Update(page, type);
@@ -128,6 +158,9 @@ public class TitanResourceController {
 		return 0;
 	}
 
+	/**
+	 * 检查资源是否存在
+	 * */
 	@RequestMapping(value = "/{resourceType}/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkData(@PathVariable String resourceType) {
@@ -135,6 +168,9 @@ public class TitanResourceController {
 		return 0;
 	}
 
+	/**
+	 * 检查一条数据
+	 * */
 	@RequestMapping(value = "/{resourceType}/{id}/check", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkOneData(@PathVariable String resourceType, @PathVariable String id) {

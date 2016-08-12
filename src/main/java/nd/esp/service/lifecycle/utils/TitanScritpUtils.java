@@ -266,6 +266,7 @@ public class TitanScritpUtils {
         Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
         param.putAll(checkParam);
 
+        //调用脚本方法
         script.append("if(!checkExist()){");
         script.append("educationId=createEducation();");
         if(CollectionUtils.isNotEmpty(coverageParamMap)){
@@ -292,6 +293,9 @@ public class TitanScritpUtils {
 
     }
 
+    /**
+     * 生成检查资源是否存在的脚本
+     * */
     private static Map<String, Object> buildCheckExistScript(StringBuffer script, String primaryCategory, String identifier){
         Map<String, Object> resultParam = new HashMap<>();
         resultParam.put("identifier_ck",identifier);
@@ -304,6 +308,9 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
+    /**
+     * 创建导入Education的脚本，包括Education中的冗余字段
+     * */
     private static Map<String, Object> buildEducationScript(StringBuffer script, Education education ,List<ResourceCategory> categories, List<ResCoverage> coverages){
         Map<String, Object> graphParams = getParam4NotNull(education);
         String suffix = "_edu";
@@ -369,7 +376,9 @@ public class TitanScritpUtils {
         param.put(fieldString.toString(),searchPathString);
     }
 
-
+    /**
+     * 创建导入TechInfo脚本
+     * */
     private static Map<String , Object> buildTechInfoScript(StringBuffer script, List<TechInfo> techInfos){
         if(CollectionUtils.isEmpty(techInfos)){
             return new HashMap<>();
@@ -401,6 +410,9 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
+    /**
+     * 创建导入维度数据的脚本
+     * */
     private static Map<String , Object> buildCategoryScript(StringBuffer script, List<ResourceCategory> categories){
         if(CollectionUtils.isEmpty(categories)){
             return new HashMap<>();
@@ -448,6 +460,9 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
+    /**
+     * 创建导入Path的脚本
+     * */
     private static Map<String, Object> buildPathScript(StringBuffer script, List<String> categoryPaths){
         if(CollectionUtils.isEmpty(categoryPaths)){
             return new HashMap<>();
@@ -482,6 +497,9 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
+    /**
+     * 创建导入覆盖范围的脚本
+     * */
     private static Map<String, Object> buildCoverageScript(StringBuffer script, List<ResCoverage> coverages){
         if(CollectionUtils.isEmpty(coverages)){
             return new HashMap<>();
@@ -560,6 +578,9 @@ public class TitanScritpUtils {
         return result;
     }
 
+    /**
+     * 生成获取详情的脚本
+     * */
     public static Map<KeyWords, Object> buildGetDetailScript(String primaryCategory,
                                                              List<String> identifierList,
                                                              List<String> includeList,

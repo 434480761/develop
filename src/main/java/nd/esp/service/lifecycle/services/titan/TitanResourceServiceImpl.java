@@ -271,6 +271,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		abstractPageQuery.doing(primaryCategory);
 	}
 
+	/**
+	 * 对覆盖范围进行去重，新脚本的产生已经对coverage进行去重，后面可以把这个方法去掉，
+	 * */
 	private List<ResCoverage> getResCoverage(List<ResCoverage> resCoverageList ){
 		if(CollectionUtils.isEmpty(resCoverageList)){
 			return new ArrayList<>();
