@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.utils;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.ScriptAbstract;
 import nd.esp.service.lifecycle.utils.titan.script.ScriptEducation;
@@ -342,48 +343,30 @@ public class TitanScritpUtils {
             }
         }
 
-        int index = 0;
-        if(CollectionUtils.isNotEmpty(resCoverages)){
-            for (String coverage : resCoverages) {
-                String propertyName = "search_coverage" +index;
-                educationScript.append(",'").append("search_coverage").append("',").append(propertyName);
-                result.put(propertyName, coverage);
-                index ++;
-            }
-            String searchCoverageString = StringUtils.join(resCoverages,",").toLowerCase();
-            educationScript.append(",'").append("search_coverage_string").append("',").append("searchCoverageString");
-            result.put("searchCoverageString",searchCoverageString);
-        }
 
-        if(CollectionUtils.isNotEmpty(categoryCodes)){
-            index = 0;
-            for (String code : categoryCodes) {
-                String codeName = "search_code" +index;
-                educationScript.append(",'").append("search_code").append("',").append(codeName);
-                result.put(codeName, code);
-                index ++;
-            }
-            String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
-            educationScript.append(",'").append("search_coverage").append("',").append("searchCodeString");
-            result.put("searchCodeString",searchCodeString);
-        }
-
-        if(CollectionUtils.isNotEmpty(paths)){
-            index = 0;
-            for (String path : paths) {
-                String pathName = "search_path" +index;
-                educationScript.append(",'").append("search_path").append("',").append(pathName);
-                result.put(pathName, path);
-                index ++;
-            }
-            String searchPathString = StringUtils.join(paths, ",").toLowerCase();
-            educationScript.append(",'").append("search_coverage").append("',").append("searchPathString");
-            result.put("searchPathString",searchPathString);
-        }
+        setProperty(educationScript, result, resCoverages, TitanKeyWords.search_coverage, TitanKeyWords.search_coverage_string);
+        setProperty(educationScript, result ,categoryCodes, TitanKeyWords.search_code , TitanKeyWords.search_code_string);
+        setProperty(educationScript, result ,paths, TitanKeyWords.search_path, TitanKeyWords.search_path_string);
         educationScript.append(").id();");
         educationScript.append(" return education};");
         script.append(educationScript);
         return result;
+    }
+
+    private static void setProperty(StringBuilder script, Map<String, Object> param, Set<String> values, TitanKeyWords fieldSet, TitanKeyWords fieldString){
+        if(CollectionUtils.isEmpty(values)){
+            return;
+        }
+        int index = 0;
+        for (String path : values) {
+            String pathName = fieldSet.toString() +index;
+            script.append(",'").append(fieldSet.toString()).append("',").append(pathName);
+            param.put(pathName, path);
+            index ++;
+        }
+        String searchPathString = StringUtils.join(values, ",").toLowerCase();
+        script.append(",'").append(fieldString.toString()).append("',").append(fieldString.toString());
+        param.put(fieldString.toString(),searchPathString);
     }
 
 
