@@ -287,6 +287,9 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return resourceCategory;
 	}
 
+	/**
+	 * 添加path，如果path已经存在者不进行其它的操作
+	 * */
 	private String addPath(String resource ,String resourcePrimaryCategory,String path ){
 		//检查path是否已经存在
 		String checkPathExist = "g.V().hasLabel(resourcePrimaryCategory).has('identifier',resource)" +
@@ -384,6 +387,9 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return taxoncodeId;
 	}
 
+	/**
+	 * 更新数据的冗余字段
+	 * */
 	private void updateResourceProperty(Set<String> pathSet , Set<String> codeSet , String primaryCategory, String identifier){
 		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
 		Map<String, Object> param = new HashMap<>();

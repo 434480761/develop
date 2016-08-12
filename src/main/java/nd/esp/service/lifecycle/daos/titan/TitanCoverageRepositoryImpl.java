@@ -297,6 +297,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return resCoverage;
 	}
 
+	/**
+	 * 更新数据冗余字段
+	 * */
 	private void updateResourceCoverage(String primaryCategory,
 			String identifier) {
 		Education education = getEducation(primaryCategory, identifier);

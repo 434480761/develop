@@ -81,6 +81,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         List<String> categoryPathList = new ArrayList<>();
         categoryPathList.addAll(categoryPathSet);
 
+        //生成导入资源的脚本
         Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,categoryList,techInfoList,categoryPathList);
         //校验addVertex中的参数个数过多，个数超过250返回为null
         if(CollectionUtils.isEmpty(result)){
@@ -249,6 +250,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             e.printStackTrace();
         }
 
+        //校验资源是否存在
         if(id == null){
             LOG.info("数据校验：数据不存在 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());
             return false;
