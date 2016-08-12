@@ -8,9 +8,8 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,42 +37,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
      * */
     @Override
     public boolean updateOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
-        Map<String, ResCoverage> coverageMap = new HashMap<>();
-        //对资源的techInfo、coverage、category进行去重处理
-        if (CollectionUtils.isNotEmpty(resCoverageList)) {
-            for (ResCoverage coverage : resCoverageList) {
-                String key = coverage.getTarget() + coverage.getStrategy() + coverage.getTargetType();
-                if (coverageMap.get(key) == null) {
-                    coverageMap.put(key, coverage);
-                }
-            }
-        }
-
-        Map<String, ResourceCategory> categoryMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(resourceCategoryList)) {
-            for (ResourceCategory resourceCategory : resourceCategoryList) {
-                if (categoryMap.get(resourceCategory.getTaxoncode()) == null) {
-                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
-                }
-
-            }
-        }
-
-        Map<String, TechInfo> techInfoMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(techInfos)) {
-            for (TechInfo techInfo : techInfos) {
-                if (techInfoMap.get(techInfo.getTitle()) == null) {
-                    techInfoMap.put(techInfo.getTitle(), techInfo);
-                }
-            }
-        }
-
-        List<ResCoverage> coverageList = new ArrayList<>();
-        coverageList.addAll(coverageMap.values());
-        List<ResourceCategory> categoryList = new ArrayList<>();
-        categoryList.addAll(categoryMap.values());
-        List<TechInfo> techInfoList = new ArrayList<>();
-        techInfoList.addAll(techInfoMap.values());
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
 
         //更新资源并检查资源在titan中是否存在，不存在不进行后续的操作
         if(!updateEducation(education)){

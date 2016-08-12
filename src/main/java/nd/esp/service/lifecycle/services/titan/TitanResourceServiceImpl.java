@@ -21,6 +21,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBReposi
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
@@ -145,7 +146,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		try {
 			educationOld = (Education) espRepository.get(id);
 		} catch (EspStoreException e) {
-			e.printStackTrace();
+			LOG.error(e.getLocalizedMessage());
 		}
 
 		if (educationOld == null){
@@ -182,7 +183,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		try {
 			education = (Education) espRepository.get(id);
 		} catch (EspStoreException e) {
-			e.printStackTrace();
+			LOG.error(e.getLocalizedMessage());
 		}
 
 		if (education == null){
@@ -198,7 +199,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		try {
 			education = (Education) espRepository.get(id);
 		} catch (EspStoreException e) {
-			e.printStackTrace();
+			LOG.error(e.getLocalizedMessage());
 		}
 
 		if (education == null){
@@ -207,8 +208,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		Set<String> uuids = new HashSet<>();
 		uuids.add(education.getIdentifier());
 
-		List<ResCoverage> resCoverageList =getResCoverage(
-				coverageDao.queryCoverageByResource(primaryCategory, uuids));
+		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
 
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
@@ -218,8 +218,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
 
-		List<ResourceRelation> resourceRelations =  getResourceRelation(
-				educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids));
+		List<ResourceRelation> resourceRelations = educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
 
 		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
 
@@ -271,110 +270,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		abstractPageQuery.doing(primaryCategory);
 	}
 
-	/**
-	 * 对覆盖范围进行去重，新脚本的产生已经对coverage进行去重，后面可以把这个方法去掉，
-	 * */
-	private List<ResCoverage> getResCoverage(List<ResCoverage> resCoverageList ){
-		if(CollectionUtils.isEmpty(resCoverageList)){
-			return new ArrayList<>();
-		}
-		List<ResCoverage> resCoverageListNew = new ArrayList<>();
-		Map<String,List<ResCoverage>> resCoverageMap = new HashMap<>();
-		for(ResCoverage rc : resCoverageList){
-			List<ResCoverage> list = resCoverageMap.get(rc.getResource());
-			if(list == null){
-				list = new ArrayList<>();
-				resCoverageMap.put(rc.getResource(),list);
-			}
-
-			if(!checkListContainCoverage(list ,rc)){
-				list.add(rc);
-				resCoverageListNew.add(rc);
-			}
-		}
-		return resCoverageListNew;
-	}
-
-	//去除重复关系
-	private List<ResourceRelation> getResourceRelation(List<ResourceRelation> resourceRelations){
-		Map<String , List<ResourceRelation>> resourceRelationMap4Source = new HashMap<>();
-		Set<ResourceRelation> resourceRelationSet = new HashSet<>();
-		for(ResourceRelation rr : resourceRelations){
-			List<ResourceRelation> list = resourceRelationMap4Source.get(rr.getSourceUuid());
-			if(list==null){
-				list = new ArrayList<>();
-				resourceRelationMap4Source.put(rr.getSourceUuid(),list);
-			}
-
-			if(!checkResourceRelationExist(list, rr)){
-				list.add(rr);
-				resourceRelationSet.add(rr);
-			}
-
-		}
-
-		Map<String , List<ResourceRelation>> resourceRelationMap4Target = new HashMap<>();
-		for(ResourceRelation rr : resourceRelations){
-			List<ResourceRelation> list = resourceRelationMap4Target.get(rr.getTarget());
-			if(list==null){
-				list = new ArrayList<>();
-				resourceRelationMap4Target.put(rr.getTarget(),list);
-			}
-
-			if(!checkResourceRelationExist(list, rr)){
-				list.add(rr);
-				resourceRelationSet.add(rr);
-			}
-		}
-
-		return new ArrayList<>(resourceRelationSet);
-	}
-
-	private boolean checkResourceRelationExist(List<ResourceRelation> list ,ResourceRelation source){
-		boolean exist = false;
-		if(list==null || list.size()==0){
-			return false;
-		}
-		for (ResourceRelation resourceRelation : list){
-			if(resourceRelation.getTarget().equals(source.getTarget())
-					&&resourceRelation.getResourceTargetType().equals(source.getResourceTargetType())
-					&&resourceRelation.getResType().equals(source.getResType())
-					&&resourceRelation.getSourceUuid().equals(source.getSourceUuid())
-					&&resourceRelation.getSourceUuid().equals(source.getSourceUuid())){
-				exist = true;
-				break;
-			} else {
-				exist = false;
-				try {
-					if(source.getEnable()){
-						resourceRelation.setEnable(true);
-					}
-				} catch (Exception e){
-					System.out.println(source);
-					e.printStackTrace();
-				}
-
-			}
-		}
-		return exist;
-	}
-
-	private boolean checkListContainCoverage(List<ResCoverage> list, ResCoverage target){
-		if(list == null){
-			return false;
-		}
-		for (ResCoverage source : list) {
-			if (source.getResType().equals(target.getResType())
-					&& source.getResource().equals(target.getResource())
-					&& source.getTarget().equals(target.getTarget())
-					&& source.getTargetType().equals(target.getTargetType())
-					&& source.getStrategy().equals(target.getStrategy())) {
-				return true;
-			}
-		}
-
-		return false;
-	}
 
 	public long pageQueryKnowledgeRelation(ResourceRepository resourceRepository) {
 		String fieldName = "identifier";
@@ -416,7 +311,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 				LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
 			} catch (Exception e) {
-				e.printStackTrace();
 				LOG.error(e.getMessage());
 			}
 		} while (++page < resourcePage.getTotalPages());
@@ -541,7 +435,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					indexNum += size;
 					LOG.info( "type: {} totalPage:{} page:{}",primaryCategory, resourcePage.getTotalPages(),page);
 				} catch (Exception e) {
-					e.printStackTrace();
 					LOG.error(e.getMessage());
 					LOG.error("importTitanMySqlError page:{} primaryCategory:{}",page,primaryCategory);
 				}
@@ -578,49 +471,24 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				uuids.add(education.getIdentifier());
 			}
 
-			List<ResCoverage> resCoverageList =getResCoverage(
-					coverageDao.queryCoverageByResource(primaryCategory, uuids));
-			Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
-			for (ResCoverage resCoverage : resCoverageList){
-				List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
-				if(resCoverages == null){
-					resCoverages = new ArrayList<>();
-					resCoverageMap.put(resCoverage.getResource(), resCoverages);
-				}
+			List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+			Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
 
-				resCoverages.add(resCoverage);
-			}
 
 			List<String> resourceTypes = new ArrayList<String>();
 			resourceTypes.add(primaryCategory);
 			List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-			Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
-			for (ResourceCategory resourceCategory : resourceCategoryList){
-				List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
-				if(resourceCategories == null){
-					resourceCategories = new ArrayList<>();
-					resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
-				}
+			Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
 
-				resourceCategories.add(resourceCategory);
-			}
 
 			List<String> primaryCategorys = new ArrayList<>();
 			primaryCategorys.add(primaryCategory);
 			List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-			Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
-			for (TechInfo techInfo : techInfos){
-				List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
-				if(techInfoList == null){
-					techInfoList = new ArrayList<>();
-					techInfoMap.put(techInfo.getResource(), techInfoList);
-				}
+			Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
 
-				techInfoList.add(techInfo);
-			}
 			for (Education education : educations){
 				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
-				List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+				List<ResCoverage> sourceResCoverage = resCoverageMap.get(education.getIdentifier());
 				List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 				titanImportRepository.checkResourceAllInTitan(education,sourceResCoverage,resourceCategory,sourceTechInfo ,null);
 			}
@@ -712,49 +580,24 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			uuids.add(education.getIdentifier());
 		}
 
-		List<ResCoverage> resCoverageList =getResCoverage(
-				coverageDao.queryCoverageByResource(primaryCategory, uuids));
-		Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
-		for (ResCoverage resCoverage : resCoverageList){
-			List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
-			if(resCoverages == null){
-				resCoverages = new ArrayList<>();
-				resCoverageMap.put(resCoverage.getResource(), resCoverages);
-			}
+		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
 
-			resCoverages.add(resCoverage);
-		}
 
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
-		for (ResourceCategory resourceCategory : resourceCategoryList){
-			List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
-			if(resourceCategories == null){
-				resourceCategories = new ArrayList<>();
-				resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
-			}
+		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
 
-			resourceCategories.add(resourceCategory);
-		}
 
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-		Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
-		for (TechInfo techInfo : techInfos){
-			List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
-			if(techInfoList == null){
-				techInfoList = new ArrayList<>();
-				techInfoMap.put(techInfo.getResource(), techInfoList);
-			}
+		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
 
-			techInfoList.add(techInfo);
-		}
 		for (Education education : educations){
 			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
-			List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+			List<ResCoverage> sourceResCoverage = resCoverageMap.get(education.getIdentifier());
 			List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 			titanUpdateDataRepository.updateOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 		}
@@ -781,49 +624,22 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			uuids.add(education.getIdentifier());
 		}
 
-		List<ResCoverage> resCoverageList =getResCoverage(
-				coverageDao.queryCoverageByResource(primaryCategory, uuids));
-		Map<String, List<ResCoverage>> resCoverageMap = new HashMap<>();
-		for (ResCoverage resCoverage : resCoverageList){
-			List<ResCoverage> resCoverages = resCoverageMap.get(resCoverage.getResource());
-			if(resCoverages == null){
-				resCoverages = new ArrayList<>();
-				resCoverageMap.put(resCoverage.getResource(), resCoverages);
-			}
-
-			resCoverages.add(resCoverage);
-		}
+		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
 
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-		Map<String, List<ResourceCategory>> resourceCategoryMap = new HashMap<>();
-		for (ResourceCategory resourceCategory : resourceCategoryList){
-			List<ResourceCategory> resourceCategories = resourceCategoryMap.get(resourceCategory.getResource());
-			if(resourceCategories == null){
-				resourceCategories = new ArrayList<>();
-				resourceCategoryMap.put(resourceCategory.getResource(), resourceCategories);
-			}
-
-			resourceCategories.add(resourceCategory);
-		}
+		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
 
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-		Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
-		for (TechInfo techInfo : techInfos){
-			List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
-			if(techInfoList == null){
-				techInfoList = new ArrayList<>();
-				techInfoMap.put(techInfo.getResource(), techInfoList);
-			}
+		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
 
-			techInfoList.add(techInfo);
-		}
 		for (Education education : educations){
 			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
-			List<ResCoverage> sourceResCoverage = getResCoverage(resCoverageMap.get(education.getIdentifier()));
+			List<ResCoverage> sourceResCoverage = resCoverageMap.get(education.getIdentifier());
 			List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 			titanImportRepository.importOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 		}
@@ -882,7 +698,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 								primaryCategory,totalPage,page);
 						Thread.sleep(60000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						LOG.error(e.getLocalizedMessage());
 					}
 				}
 			}
@@ -931,7 +747,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				importDataOperate(resources,primaryCategory);
 
 			} catch (Exception e) {
-				e.printStackTrace();
 				LOG.error(e.getMessage());
 			}
 			if(resourcePage == null){
@@ -1033,7 +848,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 						LOG.info("sleep");
 						Thread.sleep(5000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						LOG.error(e.getLocalizedMessage());
 					}
 				}
 			}
@@ -1082,7 +897,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 				importDataOperate4update(resources,primaryCategory);
 
 			} catch (Exception e) {
-				e.printStackTrace();
 				LOG.error(e.getMessage());
 			}
 			if(resourcePage == null){
@@ -1117,32 +931,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             uuids.add(education.getIdentifier());
         }
         //后去coverage、category
-        List<ResCoverage> resCoverageList =getResCoverage(coverageDao.queryCoverageByResource(primaryCategory, uuids));
+        List<ResCoverage> resCoverageList =coverageDao.queryCoverageByResource(primaryCategory, uuids);
         List<String> resourceTypes = new ArrayList<String>();
         resourceTypes.add(primaryCategory);
         List<ResourceCategory> resourceRepositoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
 
-        Map<String, List<ResCoverage>> coverageMap = new HashMap<>();
-        Map<String, List<ResourceCategory>> categoryMap = new HashMap<>();
-        for (ResCoverage resCoverage : resCoverageList){
-            List<ResCoverage> coverageList = coverageMap.get(resCoverage.getResource());
-            if(coverageList == null){
-                coverageList = new ArrayList<>();
-                coverageMap.put(resCoverage.getResource(), coverageList);
-            }
-
-            coverageList.add(resCoverage);
-        }
-
-        for(ResourceCategory category : resourceRepositoryList){
-            List<ResourceCategory> categoryList = categoryMap.get(category.getResource());
-            if(categoryList == null){
-                categoryList = new ArrayList<>();
-                categoryMap.put(category.getResource(), categoryList);
-            }
-
-            categoryList.add(category);
-        }
+        Map<String, List<ResCoverage>> coverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
+        Map<String, List<ResourceCategory>> categoryMap = TitanResourceUtils.distinctCategory(resourceRepositoryList);
 
         //保存数据
         for(Education education : educations){

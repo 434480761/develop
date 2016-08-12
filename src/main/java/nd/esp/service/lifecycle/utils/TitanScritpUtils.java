@@ -230,7 +230,7 @@ public class TitanScritpUtils {
             return null;
         }
 
-        StringBuffer script = new StringBuffer("");
+        StringBuffer script = new StringBuffer();
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory_edu",education.getPrimaryCategory());
         Map<String,Object> educationParam = buildEducationScript(script,education,categoryList,coverageList);
@@ -286,6 +286,8 @@ public class TitanScritpUtils {
         }
         script.append("};");
         script.append("g.V().hasLabel(primaryCategory_ck).has('identifier',identifier_ck).id()");
+        param.put("primaryCategory_ck",education.getPrimaryCategory());
+        param.put("identifier_ck", education.getIdentifier());
         Map<String, Object> result = new HashMap<>();
         result.put("script",script);
         result.put("param",param);
