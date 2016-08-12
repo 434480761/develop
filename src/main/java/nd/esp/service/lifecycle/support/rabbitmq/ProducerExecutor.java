@@ -6,10 +6,8 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
-import com.lcmq.component.exception.MqException;
 import com.lcmq.component.model.MqMessage;
 import com.lcmq.component.mq.RabbitMqProducer;
 /**
@@ -33,7 +31,7 @@ public class ProducerExecutor {
 					MqMessage message = new MqMessage(UUID.randomUUID().toString(), "服务名", object);
 					//发送消息
 					rabbitMqProducer.send(RabbitMqConstant.ROUTING_KEY, message);
-				} catch (MqException e) {
+				} catch (Exception e) {
 					logger.error("producer execute exception", e);
 				}
 			}
