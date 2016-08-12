@@ -56,10 +56,10 @@ public class TitanResultParse2 {
      *
      * @return
      */
-    public static List<Integer> getIndex(String resType, List<String> resultStr) {
+    public static List<Integer> getIndex(Boolean isKnowledge, List<String> resultStr) {
         List<Integer> indexArray=new ArrayList<>();
         indexArray.add(0);
-        boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+        //boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
         boolean existParent = false;
         boolean existOrder = false;
         int size = resultStr.size();
@@ -77,7 +77,7 @@ public class TitanResultParse2 {
                     //LOG.warn("异常数据");
                 }
             }
-
+            // FixMe 分成两种 检查是否是分割点
             boolean isEnd = checkBreak(isKnowledge, existOrder, existParent, i, size, i + 1 < size ? resultStr.get(i + 1) : "");
             if (isEnd) {
                 if (isKnowledge) {
@@ -194,8 +194,8 @@ public class TitanResultParse2 {
                 Map<String,List<Map<String,String>>> itemMap=new HashMap<>();
 
                 TitanResultItem item = new TitanResultItem();
-                setResource(mainResultMap,codes,ids,techInfo,taxOnPath,item);
-                clearResource(mainResultMap,codes,ids,codesAndId,techInfo,taxOnPath,parent,order);
+               // setResource(mainResultMap,codes,ids,techInfo,taxOnPath,item);
+               // clearResource(mainResultMap,codes,ids,codesAndId,techInfo,taxOnPath,parent,order);
                // item.setResource(mainResultMap).setTaxOnCodeIdLines(ids).setTaxOnCodeLines(codes).setTechInfoLines(techInfo).setTaxOnPath(taxOnPath);
                 titanResultItems.add(item);
 
@@ -205,43 +205,6 @@ public class TitanResultParse2 {
         return titanResultItems;
     }
 
-    private static void setResource(Map<String, String> mainResultMap,
-                             List<Map<String, String>> codes,
-                             List<Map<String, String>> ids,
-                             List<Map<String, String>> techInfo,
-                             String taxOnPath, TitanResultItem item) {
-        Map<String, String> resource = new HashMap<>();
-        List<Map<String, String>> codes1 = new ArrayList<>();
-        List<Map<String, String>> ids1 = new ArrayList<>();
-        List<Map<String, String>> techInfo1 = new ArrayList<>();
-        //resource.putAll(mainResultMap);
-        for (Map.Entry<String, String> entry : mainResultMap.entrySet()) {
-            resource.put(entry.getKey(), entry.getValue());
-        }
-        codes1.addAll(codes);
-        ids1.addAll(ids);
-        techInfo1.addAll(techInfo);
-        String taxOnPath1 = "";
-        taxOnPath1 = taxOnPath;
-        item.setResource(resource).setTaxOnCodeIdLines(ids1).setTaxOnCodeLines(codes1).setTechInfoLines(techInfo1).setTaxOnPath(taxOnPath1);
-
-    }
-
-    private static void clearResource(Map<String, String> mainResultMap,
-                                      List<Map<String, String>> codes,
-                                      List<Map<String, String>> ids,
-                                      List<Map<String, String>> codesAndId,
-                                      List<Map<String, String>> techInfo,
-                                      String taxOnPath, String parent, String order) {
-        if (CollectionUtils.isNotEmpty(mainResultMap)) mainResultMap.clear();
-        if (CollectionUtils.isNotEmpty(codes)) codes.clear();
-        if (CollectionUtils.isNotEmpty(ids)) ids.clear();
-        if (CollectionUtils.isNotEmpty(codesAndId)) codesAndId.clear();
-        if (CollectionUtils.isNotEmpty(techInfo)) techInfo.clear();
-        taxOnPath = null;
-        parent = null;
-        order = null;
-    }
 
 /**
      * 解析资源
@@ -261,8 +224,10 @@ public class TitanResultParse2 {
                 viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
                 resultStr.remove(resultSize - 1);
             }
+            // FIXME tomap
             // FIXME 切割资源
-            List<Integer> indexArray = getIndex(resType, resultStr);
+            boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+            List<Integer> indexArray = getIndex(isKnowledge, resultStr);
             List<List<String>> strItems=new ArrayList<>();
             for (int i = 0; i < indexArray.size() - 1; i++) {
                 int begin = indexArray.get(i);
@@ -270,8 +235,8 @@ public class TitanResultParse2 {
                 strItems.add(resultStr.subList(begin,end));
             }
             // FIXME 解析资源
-            for(List<String> strItem:strItems) {
-                items.add(parseResource(resType,strItem,includes,isCommonQuery));
+            for (List<String> strItem : strItems) {
+                items.add(parseResource(resType, isKnowledge,strItem, includes, isCommonQuery));
             }
 
         }
@@ -283,15 +248,92 @@ public class TitanResultParse2 {
     /**
      *
      * @param resType
-     * @param resultStr
+     * @param singleItemStr
      * @param includes
      * @param isCommonQuery
      * @return
      */
-    private static ResourceModel parseResource(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+    private static ResourceModel parseResource(String resType,Boolean isKnowledge, List<String> singleItemStr, List<String> includes, Boolean isCommonQuery) {
+        // 识别数据
+        Map<String, Object> data = discernData(isKnowledge, singleItemStr, isCommonQuery);
+        Map<String, String> mainResult = (Map<String, String>) data.get("");
+        List<Map<String, String>> allOtherLinesMap = (List<Map<String, String>>) data.get("");
+        String taxOnPath = (String) data.get("");
 
-        return null;
+        if (ResourceNdCode.ebooks.toString().equals(resType)) {
+            return generateEbookModel(mainResult, allOtherLinesMap, taxOnPath, includes);
+        } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
+            generateTeachingMaterialModel(mainResult, allOtherLinesMap, taxOnPath, includes);
+        } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
+        } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
+            return generateQuestionModel(mainResult, allOtherLinesMap, taxOnPath, includes);
+        } else if (isKnowledge) {
+            return generateKnowledgeModel(mainResult, allOtherLinesMap, taxOnPath, includes);
+        }
+        return generateResourceModel(mainResult, allOtherLinesMap, taxOnPath,includes);
 
+
+    }
+
+    /**
+     * 识别一个item里面的字符串数据
+     * @return
+     */
+    private static Map<String,Object> discernData(Boolean isKnowledge, List<String> singleItemStr, Boolean isCommonQuery) {
+        Map<String, Object> data = new HashMap<>();
+        List<Map<String, String>> codes = new ArrayList<>();
+        List<Map<String, String>> ids = new ArrayList<>();
+        List<Map<String, String>> codesAndId = new ArrayList<>();
+        List<Map<String, String>> techInfo = new ArrayList<>();
+        String taxOnPath = null;
+        String order = null;
+        String parent = null;
+        if (CollectionUtils.isNotEmpty(singleItemStr)) {
+            int size = singleItemStr.size();
+            for (int i = 0; i < size; i++) {
+                String line = singleItemStr.get(i);
+                if (StringUtils.isEmpty(line)) continue;
+                Map<String, String> tmpMap = toMap(line);
+                if (CollectionUtils.isEmpty(tmpMap)) continue;
+
+                if (i == 0 && tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
+                    data.put("resource", tmpMap);
+                } else if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && (!isKnowledge || i != size - 1)) {
+                    // code id
+                    codesAndId.add(tmpMap);
+                } else if (!tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()) && !tmpMap.containsKey(ES_SearchField.identifier.toString()) && tmpMap.containsKey(ES_SearchField.cg_taxonpath.toString())) {
+
+                } else if (tmpMap.containsKey(ES_SearchField.ti_format.toString())) {
+                    // tech_info
+                    techInfo.add(tmpMap);
+                } else if (isKnowledge && tmpMap.containsKey("order")) {
+                    // order
+                    if (isCommonQuery) {
+                        data.put("order", "null");
+                        order = "null";
+                    } else {
+                        data.put("order", tmpMap.get("order"));
+                        order = tmpMap.get("order");
+                    }
+                } else if (order != null && i == size - 1) {
+                    // parent
+                    if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
+                        data.put("parent", tmpMap.get(ES_SearchField.cg_taxoncode.toString()));
+                    } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
+                        String res = tmpMap.get("primary_category");
+                        if (ResourceNdCode.chapters.toString().equals(res) && !isCommonQuery) {
+                            data.put("parent", "ROOT");
+                        } else {
+                            data.put("parent", tmpMap.get(ES_SearchField.identifier.toString()));
+                        }
+                    }
+                } else {
+                    LOG.warn("异常数据");
+                }
+            }
+        }
+
+        return data;
     }
 
 
@@ -466,7 +508,7 @@ public class TitanResultParse2 {
     }
 
     /**
-     * Ebook的扩展属性
+     * KnowledgeModel的扩展属性
      * @param mainResult
      * @param allOtherLinesMap
      * @param taxOnPath
