@@ -81,7 +81,7 @@ public class TitanResultParse2 {
                     putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
                 }
                 // order parent
-                if (ResourceNdCode.knowledges.toString().equals(resType) && CollectionUtils.isNotEmpty(mainResultMap)) {
+                if (ResourceNdCode.knowledges.toString().equals(resType) && mainResultMap!=null&&mainResultMap.size()!=0) {
                     if (order != null) mainResultMap.put("order", order);
                     if (parent != null) mainResultMap.put("parent", parent);
                 }
