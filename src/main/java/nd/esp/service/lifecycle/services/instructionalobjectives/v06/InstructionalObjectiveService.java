@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.services.instructionalobjectives.v06;
 
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
@@ -53,4 +54,15 @@ public interface InstructionalObjectiveService{
 	 * @param instructionalObjectiveTypeId 教学目标类型Id
 	 */
 	ListViewModel<InstructionalObjectiveModel> getUnRelationInstructionalObjective(String knowledgeTypeCode, String instructionalObjectiveTypeId, String unrelationCategory, String limit);
+
+	/**
+	 * 获取章节下的有序的教学目标列表
+	 * @param includesList
+	 * @param relationsMap
+	 * @param coveragesList
+	 * @param limit
+	 * @param reverseBoolean
+     * @return
+     */
+	ListViewModel<ResourceModel> getResourcePageByChapterId(List<String> includesList, List<Map<String, String>> relationsMap, List<String> coveragesList, String limit, boolean reverseBoolean);
 }

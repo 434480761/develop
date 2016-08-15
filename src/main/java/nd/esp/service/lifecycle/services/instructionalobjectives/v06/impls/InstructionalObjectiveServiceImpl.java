@@ -1,11 +1,15 @@
 package nd.esp.service.lifecycle.services.instructionalobjectives.v06.impls;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.gson.reflect.TypeToken;
 import nd.esp.service.lifecycle.educommon.models.ResCoverageModel;
+import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
@@ -13,6 +17,7 @@ import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.FullModel;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.v02.ResourceRelationApiService;
@@ -28,6 +33,7 @@ import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
+import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.coverage.v06.CoverageViewModel;
 
@@ -42,6 +48,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 /**
  * 业务实现类
@@ -76,6 +85,9 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 	@Autowired
 	private TeachingMaterialServiceV06 teachingMaterialService;
+
+    @PersistenceContext(unitName = "entityManagerFactory")
+    EntityManager defaultEm;
 
 
 
@@ -459,4 +471,146 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 		return sb.toString();
 	}
+
+    @Override
+    public ListViewModel<ResourceModel> getResourcePageByChapterId(List<String> includes, List<Map<String, String>> relationsMap, List<String> coveragesList, String limit, boolean reverseBoolean) {
+
+        ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
+        rListViewModel.setLimit(limit);
+
+        String stype = relationsMap.get(0).get("stype");
+        String suuid = relationsMap.get(0).get("suuid");
+        String rtype = relationsMap.get(0).get("rtype");
+
+        String sqlSelect = "select ";
+
+        String sqlCount = " count(distinct(ndr.identifier)) ";
+
+        String sqlCommonColumn = " distinct(ndr.identifier) AS identifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language, " +
+                " null AS preview, ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties, ndr.code as code,null AS relationId ";
+        //LC
+        String sqlLifeCycleColumn = " ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate ";
+        String sqlLifeCycleColumn4Null = " null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate ";
+        //EDU
+        String sqlEducationInfoColumn = " ndr.interactivity AS educationInfo_interactivity,ndr.interactivity_level AS educationInfo_interactivityLevel,ndr.end_user_type AS educationInfo_endUserType,ndr.semantic_density AS educationInfo_semanticDensity,ndr.context AS educationInfo_context,ndr.age_range AS educationInfo_ageRange,ndr.difficulty AS educationInfo_difficulty,ndr.learning_time AS educationInfo_learningTime,ndr.edu_description AS educationInfo_description,ndr.edu_language AS educationInfo_language ";
+        String sqlEducationInfoColumn4Null = " null AS educationInfo_interactivity,null AS educationInfo_interactivityLevel,null AS educationInfo_endUserType,null AS educationInfo_semanticDensity,null AS educationInfo_context,null AS educationInfo_ageRange,null AS educationInfo_difficulty,null AS educationInfo_learningTime,null AS educationInfo_description,null AS educationInfo_language ";
+        //CR
+        String sqlCopyRightColumn = " ndr.cr_right AS copyRight_right,ndr.cr_description AS copyRight_crDescription,ndr.author AS copyRight_author ";
+        String sqlCopyRightColumn4Null = " null AS copyRight_right,null AS copyRight_crDescription,null AS copyRight_author ";
+
+
+        String sqlFrom = " FROM `ndresource` ndr " +
+                "INNER JOIN ( " +
+                " SELECT * " +
+                " FROM `resource_relations` t_chapters_instructionalobjectives " +
+                " LEFT JOIN ( " +
+                "  SELECT t_chapters_lessons.order_num AS order_num1 " +
+                "   ,t_lessons_instructionalobjectives.target AS target2 " +
+                "   ,t_lessons_instructionalobjectives.sort_num AS sort_num2 " +
+                "  FROM `resource_relations` t_lessons_instructionalobjectives " +
+                "  INNER JOIN ( " +
+                "   SELECT t1.* " +
+                "   FROM `resource_relations` t1 " +
+                "   WHERE t1.source_uuid = '" + suuid + "' " +
+                "    AND t1.res_type = 'chapters' " +
+                "    AND t1.resource_target_type = 'lessons' " +
+                "    AND t1.relation_type = 'ASSOCIATE' " +
+                "    AND t1.enable = 1 " +
+                "   ) AS t_chapters_lessons ON t_lessons_instructionalobjectives.source_uuid = t_chapters_lessons.target " +
+                "  WHERE t_lessons_instructionalobjectives.res_type = 'lessons' " +
+                "   AND t_lessons_instructionalobjectives.resource_target_type = 'instructionalobjectives' " +
+                "   AND t_lessons_instructionalobjectives.relation_type = 'ASSOCIATE' " +
+                "   AND t_lessons_instructionalobjectives.enable = 1 " +
+                "  ) AS t_chapters_lessons_instructionalobjectives ON t_chapters_instructionalobjectives.target = t_chapters_lessons_instructionalobjectives.target2 " +
+                " WHERE t_chapters_instructionalobjectives.source_uuid = '" + suuid + "' " +
+                "  AND t_chapters_instructionalobjectives.res_type = 'chapters' " +
+                "  AND t_chapters_instructionalobjectives.resource_target_type = 'instructionalobjectives' " +
+                "  AND t_chapters_instructionalobjectives.relation_type = 'ASSOCIATE' " +
+                "  AND t_chapters_instructionalobjectives.enable = 1 " +
+                " ORDER BY - t_chapters_lessons_instructionalobjectives.order_num1 DESC " +
+                "  ,- t_chapters_lessons_instructionalobjectives.sort_num2 DESC " +
+                "  ,- t_chapters_instructionalobjectives.sort_num DESC " +
+                " ) AS t_chapters_instructionalobjectives_sequential ON ndr.identifier = t_chapters_instructionalobjectives_sequential.target " +
+                "WHERE ndr.primary_category = 'instructionalobjectives' " +
+                " AND ndr.enable = 1 " +
+                " AND EXISTS (" +
+                " SELECT 1 " +
+                " FROM `res_coverages` t_rc " +
+                " WHERE ndr.identifier=t_rc.resource " +
+                "   AND t_rc.res_type='instructionalobjectives' " +
+                "   AND t_rc.target_type='Org' " +
+                "   AND t_rc.target='nd')";
+
+        Integer result[] = ParamCheckUtil.checkLimit(limit);
+        String sqlLimit = " LIMIT " + result[0] + "," + result[1];
+
+        //查询记录
+        String sqlItemsQuery = sqlSelect + sqlCommonColumn + "," + sqlLifeCycleColumn + "," + sqlEducationInfoColumn4Null + "," + sqlCopyRightColumn4Null + sqlFrom + sqlLimit;
+        Query itemsQuery = defaultEm.createNativeQuery(sqlItemsQuery, FullModel.class);
+        List<FullModel> queryResult = itemsQuery.getResultList();
+
+        //查询数量
+        String sqlCountQuery = sqlSelect + sqlCount + sqlFrom;
+        Query countQuery = defaultEm.createNativeQuery(sqlCountQuery);
+        BigInteger intTotal = (BigInteger) countQuery.getSingleResult();
+        Long total = new Long(intTotal.intValue());
+
+        //结果集
+        final Map<String, ResourceModel> resultMap = new LinkedHashMap<String, ResourceModel>();
+
+        //****************************结果集处理--Start****************************//
+        for (FullModel fullModel : queryResult) {
+            ResourceModel resourceModel = new ResourceModel();
+
+            // 通用属性
+            resourceModel.setIdentifier(fullModel.getIdentifier());
+            resourceModel.setTitle(fullModel.getTitle());
+            resourceModel.setDescription(fullModel.getDescription());
+            resourceModel.setLanguage(fullModel.getLanguage());
+            resourceModel.setKeywords(ObjectUtils.fromJson(fullModel.getKeywords(), new TypeToken<List<String>>() {
+            }));
+            resourceModel.setTags(ObjectUtils.fromJson(fullModel.getTags(), new TypeToken<List<String>>() {
+            }));
+
+
+            resourceModel.setCustomProperties(fullModel.getCustomProperties());
+            resourceModel.setNdresCode(fullModel.getCode());
+            resourceModel.setRelationId(fullModel.getRelationId());
+
+            //LC
+
+            ResLifeCycleModel rlc = new ResLifeCycleModel();
+            rlc.setVersion(fullModel.getLifeCycle_version());
+            rlc.setStatus(fullModel.getLifeCycle_status());
+
+            int enableInt = StringUtils.isNotEmpty(fullModel.getLifeCycle_enable()) ? Integer.parseInt(fullModel.getLifeCycle_enable()) : 0;
+            rlc.setEnable(enableInt == 1 ? true : false);
+            rlc.setCreator(fullModel.getLifeCycle_creator());
+            rlc.setPublisher(fullModel.getLifeCycle_publisher());
+            rlc.setProvider(fullModel.getLifeCycle_provider());
+            rlc.setProviderSource(fullModel.getLifeCycle_providerSource());
+
+            long createTimeLong = StringUtils.isNotEmpty(fullModel.getLifeCycle_createTime()) ? Long.parseLong(fullModel.getLifeCycle_createTime()) : 0L;
+            rlc.setCreateTime(new Date(createTimeLong));
+
+            long lastUpdateLong = StringUtils.isNotEmpty(fullModel.getLifeCycle_lastUpdate()) ? Long.parseLong(fullModel.getLifeCycle_lastUpdate()) : 0L;
+            rlc.setLastUpdate(new Date(lastUpdateLong));
+
+            resourceModel.setLifeCycle(rlc);
+
+
+            resultMap.put(fullModel.getIdentifier(), resourceModel);
+        }
+        //****************************结果集处理--End****************************//
+
+        //返回的list
+        List<ResourceModel> resultList = new ArrayList<ResourceModel>();
+        for (String key : resultMap.keySet()) {
+            resultList.add(resultMap.get(key));
+        }
+
+        rListViewModel.setItems(resultList);
+        rListViewModel.setTotal(total);
+        return rListViewModel;
+    }
 }
