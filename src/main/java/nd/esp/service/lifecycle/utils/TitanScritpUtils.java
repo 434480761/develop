@@ -336,7 +336,10 @@ public class TitanScritpUtils {
     /**
      * 创建导入Education的脚本，包括Education中的冗余字段
      * */
-    private static Map<String, Object> buildEducationScript(StringBuffer script, Education education ,List<ResourceCategory> categories, List<ResCoverage> coverages){
+    private static Map<String, Object> buildEducationScript(StringBuffer script,
+                                                            Education education,
+                                                            List<ResourceCategory> categories,
+                                                            List<ResCoverage> coverages){
         Map<String, Object> graphParams = getParam4NotNull(education);
         String suffix = "_edu";
         Map<String, Object> result = new HashMap<>();
@@ -407,7 +410,10 @@ public class TitanScritpUtils {
 
             appendParamAndScript(techInfoScript, resultParam, techInfoParam, suffix);
             techInfoScript.append(");");
-            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',"+techInfoNode+",'identifier',edgeIdentifier").append(suffix).append(");");
+            techInfoScript.append("g.V(education).next().addEdge('has_tech_info',")
+                    .append(techInfoNode)
+                    .append(",'identifier',edgeIdentifier")
+                    .append(suffix).append(");");
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
 
             techinfoScriptMethd.append(techInfoScript);
@@ -616,17 +622,14 @@ public class TitanScritpUtils {
         StringBuffer withInScript = new StringBuffer("within(");
 
         Map<String, Object> params = new HashMap<>();
-        int index = 0;
         for (int i=0; i <identifierList.size() ;i ++){
-            String indentifierName = "identifier"+index;
+            String indentifierName = "identifier"+i;
             if(i == 0){
                 withInScript.append(indentifierName);
             } else {
                 withInScript.append(",").append(indentifierName);
             }
             params.put(indentifierName, identifierList.get(i));
-
-            index ++;
         }
         withInScript.append(")");
         scriptBuilder.append(withInScript.toString()).append(").has('primary_category',primary_category)");
