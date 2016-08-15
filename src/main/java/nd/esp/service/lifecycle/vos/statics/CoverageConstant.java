@@ -83,7 +83,6 @@ public class CoverageConstant {
         return BLACKLIST_COVERATE_VALUE;
     }
 
-
     /**
      * target_type：覆盖范围的类型
      */
@@ -127,7 +126,12 @@ public class CoverageConstant {
         /**
          * 公共库
          */
-        TARGET_TYPE_PB("PB",true,true);
+        TARGET_TYPE_PB("PB",true,true),
+        /**
+         * 对于应用进行资源隔离
+         */
+        TARGET_TYPE_APP("App",true,true)
+        ;
         
         //属性
         String code;

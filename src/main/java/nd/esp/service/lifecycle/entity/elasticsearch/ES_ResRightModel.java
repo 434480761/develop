@@ -27,7 +27,7 @@ public class ES_ResRightModel {
 	/**
 	 * 是否有版权
 	 */
-	private boolean hasRight;
+	private Boolean hasRight;
 
 	public String getRight() {
 		return right;
@@ -69,11 +69,11 @@ public class ES_ResRightModel {
 		this.rightEndDate = rightEndDate;
 	}
 
-	public boolean isHasRight() {
+	public Boolean getHasRight() {
 		return hasRight;
 	}
 
-	public void setHasRight(boolean hasRight) {
+	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
 	}
 }

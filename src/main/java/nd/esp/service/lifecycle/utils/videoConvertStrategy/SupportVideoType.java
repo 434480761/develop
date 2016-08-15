@@ -25,7 +25,7 @@ import com.nd.gaea.rest.exceptions.extendExceptions.WafSimpleException;
 public enum SupportVideoType {
 //    cue, raw, cif, nrg, dat, sfd, bin, toc, rm, rmvb, mov, wmv, asf, flv, ;
 //    flv, mp4, mov, rmvb, rm, avi, wmv, f4v, ;
-    flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, threegp("3gp"), m4v, vob, ts, ogv,  //视频
+    flv, mp4, mov, rmvb, rm, avi, wmv, f4v, asf,  mpg,  mkv, threegp("3gp"), m4v, vob, ts, ogv, swf,   //视频
     mp3, wma, m4a, aac, wav, flac, ogg ;//音频
     
     // 辅助根据string来获取到对应对象

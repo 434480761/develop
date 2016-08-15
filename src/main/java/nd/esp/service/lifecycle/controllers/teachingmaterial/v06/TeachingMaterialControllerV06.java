@@ -10,10 +10,13 @@ import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
+import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.transcode.TransCodeManager;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewModel;
@@ -25,7 +28,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 
 /**
@@ -39,11 +47,56 @@ public class TeachingMaterialControllerV06 {
 	@Autowired
 	@Qualifier("teachingMaterialServiceV06")
 	private TeachingMaterialServiceV06 teachingMaterialService;
+	
+	@Autowired
+	private TransCodeUtil transCodeUtil;
 
 	@Autowired
 	private OfflineService offlineService;
 	@Autowired
 	private AsynEsResourceService esResourceOperation;
+	
+	
+	/**
+	 * 创建教材对象（带id）
+	 * @param rm		教材对象
+	 * @return
+	 */
+	@MarkAspect4Format2Category
+	@MarkAspect4OfflineJsonToCS
+	@RequestMapping(value="/{id}",method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public TeachingMaterialViewModel create4Id(@PathVariable String resType,@PathVariable String id,@Validated(ValidGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult){
+		
+	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType))){
+	        throw new LifeCircleException("类型不对");
+	    }
+	    
+		tmvm.setIdentifier(id);
+		//入参合法性校验
+		ValidResultHelper.valid(validResult, "LC/CREATE_TEACHINGMATERIAL_PARAM_VALID_FAIL", "TeachingMaterialControllerV06", "create");
+		
+		//业务校验
+		CommonHelper.inputParamValid(tmvm,"10111",OperationType.CREATE);
+		
+		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials);
+		
+		boolean bTranscode = TransCodeManager.canTransCode(tmvm, IndexSourceType.TeachingMaterialType.getName());
+		if(bTranscode) {
+		    tmm.getLifeCycle().setStatus(TransCodeUtil.getTransIngStatus(true));
+		}
+		
+		//创建教材
+		tmm = teachingMaterialService.createTeachingMaterial(resType,tmm);
+		
+		//model转换
+		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
+		
+		if (bTranscode) {
+            transCodeUtil.triggerTransCode(tmm, IndexSourceType.TeachingMaterialType.getName());
+        }
+		
+		return tmvm;
+	}
 
 	/**
 	 * 创建教材对象
@@ -68,18 +121,7 @@ public class TeachingMaterialControllerV06 {
 		//业务校验
 		CommonHelper.inputParamValid(tmvm,"10110",OperationType.CREATE);
 		
-		//model入参转换,部分数据初始化
-		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials);
-		
-		//创建教材
-		tmm = teachingMaterialService.createTeachingMaterial(resType,tmm);
-
-		//model出参转换
-		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
-		
-		//教材没有techInfo属性
-		tmvm.setTechInfo(null);
-		return tmvm;
+		return operate(resType,tmvm,OperationType.CREATE);
 	}
 	
 	/**
@@ -88,7 +130,7 @@ public class TeachingMaterialControllerV06 {
 	 * @return
 	 */
 	@MarkAspect4Format2Category
-	@MarkAspect4OfflineToES
+	@MarkAspect4OfflineJsonToCS
 	@RequestMapping(value = "/{id}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public TeachingMaterialViewModel update(@PathVariable String resType,@Validated(Valid4UpdateGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult,@PathVariable String id){
 		
@@ -103,18 +145,32 @@ public class TeachingMaterialControllerV06 {
 		
 		//业务校验
 		CommonHelper.inputParamValid(tmvm,"10111",OperationType.UPDATE);
-		
+
+		return operate(resType,tmvm,OperationType.UPDATE);
+	}
+	
+	/**
+	 * 操作教材对象
+	 * @param resType
+	 * @param tmvm
+	 * @param ot
+	 * @return
+	 */
+	private TeachingMaterialViewModel operate(String resType,TeachingMaterialViewModel tmvm,OperationType ot){
 		//model入参转换，部分数据初始化
 		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials);
 		
-		//修改教材
-		tmm = teachingMaterialService.updateTeachingMaterial(resType,tmm);
+		if(ot == OperationType.CREATE){
+			//创建教材
+			tmm = teachingMaterialService.createTeachingMaterial(resType,tmm);
+		}else if(ot == OperationType.UPDATE){
+			//修改教材
+			tmm = teachingMaterialService.updateTeachingMaterial(resType,tmm);
+		}
 		
 		//model转换
 		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
 		
-		//教材没有techInfo属性
-		tmvm.setTechInfo(null);
 		return tmvm;
 	}
 
@@ -148,9 +204,6 @@ public class TeachingMaterialControllerV06 {
 
 		//model转换
 		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
-
-		//教材没有techInfo属性
-		tmvm.setTechInfo(null);
 
 		if(notice) {
 			offlineService.writeToCsAsync(ResourceNdCode.teachingmaterials.toString(), id);

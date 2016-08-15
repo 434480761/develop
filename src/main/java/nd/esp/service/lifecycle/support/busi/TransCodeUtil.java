@@ -790,7 +790,7 @@ public class TransCodeUtil {
      * @since
      */
     private boolean isVideoTransCode(ResourceModel resourceModel, String resType) {
-        if (!IndexSourceType.AssetType.getName().equals(resType)) {
+        if (!(IndexSourceType.AssetType.getName().equals(resType) || IndexSourceType.TeachingMaterialType.getName().equals(resType))) {
             return false;
         }
         List<ResClassificationModel> categories = resourceModel.getCategoryList();
@@ -1045,20 +1045,23 @@ public class TransCodeUtil {
             
             // 暂时与source 放在同一个目录
             String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
-            
+
+            List<String> commands = new ArrayList<>();
             if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
                 targetPath = targetPath.substring(0, targetPath.lastIndexOf(".pkg")+4);
                 for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
                     String cmd = iter.next();
-                    if(cmd.startsWith("ffmpeg -i")) {
-                        iter.remove();
+                    if(cmd.startsWith("ffmpeg2theora")) {
+                        commands.add("ffmpeg2theora \"#src#\" "+cmd.substring(cmd.indexOf("--")));
                     }
                 }
+            } else {
+                commands = scripts;
             }
 
-            LOG.info("视频转码脚本:" + scripts);
+            LOG.info("视频转码脚本:" + commands);
 
-            arg.put("commands", scripts);
+            arg.put("commands", commands);
 
             LOG.info("视频转码后目标目录：" + targetPath);
 
@@ -1099,7 +1102,7 @@ public class TransCodeUtil {
                 }
             }
             TaskStatusInfo taskInfo = new TaskStatusInfo();
-            taskInfo.setResType("assets");
+            taskInfo.setResType(codeParam.getResType());
             taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_TRANSCODE);
             taskInfo.setBussId(codeParam.getResId());
             taskInfo.setTaskId(taskId);
