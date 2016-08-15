@@ -154,6 +154,13 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 	}
 
+	@Override
+	public void batchDeleteRelationSoft(String primaryCategory, List<String> ids) {
+		for (String id : ids){
+			deleteRelationSoft(primaryCategory, id);
+		}
+	}
+
 	private ResourceRelation addRelation(ResourceRelation resourceRelation){
 
 		String checkRelationExist = "g.E().has('has_relation','identifier',edgeIdentifier).id()";
