@@ -341,12 +341,14 @@ public class TitanScritpUtils {
         String suffix = "_edu";
         Map<String, Object> result = new HashMap<>();
 
-        StringBuilder educationScript = new StringBuilder(
+        StringBuffer educationScript = new StringBuffer(
                 "public Long createEducation(){education=graph.addVertex(T.label, primaryCategory_edu");
-        for (String key : graphParams.keySet()) {
-            educationScript.append(",'").append(key).append("',").append(key).append(suffix);
-            result.put(key+suffix, graphParams.get(key));
-        }
+//        for (String key : graphParams.keySet()) {
+//            educationScript.append(",'").append(key).append("',").append(key).append(suffix);
+//            result.put(key+suffix, graphParams.get(key));
+//        }
+
+        appendParamAndScript(educationScript, result,graphParams ,suffix);
 
         Set<String> resCoverages = new HashSet<>() ;
         Set<String> categoryCodes = new HashSet<>(TitanResourceUtils.distinctCategoryCode(categories));
@@ -366,7 +368,7 @@ public class TitanScritpUtils {
         return result;
     }
 
-    private static void setProperty(StringBuilder script, Map<String, Object> param, Set<String> values, TitanKeyWords fieldSet, TitanKeyWords fieldString){
+    private static void setProperty(StringBuffer script, Map<String, Object> param, Set<String> values, TitanKeyWords fieldSet, TitanKeyWords fieldString){
         if(CollectionUtils.isEmpty(values)){
             return;
         }
@@ -398,10 +400,12 @@ public class TitanScritpUtils {
             String techInfoNode = "techinfo"+suffix;
             Map<String, Object> techInfoParam = getParam4NotNull(techInfo);
             StringBuffer techInfoScript  = new StringBuffer(techInfoNode + " = graph.addVertex(T.label,'tech_info'");
-            for (String key : techInfoParam.keySet()) {
-                techInfoScript.append(",'").append(key).append("',").append(key).append(suffix);
-                resultParam.put(key + suffix, techInfoParam.get(key));
-            }
+//            for (String key : techInfoParam.keySet()) {
+//                techInfoScript.append(",'").append(key).append("',").append(key).append(suffix);
+//                resultParam.put(key + suffix, techInfoParam.get(key));
+//            }
+
+            appendParamAndScript(techInfoScript, resultParam, techInfoParam, suffix);
             techInfoScript.append(");");
             techInfoScript.append("g.V(education).next().addEdge('has_tech_info',"+techInfoNode+",'identifier',edgeIdentifier").append(suffix).append(");");
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
@@ -435,14 +439,17 @@ public class TitanScritpUtils {
             String categoryNodeAll = "categoryNodeAll"+suffix;
             String taxoncodeName = "taxoncode"+suffix;
             String edgeIdentifierName = "edgeIdentifier" + suffix;
-            Map<String, Object> techInfoParam = getParam4NotNull(category);
+//            Map<String, Object> techInfoParam = getParam4NotNull(category);
             categorieScript = new StringBuffer(categoryNodeAll+"=g.V().hasLabel('category_code').has('cg_taxoncode',"+taxoncodeName+");");
-            StringBuilder addNodeScript = new StringBuilder(categoryNode+"=graph.addVertex(T.label,'category_code'");
+            StringBuffer addNodeScript = new StringBuffer(categoryNode+"=graph.addVertex(T.label,'category_code'");
             Map<String, Object> categoryNodeParam = getParam4NotNull(category);
-            for (String key : categoryNodeParam.keySet()) {
-                addNodeScript.append(", '").append(key).append("', ").append(key).append(suffix);
-                resultParam.put(key + suffix, techInfoParam.get(key));
-            }
+//            for (String key : categoryNodeParam.keySet()) {
+//                addNodeScript.append(", '").append(key).append("', ").append(key).append(suffix);
+//                resultParam.put(key + suffix, techInfoParam.get(key));
+//            }
+
+            appendParamAndScript(addNodeScript, resultParam, categoryNodeParam, suffix);
+
             addNodeScript.append(");");
 
             String ifScript = "if(!"+categoryNodeAll+".iterator().hasNext()){"+addNodeScript.toString()+
@@ -548,6 +555,17 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
+    public static void appendParamAndScript(StringBuffer script, Map<String, Object> param, Map<String, Object> valueMap, String suffix){
+        if(script == null || param == null){
+            return;
+        }
+
+        for (String key : valueMap.keySet()){
+            script.append(", '").append(key).append("', ").append(key).append(suffix);
+            param.put(key + suffix, valueMap.get(key));
+        }
+    }
+
     public static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
         int orderNumber = 0;
         Map<String, Object> result = new HashMap<>();
@@ -565,10 +583,12 @@ public class TitanScritpUtils {
                             "g.V().hasLabel("+targetPrimaryCategoryName+").has('identifier',"+targetIdentifierName+").next(),'identifier',"+edgeIdentifierName);
 
             Map<String, Object> createRelationParams = getParam4NotNull(resourceRelation);
-            for (String key : createRelationParams.keySet()) {
-                scriptBuffer.append(", '").append(key).append("', ").append(key).append(suffix);
-                result.put(key + suffix, createRelationParams.get(key));
-            }
+//            for (String key : createRelationParams.keySet()) {
+//                scriptBuffer.append(", '").append(key).append("', ").append(key).append(suffix);
+//                result.put(key + suffix, createRelationParams.get(key));
+//            }
+
+            appendParamAndScript(scriptBuffer, result, createRelationParams,suffix);
 
             scriptBuffer.append(");");
 
