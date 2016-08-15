@@ -137,7 +137,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             paramMap.put(strategy, coverage.getStrategy());
             paramMap.put(target, coverage.getTarget());
             innerScriptList.add(script);
-            index ++;
         }
 
         for (int index =0 ;index < techInfoList.size() ;index++){
@@ -146,7 +145,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             String script = "outE().hasLabel('has_tech_info').inV().has('ti_title',"+techInfoTitle+")";
             paramMap.put(techInfoTitle,techInfo.getTitle());
             innerScriptList.add(script);
-            index ++;
         }
 
         for (int index =0 ;index <categoryList.size() ;index++){
@@ -156,7 +154,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
             paramMap.put(taxoncode, resourceCategory.getTaxoncode());
             innerScriptList.add(script);
-            index ++;
         }
 
         for(int index =0 ;index <categoryPathSet.size() ;index ++){
@@ -165,7 +162,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             String script = "outE().hasLabel('has_categories_path').inV().has('cg_taxonpath',"+categoryPath+")";
             paramMap.put(categoryPath, path);
             innerScriptList.add(script);
-            index ++ ;
         }
         StringBuffer checkAllScript = new StringBuffer(baseScript);
         if(CollectionUtils.isNotEmpty(innerScriptList)){
