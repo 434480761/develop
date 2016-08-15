@@ -452,12 +452,13 @@ public class TranscodeServiceImpl implements TranscodeService {
 //        String targetFileName = NameWithoutEx+"."+extParam.get("targetFmt");
         String srcDir = zipFileTempDir+File.separator+id+File.separator+"src";
         String destDir = zipFileTempDir+File.separator+id+File.separator+"targets";
-        
-        List<String> cmds = param.getCommands();
-        extParam.put("src", srcDir+File.separator+srcFileName);
-//        extParam.put("target", destDir+File.separator+targetFileName);
         FileUtils.forceMkdir(new File(srcDir));
         FileUtils.forceMkdir(new File(destDir));
+
+        List<String> cmds = param.getCommands();
+        extParam.put("src", srcDir+File.separator+srcFileName);
+        extParam.put("destDir", destDir);
+        extParam.put("fileNameNoEx", NameWithoutEx);
         
         long timeStart = System.currentTimeMillis();
         StringBuffer errMsg = new StringBuffer();
@@ -597,7 +598,9 @@ public class TranscodeServiceImpl implements TranscodeService {
         
         List<String> cmds = param.getCommands();
         extParam.put("src", srcDir+File.separator+srcFileName);
-        extParam.put("target", destDir+File.separator+NameWithoutEx+"."+extParam.get("targetFmt"));
+        extParam.put("tempMp4", destDir+File.separator+NameWithoutEx+".mp4");
+        extParam.put("destDir", destDir);
+        extParam.put("fileNameNoEx", NameWithoutEx);
         extParam.put("targetPreview", previewDir);
         extParam.put("targetCover", coverDir);
         
@@ -777,16 +780,12 @@ public class TranscodeServiceImpl implements TranscodeService {
                         String targetKey = argHeight + "p";
                         String finalFilename = nameWithNoEx;
                         if(command.startsWith("ffmpeg2theora")) {
-                            if(!metaMap.get("Format").equals("MPEG-4")) {
-                                command = command.replace("#src#", destDir+File.separator+targetKey+File.separator+finalFilename+".mp4");
-                            }
                             finalFilename += ".ogv";
                             targetKey += "-ogv";
                         } else {
                             finalFilename += ".mp4";
                         }
                         String target = destDir+File.separator+targetKey+File.separator+finalFilename;
-                        iter.set(command.replace("#target#", target));
                         targetsMap.put(targetKey, target);
                         FileUtils.forceMkdir(new File(destDir+File.separator+targetKey));
                     }
@@ -963,96 +962,6 @@ public class TranscodeServiceImpl implements TranscodeService {
         mediaInfoMap.putAll(srcMap);
 
         return srcDuration;
-//        String probeCmd = "ffprobe -v quiet -print_format json -show_streams -show_format -i " + file;
-//        StringBuffer probeData = new StringBuffer();
-//        result = RunCommand(probeCmd, probeData, toolPath, logMsg);
-//        if(result!=0) {
-//            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-//                    "LC/MEDIA_TRANSCODE_FAIL","获取目标文件metadata失败！");
-//        }
-//        
-//        MediaInfo meta = ObjectUtils.fromJson(mediaInfo.toString(), MediaInfo.class);
-//        Map<String,String> probeMap = ObjectUtils.fromJson(probeData.toString(), Map.class);
-//        
-//        int probeDuration = 0;
-//        if(probeMap.containsKey("format")) {
-//            Map<String,String> formatMap = ObjectUtils.fromJson(probeMap.get("format"), Map.class);
-//            if(formatMap.containsKey("tags")) {
-//                String tags = formatMap.get("tags");
-//                if(tags.contains("hasMetadata")) {
-//                    meta.setHasMetadata(true);
-//                }
-//                if(tags.contains("hasKeyframes")) {
-//                    meta.setHasKeyframes(true);
-//                }
-//                if(tags.contains("hasVideo")) {
-//                    meta.setHasVideo(true);
-//                }
-//                if(tags.contains("hasAudio")) {
-//                    meta.setHasAudio(true);
-//                }
-//            }
-//            
-//            BigDecimal duaration = new BigDecimal(formatMap.get("duration"));
-//            probeDuration = duaration.intValue();
-//        }
-//        meta.setDuration(meta.getDuration()/1000);
-//        if(meta.getDuration()<=0) {
-//            meta.setDuration(probeDuration);
-//        }
-//        
-//        List<Map<String,String>> videoInfos = new ArrayList<Map<String,String>>();
-//        for(int i=0; i<meta.getVideos().size(); ++i) {
-//            Map<String,String> videoInfo = meta.getVideos().get(i);
-//            BigDecimal duaration = new BigDecimal(videoInfo.get("Duration"));
-//            videoInfo.put("Duration", String.valueOf(duaration.intValue()/1000));
-//            BigDecimal bitRate = new BigDecimal(videoInfo.get("BitRate"));
-//            if(bitRate.longValue()<=0) {
-//                videoInfo.put("BitRate", videoInfo.get("BitRateNominal"));
-//            }
-//
-//            int finalHeight = Integer.parseInt(videoInfo.get("Height"));
-//            int finalWidth = Integer.parseInt(videoInfo.get("Width"));
-//            if(StringUtils.isNotEmpty(videoInfo.get("WidthOriginal")) && StringUtils.isNotEmpty(videoInfo.get("HeightOriginal"))) {
-//                int heightOriginal = Integer.parseInt(videoInfo.get("HeightOriginal"));
-//                int widthOriginal = Integer.parseInt(videoInfo.get("WidthOriginal"));
-//                if(heightOriginal>finalHeight && widthOriginal>finalWidth) {
-//                    finalHeight=heightOriginal;
-//                    finalWidth=widthOriginal;
-//                }
-//            }
-//            
-//            if(finalHeight<=0 || finalWidth<=0) {
-//                if(probeMap.containsKey("streams")) {
-//                    List<Map<String,String>> streams = ObjectUtils.fromJson(probeMap.get("streams"), List.class);
-//                    for(Map<String,String> stream:streams) {
-//                        if(stream.get("codec_type").equals("video")) {
-//                            finalHeight = Integer.parseInt(stream.get("height"));
-//                            finalWidth = Integer.parseInt(stream.get("width"));
-//                        }
-//                    }
-//                }
-//            }
-//            videoInfo.put("Height", String.valueOf(finalHeight));
-//            videoInfo.put("Width", String.valueOf(finalWidth));
-//            
-//            videoInfos.add(videoInfo);
-//        }
-//        meta.setVideos(videoInfos);
-//        
-//        List<Map<String,String>> audioInfos = new ArrayList<Map<String,String>>();
-//        for(int i=0; i<meta.getAudios().size(); ++i) {
-//            Map<String,String> audioInfo = meta.getAudios().get(i);
-//            
-//            BigDecimal duaration = new BigDecimal(audioInfo.get("Duration"));
-//            if(duaration.intValue() == 0) {
-//                audioInfo.put("Duration", String.valueOf(meta.getDuration()));
-//            } else {
-//                audioInfo.put("Duration", String.valueOf(duaration.intValue()/1000));
-//            }
-//        }
-//        
-//        return metadata;
     }
     
     private static String durationFormat(long durationInSec) {

@@ -50,7 +50,6 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 
 			//维度管理者角色--[CategoryDataAdmin]
 			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue());
-			http.authorizeRequests().antMatchers(HttpMethod.GET, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue(),RoleEnum.RESCREATOR.getValue(),RoleEnum.RESCONSUMER.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.PUT, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.POST, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
 			http.authorizeRequests().antMatchers(HttpMethod.DELETE, "/v*/categories/*").hasAnyAuthority(RoleEnum.BEARERTOKEN.getValue(),RoleEnum.CATEGORYDATAADMIN.getValue(),RoleEnum.SUPERADMIN.getValue(),RoleEnum.COVERAGEADMIN.getValue());
@@ -109,7 +108,7 @@ public class LifeCircleSecurityConfig extends WafWebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		//忽略的url地址
 		//web.ignoring().antMatchers("/**");
-		//web.ignoring() .antMatchers(HttpMethod.GET,"/**");
+		web.ignoring() .antMatchers(HttpMethod.GET,"/**");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/*.html");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/*.favicon.ico");
 		web.ignoring() .antMatchers(HttpMethod.GET,"/jsp/*.jsp");

@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 字符串工具类
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  */
 public final class StringUtils {
 
-
+	private static final Logger LOG = LoggerFactory.getLogger(StringUtils.class);
     private static long uniqueId = 0L;
     /**
      * The empty String <code>""</code>.
@@ -66,11 +66,11 @@ public final class StringUtils {
             format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         }
 
-        Date d=null;
+        Date d=new Date();
         try {
             d = format.parse(date);
         } catch (ParseException e) {
-            e.printStackTrace();
+        	LOG.error(e.getLocalizedMessage());
         }
 
         return d.getTime();

@@ -241,7 +241,7 @@ public class CommonServiceHelper {
         repositoryAndModelMap.put("teachingmaterials", new RepositoryAndModelAndView(teachingMaterialRepository,
                                                                              TeachingMaterialModel.class,
                                                                              TeachingMaterialViewModel.class,
-                                                                             TeachingMaterial.class,false,false));
+                                                                             TeachingMaterial.class,true,true));
 																			 
 		//习题
         repositoryAndModelMap.put("questions", new RepositoryAndModelAndView(questionRepository,

@@ -1524,8 +1524,15 @@ public class NDResourceServiceImpl implements NDResourceService{
     	
     	if(CollectionUtils.isNotEmpty(resourceModels)){
     		for(ResourceModel resourceModel : resourceModels){
-    			AccessModel accessModel = getDownloadAccessModel(
-    					resourceModel, resourceType, resourceModel.getIdentifier(), uid, key);
+    			AccessModel accessModel = new AccessModel();
+    			try {
+    				accessModel = getDownloadAccessModel(
+        					resourceModel, resourceType, resourceModel.getIdentifier(), uid, key);
+				} catch (Exception e) {
+					accessModel.setAccessMethod(null);
+					accessModel.setErrorMessage(e.getLocalizedMessage());
+				}
+    			
     			resultMap.put(resourceModel.getIdentifier(), accessModel);
     		}
     	}
@@ -1579,7 +1586,6 @@ public class NDResourceServiceImpl implements NDResourceService{
         // 获得session
         String sessionid = getSessionIdFromCS(csInstanceInfo.getUrl() + "/sessions", param);
 
-        
         LOG.debug("session:"+sessionid);
         
         AccessModel accessModel = new AccessModel();
@@ -1590,6 +1596,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         accessModel.setUuid(UUID.fromString(uuid));
         accessModel.setExpireTime(CommonHelper.fileOperationExpireDate());
         accessModel.setSessionId(sessionid);
+        accessModel.setErrorMessage(null);
         
         return accessModel;
     }
