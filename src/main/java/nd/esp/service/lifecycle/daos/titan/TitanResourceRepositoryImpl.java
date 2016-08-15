@@ -154,7 +154,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         try {
             id = titanCommonRepository.getVertexIdByLabelAndId(model.getPrimaryCategory(), model.getIdentifier());
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
 //            LOG.error("资源更新到titan失败");
             //TODO titan sync
             return null;
