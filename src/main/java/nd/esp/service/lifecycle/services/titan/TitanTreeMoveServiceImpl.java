@@ -36,7 +36,7 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         	}
             createNewRelation(titanTreeModel);
         }catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
             LOG.info("move node error");
         }
     }
@@ -60,7 +60,7 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
             deleteOldRelation(titanTreeModel);
             createNewRelation(titanTreeModel);
         }catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
             LOG.info("move node error");
         }
 

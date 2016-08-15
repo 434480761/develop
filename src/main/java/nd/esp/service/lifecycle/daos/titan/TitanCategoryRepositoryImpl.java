@@ -147,7 +147,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			titanCommonRepository.executeScript(deleteScript, param);
 			titanCommonRepository.executeScript(deleteScript2, param);
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			//TODO titan sync
 //			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
@@ -416,7 +416,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),identifier);
 			// TODO Auto-generated catch block
 			//TODO titan sync
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 

@@ -191,7 +191,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, param);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
         }
         return null;
     }

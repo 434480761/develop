@@ -139,7 +139,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 					srciptResource, paramResource);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+//			e.printStackTrace();
 			return false;
 		}
 		if(resultSet == null){
