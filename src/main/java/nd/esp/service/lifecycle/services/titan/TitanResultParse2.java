@@ -57,93 +57,6 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListViewWithLabel(String resType, List<String> resultStr,List<String> includes) {
-        long start = System.currentTimeMillis();
-        ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
-        List<ResourceModel> items = new ArrayList<>();
-
-        Map<String, String> mainResultMap = null;
-        List<Map<String, String>> taxOnCodeLinesMap = new ArrayList<>();
-        List<Map<String, String>> taxOnCodeIdLinesMap = new ArrayList<>();
-        List<Map<String, String>> techInfoLinesMap = new ArrayList<>();
-        String taxOnPath = null;
-        String parent=null;
-        String order=null;
-        int count = 0;
-        for (String line : resultStr) {
-            if(StringUtils.isEmpty(line)) continue;
-            Map<String, String> tmpMap = toMap(line);
-            if (CollectionUtils.isEmpty(tmpMap)) continue;
-            if (count > 0 && (tmpMap.containsKey(ES_SearchField.lc_create_time.toString()) || line.contains(TitanKeyWords.TOTALCOUNT.toString()))) {
-                // 解析一个item
-                // 把id和code放在一起
-                if (CollectionUtils.isNotEmpty(taxOnCodeLinesMap) || CollectionUtils.isNotEmpty(techInfoLinesMap)) {
-                    putIdCodeTogeter(taxOnCodeIdLinesMap, taxOnCodeLinesMap, techInfoLinesMap);
-                }
-                // order parent
-                if (ResourceNdCode.knowledges.toString().equals(resType) && mainResultMap!=null&&mainResultMap.size()!=0) {
-                    if (order != null) mainResultMap.put("order", order);
-                    if (parent != null) mainResultMap.put("parent", parent);
-                }
-                items.add(parseResource(resType, mainResultMap, taxOnCodeLinesMap, taxOnPath,includes));
-                taxOnCodeLinesMap.clear();
-                taxOnCodeIdLinesMap.clear();
-                techInfoLinesMap.clear();
-                taxOnPath = null;
-                parent = null;
-                order = null;
-            }
-            String label=tmpMap.get("label");
-
-            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
-            } else if ("categories_path".equals(label)) {
-                //path
-                taxOnPath = tmpMap.get(ES_SearchField.cg_taxonpath.toString());
-            } else if (tmpMap.containsKey(ES_SearchField.lc_create_time.toString())) {
-                mainResultMap = tmpMap;
-            } else if (order==null && "category_code".equals(label)) {
-                // code
-                taxOnCodeLinesMap.add(tmpMap);
-            } else if ("has_category_code".equals(label)) {
-                // id
-                taxOnCodeIdLinesMap.add(tmpMap);
-            } else if ("has_knowledge".equals(label)) {
-                // order
-                order = tmpMap.get("order");
-            } else if (order != null && ResourceNdCode.knowledges.toString().equals(resType) && (tmpMap.containsKey("primary_category") || tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString()))) {
-                // parent
-                if (tmpMap.containsKey(ES_SearchField.cg_taxoncode.toString())) {
-                    parent = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
-                } else if (tmpMap.containsKey("primary_category")) {
-                    String res = tmpMap.get("primary_category");
-                    if (ResourceNdCode.knowledges.toString().equals(res)) {
-                        parent = tmpMap.get(ES_SearchField.identifier.toString());
-                    } else if (ResourceNdCode.chapters.toString().equals(res)) {
-                        parent = "ROOT";
-                    }
-                }
-            } else if(tmpMap.containsKey(ES_SearchField.ti_format.toString())){
-                // tech_info
-                techInfoLinesMap.add(tmpMap);
-            }else {
-                LOG.warn("异常数据");
-            }
-            count++;
-
-
-        }
-
-        viewModels.setItems(items);
-        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
-        return viewModels;
-    }
-    /**
-     * 解析资源
-     * @param resType
-     * @param resultStr
-     * @return
-     */
     public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes,Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = new ArrayList<>();
@@ -309,7 +222,7 @@ public class TitanResultParse2 {
     }
 
     /**
-     * Ebook的扩展属性
+     * KnowledgeModel的扩展属性
      * @param mainResult
      * @param allOtherLinesMap
      * @param taxOnPath
@@ -692,7 +605,14 @@ public class TitanResultParse2 {
         copyright.setAuthor(tmpMap.get(ES_SearchField.cr_author.toString()));
         copyright.setRight(tmpMap.get(ES_SearchField.cr_right.toString()));
         copyright.setDescription(tmpMap.get(ES_SearchField.cr_description.toString()));
-        copyright.setHasRight("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString())));
+        if("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString()))){
+            copyright.setHasRight(true);
+        } else if("false".equals(tmpMap.get(ES_SearchField.cr_has_right.toString()))){
+            copyright.setHasRight(false);
+        } else {
+            copyright.setHasRight(null);
+        }
+
         copyright.setRightStartDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_start_date.toString())));
         copyright.setRightEndDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_end_date.toString())));
         return copyright;
@@ -754,6 +674,5 @@ public class TitanResultParse2 {
         }
         return tmpMap;
     }
-
 
 }

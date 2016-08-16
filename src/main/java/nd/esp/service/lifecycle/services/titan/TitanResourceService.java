@@ -12,6 +12,9 @@ public interface TitanResourceService {
 
 	void timeTaskImport(Integer page , String type);
 	long importAllRelation();
+	void repairAllRelation();
+	void repairOne(String resourceType, String id);
+	void timeTaskRepair(Integer page , String type);
 
 	long importKnowledgeRelation();
 
@@ -25,4 +28,6 @@ public interface TitanResourceService {
 
 	void checkAllData(String primaryCategory);
 	String importStatus();
+	void code();
+	void repairData(String primaryCategory);
 }

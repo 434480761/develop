@@ -25,4 +25,8 @@ public interface TitanImportRepository {
                                     List<ResourceCategory> resourceCategoryList,
                                     List<TechInfo> techInfos,
                                     List<ResourceRelation> resourceRelationList);
+    boolean checkResourceAllInTitanDetail(Education education, List<ResCoverage> resCoverageList,
+                                    List<ResourceCategory> resourceCategoryList,
+                                    List<TechInfo> techInfos,
+                                    List<ResourceRelation> resourceRelationList);
 }

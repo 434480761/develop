@@ -35,6 +35,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
     @Autowired
     private TitanCommonRepository titanCommonRepository;
 
+    /**
+     * Sync导入失败增加一条数据
+     * */
     public void titanSync4MysqlImportAdd(TitanSyncType errorType, String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -88,6 +91,55 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    @Override
+    public void titanSync4MysqlAdd(TitanSyncType errorType, String primaryCategory, String source, int executeTimes) {
+        TitanSync example = new TitanSync();
+        example.setPrimaryCategory(primaryCategory);
+        example.setResource(source);
+        List<TitanSync> titanSyncList = null;
+        TitanSync titanSync = null;
+        try {
+            titanSyncList = titanSyncRepository.getAllByExample(example);
+        } catch (EspStoreException e) {
+//            e.printStackTrace();
+            LOG.info("");
+        }
+
+        /**
+         * 获取Sync数据同步条件，如果新增加的真删除资源，则清空其它的数据同步条件
+         * */
+        if(titanSyncList != null && titanSyncList.size() > 0){
+            for(TitanSync ts : titanSyncList){
+                if(TitanSyncType.value(ts.getType()).equals(errorType)){
+                    titanSync = ts;
+                } else if(TitanSyncType.DROP_RESOURCE_ERROR.equals(errorType)){
+                    titanSyncRepository.delete(ts);
+                }
+            }
+        }
+
+        if(titanSync == null){
+            titanSync = new TitanSync();
+            titanSync.setResource(source);
+            titanSync.setPrimaryCategory(primaryCategory);
+            titanSync.setIdentifier(UUID.randomUUID().toString());
+            titanSync.setCreateTime(new Date().getTime());
+            titanSync.setExecuteTimes(executeTimes);
+            titanSync.setType(errorType.toString());
+            titanSync.setDescription("");
+            titanSync.setTitle("");
+            titanSync.setLevel(0);
+            try {
+                titanSyncRepository.add(titanSync);
+            } catch (EspStoreException e) {
+                LOG.error("titan数据同步,add异常数据到mysql失败 primaryCategory：{}  errorType:{}  source:{}",primaryCategory,errorType,source);
+            }
+        }
+    }
+
+    /**
+     * 数据保存到titan中失败，保存一条数据到同步表中，如果表中已经存在数据则不进行操作
+     * */
     @Override
     public void titanSync4MysqlAdd(TitanSyncType errorType, String primaryCategory, String source) {
         TitanSync example = new TitanSync();
@@ -147,6 +199,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 删除同步表中的一条数据
+     * */
     public void titanSync4MysqlDelete(TitanSyncType errorType, String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -163,6 +218,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 删除一个资源在同步表中的所有数据
+     * */
     public void titanSync4MysqlDeleteAll(String primaryCategory, String source){
         TitanSync example = new TitanSync();
         example.setPrimaryCategory(primaryCategory);
@@ -174,6 +232,9 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         }
     }
 
+    /**
+     * 检查关系在mysql中是否存在
+     * */
     @Override
     public boolean checkRelationExistInMysql(ResourceRelation resourceRelation) {
         if(checkEducationExistInMySql(resourceRelation.getResType(), resourceRelation.getSourceUuid())

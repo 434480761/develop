@@ -12,6 +12,7 @@ import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
@@ -41,7 +42,9 @@ public class ChapterDaoImpl implements ChapterDao{
     
     @Autowired
     private ChapterRepository chapterRepository;
-    
+
+    @Autowired
+    private TitanRelationRepository titanRelationRepository;
     
     
     @SuppressWarnings("unchecked")
@@ -84,7 +87,7 @@ public class ChapterDaoImpl implements ChapterDao{
         
         Query query = chapterRepository.getEntityManager().createNativeQuery(executeHql);
         query.setParameter("tmid", mid);
-        
+
         query.executeUpdate();
     }
 
@@ -427,6 +430,10 @@ public class ChapterDaoImpl implements ChapterDao{
         query.setParameter("resourceType", "chapters");
         query.setParameter("ids", chapterIds);
         query.executeUpdate();
+
+        //titan delete
+        titanRelationRepository.batchDeleteRelationSoft("chapters", chapterIds);
+
         return true;
     }
     
