@@ -65,7 +65,7 @@ public class TitanQueryEdge extends TitanQueryElement {
 					"LC/QUERY/PARAM", "titanEdgeDirection");
 		}
 
-		return scriptBuffer.toString();
+		return scriptBuffer.toString()+".as('relationvalues')";
 	}
 
 	private String appendEdgeLabel(Map<String, Object> scriptParamMap) {
