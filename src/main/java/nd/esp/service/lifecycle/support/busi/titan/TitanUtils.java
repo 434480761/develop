@@ -22,7 +22,8 @@ public class TitanUtils {
 		if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
-		String end = ").valueMap(true);";// 取回label
+		String end = ")";// 取回label
+		String defaultStr=".valueMap(true);";
 
 		if(CollectionUtils.isNotEmpty(includes)) {
 			for (String include : includes) {
@@ -43,8 +44,8 @@ public class TitanUtils {
 			scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
 
-		if ("".equals(scriptBuffer.toString())) return "";
-		return begin + scriptBuffer.toString() + end;
+		if ("".equals(scriptBuffer.toString())) return defaultStr;
+		return begin + scriptBuffer.toString() + end + defaultStr;
 	}
 
 	// 生成脚本参数名字，避免多个值冲突
