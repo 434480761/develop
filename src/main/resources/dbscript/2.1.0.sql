@@ -1,0 +1,3 @@
+CREATE TABLE `resource_providers` ( `identifier` CHAR(36) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `title` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `description` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL , PRIMARY KEY (`identifier`) ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT = '资源提供商';
+
+CREATE TABLE `copyright_owners` ( `identifier` CHAR(36) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `title` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `description` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL , PRIMARY KEY (`identifier`) ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT = '资源版权方';
