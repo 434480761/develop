@@ -22,25 +22,23 @@ public class TitanUtils {
 		if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
-		String end = ")";
+		String end = ").valueMap(true);";// 取回label
 
 		if(CollectionUtils.isNotEmpty(includes)) {
 			for (String include : includes) {
 				if (include.equals(IncludesConstant.INCLUDE_TI)) {
 					scriptBuffer.append(",out('has_tech_info')");
 				} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
-					scriptBuffer.append(",out('has_category_code')");
-					// cg_taxoncode identifier
+					// scriptBuffer.append(",out('has_category_code')");
+					// code、id和path都从边上取(cg_taxoncode identifier cg_taxonpath)
 					scriptBuffer.append(",outE('has_category_code')");
-					scriptBuffer.append(",out('has_categories_path')");
+					// scriptBuffer.append(",out('has_categories_path')");
 				}
 			}
 		}
 		if (ResourceNdCode.knowledges.toString().equals(resType)) {
-
 			// order
 			scriptBuffer.append(",inE('has_knowledge')");
-
 			// parent
 			scriptBuffer.append(",inE('has_knowledge').outV()");
 		}

@@ -640,7 +640,7 @@ public class TitanScritpUtils {
         params.put("primary_category", primaryCategory);
 
         scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,primaryCategory));
-        scriptBuilder.append(".valueMap();");
+        //scriptBuilder.append(".valueMap();");
 
         Map<KeyWords, Object> result = new HashMap<>();
         result.put(KeyWords.script, scriptBuilder.toString());

@@ -58,9 +58,8 @@ public class TitanResultParse {
      * @return
      */
     public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
-        long start = System.currentTimeMillis();
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
-        List<ResourceModel> items = new ArrayList<>();
+        List<ResourceModel> items = null;
         if (CollectionUtils.isNotEmpty(resultStr)) {
             int resultSize = resultStr.size();
             // 处理count
@@ -69,33 +68,49 @@ public class TitanResultParse {
                 viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
                 resultStr.remove(resultSize - 1);
             }
-            if (resultStr.size() > 0) {
-                // 数据转成key-value
-                List<Map<String, String>> resultStrMap = new ArrayList<>();
-                for (String str : resultStr) {
-                    Map<String, String> tmp = toMapWithLabel(str);
-                    if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
-                }
+            // 解析items
+            items = parseToItems(resType, resultStr, includes, isCommonQuery);
+        }
+        viewModels.setItems(items);
+        return viewModels;
+    }
 
-                // 切割资源
-                List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
-                if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
-                    List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
-                    for (int i = 0; i < indexArray.size() - 1; i++) {
-                        int begin = indexArray.get(i);
-                        int end = indexArray.get(i + 1);
-                        allItemMaps.add(resultStrMap.subList(begin, end));
-                    }
-                    // 解析资源
-                    for (List<Map<String, String>> oneItemMaps : allItemMaps) {
-                        items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
-                    }
+
+    /**
+     *
+     * @param resType
+     * @param resultStr
+     * @param includes
+     * @param isCommonQuery
+     * @return
+     */
+    public static List<ResourceModel> parseToItems(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+        long start = System.currentTimeMillis();
+        List<ResourceModel> items = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(resultStr)) {
+            // 数据转成key-value
+            List<Map<String, String>> resultStrMap = new ArrayList<>();
+            for (String str : resultStr) {
+                Map<String, String> tmp = toMapWithLabel(str);
+                if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
+            }
+            // 切割资源
+            List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
+            if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
+                List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
+                for (int i = 0; i < indexArray.size() - 1; i++) {
+                    int begin = indexArray.get(i);
+                    int end = indexArray.get(i + 1);
+                    allItemMaps.add(resultStrMap.subList(begin, end));
+                }
+                // 解析资源
+                for (List<Map<String, String>> oneItemMaps : allItemMaps) {
+                    items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
                 }
             }
         }
-        viewModels.setItems(items);
         LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
-        return viewModels;
+        return items;
     }
 
 
@@ -184,11 +199,13 @@ public class TitanResultParse {
                         String label2 = parent.get("label");
                         if ("category_code".equals(label2)) {
                             resource.put("parent", parent.get("cg_taxoncode"));
-                        } else if ("knowledges".equals(label2) || "chapters".equals(label2)) {
+                        } else if ("knowledges".equals(label2)) {
+                            resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
+                        }else if("chapters".equals(label2)){
                             if (!isCommonQuery) {
                                 resource.put("parent", "ROOT");
                             } else {
-                                resource.put("parent", map.get(ES_SearchField.identifier.toString()));
+                                resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
                             }
                         } else {
                             LOG.warn("parent--未能识别");

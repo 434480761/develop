@@ -249,7 +249,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 resultStr.add(iterator.next().getString());
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse2.parseToListView(resType, resultStr,includes,false);
+            return TitanResultParse.parseToListView(resType, resultStr,includes,false);
         }
         return null;
     }
@@ -607,7 +607,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if(StringUtils.isNotEmpty(relationType)) edgePropertiesMap.put("relation_type", generateFieldCondtion("relation_type", relationType));
         if(StringUtils.isNotEmpty(label)) edgePropertiesMap.put("rr_label", generateFieldCondtion("rr_label", label));
         // FIXME 处理成like
-        if(StringUtils.isNotEmpty(tags)) edgePropertiesMap.put("tags", generateFieldCondtion("tags", tags));
+        if(StringUtils.isNotEmpty(tags)) edgePropertiesMap.put("tags", generateFieldCondtionWithLike("tags", "*" + tags + "*"));
 
         titanQueryEdge.setPropertiesMap(edgePropertiesMap);
         Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
@@ -756,6 +756,21 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         List<Object> properties = new ArrayList<Object>();
         properties.add(value);
         if (ES_SearchField.cg_taxoncode.toString().equals(fieldName)
+                && value instanceof String && ((String) value).contains("*")) {
+            propertiesMap.put(Titan_OP.like, properties);
+        } else {
+            propertiesMap.put(Titan_OP.eq, properties);
+        }
+
+        return propertiesMap;
+    }
+
+    private Map<Titan_OP, List<Object>> generateFieldCondtionWithLike(String fieldName,
+                                                              Object value) {
+        Map<Titan_OP, List<Object>> propertiesMap = new HashMap<Titan_OP, List<Object>>();
+        List<Object> properties = new ArrayList<Object>();
+        properties.add(value);
+        if (ES_SearchField.tags.toString().equals(fieldName)
                 && value instanceof String && ((String) value).contains("*")) {
             propertiesMap.put(Titan_OP.like, properties);
         } else {
