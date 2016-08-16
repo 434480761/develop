@@ -561,7 +561,7 @@ public class TitanScritpUtils {
         return resultParam;
     }
 
-    public static void appendParamAndScript(StringBuffer script, Map<String, Object> param, Map<String, Object> valueMap, String suffix){
+    private static void appendParamAndScript(StringBuffer script, Map<String, Object> param, Map<String, Object> valueMap, String suffix){
         if(script == null || param == null){
             return;
         }
@@ -569,6 +569,16 @@ public class TitanScritpUtils {
         for (String key : valueMap.keySet()){
             script.append(", '").append(key).append("', ").append(key).append(suffix);
             param.put(key + suffix, valueMap.get(key));
+        }
+    }
+
+    public static void appendHas(StringBuffer script, Map<String, Object> valueMap){
+        if(CollectionUtils.isEmpty(valueMap)){
+            return;
+        }
+
+        for (String key : valueMap.keySet()){
+            script.append(".has(").append(key).append(")");
         }
     }
 
@@ -647,6 +657,19 @@ public class TitanScritpUtils {
         result.put(KeyWords.params, params);
 
         return  result;
+    }
+
+    public static Map<TitanScritpUtils.KeyWords, Object> checkCoverage(ResCoverage coverage){
+        StringBuffer script = new StringBuffer("g.V().has('identifier',resourceIdentifier).outE('"+
+                TitanKeyWords.has_coverage.toString()+"').has('identifier')");
+        Map<String, Object> paramMap = getParam4NotNull(coverage);
+        appendHas(script, paramMap);
+
+        Map<TitanScritpUtils.KeyWords, Object> result = new HashMap<>();
+        result.put(KeyWords.script,script);
+        result.put(KeyWords.params, paramMap);
+
+        return result;
     }
 
     public static  void main(String[] args){

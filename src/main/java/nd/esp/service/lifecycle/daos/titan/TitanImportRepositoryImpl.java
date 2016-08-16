@@ -4,13 +4,15 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.services.titanV07.NDResourceTitanService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
-import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,12 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
+
+    @Autowired
+    private NDResourceTitanService ndResourceTitanService;
+
+    @Autowired
+    private NDResourceService ndResourceService;
 
     @Override
     /**
@@ -97,9 +105,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
 
         if(count == null || count == 0){
-            LOG.info("资源在titan中不存在 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(), education.getIdentifier());
+
+            titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
         } else if(count > 1){
-            LOG.info("资源在titan中有重复 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(), education.getIdentifier());
+            titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
         } else {
             return true;
         }
@@ -177,7 +186,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         } else {
             checkAllScript.append(".id()");
         }
-        Long id = null;        try {
+        Long id = null;
+        try {
 
             id = titanCommonRepository.executeScriptUniqueLong(checkAllScript.toString(), paramMap);
         } catch (Exception e) {
@@ -216,9 +226,54 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return true;
     }
 
+    @Override
+    public boolean checkResourceAllInTitanDetail(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
+        List<String> includes = new ArrayList<>();
+        includes.add(IncludesConstant.INCLUDE_CG);
+        includes.add(IncludesConstant.INCLUDE_EDU);
+        includes.add(IncludesConstant.INCLUDE_TI);
+        includes.add(IncludesConstant.INCLUDE_CR);
+        includes.add(IncludesConstant.INCLUDE_LC);
+
+        //通过获取详情检查资源的每个字段
+        ResourceModel titan = ndResourceService.getDetail(education.getPrimaryCategory(), education.getIdentifier(), includes, true);
+        ResourceModel mysql = ndResourceTitanService.getDetail(education.getPrimaryCategory(), education.getIdentifier(), includes, true);
+        boolean success = equalModel(titan, mysql);
+
+
+        //校验mysql关系的条数等于titan边的条数据
+        String baseScript = "g.V().has(primaryCategory,'identifier',identifier).outE().or(hasLabel('has_coverage'),hasLabel('has_tech_info')" +
+                ",hasLabel('has_category_code'),hasLabel('has_categories_path')).count();";
+
+        //校验coverage数据正确性
+
+
+        //校验资源关系数据正确性
+
+
+        //校验章节知识点关系正确性
+
+        return false;
+    }
+
 
     private void titanSync(Education education){
         titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.IMPORT_DATA_ERROR,
                 education.getPrimaryCategory(), education.getIdentifier(),999);
+    }
+
+    /**
+     * 保存异常数据到titan sync表中
+     * */
+    private void titanSync(TitanSyncType syncType, String parmaryCategory, String identifier){
+        titanRepositoryUtils.titanSync4MysqlAdd(syncType, parmaryCategory, identifier,999);
+    }
+
+    private boolean equalModel(ResourceModel titan, ResourceModel mysql){
+        return true;
+    }
+
+    public static void main(String[] args){
+        System.out.println(Float.MAX_VALUE);
     }
 }
