@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EsSyncTimerTask {
 
-	private static final int MAX_TRY_TIMES = 5;
+	public static final int MAX_TRY_TIMES = 5;
 	private static final Logger LOG = LoggerFactory.getLogger(EsSyncTimerTask.class);
 
 	@Autowired

@@ -17,5 +17,7 @@ public interface EsSyncDao {
 	void batchBeforeDelete(Set<Resource> resourceSet)throws EspStoreException;
 	void afterDelete(Resource resource)throws EspStoreException;
 	void batchAfterDelete(Set<Resource> resourceSet)throws EspStoreException;
+	
+	void restartSync()throws EspStoreException;
 
 }
