@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.daos.titan;
 
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanEspRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryFactory;
@@ -20,6 +21,9 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
             .getLogger(TitanCategoryRepositoryImpl.class);
     @Autowired
     private TitanRepositoryFactory repositoryFactory;
+
+    @Autowired
+    private TitanCommonRepository titanCommonRepository;
 
     @Override
     public List<M> batchAdd(List<M> models) {
@@ -92,5 +96,28 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
         }
 
         return null;
+    }
+
+    public boolean delete(String identifier){
+        try {
+            titanCommonRepository.deleteEdgeById(identifier);
+        } catch (Exception e) {
+            LOG.info("titan batch update error");
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> identifiers) {
+        try {
+            titanCommonRepository.batchDeleteEdgeByIds(identifiers);
+        } catch (Exception e) {
+            LOG.info("titan batch update error");
+            return false;
+        }
+
+        return true;
     }
 }

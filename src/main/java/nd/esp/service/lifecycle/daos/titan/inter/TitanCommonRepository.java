@@ -29,6 +29,7 @@ public interface TitanCommonRepository {
      * */
     public void deleteAllOutVertexByResourceAndVertexLabel(String primaryCategory, String identifier , String vertexLabel) throws Exception;
     public void deleteEdgeById(String id) throws Exception;
+    public void batchDeleteEdgeByIds(List<String> ids) throws Exception;
     public void butchDeleteVertexById(List<String> ids) throws Exception;
     public void butchDeleteEdgeById(List<String> ids) throws Exception;
 
