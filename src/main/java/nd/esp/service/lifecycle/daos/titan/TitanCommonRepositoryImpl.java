@@ -132,6 +132,13 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     @Override
+    public void batchDeleteEdgeByIds(List<String> ids) throws Exception {
+        for (String id : ids){
+            deleteEdgeById(id);
+        }
+    }
+
+    @Override
     public void butchDeleteVertexById(List<String> ids) throws Exception {
         for(String id : ids){
             deleteVertexById(id);

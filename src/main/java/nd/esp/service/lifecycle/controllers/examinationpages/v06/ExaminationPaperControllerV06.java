@@ -155,7 +155,7 @@ public class ExaminationPaperControllerV06 {
         } else if (type == CONTROLLER_UPDATE_TYPE) {
             ValidResultHelper.valid(validResult,
                                     "LC/UPDATE_EXAMINATIONPAPER_PARAM_VALID_FAIL",
-                                    "eourseWareObjectControllerV06",
+                                    "examinationPaperControllerV06",
                                     "update");
             CommonHelper.inputParamValid(viewModel, "11111",OperationType.UPDATE);
         }
