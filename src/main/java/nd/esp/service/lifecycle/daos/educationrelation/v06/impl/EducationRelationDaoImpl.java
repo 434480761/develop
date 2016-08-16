@@ -20,6 +20,7 @@ import nd.esp.service.lifecycle.models.v06.ResourceRelationResultModel;
 import nd.esp.service.lifecycle.models.v06.ResultModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
@@ -57,6 +58,9 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
     
     @Autowired
     private ResourceRelationRepository repository;
+
+    @Autowired
+    private ResourceRelation4QuestionDBRepository resourceRelation4QuestionDBRepository;
     
     @Autowired
     private NDResourceDao nDResourceDao;
@@ -1406,8 +1410,18 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
         query.setParameter("resType", primaryCategory);
         query.setParameter("rids", uuidsSet);
 
+        javax.persistence.Query queryQuestions = resourceRelation4QuestionDBRepository
+                .getEntityManager()
+                .createNamedQuery("batchGetRelationByResourceSourceOrTarget");
+        queryQuestions.setParameter("resType", primaryCategory);
+        queryQuestions.setParameter("rids", uuidsSet);
+
         @SuppressWarnings("unchecked")
         List<ResourceRelation> result = query.getResultList();
+        @SuppressWarnings("unchecked")
+        List<ResourceRelation> resultQuestions = queryQuestions.getResultList();
+
+        result.addAll(resultQuestions);
 
         return result;
     }

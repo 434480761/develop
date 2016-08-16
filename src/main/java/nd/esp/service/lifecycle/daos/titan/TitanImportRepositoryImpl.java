@@ -3,10 +3,11 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.TitanSyncRepository;
+import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -27,66 +28,30 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             .getLogger(TitanImportRepositoryImpl.class);
     @Autowired
     private TitanCommonRepository titanCommonRepository;
-    @Autowired
-    private TitanSyncRepository titanSyncRepository;
 
     @Autowired
     private TitanRelationRepository titanRelationRepository;
+
+    @Autowired
+    private TitanRepositoryUtils titanRepositoryUtils;
 
     @Override
     /**
      * @return false 导入数据失败 ；true 导入成功
      * */
     public boolean importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
-        Map<String,ResCoverage> coverageMap = new HashMap<>();
-        //对资源的techInfo、coverage、category进行去重处理
-        if(CollectionUtils.isNotEmpty(resCoverageList)){
-            for(ResCoverage coverage : resCoverageList){
-                String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
-                if(coverageMap.get(key)==null){
-                    coverageMap.put(key, coverage);
-                }
-            }
-        }
 
-        Set<String> categoryPathSet = new HashSet<>();
-        Map<String, ResourceCategory> categoryMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(resourceCategoryList)){
-            for (ResourceCategory resourceCategory : resourceCategoryList){
-                if(StringUtils.isNotEmpty(resourceCategory.getTaxonpath())){
-                    categoryPathSet.add(resourceCategory.getTaxonpath());
-                }
-                if(categoryMap.get(resourceCategory.getTaxoncode())==null){
-                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
-                }
-
-            }
-        }
-
-        Map<String, TechInfo> techInfoMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(techInfos)){
-            for (TechInfo techInfo : techInfos){
-                if(techInfoMap.get(techInfo.getTitle()) == null){
-                    techInfoMap.put(techInfo.getTitle(), techInfo);
-                }
-            }
-        }
-
-        List<ResCoverage> coverageList = new ArrayList<>();
-        coverageList.addAll(coverageMap.values());
-        List<ResourceCategory> categoryList = new ArrayList<>();
-        categoryList.addAll(categoryMap.values());
-        List<TechInfo> techInfoList = new ArrayList<>();
-        techInfoList.addAll(techInfoMap.values());
-        List<String> categoryPathList = new ArrayList<>();
-        categoryPathList.addAll(categoryPathSet);
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
+        List<String> categoryPathList = TitanResourceUtils.distinctCategoryPath(resourceCategoryList);
 
         //生成导入资源的脚本
         Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,categoryList,techInfoList,categoryPathList);
         //校验addVertex中的参数个数过多，个数超过250返回为null
         if(CollectionUtils.isEmpty(result)){
             //TODO 这种错误情况保存到数据库中，返回true
-            saveErrorSource(education);
+            titanSync(education);
         } else {
             Long educationId = null;
             try {
@@ -128,7 +93,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         try {
             count = titanCommonRepository.executeScriptUniqueLong(script, param);
         } catch (Exception e) {
-            e.printStackTrace();
+           LOG.info(e.getLocalizedMessage());
         }
 
         if(count == null || count == 0){
@@ -150,46 +115,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     //FIXME 现在边上都有ID，后面通过ID对边进行检测
     public boolean checkResourceAllInTitan(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
         String baseScript = "g.V().has(primaryCategory,'identifier',identifier)";
-        Map<String,ResCoverage> coverageMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(resCoverageList)){
-            for(ResCoverage coverage : resCoverageList){
-                String key = coverage.getTarget()+coverage.getStrategy()+coverage.getTargetType();
-                if(coverageMap.get(key)==null){
-                    coverageMap.put(key, coverage);
-                }
-            }
-        }
 
-        Set<String> categoryPathSet = new HashSet<>();
-        Map<String, ResourceCategory> categoryMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(resourceCategoryList)){
-            for (ResourceCategory resourceCategory : resourceCategoryList){
-                if(StringUtils.isNotEmpty(resourceCategory.getTaxonpath())){
-                    categoryPathSet.add(resourceCategory.getTaxonpath());
-                }
-                if(categoryMap.get(resourceCategory.getTaxoncode())==null){
-                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
-                }
-
-            }
-        }
-
-        Map<String, TechInfo> techInfoMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(techInfos)){
-            for (TechInfo techInfo : techInfos){
-                if(techInfoMap.get(techInfo.getTitle()) == null){
-                    techInfoMap.put(techInfo.getTitle(), techInfo);
-                }
-            }
-        }
+        List<String> categoryPathSet = TitanResourceUtils.distinctCategoryPath(resourceCategoryList);
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
 
         //产生资源校验的脚本
         List<String> innerScriptList = new ArrayList<>();
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("primaryCategory", education.getPrimaryCategory());
         paramMap.put("identifier",education.getIdentifier());
-        int index = 0;
-        for(ResCoverage coverage : coverageMap.values()){
+        for(int index = 0; index < coverageList.size() ;index ++){
+            ResCoverage coverage = coverageList.get(index);
             String targetType = "target_type"+index;
             String strategy = "strategy" + index;
             String target = "target" +index;
@@ -199,35 +137,31 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             paramMap.put(strategy, coverage.getStrategy());
             paramMap.put(target, coverage.getTarget());
             innerScriptList.add(script);
-            index ++;
         }
 
-        index = 0;
-        for (TechInfo techInfo : techInfoMap.values()){
+        for (int index =0 ;index < techInfoList.size() ;index++){
+            TechInfo techInfo = techInfoList.get(index);
             String techInfoTitle = "techInfoTitle"+index;
             String script = "outE().hasLabel('has_tech_info').inV().has('ti_title',"+techInfoTitle+")";
             paramMap.put(techInfoTitle,techInfo.getTitle());
             innerScriptList.add(script);
-            index ++;
         }
 
-        index = 0;
-        for (ResourceCategory resourceCategory : categoryMap.values()){
+        for (int index =0 ;index <categoryList.size() ;index++){
+            ResourceCategory resourceCategory = categoryList.get(index);
             String taxoncode = "taxoncode" + index;
             String script = "outE().hasLabel('has_category_code').inV().has('cg_taxoncode',"+taxoncode+")";
 
             paramMap.put(taxoncode, resourceCategory.getTaxoncode());
             innerScriptList.add(script);
-            index ++;
         }
 
-        index = 0;
-        for(String path : categoryPathSet){
+        for(int index =0 ;index <categoryPathSet.size() ;index ++){
+            String path = categoryPathSet.get(index);
             String categoryPath = "path" + index;
             String script = "outE().hasLabel('has_categories_path').inV().has('cg_taxonpath',"+categoryPath+")";
             paramMap.put(categoryPath, path);
             innerScriptList.add(script);
-            index ++ ;
         }
         StringBuffer checkAllScript = new StringBuffer(baseScript);
         if(CollectionUtils.isNotEmpty(innerScriptList)){
@@ -247,7 +181,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
             id = titanCommonRepository.executeScriptUniqueLong(checkAllScript.toString(), paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getLocalizedMessage());
         }
 
         //校验资源是否存在
@@ -256,6 +190,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             return false;
         }
 
+        //保证titan里面不会出现多余的数据
         String getEdgeNumber = baseScript + ".outE().or(hasLabel('has_coverage'),hasLabel('has_tech_info')" +
                 ",hasLabel('has_category_code'),hasLabel('has_categories_path')).count();";
         Map<String, Object> getEdgeNumberParam = new HashMap<>();
@@ -265,14 +200,14 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         try {
             edgeCount = titanCommonRepository.executeScriptUniqueLong(getEdgeNumber,getEdgeNumberParam);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getLocalizedMessage());
         }
 
         //category在保存的时候没有做去重处理，在导入数据的时候有做去重处理
         if(CollectionUtils.isEmpty(resourceCategoryList)){
             resourceCategoryList = new ArrayList<>();
         }
-        Integer edgeCountMysql = coverageMap.size() + techInfoMap.size() + resourceCategoryList.size() + categoryPathSet.size();
+        Integer edgeCountMysql = coverageList.size() + techInfoList.size() + resourceCategoryList.size() + categoryPathSet.size();
         if (edgeCount == null || edgeCount.intValue() > edgeCountMysql ){
             LOG.info("数据校验：数据有误 primaryCategory:{}  identifier:{}",education.getPrimaryCategory(),education.getIdentifier());
             return false;
@@ -282,21 +217,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
 
 
-    private void saveErrorSource(Education education){
-        TitanSync titanSync = new TitanSync();
-        titanSync.setIdentifier(UUID.randomUUID().toString());
-        titanSync.setLevel(0);
-        titanSync.setResource(education.getIdentifier());
-        titanSync.setExecuteTimes(999);
-        titanSync.setCreateTime(System.currentTimeMillis());
-        titanSync.setTitle("");
-        titanSync.setDescription("");
-        titanSync.setPrimaryCategory(education.getPrimaryCategory());
-        titanSync.setType(TitanSyncType.IMPORT_DATA_ERROR.toString());
-        try {
-            titanSyncRepository.add(titanSync);
-        } catch (EspStoreException e) {
-            e.printStackTrace();
-        }
+    private void titanSync(Education education){
+        titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.IMPORT_DATA_ERROR,
+                education.getPrimaryCategory(), education.getIdentifier(),999);
     }
 }

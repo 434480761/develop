@@ -56,7 +56,7 @@ public class TitanSyncTimerTask {
             try{
                 syncData();
             } catch (Exception e){
-                e.printStackTrace();
+                LOG.info("titan_sync_error {}",e.getLocalizedMessage());
             }
         }
     }

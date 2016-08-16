@@ -17,6 +17,9 @@ public enum  TitanSyncType {
     SYNC_SUCCESS,
     UPDATE_DATA_RESOURCE,
     UPDATE_DATA_RELATION,
+    UPDATE_DATA_TECH,
+    UPDATE_DATA_COVERAGE,
+    UPDATE_DATA_CATEGORY,
     UPDATE_DATA_OTHER;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();

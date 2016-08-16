@@ -8,9 +8,8 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,7 @@ import java.util.*;
 @Repository
 public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository {
     private static final Logger LOG = LoggerFactory
-            .getLogger(TitanCategoryRepositoryImpl.class);
+            .getLogger(TitanUpdateDataRepositoryImpl.class);
 
     @Autowired
     private TitanCommonRepository titanCommonRepository;
@@ -38,46 +37,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
      * */
     @Override
     public boolean updateOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
-        Map<String, ResCoverage> coverageMap = new HashMap<>();
-        //对资源的techInfo、coverage、category进行去重处理
-        if (CollectionUtils.isNotEmpty(resCoverageList)) {
-            for (ResCoverage coverage : resCoverageList) {
-                String key = coverage.getTarget() + coverage.getStrategy() + coverage.getTargetType();
-                if (coverageMap.get(key) == null) {
-                    coverageMap.put(key, coverage);
-                }
-            }
-        }
-
-        Set<String> categoryPathSet = new HashSet<>();
-        Map<String, ResourceCategory> categoryMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(resourceCategoryList)) {
-            for (ResourceCategory resourceCategory : resourceCategoryList) {
-                if (StringUtils.isNotEmpty(resourceCategory.getTaxonpath())) {
-                    categoryPathSet.add(resourceCategory.getTaxonpath());
-                }
-                if (categoryMap.get(resourceCategory.getTaxoncode()) == null) {
-                    categoryMap.put(resourceCategory.getTaxoncode(), resourceCategory);
-                }
-
-            }
-        }
-
-        Map<String, TechInfo> techInfoMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(techInfos)) {
-            for (TechInfo techInfo : techInfos) {
-                if (techInfoMap.get(techInfo.getTitle()) == null) {
-                    techInfoMap.put(techInfo.getTitle(), techInfo);
-                }
-            }
-        }
-
-        List<ResCoverage> coverageList = new ArrayList<>();
-        coverageList.addAll(coverageMap.values());
-        List<ResourceCategory> categoryList = new ArrayList<>();
-        categoryList.addAll(categoryMap.values());
-        List<TechInfo> techInfoList = new ArrayList<>();
-        techInfoList.addAll(techInfoMap.values());
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
 
         //更新资源并检查资源在titan中是否存在，不存在不进行后续的操作
         if(!updateEducation(education)){
@@ -114,9 +76,8 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         repairEducation.setRightEndDate(education.getRightEndDate());
         repairEducation.setContext(education.getContext());
         repairEducation.setProviderMode(education.getProviderMode());
-        //Education中enable和preview有默认值需要重设置
-        repairEducation.setEnable(education.getEnable());
-        repairEducation.setPreview(null);
+        //Education中enable有默认值需要重设置
+        repairEducation.setEnable(null);
         return repairNode(repairEducation,education.getPrimaryCategory(),education.getIdentifier());
     }
 
@@ -150,7 +111,7 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
 
         boolean success =  repairEdge(techInfo, TitanKeyWords.has_tech_info.toString());
         if(!success){
-            titanSync(TitanSyncType.UPDATE_DATA_OTHER, techInfo.getResType(), techInfo.getResource());
+            titanSync(TitanSyncType.UPDATE_DATA_TECH, techInfo.getResType(), techInfo.getResource());
 
         }
 
@@ -161,7 +122,7 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         for (ResCoverage resCoverage : coverageList) {
             boolean success =  repairEdge(resCoverage, TitanKeyWords.has_coverage.toString());
             if(!success){
-                titanSync(TitanSyncType.UPDATE_DATA_OTHER, resCoverage.getResType(), resCoverage.getResource());
+                titanSync(TitanSyncType.UPDATE_DATA_COVERAGE, resCoverage.getResType(), resCoverage.getResource());
             }
 
         }
@@ -175,14 +136,14 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
 
             boolean success = repairEdge(resourceCategory, TitanKeyWords.has_category_code.toString());
             if(!success){
-                titanSync(TitanSyncType.UPDATE_DATA_OTHER, resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
+                titanSync(TitanSyncType.UPDATE_DATA_CATEGORY, resourceCategory.getPrimaryCategory(), resourceCategory.getResource());
             }
         }
         return null;
     }
 
     /**
-     * 修复边
+     * 修复边,全量更新属性
      * */
     private boolean repairEdge(EspEntity entity, String label){
         StringBuffer script = new StringBuffer("g.E().has(edgeLabel,'identifier',identifier)");
@@ -195,7 +156,7 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         try {
            id= titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
         } catch (Exception e) {
-            e.printStackTrace();
+           LOG.error(e.getLocalizedMessage());
             return false;
         }
 
@@ -210,18 +171,18 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
      * 修复一个节点，通过增量的方式修复
      * */
     private boolean repairNode(Education entity, String label ,String identifier){
-        StringBuffer script = new StringBuffer("g.V().has(edgeLabel,'identifier',identifier)");
+        StringBuffer script = new StringBuffer("g.V().has(nodeLabel,'identifier',identifier)");
         Map<String, Object> graphParams;
         //获取Education中不为null的属性
         graphParams = TitanScritpUtils.getParamAndChangeScript4Repair(script, entity);
-        graphParams.put("edgeLabel",label);
+        graphParams.put("nodeLabel",label);
         graphParams.put("identifier",identifier);
         script.append(".id()");
         String id = null;
         try {
             id= titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getLocalizedMessage());
             return false;
         }
 
@@ -238,4 +199,5 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
     private void titanSync(TitanSyncType syncType, String parmaryCategory, String identifier){
         titanRepositoryUtils.titanSync4MysqlAdd(syncType, parmaryCategory, identifier,999);
     }
+    
 }

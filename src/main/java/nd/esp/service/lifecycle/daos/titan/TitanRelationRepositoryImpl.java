@@ -121,7 +121,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		try {
 			titanCommonRepository.executeScript(script, paramMap);
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 //			LOG.info("resourceRelation出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					primaryCategory,identifier);
