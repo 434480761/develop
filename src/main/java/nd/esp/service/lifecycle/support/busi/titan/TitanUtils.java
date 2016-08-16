@@ -19,7 +19,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 public class TitanUtils {
 
 	public static String generateScriptForInclude(List<String> includes, String resType) {
-		if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
+//		 if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
 		String end = ")";// 取回label
