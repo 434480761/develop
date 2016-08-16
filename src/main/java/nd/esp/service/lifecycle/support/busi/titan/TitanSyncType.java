@@ -20,6 +20,8 @@ public enum  TitanSyncType {
     UPDATE_DATA_TECH,
     UPDATE_DATA_COVERAGE,
     UPDATE_DATA_CATEGORY,
+    CHECK_NOT_EXIST,
+    CHECK_REPEAT,
     UPDATE_DATA_OTHER;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
