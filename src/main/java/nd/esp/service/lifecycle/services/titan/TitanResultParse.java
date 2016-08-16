@@ -69,24 +69,28 @@ public class TitanResultParse {
                 viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
                 resultStr.remove(resultSize - 1);
             }
-            // FIXME tomap
-            List<Map<String, String>> resultStrMap = new ArrayList<>();
-            for (String str : resultStr) {
-                Map<String, String> tmp = toMapWithLabel(str);
-                if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
-            }
+            if (resultStr.size() > 0) {
+                // 数据转成key-value
+                List<Map<String, String>> resultStrMap = new ArrayList<>();
+                for (String str : resultStr) {
+                    Map<String, String> tmp = toMapWithLabel(str);
+                    if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
+                }
 
-            // FIXME 切割资源
-            List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
-            List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
-            for (int i = 0; i < indexArray.size() - 1; i++) {
-                int begin = indexArray.get(i);
-                int end = indexArray.get(i + 1);
-                allItemMaps.add(resultStrMap.subList(begin, end));
-            }
-            // FIXME 解析资源
-            for (List<Map<String, String>> oneItemMaps : allItemMaps) {
-                items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
+                // 切割资源
+                List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
+                if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
+                    List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
+                    for (int i = 0; i < indexArray.size() - 1; i++) {
+                        int begin = indexArray.get(i);
+                        int end = indexArray.get(i + 1);
+                        allItemMaps.add(resultStrMap.subList(begin, end));
+                    }
+                    // 解析资源
+                    for (List<Map<String, String>> oneItemMaps : allItemMaps) {
+                        items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
+                    }
+                }
             }
         }
         viewModels.setItems(items);
@@ -112,6 +116,7 @@ public class TitanResultParse {
                 // 发现存在order跳过下一行数据 order-->has_knowledge
                 if ("has_knowledge".equals(label)) i++;
             }
+            // 检查切割点
             boolean isEnd = (i == endSize) || ((i < endSize) && resType.equals(resultStrMap.get(i + 1).get("label")));
             if (isEnd) indexArray.add(i + 1);
         }
