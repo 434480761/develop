@@ -59,15 +59,15 @@ public class EsResourceOperationImpl implements EsResourceOperation {
 	public static final WafSecurityHttpClient WAF_HTTP_CLIENT = new WafSecurityHttpClient(
 			WAF_CLIENT_CONNECT_TIMEOUT_VALUE, WAF_CLIENT_SOCKET_TIMEOUT_VALUE);
 	// online
-//	private final static String LC_API_URL_FOR_ES = Constant.LIFE_CYCLE_DOMAIN_URL
-//			+ "/elasticsearch/index/data/{resourceType}/{identifier}/forES";
-//	private final static String LC_API_URL_FOR_ES_BATCH = Constant.LIFE_CYCLE_DOMAIN_URL
-//			+ "/elasticsearch/index/data/{resourceType}/list/forES?";
+	private final static String LC_API_URL_FOR_ES = Constant.LIFE_CYCLE_DOMAIN_URL
+			+ "/elasticsearch/index/data/{resourceType}/{identifier}/forES";
+	private final static String LC_API_URL_FOR_ES_BATCH = Constant.LIFE_CYCLE_DOMAIN_URL
+			+ "/elasticsearch/index/data/{resourceType}/list/forES?";
 	// bylsm local
-	 private final static String LC_API_URL_FOR_ES =
-	 "http://localhost:8080/esp-lifecycle/elasticsearch/index/data/{resourceType}/{identifier}/forES";
-	 private final static String LC_API_URL_FOR_ES_BATCH =
-	 "http://localhost:8080/esp-lifecycle/elasticsearch/index/data/{resourceType}/list/forES?";
+//	 private final static String LC_API_URL_FOR_ES =
+//	 "http://localhost:8080/esp-lifecycle/elasticsearch/index/data/{resourceType}/{identifier}/forES";
+//	 private final static String LC_API_URL_FOR_ES_BATCH =
+//	 "http://localhost:8080/esp-lifecycle/elasticsearch/index/data/{resourceType}/list/forES?";
 
 	public final static JacksonCustomObjectMapper ObjectMapper = new JacksonCustomObjectMapper();
 
