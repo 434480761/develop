@@ -35,6 +35,7 @@ public class TitanResultItem {
     private Map<String, String> resource;
     private List<Map<String, String>> category;// code/id/path
     private List<Map<String, String>> techInfo;
+    private Map<String, String> relationValues;// 边上的关系数据
 
     public Map<String, String> getResource() {
         return resource;
@@ -58,5 +59,13 @@ public class TitanResultItem {
 
     public void setTechInfo(List<Map<String, String>> techInfo) {
         this.techInfo = techInfo;
+    }
+
+    public Map<String, String> getRelationValues() {
+        return relationValues;
+    }
+
+    public void setRelationValues(Map<String, String> relationValues) {
+        this.relationValues = relationValues;
     }
 }

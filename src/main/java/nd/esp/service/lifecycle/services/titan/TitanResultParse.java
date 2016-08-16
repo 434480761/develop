@@ -57,7 +57,7 @@ public class TitanResultParse {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+    public static ListViewModel<ResourceModel> parseToListViewResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
         List<ResourceModel> items = null;
         if (CollectionUtils.isNotEmpty(resultStr)) {
@@ -69,7 +69,7 @@ public class TitanResultParse {
                 resultStr.remove(resultSize - 1);
             }
             // 解析items
-            items = parseToItems(resType, resultStr, includes, isCommonQuery);
+            items = parseToItemsResourceModel(resType, resultStr, includes, isCommonQuery);
         }
         viewModels.setItems(items);
         return viewModels;
@@ -84,34 +84,59 @@ public class TitanResultParse {
      * @param isCommonQuery
      * @return
      */
-    public static List<ResourceModel> parseToItems(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+    public static List<ResourceModel> parseToItemsResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         long start = System.currentTimeMillis();
         List<ResourceModel> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             // 数据转成key-value
-            List<Map<String, String>> resultStrMap = new ArrayList<>();
-            for (String str : resultStr) {
-                Map<String, String> tmp = toMapWithLabel(str);
-                if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
-            }
+            List<Map<String, String>> resultStrMap = changeStrToKeyValue(resultStr);
             // 切割资源
-            List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
-            if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
-                List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
-                for (int i = 0; i < indexArray.size() - 1; i++) {
-                    int begin = indexArray.get(i);
-                    int end = indexArray.get(i + 1);
-                    allItemMaps.add(resultStrMap.subList(begin, end));
-                }
-                // 解析资源
-                for (List<Map<String, String>> oneItemMaps : allItemMaps) {
-                    items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
-                }
+            List<List<Map<String, String>>> allItemMaps = cutOneItemMaps(resType, resultStrMap);
+            // 解析资源
+            for (List<Map<String, String>> oneItemMaps : allItemMaps) {
+                items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
             }
         }
         LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
         return items;
     }
+
+    /**
+     *
+     * @param resultStr
+     * @return
+     */
+    public static List<Map<String, String>> changeStrToKeyValue(List<String> resultStr) {
+        List<Map<String, String>> resultStrMap = new ArrayList<>();
+        for (String str : resultStr) {
+            Map<String, String> tmp = toMapWithLabel(str);
+            if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
+        }
+        return resultStrMap;
+    }
+
+    /**
+     *
+     * @param resType
+     * @param resultStrMap
+     * @return
+     */
+    public static List<List<Map<String, String>>> cutOneItemMaps(String resType, List<Map<String, String>> resultStrMap) {
+        // 切割资源
+        List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
+        List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
+            for (int i = 0; i < indexArray.size() - 1; i++) {
+                int begin = indexArray.get(i);
+                int end = indexArray.get(i + 1);
+                allItemMaps.add(resultStrMap.subList(begin, end));
+            }
+
+        }
+        return allItemMaps;
+    }
+
+
 
 
     /**
@@ -174,7 +199,7 @@ public class TitanResultParse {
      * @param isCommonQuery
      * @return
      */
-    private static TitanResultItem discernData(String resType, List<Map<String, String>> singleItemMaps, Boolean isCommonQuery) {
+    public static TitanResultItem discernData(String resType, List<Map<String, String>> singleItemMaps, Boolean isCommonQuery) {
         TitanResultItem item = new TitanResultItem();
         if (CollectionUtils.isNotEmpty(singleItemMaps)) {
             Map<String, String> resource = new HashMap<>();

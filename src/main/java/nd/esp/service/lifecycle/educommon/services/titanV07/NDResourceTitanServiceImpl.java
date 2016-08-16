@@ -645,7 +645,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
             resultList.add(line);
         }
 
-        return TitanResultParse.parseToItems(resourceType,resultList,includeList,true);
+        return TitanResultParse.parseToItemsResourceModel(resourceType,resultList,includeList,true);
     }
 
 
