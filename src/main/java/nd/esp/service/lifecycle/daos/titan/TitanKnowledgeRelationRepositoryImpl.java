@@ -88,6 +88,9 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         Map<String, Object> createScriptParams = new HashMap<>();
         createScriptParams.put("parentId", parentId);
         createScriptParams.put("childId", childId);
+        if(leftValue == null){
+        	leftValue = 0;
+        }
         createScriptParams.put("treeOrder", new Float(leftValue));
         try {
             titanCommonRepository.executeScript(createScript, createScriptParams);

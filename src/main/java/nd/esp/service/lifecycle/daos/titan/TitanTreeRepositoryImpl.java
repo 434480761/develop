@@ -94,12 +94,13 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public Double getChildMaxOrderByParent(TitanTreeType treeType, Long parentNodeId) {
-        Double maxValue =  10000D;
+        Double maxValue =  100000D;//by lsm 目前生产环境最多有4万多知识点，最大值是88761.0 所以暂时设置成这个值
         String script = "g.V(parentNodeId).outE().hasLabel(relationType).has('"+TitanKeyWords.tree_order.toString()+"',gt(new Double(maxValue))).values('"+TitanKeyWords.tree_order+"').order().by("
                 +TitanKeyWords.decr.toString()+").limit(1)";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
         paramMap.put("relationType",treeType.relation());
+        paramMap.put("maxValue", maxValue);
 
         Double order = null;
         try {
