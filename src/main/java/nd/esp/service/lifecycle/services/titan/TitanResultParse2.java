@@ -88,11 +88,7 @@ public class TitanResultParse2 {
         List<RelationForQueryViewModel> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             // 数据转成key-value
-            List<Map<String, String>> resultStrMap = new ArrayList<>();
-            for (String str : resultStr) {
-                Map<String, String> tmp = TitanResultParse.toMapForRelationQuery(str);
-                if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
-            }
+            List<Map<String, String>> resultStrMap = TitanResultParse.changeStrToKeyValue(resultStr);
             List<TitanResultItem> titanResultItems = discernData(resType, resultStrMap);
             // 解析资源
             if (CollectionUtils.isNotEmpty(titanResultItems)) {
