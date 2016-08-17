@@ -197,19 +197,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         resourceVertexPropertyMap.put("primary_category",generateFieldCondtion("primary_category", targetType));
-        //resourceVertexPropertyMap.put("identifier",generateFieldCondtion("identifier", sourceUuid));
         resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
 
-        // Map<String, Map<String, List<String>>> params
-
         // 处理维度
-        if(StringUtils.isNotEmpty(categories)) dealWithSearchCode2(resourceQueryVertex,Arrays.asList(categories.split(",")));
+        if(StringUtils.isNotEmpty(categories)) dealWithSearchCode4queryListByResType(resourceQueryVertex,Arrays.asList(categories.split(",")));
         //覆盖范围 Map<String, List<String>> coverageConditions
-        /*Map<String, List<String>> coverageConditions=new HashMap<>();
-        List<String> coverages=new ArrayList();
-        coverages.add(coverage);
-        coverageConditions.put(ES_OP.in.toString(),coverages);
-        dealWithSearchCoverage(resourceVertexPropertyMap,coverageConditions);*/
         if(StringUtils.isNotEmpty(coverage)) dealWithSearchCoverage4queryListByResType(resourceVertexPropertyMap,coverage);
 
         titanExpression.addCondition(resourceQueryVertex);
@@ -425,7 +417,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param resourceQueryVertex
      * @param eqConditions
      */
-    private void dealWithSearchCode2(TitanQueryVertex resourceQueryVertex,
+    private void dealWithSearchCode4queryListByResType(TitanQueryVertex resourceQueryVertex,
                                     List<String> eqConditions) {
         if (CollectionUtils.isEmpty(eqConditions)) return;
 
