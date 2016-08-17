@@ -37,14 +37,14 @@ public class TitanUtils {
 				}
 			}
 		}
-		if (ResourceNdCode.knowledges.toString().equals(resType)) {
+		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
 			// order
 			scriptBuffer.append(",inE('has_knowledge')");
 			// parent
 			scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
 		if (needRelationValues) {
-			scriptBuffer.append(",select('relationvalues')");
+			scriptBuffer.append(",select('e')");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;
