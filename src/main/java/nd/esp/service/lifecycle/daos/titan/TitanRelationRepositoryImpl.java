@@ -134,6 +134,11 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		return false;
 	}
 
+	@Override
+	public boolean batchDelete(List<String> ids) {
+		return false;
+	}
+
 	/**
 	 * 提供给数据导入使用的接口
 	 * */

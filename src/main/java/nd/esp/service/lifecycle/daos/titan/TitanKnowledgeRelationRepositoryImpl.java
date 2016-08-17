@@ -164,6 +164,16 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         return null;
     }
 
+    @Override
+    public boolean delete(String id) {
+        return false;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> ids) {
+        return false;
+    }
+
     private boolean isSubjectCode(String parent) {
         if (StringUtils.isEmpty(parent)) {
             return false;

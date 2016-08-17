@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -129,6 +130,29 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		 * 待定
 		 * */
 		return null;
+	}
+
+	@Override
+	public boolean delete(String id) {
+		try {
+			titanCommonRepository.deleteEdgeById(id);
+		} catch (Exception e) {
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DELETE_CATEGORY_ERROR,
+					TitanKeyWords.category_code.toString(),id);
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean batchDelete(List<String> ids) {
+		if(CollectionUtils.isEmpty(ids)){
+			return true;
+		}
+		for (String id : ids){
+			delete(id);
+		}
+		return true;
 	}
 
 	@Override
