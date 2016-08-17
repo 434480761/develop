@@ -94,7 +94,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public Double getChildMaxOrderByParent(TitanTreeType treeType, Long parentNodeId) {
-        Double maxValue =  2000D;
+        Double maxValue =  10000D;
         String script = "g.V(parentNodeId).outE().hasLabel(relationType).has('"+TitanKeyWords.tree_order.toString()+"',gt(new Double(maxValue))).values('"+TitanKeyWords.tree_order+"').order().by("
                 +TitanKeyWords.decr.toString()+").limit(1)";
         Map<String, Object> paramMap = new HashMap<>();
