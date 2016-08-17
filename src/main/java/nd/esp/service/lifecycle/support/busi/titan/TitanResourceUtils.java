@@ -48,16 +48,17 @@ public class TitanResourceUtils {
 
     public static Map<String, List<TechInfo>> distinctTechInfo(List<TechInfo> techInfos){
         Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
-        for (TechInfo techInfo : techInfos){
-            List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
-            if(techInfoList == null){
-                techInfoList = new ArrayList<>();
-                techInfoMap.put(techInfo.getResource(), techInfoList);
-            }
-
-            techInfoList.add(techInfo);
+        if(CollectionUtils.isNotEmpty(techInfos)){
+		    for (TechInfo techInfo : techInfos){
+		        List<TechInfo> techInfoList = techInfoMap.get(techInfo.getResource());
+		        if(techInfoList == null){
+		            techInfoList = new ArrayList<>();
+		            techInfoMap.put(techInfo.getResource(), techInfoList);
+		        }
+		
+		        techInfoList.add(techInfo);
+		    }
         }
-
         return techInfoMap;
     }
 

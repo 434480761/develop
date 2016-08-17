@@ -436,7 +436,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 					indexNum += size;
 					LOG.info( "type: {} totalPage:{} page:{}",primaryCategory, resourcePage.getTotalPages(),page);
 				} catch (Exception e) {
-					LOG.error(e.getMessage());
+					e.printStackTrace();
 					LOG.error("importTitanMySqlError page:{} primaryCategory:{}",page,primaryCategory);
 				}
 				setStatisticParam(primaryCategory,resourcePage.getTotalPages(),page);
