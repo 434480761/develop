@@ -10,7 +10,9 @@ import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +47,16 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
         if(!updateEducation(education)){
             titanSync(TitanSyncType.UPDATE_DATA_RESOURCE,education.getPrimaryCategory(),education.getIdentifier());
         }else {
-            batchUpdateCategory(categoryList);
-            batchUpdateCoverage(coverageList);
-            batchUpdateTechInfo(techInfoList);
+        	if(CollectionUtils.isNotEmpty(categoryList)){
+        		batchUpdateCategory(categoryList);
+        	}
+        		
+        	if(CollectionUtils.isNotEmpty(coverageList)){
+        		batchUpdateCoverage(coverageList);
+        	}
+        	if(CollectionUtils.isNotEmpty(techInfoList)){
+        		batchUpdateTechInfo(techInfoList);
+        	}
         }
         return false;
     }
@@ -56,6 +65,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
      * 修复关系
      * */
     public void batchUpdateRelation(List<ResourceRelation> relationList){
+    	if(CollectionUtils.isEmpty(relationList)){
+    		return;
+    	}
         for (ResourceRelation resourceRelation : relationList){
             boolean success = repairEdge(resourceRelation,TitanKeyWords.has_relation.toString());
             if (!success){
