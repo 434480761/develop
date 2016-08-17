@@ -61,12 +61,13 @@ public class EsSyncTimerTask {
 	/**
 	 * 用于清理已经不存在于MySQL中的数据（已经被清理脏数据的接口处理了）
 	 */
-	@Scheduled(fixedDelay = 10000)
+	@Scheduled(fixedDelay = 60000)
 	public void runQueryForCleanES_SYNC() {
 		if (commonServiceHelper.queryAndUpdateSynVariable(SynVariable.esSynTask
 				.getValue()) == 0) {
 			return;
 		}
+//		LOG.error("runQueryForCleanES_SYNC_BEGIN");
 		try {
 			Set<Resource> oldResourceForUpdate = queryResources(true, false);
 			if (CollectionUtils.isNotEmpty(oldResourceForUpdate)) {
@@ -95,6 +96,7 @@ public class EsSyncTimerTask {
 		} catch (Exception e) {
 			LOG.error(e.getLocalizedMessage());
 		}
+//		LOG.error("runQueryForCleanES_SYNC_END");
 
 		commonServiceHelper.initSynVariable(SynVariable.esSynTask.getValue());
 	}

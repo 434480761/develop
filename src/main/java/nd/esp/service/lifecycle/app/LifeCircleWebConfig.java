@@ -242,6 +242,6 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
 	 */
 	@Override
 	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-		taskRegistrar.setScheduler(Executors.newScheduledThreadPool(3));
+		taskRegistrar.setScheduler(Executors.newScheduledThreadPool(5));
 	}
 }
