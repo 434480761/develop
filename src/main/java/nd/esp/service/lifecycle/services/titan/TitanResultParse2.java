@@ -59,7 +59,7 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<RelationForQueryViewModel> parseToListViewRelationForQueryViewModel(String resType, List<String> resultStr,String sourceUuid) {
+    public static ListViewModel<RelationForQueryViewModel> parseToListViewRelationForQueryViewModel(String resType, List<String> resultStr) {
         ListViewModel<RelationForQueryViewModel> viewModels = new ListViewModel<>();
         List<RelationForQueryViewModel> items = null;
         if (CollectionUtils.isNotEmpty(resultStr)) {
@@ -71,7 +71,7 @@ public class TitanResultParse2 {
                 resultStr.remove(resultSize - 1);
             }
             // 解析items
-            items = parseToItemsRelationForQueryViewModel(resType, resultStr, sourceUuid);
+            items = parseToItemsRelationForQueryViewModel(resType, resultStr);
         }
         viewModels.setItems(items);
         return viewModels;
@@ -83,17 +83,21 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static List<RelationForQueryViewModel> parseToItemsRelationForQueryViewModel(String resType, List<String> resultStr,String sourceUuid) {
+    public static List<RelationForQueryViewModel> parseToItemsRelationForQueryViewModel(String resType, List<String> resultStr) {
         long start = System.currentTimeMillis();
         List<RelationForQueryViewModel> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             // 数据转成key-value
-            List<Map<String, String>> resultStrMap = TitanResultParse.changeStrToKeyValue(resultStr);
+            List<Map<String, String>> resultStrMap = new ArrayList<>();
+            for (String str : resultStr) {
+                Map<String, String> tmp = TitanResultParse.toMapForRelationQuery(str);
+                if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
+            }
             List<TitanResultItem> titanResultItems = discernData(resType, resultStrMap);
             // 解析资源
             if (CollectionUtils.isNotEmpty(titanResultItems)) {
                 for (TitanResultItem titanResultItem : titanResultItems) {
-                    items.add(generateResourceModel(titanResultItem, sourceUuid));
+                    items.add(generateResourceModel(titanResultItem));
                 }
             }
         }
@@ -102,7 +106,7 @@ public class TitanResultParse2 {
     }
 
 
-    private static RelationForQueryViewModel generateResourceModel(TitanResultItem titanItem,String sourceUuid) {
+    private static RelationForQueryViewModel generateResourceModel(TitanResultItem titanItem) {
         RelationForQueryViewModel item = new RelationForQueryViewModel();
         Map<String, String> resource = titanItem.getResource();
         Map<String, String> relationValues = titanItem.getRelationValues();// 边上的关系数据
@@ -110,9 +114,9 @@ public class TitanResultParse2 {
             item.setRelationId(relationValues.get(ES_SearchField.identifier.toString()));
             item.setRelationType(relationValues.get("relation_type"));
             item.setLabel(relationValues.get("rr_label"));
-            String orderStr = relationValues.get("sort_num");
+            String orderStr = relationValues.get("order_num");
             if (StringUtils.isNotEmpty(orderStr)) {
-                int order = (int) Float.parseFloat(relationValues.get("sort_num"));
+                int order = (int) Float.parseFloat(orderStr);
                 item.setOrderNum(order);
             }
             item.setEnable("true".equals(relationValues.get("enable")));
@@ -149,7 +153,7 @@ public class TitanResultParse2 {
             } else if (keywords != null) {
                 item.setKeywords(new ArrayList<String>());
             }
-            item.setSid(sourceUuid);
+            item.setSid(relationValues.get("source_uuid"));
             item.setTargetType(resource.get("label"));
             item.setCreator(resource.get(ES_SearchField.lc_creator.toString()));
             item.setStatus(resource.get(ES_SearchField.lc_status.toString()));
