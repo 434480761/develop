@@ -205,11 +205,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 处理维度
         if(StringUtils.isNotEmpty(categories)) dealWithSearchCode2(resourceQueryVertex,Arrays.asList(categories.split(",")));
         //覆盖范围 Map<String, List<String>> coverageConditions
-        Map<String, List<String>> coverageConditions=new HashMap<>();
+        /*Map<String, List<String>> coverageConditions=new HashMap<>();
         List<String> coverages=new ArrayList();
         coverages.add(coverage);
         coverageConditions.put(ES_OP.in.toString(),coverages);
-        dealWithSearchCoverage(resourceVertexPropertyMap,coverageConditions);
+        dealWithSearchCoverage(resourceVertexPropertyMap,coverageConditions);*/
+        if(StringUtils.isNotEmpty(coverage)) dealWithSearchCoverage4queryListByResType(resourceVertexPropertyMap,coverage);
 
         titanExpression.addCondition(resourceQueryVertex);
 
@@ -299,6 +300,32 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             return TitanResultParse.parseToListViewResourceModel(resType, resultStr,includes,false);
         }
         return null;
+    }
+
+
+    /**
+     * 处理coverage
+     * @param vertexPropertiesMap
+     * @param coverage
+     */
+    private void dealWithSearchCoverage4queryListByResType(
+            Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap,
+            String coverage) {
+        if(StringUtils.isNotEmpty(coverage)){
+            Map<Titan_OP, List<Object>> searchCoverageConditionMap = new HashedMap<Titan_OP, List<Object>>();
+            List<Object> coverageList = new ArrayList<>();
+            coverageList.add(coverage);
+            Titan_OP op = Titan_OP.in;
+            String[] tmp = coverage.split("/");
+            if (tmp.length > 2) {
+                if(tmp[0].contains("*") ||tmp[1].contains("*") ){
+                    op = Titan_OP.like;
+                }
+            }
+
+            if (CollectionUtils.isNotEmpty(coverageList)) searchCoverageConditionMap.put(op, coverageList);
+            if (CollectionUtils.isNotEmpty(searchCoverageConditionMap)) vertexPropertiesMap.put("search_coverage", searchCoverageConditionMap);
+        }
     }
 
     /**
