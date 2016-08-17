@@ -132,6 +132,7 @@ public class EducationRelationControllerV07 {
         try {
             listViewModel = titanSearchService.queryListByResType(
                     resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean,recursionBoolean, coverage);
+            listViewModel.setLimit(limit);
         } catch (Exception e) {
             LOG.error("titan--通过资源关系获取资源列表失败",e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -175,7 +176,8 @@ public class EducationRelationControllerV07 {
         }
         
         limit = CommonHelper.checkLimitMaxSize(limit);
-        
-        return titanSearchService.batchQueryResources(resType, sids, targetType, label, tags, relationType, limit,reverse);
+        ListViewModel<RelationForQueryViewModel> viewModel=titanSearchService.batchQueryResources(resType, sids, targetType, label, tags, relationType, limit,reverse);
+        viewModel.setLimit(limit);
+        return viewModel;
     }
 }
