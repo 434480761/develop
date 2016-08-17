@@ -139,7 +139,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 					srciptResource, paramResource);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+//			e.printStackTrace();
 			return false;
 		}
 		if(resultSet == null){
@@ -297,6 +297,9 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		return resCoverage;
 	}
 
+	/**
+	 * 更新数据冗余字段
+	 * */
 	private void updateResourceCoverage(String primaryCategory,
 			String identifier) {
 		Education education = getEducation(primaryCategory, identifier);
@@ -312,7 +315,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 			return;
 		}
 		for (ResCoverage resCoverage : resCoverageList) {
-			searchCoverages.addAll(getAllResourceCoverage(resCoverage,
+			searchCoverages.addAll(TitanScritpUtils.getAllResourceCoverage(resCoverage,
 					education.getStatus()));
 		}
 
@@ -345,27 +348,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 
 	}
 
-	private Set<String> getAllResourceCoverage(ResCoverage resCoverage,
-			String status) {
-		Set<String> searchCoverages = new HashSet<>();
-		String value1 = resCoverage.getTargetType() + "/"
-				+ resCoverage.getTarget() + "/" + resCoverage.getStrategy()
-				+ "/" + status;
-		String value2 = resCoverage.getTargetType() + "/"
-				+ resCoverage.getTarget() + "//" + status;
-		String value3 = resCoverage.getTargetType() + "/"
-				+ resCoverage.getTarget() + "/" + resCoverage.getStrategy()
-				+ "/";
-		String value4 = resCoverage.getTargetType() + "/"
-				+ resCoverage.getTarget() + "//";
 
-		searchCoverages.add(value1);
-		searchCoverages.add(value2);
-		searchCoverages.add(value3);
-		searchCoverages.add(value4);
-
-		return searchCoverages;
-	}
 
 	private Education getEducation(String primaryCategory, String identifier) {
 		String pc = primaryCategory;

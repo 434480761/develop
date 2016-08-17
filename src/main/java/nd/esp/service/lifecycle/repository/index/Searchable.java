@@ -41,6 +41,16 @@ public interface Searchable<T extends IndexMapper> {
 	public  QueryResponse<T> searchByExample(AdaptQueryRequest<T> queryRequest) throws EspStoreException;
 	
 	/**
+	 * searchByExample的扩展,支持单个field的模糊匹配
+	 * @author xiezy
+	 * @date 2016年8月16日
+	 * @param queryRequest
+	 * @return
+	 * @throws EspStoreException
+	 */
+	public  QueryResponse<T> searchByExampleSupportLike(AdaptQueryRequest<T> queryRequest) throws EspStoreException;
+	
+	/**
 	 * Search.
 	 *
 	 * @param queryRequest the query request

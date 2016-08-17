@@ -36,15 +36,10 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         	}
             createNewRelation(titanTreeModel);
         }catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
             LOG.info("move node error");
         }
     }
-
-    private Long getKnowledgeRootId(String root) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
     public void moveNode(TitanTreeModel titanTreeModel) {
@@ -65,17 +60,11 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
             deleteOldRelation(titanTreeModel);
             createNewRelation(titanTreeModel);
         }catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
             LOG.info("move node error");
         }
 
     }
-
-    private Long getTitanRootId(String source) {
-		String script = "s = g.V().has('identifier','000901ca-7c6c-4c80-8b1c-4408f8b11d15').id();Long last =0;while(s.iterator().hasNext()){last = s.iterator().next();s = g.V(last).in('has_chapter').id();};last;";
-		
-		return null;
-	}
 
 	private void deleteOldRelation(TitanTreeModel titanTreeModel){
         titanTreeRepository.deleteOldRelation(titanTreeModel.getTreeType(), titanTreeModel.getSource());
@@ -98,7 +87,6 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
         if(titanTreeModel.getTreeDirection() == null){
             titanTreeModel.setTreeDirection(TreeDirection.next);
         }
-
         //获取sourceID
         nodeId = titanTreeRepository.getSourceId(titanTreeModel.getTreeType(), titanTreeModel.getSource());
         if (nodeId == null) {
@@ -118,26 +106,24 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
                 LOG.info("{target:{} titan中找不到target order",target);
                 return;
             }
-            List<Double> childOrders = titanTreeRepository.getAllChildOrderByParent(titanTreeModel.getTreeType(), parentNodeId);
-            if(childOrders != null && childOrders.size() != 0){
-                Collections.sort(childOrders);
-                int indexOfTargetOrder = childOrders.indexOf(targetOrder);
-                switch (titanTreeModel.getTreeDirection()){
-                    case pre:
-                        if(indexOfTargetOrder==0){
-                            order = targetOrder / 2;
-                        } else {
-                            order = (childOrders.get(indexOfTargetOrder) + childOrders.get(indexOfTargetOrder - 1)) / 2;
-                        }
-                        break;
-                    case next:
-                        if(indexOfTargetOrder == childOrders.size()-1){
-                            order = targetOrder + 10;
-                        } else {
-                            order = (childOrders.get(indexOfTargetOrder) + childOrders.get(indexOfTargetOrder + 1)) / 2;
-                        }
-                        break;
-                }
+            //获取指定的order
+            Double secondOrder = titanTreeRepository.getChildOrderByParentAndTargetOrder(titanTreeModel.getTreeType(),
+                    parentNodeId,titanTreeModel.getTreeDirection(),targetOrder);
+            switch (titanTreeModel.getTreeDirection()){
+                case pre:
+                    if(secondOrder==null){
+                        order = targetOrder / 2;
+                    } else {
+                        order = (secondOrder + targetOrder) / 2;
+                    }
+                    break;
+                case next:
+                    if(secondOrder == null){
+                        order = targetOrder + 10;
+                    } else {
+                        order = (secondOrder + targetOrder) / 2;
+                    }
+                    break;
             }
         } else if (parent != null) {
             switch (titanTreeModel.getTreeType()) {
@@ -167,16 +153,15 @@ public class TitanTreeMoveServiceImpl implements TitanTreeMoveService {
                 LOG.info("{target:{} titan中找不到parent对应的节点",target);
                 return;
             }
-            List<Double> childOrders = titanTreeRepository.getAllChildOrderByParent(titanTreeModel.getTreeType(), parentNodeId);
-            if (childOrders != null && childOrders.size() != 0) {
-                Collections.sort(childOrders);
+            //获取最大的order
+            Double childMaxOrders = titanTreeRepository.getChildMaxOrderByParent(titanTreeModel.getTreeType(), parentNodeId);
+            if (childMaxOrders != null) {
                 //TODO 获取最大的编号并加一个值使order变成最大
-                order = childOrders.get(childOrders.size() - 1) + 10;
+                order =  childMaxOrders  + 10;
             }
         }
 
         titanTreeRepository.createNewRelation(titanTreeModel.getTreeType(),parentNodeId,nodeId,order);
-
     }
 
 }

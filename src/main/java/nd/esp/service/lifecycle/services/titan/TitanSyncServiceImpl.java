@@ -223,7 +223,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
 
         List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(categoryList);
-        if(resourceCategoryList.size()!=resultCategory.size()){
+        if(categoryList.size()!=resultCategory.size()){
             return false;
         }
 

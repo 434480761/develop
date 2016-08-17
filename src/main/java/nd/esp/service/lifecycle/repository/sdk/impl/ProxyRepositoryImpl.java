@@ -216,7 +216,14 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			return Lists.newArrayList();
 		}
 	}
-
+	
+	@Override
+	@Transactional(propagation=Propagation.NOT_SUPPORTED)
+	public QueryResponse<T> searchByExampleSupportLike(AdaptQueryRequest<T> queryRequest) 
+			throws EspStoreException{
+		return searchByExample(queryRequest, true);
+	}
+	
 	/**
 	 * Description.
 	 *
@@ -227,10 +234,14 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	 *             the esp store exception
 	 * @see com.nd.esp.repository.IndexRepository#searchByExample(com.nd.esp.repository.index.AdaptQueryRequest)
 	 */
-
 	@Override
 	@Transactional(propagation=Propagation.NOT_SUPPORTED)
 	public QueryResponse<T> searchByExample(AdaptQueryRequest<T> queryRequest)
+			throws EspStoreException {
+	    return searchByExample(queryRequest, false);
+	}
+	
+	private QueryResponse<T> searchByExample(AdaptQueryRequest<T> queryRequest,boolean supportLike)
 			throws EspStoreException {
 	    if(queryRequest.getOffset()<0) {
 	        queryRequest.setOffset(0);
@@ -262,7 +273,7 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
                 pageable = new OffsetPageRequest(queryRequest.getOffset(), queryRequest.getLimit());
             }
         }
-        Page<T> page  = findAll(searchExampleSpecification(queryRequest), pageable);
+        Page<T> page  = findAll(searchExampleSpecification(queryRequest,supportLike), pageable);
         int pageOffset = queryRequest.getOffset()%queryRequest.getLimit();
 //        List<T> resultList = new ArrayList<T>();
 //        if(pageOffset!=0) {
@@ -312,7 +323,7 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		AdaptQueryRequest<T>adaptQueryRequest=new AdaptQueryRequest();
 		ModelMapper modelMapper=new ModelMapper();
 		adaptQueryRequest=modelMapper.map(queryRequest, AdaptQueryRequest.class);
-
+		
 	    QueryResponse<T> response = searchByExample(adaptQueryRequest);
         
         return response;
@@ -423,6 +434,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			throw new EspStoreException(e);
 		}
 
+		//TODO titan repository code batchAdd
+		getTitanRepository().delete(id);
 	}
 
 	/**
@@ -496,6 +509,9 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			}
 			throw new EspStoreException(e);
 		}
+
+		//TODO titan repository code batchAdd
+		getTitanRepository().batchDelete(ids);
 	}
 
 	/**
@@ -610,13 +626,27 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	}
 	
 	/**
-     * Example specification.
-     *
-     * @param entity
-     *            the entity
-     * @return the specification
-     */
-    private Specification<T> searchExampleSpecification(final AdaptQueryRequest<T> queryRequest) throws EspStoreException {
+	 * 原有的searchExampleSpecification
+	 * @author xiezy
+	 * @date 2016年8月16日
+	 * @param queryRequest
+	 * @return
+	 * @throws EspStoreException
+	 */
+	private Specification<T> searchExampleSpecification(final AdaptQueryRequest<T> queryRequest) throws EspStoreException{
+		return searchExampleSpecification(queryRequest, false);
+	}
+	
+	/**
+	 * 改造后的searchExampleSpecification,可支持单个field的模糊匹配
+	 * @author xiezy
+	 * @date 2016年8月16日
+	 * @param queryRequest
+	 * @param supportLike
+	 * @return
+	 * @throws EspStoreException
+	 */
+    private Specification<T> searchExampleSpecification(final AdaptQueryRequest<T> queryRequest, final boolean supportLike) throws EspStoreException {
         //判断组合条件是否有错误
         final Boolean[] isErr = {false};
         Specification<T> spec = new Specification<T>() {
@@ -661,7 +691,11 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
                                 }
                             } else if(value instanceof String) {
                                 if(StringUtils.isNotEmpty((String)value)){
-                                    p = cb.and(p, cb.equal(root.get(field), value));
+                                	if(supportLike){
+                                		p = cb.and(p, cb.like(root.get(field).as(String.class), "%" + value + "%"));
+                                	}else{
+                                		p = cb.and(p, cb.equal(root.get(field), value));
+                                	}
                                 }
                             } else {
                                 p = cb.and(p, cb.equal(root.get(field), value));

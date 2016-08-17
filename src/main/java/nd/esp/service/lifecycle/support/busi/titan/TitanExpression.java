@@ -160,7 +160,7 @@ public class TitanExpression implements TitanScriptGenerator {
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
         scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
-        scriptBuffer.append(".valueMap();");
+        //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
     }

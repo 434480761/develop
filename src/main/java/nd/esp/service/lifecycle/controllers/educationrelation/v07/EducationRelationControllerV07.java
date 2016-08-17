@@ -120,26 +120,20 @@ public class EducationRelationControllerV07 {
         }
         
         limit = CommonHelper.checkLimitMaxSize(limit);
-        
-        
         ListViewModel<RelationForQueryViewModel> listViewModel = null;
-        try {
-            if(!recursionBoolean){
-                listViewModel = titanSearchService.queryListByResType(
-                                   resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean,recursionBoolean, coverage);
-            }else if(IndexSourceType.ChapterType.getName().equals(resType)){
-                listViewModel = titanSearchService.recursionQueryResources(
-                        resType, sourceUuid, categories, targetType, label, tags, relationType, limit,coverage);
-            }else{
-                
+        if (recursionBoolean) {
+            if (!IndexSourceType.ChapterType.getName().equals(resType)) {
                 LOG.error("递归查询res_type目前仅支持chapters");
-                
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                         LifeCircleErrorMessageMapper.RelationSupportTypeError);
             }
-        } catch (EspStoreException e) {
-            LOG.error("通过资源关系获取资源列表失败",e);
-            
+        }
+
+        try {
+            listViewModel = titanSearchService.queryListByResType(
+                    resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean,recursionBoolean, coverage);
+        } catch (Exception e) {
+            LOG.error("titan--通过资源关系获取资源列表失败",e);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.GetEducationRelationListFail.getCode(),e.getMessage());
         }

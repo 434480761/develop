@@ -166,7 +166,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append("results = g.V(ids.toArray())");
         baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
-        baseQuery.append(".valueMap();");
+        //baseQuery.append(".valueMap();");
         query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 
         return query.toString();

@@ -132,6 +132,13 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     @Override
+    public void batchDeleteEdgeByIds(List<String> ids) throws Exception {
+        for (String id : ids){
+            deleteEdgeById(id);
+        }
+    }
+
+    @Override
     public void butchDeleteVertexById(List<String> ids) throws Exception {
         for(String id : ids){
             deleteVertexById(id);
@@ -147,7 +154,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return -1D;
+            return null;
         }
         Double id = null;
         try {
@@ -202,9 +209,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private ResultSet submitScriptResultRet(String script, Map<String, Object> params) throws Exception{
-        if(!StaticDatas.TITAN_SWITCH){
-            return null;
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         ResultSet resultSet = null;
         try {
             resultSet = client().submit(script, params);
@@ -221,9 +228,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private Long submitUniqueLong(String script, Map<String, Object> params) throws Exception {
-        if(!StaticDatas.TITAN_SWITCH){
-            return -1L;
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         Long id = null;
         try {
             ResultSet resultSet = client().submit(script, params);
@@ -244,9 +251,9 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      * id==null 节点不存在或提交出现异常
      */
     private String submitUniqueString(String script, Map<String, Object> params) throws Exception {
-        if(!StaticDatas.TITAN_SWITCH){
-            return "****";
-        }
+//        if(!StaticDatas.TITAN_SWITCH){
+//            return null;
+//        }
         String id = null;
         try {
             ResultSet resultSet = client().submit(script, params);
