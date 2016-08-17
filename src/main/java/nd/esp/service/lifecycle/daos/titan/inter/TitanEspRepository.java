@@ -10,4 +10,6 @@ public interface TitanEspRepository<M> {
     List<M> batchAdd(List<M> entityList);
     M update(M entity);
     List<M> batchUpdate(List<M> entityList);
+    boolean delete(String id);
+    boolean batchDelete(List<String> ids);
 }

@@ -22,7 +22,10 @@ public enum  TitanSyncType {
     UPDATE_DATA_CATEGORY,
     CHECK_NOT_EXIST,
     CHECK_REPEAT,
-    UPDATE_DATA_OTHER;
+    UPDATE_DATA_OTHER,
+    DELETE_CATEGORY_ERROR,
+    DELETE_COVERAGE_ERROR,
+    DELETE_TECH_INFO_ERROR;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {

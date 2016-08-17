@@ -72,6 +72,16 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
     }
 
     @Override
+    public boolean delete(String id) {
+        return false;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> ids) {
+        return false;
+    }
+
+    @Override
     public boolean delete(String primaryCategory, String identifier) {
     	 //真删除
         try {

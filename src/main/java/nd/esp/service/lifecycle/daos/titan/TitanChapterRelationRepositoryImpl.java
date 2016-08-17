@@ -3,6 +3,8 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +46,14 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             return false;
         }
 
-        String createScript = "g.V(parentId).next().addEdge('has_chapter',g.V(chapterId).next(),'left',leftValue)";
+        String createScript = "g.V(parentId).next().addEdge('"+TitanKeyWords.tree_has_chapter.toString()
+        		+"',g.V(chapterId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
 
         Map<String,Object> scriptParams = new HashMap<>();
         scriptParams.put("parentId",parentId);
         scriptParams.put("chapterId",chapterId);
 
-        scriptParams.put("leftValue",leftValue);
+        scriptParams.put("treeOrder",new Float(leftValue));
 
 //        client.submit(createScript,scriptParams);
         try {
@@ -81,51 +84,51 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
 
     @Override
     public void updateRelationOrderValue(List<Chapter> chapters, String type) {
-        String edgelabe ;
-        if("chapters".equals(type)){
-            edgelabe = "has_chapter";
-        } else if("knowledges".equals(type)) {
-            edgelabe = "has_knowledge";
-        } else {
-            return ;
-        }
-
-        for(Chapter chapter : chapters){
-            String scriptLeft = "g.V().has(type,'identifier',identifier).inE().hasLabel(edgelabe).values('left');";
-            String scriptOrder = "g.V().has(type,'identifier',identifier).inE().hasLabel(edgelabe).property('order',order)";
-            Map<String, Object> params = new HashMap<>();
-            params.put("type",type);
-            params.put("identifier", chapter.getIdentifier());
-            params.put("edgelabe", edgelabe);
-
-            Long left = null;
-            try {
-                left = titanCommonRepository.executeScriptUniqueLong(scriptLeft, params);
-            } catch (Exception e) {
-                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
-                //TODO titan 异常处理
-            }
-
-            if(left == null){
-                continue;
-            }
-
-            Double order = new Double(left);
-
-
-            Map<String, Object> paramOrder = new HashMap<>();
-            paramOrder.put("type",type);
-            paramOrder.put("identifier", chapter.getIdentifier());
-            paramOrder.put("edgelabe", edgelabe);
-            paramOrder.put("order", order);
-
-            try {
-                titanCommonRepository.executeScript(scriptOrder, paramOrder);
-            } catch (Exception e) {
-                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
-                //TODO titan 异常处理
-            }
-        }
+//        String edgelabe ;
+//        if("chapters".equals(type)){
+//            edgelabe = "has_chapter";
+//        } else if("knowledges".equals(type)) {
+//            edgelabe = "has_knowledge_new";
+//        } else {
+//            return ;
+//        }
+//
+//        for(Chapter chapter : chapters){
+//            String scriptLeft = "g.V().has(type,'identifier',identifier).inE().hasLabel(edgelabe).values('left');";
+//            String scriptOrder = "g.V().has(type,'identifier',identifier).inE().hasLabel(edgelabe).property('order_new',order)";
+//            Map<String, Object> params = new HashMap<>();
+//            params.put("type",type);
+//            params.put("identifier", chapter.getIdentifier());
+//            params.put("edgelabe", edgelabe);
+//
+//            Long left = null;
+//            try {
+//                left = titanCommonRepository.executeScriptUniqueLong(scriptLeft, params);
+//            } catch (Exception e) {
+//                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
+//                //TODO titan 异常处理
+//            }
+//
+//            if(left == null){
+//                continue;
+//            }
+//
+//            Double order = new Double(left);
+//
+//
+//            Map<String, Object> paramOrder = new HashMap<>();
+//            paramOrder.put("type",type);
+//            paramOrder.put("identifier", chapter.getIdentifier());
+//            paramOrder.put("edgelabe", edgelabe);
+//            paramOrder.put("order", order);
+//
+//            try {
+//                titanCommonRepository.executeScript(scriptOrder, paramOrder);
+//            } catch (Exception e) {
+//                LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),chapter.getIdentifier());
+//                //TODO titan 异常处理
+//            }
+//        }
     }
 
 
