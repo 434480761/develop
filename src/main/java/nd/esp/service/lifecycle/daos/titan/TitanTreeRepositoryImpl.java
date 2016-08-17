@@ -100,6 +100,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
         paramMap.put("relationType",treeType.relation());
+        paramMap.put("maxValue", maxValue);
 
         Double order = null;
         try {
