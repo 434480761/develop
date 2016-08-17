@@ -25,6 +25,7 @@ import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectRepository;
 import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectTemplateRepository;
 import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
+import nd.esp.service.lifecycle.repository.sdk.ExaminationPaperRepository;
 import nd.esp.service.lifecycle.repository.sdk.GuidanceBooksRepository;
 import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
 import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
@@ -90,6 +91,7 @@ public class ServicesManager implements ApplicationContextAware {
 		RESOURCE_REPOSITORIES.put(IndexSourceType.GuidanceBooksType.getName(), TeachingMaterialRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ToolsType.getName(), ToolsRepository.class);  //FIXME 
 		RESOURCE_REPOSITORIES.put(IndexSourceType.SourceTeachingActivitiesType.getName(), TeachingActivitiesRepository.class);
+		RESOURCE_REPOSITORIES.put(IndexSourceType.ExaminationPapersType.getName(), ExaminationPaperRepository.class);
 		RESOURCE_REPOSITORIES.put("knowledgebases", KnowledgeBaseRepository.class);
 	}
 	
