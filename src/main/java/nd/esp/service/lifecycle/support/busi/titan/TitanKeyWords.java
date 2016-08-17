@@ -18,5 +18,29 @@ public enum TitanKeyWords {
     search_code,search_path,search_coverage,search_code_string,search_path_string,search_coverage_string,
 
     //树形结构
-    tree_has_chapter,tree_has_knowledge,tree_order ;
+    tree_has_chapter("has_chapter"),tree_has_knowledge("has_knowledge"),tree_order("order");
+
+    private String name;
+
+    private TitanKeyWords(String name){
+        this.name = name;
+    }
+    private TitanKeyWords(){
+
+    }
+
+    @Override
+    public String toString() {
+        if(name == null){
+            return super.toString();
+        }else{
+            return name;
+        }
+    }
+
+    public static void main(String[] args){
+        for(TitanKeyWords keyWords:TitanKeyWords.values()){
+            System.out.println(keyWords.toString());
+        }
+    }
 }
