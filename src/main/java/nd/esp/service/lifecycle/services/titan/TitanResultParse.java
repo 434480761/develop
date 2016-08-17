@@ -591,7 +591,13 @@ public class TitanResultParse {
         if (requirements != null) {
             if (!"".equals(requirements.trim()) && !"null".equals(requirements.trim())) {
                 // System.out.println("requirements:" + requirements);
-                List<TechnologyRequirementModel> requirementsList = ObjectUtils.fromJson("[" + requirements + "]", new TypeToken<List<TechnologyRequirementModel>>() {
+                if (!requirements.startsWith("[")) {
+                    requirements = "[" + requirements;
+                }
+                if (!requirements.endsWith("]")) {
+                    requirements = requirements + "]";
+                }
+                List<TechnologyRequirementModel> requirementsList = ObjectUtils.fromJson(requirements, new TypeToken<List<TechnologyRequirementModel>>() {
                 });
                 techInfo.setRequirements(requirementsList);
             }
