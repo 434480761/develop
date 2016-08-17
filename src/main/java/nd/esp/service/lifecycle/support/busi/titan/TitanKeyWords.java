@@ -18,7 +18,10 @@ public enum TitanKeyWords {
     search_code,search_path,search_coverage,search_code_string,search_path_string,search_coverage_string,
 
     //树形结构
-    tree_has_chapter("has_chapter"),tree_has_knowledge("has_knowledge"),tree_order("order");
+    tree_has_chapter("tree_has_chapter"),tree_has_knowledge("tree_has_knowledge"),tree_order("tree_order"),
+    //统计
+    statistical,has_statistical
+    ;
 
     private String name;
 
