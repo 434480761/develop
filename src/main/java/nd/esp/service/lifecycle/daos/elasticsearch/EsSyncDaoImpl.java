@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.daos.elasticsearch;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.EsSync;
 import nd.esp.service.lifecycle.repository.sdk.EsSyncRepository;
+import nd.esp.service.lifecycle.support.busi.elasticsearch.EsSyncTimerTask;
 
 @Service
 public class EsSyncDaoImpl implements EsSyncDao {
@@ -167,4 +169,12 @@ public class EsSyncDaoImpl implements EsSyncDao {
 
 	}
 
+	@Override
+	public void restartSync() throws EspStoreException {
+		String sql = "update es_sync set try_times ="
+				+ (EsSyncTimerTask.MAX_TRY_TIMES - 1) + " WHERE try_times >="
+				+ EsSyncTimerTask.MAX_TRY_TIMES;
+		esSyncRepository.getJdbcTemple().execute(sql);
+	}
+	
 }

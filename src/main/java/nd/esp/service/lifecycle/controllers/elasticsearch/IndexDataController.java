@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import nd.esp.service.lifecycle.daos.elasticsearch.EsSyncDao;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.elasticsearch.IndexDataService;
@@ -41,6 +42,9 @@ public class IndexDataController {
 
 	@Autowired
 	private IndexDataService indexDataService;
+	
+	@Autowired
+	private EsSyncDao esSyncDao;
 
 	/**
 	 * 重建索引
@@ -222,6 +226,16 @@ public class IndexDataController {
 			@RequestParam("uuid") Set<String> uuids) {
 
 		return indexDataService.batchDetailForES(resourceType, uuids);
+	}
+	
+	/**
+	 * 重新触发同步表es-sync中的数据（try_times = MAX-1)
+	 * 
+	 * @throws EspStoreException
+	 */
+	@RequestMapping(value = "/restartSync", method = RequestMethod.GET)
+	public void restartSync() throws EspStoreException {
+		esSyncDao.restartSync();
 	}
 
 }
