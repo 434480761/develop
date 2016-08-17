@@ -94,7 +94,8 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public Double getChildMaxOrderByParent(TitanTreeType treeType, Long parentNodeId) {
-        String script = "g.V(parentNodeId).outE().hasLabel(relationType).values('"+TitanKeyWords.tree_order+"').order().by("
+        Double maxValue =  10000D;
+        String script = "g.V(parentNodeId).outE().hasLabel(relationType).has('"+TitanKeyWords.tree_order.toString()+"',gt(new Double(maxValue))).values('"+TitanKeyWords.tree_order+"').order().by("
                 +TitanKeyWords.decr.toString()+").limit(1)";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
@@ -107,6 +108,11 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
             LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
+
+        if(order == null || order < 0){
+            return maxValue;
+        }
+
         return order;
     }
 
