@@ -16,8 +16,8 @@ public enum TitanTreeType {
     public static Map<TitanTreeType, String> primaryCategory = new HashMap<>();
 
     static {
-        relationType.put(knowledges,TitanKeyWords.has_knowledge.toString());
-        relationType.put(chapters,TitanKeyWords.has_chapter.toString());
+        relationType.put(knowledges,TitanKeyWords.tree_has_knowledge.toString());
+        relationType.put(chapters,TitanKeyWords.tree_has_chapter.toString());
 
         primaryCategory.put(knowledges, ResourceNdCode.knowledges.toString());
         primaryCategory.put(chapters, ResourceNdCode.chapters.toString());

@@ -433,9 +433,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			        
 			throw new EspStoreException(e);
 		}
-
-		//TODO titan repository code batchAdd
-		getTitanRepository().delete(id);
 	}
 
 	/**
@@ -509,9 +506,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			}
 			throw new EspStoreException(e);
 		}
-
-		//TODO titan repository code batchAdd
-		getTitanRepository().batchDelete(ids);
 	}
 
 	/**

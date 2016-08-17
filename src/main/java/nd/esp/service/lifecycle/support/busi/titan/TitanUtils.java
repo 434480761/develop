@@ -18,8 +18,8 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes, String resType) {
-//		 if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
+	public static String generateScriptForInclude(List<String> includes, String resType,boolean needRelationValues) {
+		//if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
 		String end = ")";// 取回label
@@ -37,11 +37,14 @@ public class TitanUtils {
 				}
 			}
 		}
-		if (ResourceNdCode.knowledges.toString().equals(resType)) {
+		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
 			// order
 			scriptBuffer.append(",inE('has_knowledge')");
 			// parent
 			scriptBuffer.append(",inE('has_knowledge').outV()");
+		}
+		if (needRelationValues) {
+			scriptBuffer.append(",select('e')");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;

@@ -64,8 +64,8 @@ public class TitanQueryEdge extends TitanQueryElement {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					"LC/QUERY/PARAM", "titanEdgeDirection");
 		}
-
-		return scriptBuffer.toString();
+		// 加上取回边上关系的数据
+		return scriptBuffer.toString()+".as('e')";
 	}
 
 	private String appendEdgeLabel(Map<String, Object> scriptParamMap) {

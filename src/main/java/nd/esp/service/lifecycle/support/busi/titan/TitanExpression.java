@@ -20,6 +20,11 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
     private List<String> includes;
+    private boolean needRelationValues = false;
+
+    public void setNeedRelationValues(boolean needRelationValues) {
+        this.needRelationValues = needRelationValues;
+    }
 
     public void setIncludes(List<String> includes) {
         this.includes = includes;
@@ -159,7 +164,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.needRelationValues));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 

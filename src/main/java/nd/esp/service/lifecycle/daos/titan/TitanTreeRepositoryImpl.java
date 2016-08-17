@@ -44,7 +44,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public void createNewRelation(TitanTreeType treeType, Long parentNodeId, Long nodeId, Double order) {
-        String script = "g.V(parentNodeId).next().addEdge(relationType,g.V(nodeId).next(),'order',order);";
+        String script = "g.V(parentNodeId).next().addEdge(relationType,g.V(nodeId).next(),'"+TitanKeyWords.tree_order+"',order);";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId", parentNodeId);
         paramMap.put("nodeId", nodeId);
@@ -72,8 +72,8 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
             orderBy = TitanKeyWords.decr;
         }
 
-        String script = "g.V(parentNodeId).outE(relationType).has('order',"
-                +operation.toString()+"(new Double(targetOrder))).values('order').order().by("+orderBy.toString()+").limit(1);";
+        String script = "g.V(parentNodeId).outE(relationType).has('"+TitanKeyWords.tree_order+"',"
+                +operation.toString()+"(new Double(targetOrder))).values('"+TitanKeyWords.tree_order+"').order().by("+orderBy.toString()+").limit(1);";
 
 //        String script = "g.V(parentNodeId).outE().hasLabel(relationType).values('order')";
         Map<String, Object> paramMap = new HashMap<>();
@@ -94,7 +94,8 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public Double getChildMaxOrderByParent(TitanTreeType treeType, Long parentNodeId) {
-        String script = "g.V(parentNodeId).outE().hasLabel(relationType).values('order').order().by("
+        Double maxValue =  10000D;
+        String script = "g.V(parentNodeId).outE().hasLabel(relationType).has('"+TitanKeyWords.tree_order.toString()+"',gt(new Double(maxValue))).values('"+TitanKeyWords.tree_order+"').order().by("
                 +TitanKeyWords.decr.toString()+").limit(1)";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
@@ -107,6 +108,11 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
             LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
+
+        if(order == null || order < 0){
+            return maxValue;
+        }
+
         return order;
     }
 
@@ -114,7 +120,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
     public Double getTargetOrder(TitanTreeType treeType,Long parentNodeId, String identifier) {
 //        String script = "g.V(parentNodeId).outE().hasLabel(relationType)" +
 //                ".as('x').inV().has(primaryCategory,'identifier',identifier).select('x').values('order')";
-        String script = "g.V().has(primaryCategory,'identifier',identifier).inE(relationType).values('order')";
+        String script = "g.V().has(primaryCategory,'identifier',identifier).inE(relationType).values('"+TitanKeyWords.tree_order+"')";
         Map<String, Object> paramMap = new HashMap<>();
 //        paramMap.put("parentNodeId", parentNodeId);
         paramMap.put("relationType", treeType.relation());
