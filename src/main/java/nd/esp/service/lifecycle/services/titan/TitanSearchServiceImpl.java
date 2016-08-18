@@ -190,6 +190,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setIncludes(null);
         titanExpression.setResType(resType);
         titanExpression.setOrderByEdgeField(true);
+        if (isOrderByON) {
+            titanExpression.setOrderByEdgeFieldName("order_num");
+        } else {
+            titanExpression.setOrderByEdgeFieldName("sort_num");
+        }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         Integer result[] = ParamCheckUtil.checkLimit(limit);

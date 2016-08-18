@@ -22,6 +22,11 @@ public class TitanExpression implements TitanScriptGenerator {
     private List<String> includes;
     private boolean needRelationValues = false;
     private boolean orderByEdgeField = false;
+    private String orderByEdgeFieldName;
+
+    public void setOrderByEdgeFieldName(String orderByEdgeFieldName) {
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+    }
 
     public void setOrderByEdgeField(boolean orderByEdgeField) {
         this.orderByEdgeField = orderByEdgeField;
@@ -140,6 +145,7 @@ public class TitanExpression implements TitanScriptGenerator {
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
         if (this.orderByEdgeField) {
             //.select('e').order().by('order_num',decr).select('x')
+            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by('").append(this.orderByEdgeFieldName).append("',incr).select('x')");
         } else {
             scriptBuffer.append(".order()");
             for (String field : this.orderMap.keySet()) {
