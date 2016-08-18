@@ -21,6 +21,11 @@ public class TitanExpression implements TitanScriptGenerator {
     private String resType;
     private List<String> includes;
     private boolean needRelationValues = false;
+    private boolean orderByEdgeField = false;
+
+    public void setOrderByEdgeField(boolean orderByEdgeField) {
+        this.orderByEdgeField = orderByEdgeField;
+    }
 
     public void setNeedRelationValues(boolean needRelationValues) {
         this.needRelationValues = needRelationValues;
@@ -133,24 +138,28 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        scriptBuffer.append(".order()");
-        for (String field : this.orderMap.keySet()) {
-            if (field == null)
-                continue;
-            final String value = orderMap.get(field);
-            String sortBy = null;
-            if (value != null) {
-                if (value.trim().toUpperCase()
-                        .equals(PropOperationConstant.OP_ASC)) {
-                    sortBy = TitanKeyWords.incr.toString();
+        if (this.orderByEdgeField) {
+            //.select('e').order().by('order_num',decr).select('x')
+        } else {
+            scriptBuffer.append(".order()");
+            for (String field : this.orderMap.keySet()) {
+                if (field == null)
+                    continue;
+                final String value = orderMap.get(field);
+                String sortBy = null;
+                if (value != null) {
+                    if (value.trim().toUpperCase()
+                            .equals(PropOperationConstant.OP_ASC)) {
+                        sortBy = TitanKeyWords.incr.toString();
+                    } else {
+                        sortBy = TitanKeyWords.decr.toString();
+                    }
                 } else {
                     sortBy = TitanKeyWords.decr.toString();
                 }
-            } else {
-                sortBy = TitanKeyWords.decr.toString();
+                scriptBuffer.append(".by('").append(field).append("',")
+                        .append(sortBy).append(")");
             }
-            scriptBuffer.append(".by('").append(field).append("',")
-                    .append(sortBy).append(")");
         }
 
         // FIXME for now only get the identifier

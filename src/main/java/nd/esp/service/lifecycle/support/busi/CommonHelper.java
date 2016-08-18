@@ -23,6 +23,10 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.daos.titan.TitanCommonRepositoryImpl;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
+import nd.esp.service.lifecycle.daos.titan.TitanRepositoryUtilsImpl;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -1233,7 +1237,74 @@ public class CommonHelper {
 		}
 
 	}
-	
+
+	/**
+	 * 当且仅当ID>0的时候返回true
+	 * */
+	private static boolean checkEducationExistInTitan(String primaryCategory, String identifier){
+		Long id;
+		try {
+			TitanCommonRepository titanCommonRepository = new TitanCommonRepositoryImpl();
+			id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+		} catch (Exception e) {
+
+			LOG.error("titan_repository error:{}" ,e.getMessage());
+
+			return false;
+		}
+
+		if(id != null && id > 0){
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * 判断源资源是否存在
+	 *
+	 * @param resType 资源种类
+	 * @param resId 源资源id
+	 * @param type  源资源类型
+	 * @since
+	 */
+	public static void resourceExistByTitan(String resType, String resId, String type) {
+		boolean flag = false;
+		try {
+			flag = checkEducationExistInTitan(resType, resId);
+		} catch (Exception e) {
+			if (ResourceType.RESOURCE_SOURCE.equals(type)) {
+				LOG.error("源资源:" + resType + "--" + resId + "未找到", e);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+			if (ResourceType.RESOURCE_TARGET.equals(type)) {
+				LOG.error("目标资源:" + resType + "--" + resId + "未找到", e);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
+
+		// 资源不存在,抛出异常
+		if (!flag) {
+			if (ResourceType.RESOURCE_SOURCE.equals(type)) {
+				LOG.error("源资源:" + resType + "--" + resId + "未找到");
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.SourceResourceNotFond.getCode(),
+						"源资源:" + resType + "--" + resId + "未找到");
+			}
+			if (ResourceType.RESOURCE_TARGET.equals(type)) {
+
+				LOG.error("目标资源:" + resType + "--" + resId + "未找到");
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.TargetResourceNotFond.getCode(),
+						"目标资源:" + resType + "--" + resId + "未找到");
+			}
+		}
+	}
 	/**
 	 * 判断源资源是否存在
 	 * 
