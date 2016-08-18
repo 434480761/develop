@@ -157,7 +157,7 @@ public class TitanResultParse {
             String label = resultStrMap.get(i).get("label");
             if (isKnowledge) {
                 // 发现存在order跳过下一行数据 order-->has_knowledge
-                if ("has_knowledge".equals(label)) i++;
+                if (TitanKeyWords.has_knowledge.toString().equals(label)) i++;
             }
             // 检查切割点
             boolean isEnd = (i == endSize) || ((i < endSize) && resType.equals(resultStrMap.get(i + 1).get("label")));
@@ -214,22 +214,22 @@ public class TitanResultParse {
                 String label = map.get("label");
                 if (resType.equals(label)) {
                     resource.putAll(map);
-                } else if ("has_category_code".equals(label)) {
+                } else if (TitanKeyWords.has_category_code.toString().equals(label)) {
                     category.add(map);
-                } else if ("tech_info".equals(label)) {
+                } else if (TitanKeyWords.tech_info.toString().equals(label)) {
                     techInfo.add(map);
-                } else if ("has_knowledge".equals(label)) {
+                } else if (TitanKeyWords.has_knowledge.toString().equals(label)) {
                     resource.put("order", map.get("order"));
                     // 处理parent
                     if (i < size - 1) {
                         i++;
                         Map<String, String> parent = singleItemMaps.get(i);
                         String label2 = parent.get("label");
-                        if ("category_code".equals(label2)) {
+                        if (TitanKeyWords.category_code.toString().equals(label2)) {
                             resource.put("parent", parent.get("cg_taxoncode"));
-                        } else if ("knowledges".equals(label2)) {
+                        } else if (ResourceNdCode.knowledges.toString().equals(label2)) {
                             resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
-                        }else if("chapters".equals(label2)){
+                        }else if(ResourceNdCode.chapters.toString().equals(label2)){
                             if (!isCommonQuery) {
                                 resource.put("parent", "ROOT");
                             } else {
@@ -783,13 +783,18 @@ public class TitanResultParse {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		testToMapForRelationQuery();
+        System.out.println("测试点1");
+		testToMapForRelationQuery1();
+        System.out.println("测试点2");
+        testToMapForRelationQuery2();
+        System.out.println("测试边1");
+        testToMapForRelationQuery3();
 	}
 
 	/**
 	 * 测试方法：toMapForRelationQuery
 	 */
-	private static void testToMapForRelationQuery() {
+	private static void testToMapForRelationQuery1() {
 		// 44 key
 		String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
 		// System.out.println("resource: "+resource);
@@ -863,8 +868,56 @@ public class TitanResultParse {
 		
 		//FIXME toMapForRelationQuery方法测试：暂时把其它两种情况也做下 ->龚世文
 	}
+    /**
+     * {identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], id=356900872, ti_entry=[入口地址], ti_requirements=[[{"identifier":null,"type":"HARDWARE","name":"resolution","minVersion":null,"maxVersion":null,"installation":null,"installationFile":null,"value":"435*237","ResourceModel":null}]]}
+     * 测试方法：toMapForRelationQuery
+     */
+    private static void testToMapForRelationQuery2() {
+        String resource = "{identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], id=356900872, ti_entry=[入口地址], ti_requirements=[[{\"identifier\":null,\"type\":\"HARDWARE\",\"name\":\"resolution\",\"minVersion\":null,\"maxVersion\":null,\"installation\":null,\"installationFile\":null,\"value\":\"435*237\",\"ResourceModel\":null}]]}";
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
 
-	/**
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "3eaabed0-92a2-4c3c-bced-3a44e8a5f51d");
+        expectResourceMap.put("ti_md5", "md5Value");
+        expectResourceMap.put("label", "tech_info");
+        expectResourceMap.put("ti_title", "href");
+        expectResourceMap.put("ti_location", "${ref-path}/prepub_content_edu/esp/test/abc.png");
+        expectResourceMap.put("ti_size", "1024");
+        expectResourceMap.put("ti_format","image/png");
+        expectResourceMap.put("id","356900872");
+        expectResourceMap.put("ti_entry", "入口地址");
+        expectResourceMap.put("ti_requirements", "[{\"identifier\":null,\"type\":\"HARDWARE\",\"name\":\"resolution\",\"minVersion\":null,\"maxVersion\":null,\"installation\":null,\"installationFile\":null,\"value\":\"435*237\",\"ResourceModel\":null}]");
+
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+    /**
+     * {identifier=7d4a95eb-c2da-4e28-9f14-300085396680, target_uuid=92505a6f-bef1-4641-abb7-b1454437e682, source_uuid=35ee3c2e-ce28-4959-8322-c637cf94a6f7, resource_target_type=coursewares, relation_type=ASSOCIATE, tags=["好玩","好喝"], res_type=chapters, label=has_relation, enable=true, sort_num=5000.0, order_num=0.0, rr_label=weo, id=x4se1h-6e5odk-2qs5-72ptl4}
+     * 测试方法：toMapForRelationQuery
+     */
+    private static void testToMapForRelationQuery3() {
+        String resource = "{identifier=7d4a95eb-c2da-4e28-9f14-300085396680, target_uuid=92505a6f-bef1-4641-abb7-b1454437e682, source_uuid=35ee3c2e-ce28-4959-8322-c637cf94a6f7, resource_target_type=coursewares, relation_type=ASSOCIATE, tags=[\"好玩\",\"好喝\"], res_type=chapters, label=has_relation, enable=true, sort_num=5000.0, order_num=0.0, rr_label=weo, id=x4se1h-6e5odk-2qs5-72ptl4}";
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "7d4a95eb-c2da-4e28-9f14-300085396680");
+        expectResourceMap.put("target_uuid", "92505a6f-bef1-4641-abb7-b1454437e682");
+        expectResourceMap.put("source_uuid", "35ee3c2e-ce28-4959-8322-c637cf94a6f7");
+        expectResourceMap.put("resource_target_type", "coursewares");
+        expectResourceMap.put("relation_type", "ASSOCIATE");
+        expectResourceMap.put("tags", "\"好玩\",\"好喝\"");
+        expectResourceMap.put("res_type","chapters");
+        expectResourceMap.put("label","has_relation");
+        expectResourceMap.put("enable", "true");
+        expectResourceMap.put("sort_num", "5000.0");
+        expectResourceMap.put("order_num", "0.0");
+        expectResourceMap.put("rr_label", "weo");
+        expectResourceMap.put("id", "x4se1h-6e5odk-2qs5-72ptl4");
+
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+
+
+    /**
 	 * 校验map
 	 * 
 	 * @param resultResourceMap
@@ -880,8 +933,8 @@ public class TitanResultParse {
 				.entrySet()) {
 			String key = expectEntry.getKey();
 			if (!expectEntry.getValue().equals(resultResourceMap.get(key))) {
-				System.out.println("key: " + key + "; expectValue "
-						+ expectEntry.getValue() + "; resultValue: "
+				System.out.println("key: " + key + "\n expectValue: "
+						+ expectEntry.getValue() + "\n resultValue: "
 						+ resultResourceMap.get(key));
 			}
 		}
