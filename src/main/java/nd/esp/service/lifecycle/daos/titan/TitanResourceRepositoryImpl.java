@@ -8,6 +8,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
@@ -17,6 +18,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -112,14 +114,13 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
 
     @Override
     public ResultSet search(String script, Map<String, Object> scriptParamMap) {
-        // FIXME
     	try {
             return titanCommonRepository.executeScriptResultSet(script, scriptParamMap);
         } catch (Exception e) {
-            LOG.error("titan_repository error:{}" ,e.getMessage());
-        }
-    	
-    	return null;
+			LOG.error("titan_repository error:{}", e.getMessage());
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"LC/titan/search", e.getLocalizedMessage());
+		}
     }
     
     private M addResource(M model){
