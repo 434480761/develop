@@ -17,6 +17,10 @@ public enum TitanKeyWords {
     //资源冗余字段
     search_code,search_path,search_coverage,search_code_string,search_path_string,search_coverage_string,
 
+    primary_category,
+    // 边上的几个属性
+    relation_type,rr_label,order_num,sort_num,
+
     //树形结构
     tree_has_chapter("tree_has_chapters"),tree_has_knowledge("tree_has_knowledges"),tree_order("tree_order_num"),
     //统计
