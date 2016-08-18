@@ -32,6 +32,7 @@ public class TeachingMaterialServiceImplV06 implements
 		TeachingMaterialServiceV06 {
 	private static final int CREATE_TYPE = 0;//新增教材操作
 	private static final int UPDATE_TYPE = 1;//修改教材操作
+	private static final int PATCH_TYPE = 2;//局部修改教材操作
 	@Autowired
 	private NDResourceService ndResourceService;
 	@Autowired
@@ -66,7 +67,7 @@ public class TeachingMaterialServiceImplV06 implements
 													   TeachingMaterialModel tmm) {
 		//1、校验资源是否存在
 		if(CollectionUtils.isNotEmpty(tmm.getCategoryList())) {
-			checkTeachingMaterial(resType, tmm, UPDATE_TYPE);
+			checkTeachingMaterial(resType, tmm, PATCH_TYPE);
 		}
 
 		//2、调用通用创建接口
@@ -111,7 +112,7 @@ public class TeachingMaterialServiceImplV06 implements
 				}
 			}
 		}
-		if(CollectionUtils.isEmpty(paths)){
+		if(CollectionUtils.isEmpty(paths) && type!=PATCH_TYPE){
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckTaxonpathFail);
 		}else{
 			if(isNeedValidSameTm(resType,tmm)){

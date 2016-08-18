@@ -2781,7 +2781,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 						resourceCategory.setPrimaryCategory(resourceType);
 
 						if(StringUtils.isEmpty(resClassificationModel.getOperation())) {
-							resClassificationModel.setOperation("add");
+							resClassificationModel.setOperation("update");
 						}
 
 						switch (resClassificationModel.getOperation()) {

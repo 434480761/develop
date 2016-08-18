@@ -241,6 +241,10 @@ public class TitanScritpUtils {
             return LifeCircleApplicationInitializer.db_titan_field_coverage;
         }
 
+        if(model instanceof ResourceStatistical){
+            return LifeCircleApplicationInitializer.db_titan_field_statistical;
+        }
+
         return new Properties();
     }
 

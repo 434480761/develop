@@ -89,7 +89,6 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
     public boolean delete(String id) {
 
         try {
-            titanCommonRepository.deleteEdgeById(id);
             titanCommonRepository.deleteVertexById(id);
         } catch (Exception e) {
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DELETE_TECH_INFO_ERROR,
@@ -177,7 +176,8 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
 
             StringBuffer updateEdge = new StringBuffer("g.E().has('identifier',identifier)");
             Map<String, Object>  updateEdgeParam = TitanScritpUtils.getParamAndChangeScript4Update(updateEdge,techInfo);
-
+            updateEdgeParam.put("identifier", techInfo.getIdentifier());
+            
             try {
                 titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
                 titanCommonRepository.executeScript(updateEdge.toString(), updateEdgeParam);

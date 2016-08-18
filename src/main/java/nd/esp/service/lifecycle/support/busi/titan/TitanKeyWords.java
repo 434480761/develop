@@ -22,7 +22,10 @@ public enum TitanKeyWords {
     relation_type,rr_label,order_num,sort_num,
 
     //树形结构
-    tree_has_chapter("has_chapter"),tree_has_knowledge("has_knowledge"),tree_order("order");
+    tree_has_chapter("tree_has_chapters"),tree_has_knowledge("tree_has_knowledges"),tree_order("tree_order_num"),
+    //统计
+    statistical,has_statistical
+    ;
 
     private String name;
 

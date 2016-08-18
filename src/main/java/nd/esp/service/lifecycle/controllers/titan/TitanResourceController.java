@@ -57,6 +57,14 @@ public class TitanResourceController {
 			titanResourceService.repairData(resourceType);
 		}
 	}
+	
+	/**
+	 * 修复数据
+	 * */
+	@RequestMapping(value = "/{resourceType}/repair", method = RequestMethod.GET)
+	public void repairData(@PathVariable String resourceType) {
+		titanResourceService.repairData(resourceType);
+	}
 
 	/**
 	 * 修复所有关系
