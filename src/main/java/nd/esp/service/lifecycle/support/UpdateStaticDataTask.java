@@ -51,7 +51,6 @@ public class UpdateStaticDataTask {
             
             synchronizeDbStatusToStaticVariable();
             
-            System.out.println(StaticDatas.QUERY_BY_TITAN_FIRST);
             LOG.info("静态变量初始化");
         }else{
         	Long lastUpdateInDB = staticDataService.queryLastUpdateTime(SWITCH_TASK_ID);
