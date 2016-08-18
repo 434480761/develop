@@ -48,27 +48,36 @@ public class UpdateStaticDataTask {
         if(lastUpdateTime == 0){//项目刚启动,进行初始化
             lastUpdateTime = staticDataService.queryLastUpdateTime(SWITCH_TASK_ID);
             LOG.info("lastUpdateTime初始化");
-            List<String> dataNames = staticDataService.getStaticDatasName();
-            for(String name : dataNames){
-            	int value = staticDataService.getValues(name) ? 1 : 0;
-            	staticDataService.updateNowStatus(name, value);
-            }
+            
+            synchronizeDbStatusToStaticVariable();
+            
+            System.out.println(StaticDatas.QUERY_BY_TITAN_FIRST);
             LOG.info("静态变量初始化");
         }else{
         	Long lastUpdateInDB = staticDataService.queryLastUpdateTime(SWITCH_TASK_ID);
             if(!lastUpdateInDB.equals(lastUpdateTime)){
-                //获取静态变量名和现在状态值
-                List<Map<String, Integer>> list = staticDataService.queryNowStatus();
-                if(CollectionUtils.isNotEmpty(list)){
-                    for(Map<String, Integer> map : list){
-                        for(String name : map.keySet()){
-                        	staticDataService.setValues(name, map.get(name));
-                        }
-                    }
-                }
+            	
+            	synchronizeDbStatusToStaticVariable();
                 
                 lastUpdateTime = lastUpdateInDB;
                 LOG.info("静态变量更新--end!");
+            }
+        }
+    }
+    
+    /**
+     * 同步数据库状态到静态变量
+     * @author xiezy
+     * @date 2016年8月18日
+     */
+    private void synchronizeDbStatusToStaticVariable(){
+    	//获取静态变量名和现在状态值
+        List<Map<String, Integer>> list = staticDataService.queryNowStatus();
+        if(CollectionUtils.isNotEmpty(list)){
+            for(Map<String, Integer> map : list){
+                for(String name : map.keySet()){
+                	staticDataService.setValues(name, map.get(name));
+                }
             }
         }
     }
@@ -120,26 +129,4 @@ public class UpdateStaticDataTask {
             }
         }
     }
-    
-//    @Scheduled(cron="0 01 23 * * ?")
-//    public void runTask4Provider(){
-//        Map<String, String> map = new HashMap<String, String>();
-////        map.put("资源中心自生产", "华渔5");
-////        map.put("网络采集", "华渔4");
-//        map.put("智能出题", "华渔2");
-//        map.put("结构化生产", "华渔3");
-////        map.put("自动化生产", "华渔3");
-//        map.put("ND外包制作-自有版权", "华渔1");
-//        map.put("倍速", "倍速学习法");
-////        map.put("志鸿", "志鸿优化设计");
-//        
-//        if(CollectionUtils.isNotEmpty(map)){
-//        	for(String pre : map.keySet()){
-//        		adapterDBDataService.repairProvider("coursewareobjects", pre, map.get(pre));
-//        		System.out.println("coursewareobjects --over");
-//        		adapterDBDataService.repairProvider("questions", pre, map.get(pre));
-//        		System.out.println("questions --over");
-//        	}
-//        }
-//    }
 }
