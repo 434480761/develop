@@ -142,7 +142,7 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
             isAdd = true;
             scriptBuffer = new StringBuffer("statistical = graph.addVertex(T.label, type");
             graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,statistical);
-            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('"+TitanKeyWords.has_statistical.toString()+"',statistical ,'identifier',edgeIdentifier");
+            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('"+TitanKeyWords.has_statistical.toString()+"',statistical");
 
             graphParams.putAll(TitanScritpUtils.getParamAndChangeScript(scriptBuffer, statistical));
 
@@ -166,7 +166,7 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
 
             StringBuffer updateEdge = new StringBuffer("g.E().has('identifier',identifier)");
             Map<String, Object>  updateEdgeParam = TitanScritpUtils.getParamAndChangeScript4Update(updateEdge,statistical);
-
+            updateEdgeParam.put("identifier", statistical.getIdentifier());
             try {
                 titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
                 titanCommonRepository.executeScript(updateEdge.toString(), updateEdgeParam);
