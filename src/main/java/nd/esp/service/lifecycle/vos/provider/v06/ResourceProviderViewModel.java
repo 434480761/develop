@@ -12,7 +12,7 @@ public class ResourceProviderViewModel {
 	private String identifier;
 	
 	@NotBlank(message="{resourceProviderViewModel.title.notBlank.validmsg}") 
-	@Length(max=200,message="{resourceProviderViewModel.title.maxlength.validmsg}")
+	@Length(max=100,message="{resourceProviderViewModel.title.maxlength.validmsg}")
 	private String title;
 	
 	private String description;
