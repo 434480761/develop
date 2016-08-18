@@ -59,7 +59,7 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static ListViewModel<RelationForQueryViewModel> parseToListViewRelationForQueryViewModel(String resType, List<String> resultStr) {
+    public static ListViewModel<RelationForQueryViewModel> parseToListViewRelationForQueryViewModel(String resType, List<String> resultStr,boolean reverse) {
         ListViewModel<RelationForQueryViewModel> viewModels = new ListViewModel<>();
         List<RelationForQueryViewModel> items = null;
         if (CollectionUtils.isNotEmpty(resultStr)) {
@@ -71,7 +71,7 @@ public class TitanResultParse2 {
                 resultStr.remove(resultSize - 1);
             }
             // 解析items
-            items = parseToItemsRelationForQueryViewModel(resType, resultStr);
+            items = parseToItemsRelationForQueryViewModel(resType, resultStr,reverse);
         }
         viewModels.setItems(items);
         return viewModels;
@@ -83,7 +83,7 @@ public class TitanResultParse2 {
      * @param resultStr
      * @return
      */
-    public static List<RelationForQueryViewModel> parseToItemsRelationForQueryViewModel(String resType, List<String> resultStr) {
+    public static List<RelationForQueryViewModel> parseToItemsRelationForQueryViewModel(String resType, List<String> resultStr,boolean reverse) {
         long start = System.currentTimeMillis();
         List<RelationForQueryViewModel> items = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
@@ -93,7 +93,7 @@ public class TitanResultParse2 {
             // 解析资源
             if (CollectionUtils.isNotEmpty(titanResultItems)) {
                 for (TitanResultItem titanResultItem : titanResultItems) {
-                    items.add(generateResourceModel(titanResultItem));
+                    items.add(generateResourceModel(titanResultItem,reverse));
                 }
             }
         }
@@ -102,7 +102,7 @@ public class TitanResultParse2 {
     }
 
 
-    private static RelationForQueryViewModel generateResourceModel(TitanResultItem titanItem) {
+    private static RelationForQueryViewModel generateResourceModel(TitanResultItem titanItem,boolean reverse) {
         RelationForQueryViewModel item = new RelationForQueryViewModel();
         Map<String, String> resource = titanItem.getResource();
         Map<String, String> relationValues = titanItem.getRelationValues();// 边上的关系数据
@@ -149,7 +149,12 @@ public class TitanResultParse2 {
             } else if (keywords != null) {
                 item.setKeywords(new ArrayList<String>());
             }
-            item.setSid(relationValues.get("source_uuid"));
+            // 反向查询时，返回数据sid错误，应为url中的uuid
+            if (reverse) {
+                item.setSid(relationValues.get("target_uuid"));
+            } else {
+                item.setSid(relationValues.get("source_uuid"));
+            }
             item.setTargetType(resource.get("label"));
             item.setCreator(resource.get(ES_SearchField.lc_creator.toString()));
             item.setStatus(resource.get(ES_SearchField.lc_status.toString()));
