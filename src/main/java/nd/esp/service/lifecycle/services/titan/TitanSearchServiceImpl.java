@@ -238,7 +238,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setIncludes(null);
         titanExpression.setResType(resType);
         titanExpression.setOrderByEdgeField(true);
-        titanExpression.setOrderByEdgeField(true);
         if (isOrderByON) {
             titanExpression.setOrderByEdgeFieldName(TitanKeyWords.order_num.toString());
         } else {
