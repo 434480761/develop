@@ -70,6 +70,16 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
         return executeScriptUniqueLong(script, param);
     }
+    @Override
+    public Long getEnableVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
+        String script = "g.V().has(primaryCategory,'identifier',identifier,'lc_enable',true).id()";
+        Map<String, Object> param = new HashMap<>();
+        param.put("primaryCategory", primaryCategory);
+        param.put("identifier", identifier);
+       // param.put("lc_enable", enable);
+
+        return executeScriptUniqueLong(script, param);
+    }
 
     @Override
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception {
