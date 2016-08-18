@@ -72,11 +72,11 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
     @Override
     public Long getEnableVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
-        String script = "g.V().has(primaryCategory,'identifier',identifier,'lc_enable',true).id()";
+        String script = "g.V().has('primary_category',primaryCategory).has('identifier',identifier).has('lc_enable',lc_enable).id()";
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory", primaryCategory);
         param.put("identifier", identifier);
-       // param.put("lc_enable", enable);
+        param.put("lc_enable", true);
 
         return executeScriptUniqueLong(script, param);
     }

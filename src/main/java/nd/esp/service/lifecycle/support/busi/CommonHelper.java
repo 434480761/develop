@@ -1245,7 +1245,7 @@ public class CommonHelper {
 		Long id;
 		try {
 			TitanCommonRepository titanCommonRepository = new TitanCommonRepositoryImpl();
-			id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+			id = titanCommonRepository.getEnableVertexIdByLabelAndId(primaryCategory, identifier);
 		} catch (Exception e) {
 
 			LOG.error("titan_repository error:{}" ,e.getMessage());
