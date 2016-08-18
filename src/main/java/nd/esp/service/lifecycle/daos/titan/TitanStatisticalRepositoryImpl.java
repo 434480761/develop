@@ -121,7 +121,7 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
     }
 
     private ResourceStatistical addOrUpdateStatistical(ResourceStatistical statistical){
-        String checkTechInfoExist = "g.E().hasLabel('"+ TitanKeyWords.has_statistical.toString()+"').has('identifier',edgeIdentifier).id()";
+        String checkTechInfoExist = "g.E().hasLabel('"+ TitanKeyWords.has_resource_statistical.toString()+"').has('identifier',edgeIdentifier).id()";
         Map<String, Object> checkTechInfoParam = new HashMap<>();
         checkTechInfoParam.put("edgeIdentifier",statistical.getIdentifier());
         String oldTechInfoId = null;
@@ -142,7 +142,7 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
             isAdd = true;
             scriptBuffer = new StringBuffer("statistical = graph.addVertex(T.label, type");
             graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,statistical);
-            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('"+TitanKeyWords.has_statistical.toString()+"',statistical");
+            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('"+TitanKeyWords.has_resource_statistical.toString()+"',statistical");
 
             graphParams.putAll(TitanScritpUtils.getParamAndChangeScript(scriptBuffer, statistical));
 

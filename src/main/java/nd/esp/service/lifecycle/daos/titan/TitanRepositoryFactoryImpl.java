@@ -53,7 +53,7 @@ public class TitanRepositoryFactoryImpl implements TitanRepositoryFactory{
         if (StringUtils.isEmpty(label)){
             return null;
         }
-        if(TitanKeyWords.has_statistical.toString().equals(label)){
+        if(TitanKeyWords.has_resource_statistical.toString().equals(label)){
             return titanStatisticalRepository;
         } else if(TitanKeyWords.has_tech_info.toString().equals(label)){
             return titanTechInfoRepository;
