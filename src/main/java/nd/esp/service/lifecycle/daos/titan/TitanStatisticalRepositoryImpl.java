@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.daos.titan;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanStatisticalRepository;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import org.slf4j.Logger;
@@ -55,11 +56,18 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
 
     @Override
     public boolean deleteAllByResource(String primaryCategory, String identifier) {
-        return false;
+        try {
+            titanCommonRepository.deleteAllOutVertexByResourceAndVertexLabel(primaryCategory,identifier,TitanKeyWords.statistical.toString());
+        } catch (Exception e) {
+            LOG.error("titan_repository error:{}" ,e.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     private ResourceStatistical addOrUpdateStatistical(ResourceStatistical statistical){
-        String checkTechInfoExist = "g.E().hasLabel('has_tech_info').has('identifier',edgeIdentifier).id()";
+        String checkTechInfoExist = "g.E().hasLabel('"+ TitanKeyWords.has_statistical.toString()+"').has('identifier',edgeIdentifier).id()";
         Map<String, Object> checkTechInfoParam = new HashMap<>();
         checkTechInfoParam.put("edgeIdentifier",statistical.getIdentifier());
         String oldTechInfoId = null;
@@ -78,14 +86,14 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
         String techInfoEdgeId = null;
         if(StringUtils.isEmpty(oldTechInfoId)){
             isAdd = true;
-            scriptBuffer = new StringBuffer("techinfo = graph.addVertex(T.label, type");
+            scriptBuffer = new StringBuffer("statistical = graph.addVertex(T.label, type");
             graphParams = TitanScritpUtils.getParamAndChangeScript(scriptBuffer,statistical);
-            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('has_tech_info',techinfo ,'identifier',edgeIdentifier");
+            scriptBuffer.append(");g.V().has(primaryCategory,'identifier',sourceIdentifier).next().addEdge('"+TitanKeyWords.has_statistical.toString()+"',statistical ,'identifier',edgeIdentifier");
 
             graphParams.putAll(TitanScritpUtils.getParamAndChangeScript(scriptBuffer, statistical));
 
             scriptBuffer.append(").id();");
-            graphParams.put("type", "tech_info");
+            graphParams.put("type", TitanKeyWords.statistical.toString());
             graphParams.put("primaryCategory",statistical.getResType());
             graphParams.put("sourceIdentifier",statistical.getResource());
             graphParams.put("edgeIdentifier",statistical.getIdentifier());

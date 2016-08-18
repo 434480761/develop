@@ -89,7 +89,6 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
     public boolean delete(String id) {
 
         try {
-            titanCommonRepository.deleteEdgeById(id);
             titanCommonRepository.deleteVertexById(id);
         } catch (Exception e) {
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DELETE_TECH_INFO_ERROR,
