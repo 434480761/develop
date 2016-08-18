@@ -32,7 +32,7 @@ public interface TitanCommonRepository {
     public void batchDeleteEdgeByIds(List<String> ids) throws Exception;
     public void butchDeleteVertexById(List<String> ids) throws Exception;
     public void butchDeleteEdgeById(List<String> ids) throws Exception;
-
+    public String getEdgeLabelById(String identifier) throws Exception;
 
 
 }
