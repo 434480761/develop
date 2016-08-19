@@ -38,9 +38,9 @@ public class TitanUtils {
 		}
 		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
 			// order
-			scriptBuffer.append(",inE('").append(TitanKeyWords.has_knowledge.toString()).append("')");
+			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("')");
 			// parent
-			scriptBuffer.append(",inE('").append(TitanKeyWords.has_knowledge.toString()).append("').outV()");
+			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("').outV()");
 		}
 		if (needRelationValues) {
 			scriptBuffer.append(",select('e')");

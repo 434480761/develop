@@ -12,7 +12,7 @@ public enum TitanKeyWords {
     RESULT,TOTALCOUNT,
     //暂时放在这里
     has_relation, has_category_code, category_code, has_coverage, coverage, categories_path, has_categories_path
-    , has_chapter,has_knowledge,tech_info,has_tech_info,has_knowledge_relation,
+    ,tech_info,has_tech_info,has_knowledge_relation,// has_chapter,has_knowledge,
     
     //资源冗余字段
     search_code,search_path,search_coverage,search_code_string,search_path_string,search_coverage_string,

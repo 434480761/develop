@@ -720,9 +720,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (recursionBoolean) {
             titanQueryVertex = new TitanQueryVertexForTree();
             if (ResourceNdCode.chapters.toString().equals(resType)) {
-                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_chapter.toString());
+                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_chapter.toString());
             } else if (ResourceNdCode.knowledges.toString().equals(resType)) {
-                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_knowledge.toString());
+                ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_knowledge.toString());
             }
         } else {
             titanQueryVertex = new TitanQueryVertex();
@@ -874,11 +874,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 chunks[1] = chunks[1].substring(0, chunks[1].length() - 1); // 去除$标志
                 titanQueryVertex = new TitanQueryVertexForTree();
                 if (ResourceNdCode.chapters.toString().equals(chunks[0])) {
-                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_chapter
+                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_chapter
                             .toString());
                 } else if (ResourceNdCode.knowledges.toString().equals(
                         chunks[0])) {
-                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.has_knowledge
+                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_knowledge
                             .toString());
                 }
                 // service层，不必考虑参数非法；

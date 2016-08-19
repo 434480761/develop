@@ -157,7 +157,7 @@ public class TitanResultParse {
             String label = resultStrMap.get(i).get("label");
             if (isKnowledge) {
                 // 发现存在order跳过下一行数据 order-->has_knowledge
-                if (TitanKeyWords.has_knowledge.toString().equals(label)) i++;
+                if (TitanKeyWords.tree_has_knowledge.toString().equals(label)) i++;
             }
             // 检查切割点
             boolean isEnd = (i == endSize) || ((i < endSize) && resType.equals(resultStrMap.get(i + 1).get("label")));
@@ -218,8 +218,8 @@ public class TitanResultParse {
                     category.add(map);
                 } else if (TitanKeyWords.tech_info.toString().equals(label)) {
                     techInfo.add(map);
-                } else if (TitanKeyWords.has_knowledge.toString().equals(label)) {
-                    resource.put("order", map.get("order"));
+                } else if (TitanKeyWords.tree_has_knowledge.toString().equals(label)) {
+                    resource.put(TitanKeyWords.tree_order.toString(), map.get(TitanKeyWords.tree_order.toString()));
                     // 处理parent
                     if (i < size - 1) {
                         i++;
@@ -266,7 +266,7 @@ public class TitanResultParse {
             KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
             extProperties.setParent(mainResult.get("parent"));
-            String order = mainResult.get("order");
+            String order = mainResult.get(TitanKeyWords.tree_order.toString());
             if (order != null && !"".equals(order.trim())&& !"null".equals(order.trim())) {
                 extProperties.setOrder_num((int) Float.parseFloat(order));
             }
