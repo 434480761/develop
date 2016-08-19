@@ -1,15 +1,12 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
@@ -44,7 +41,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 	 * 
 	 * @return
 	 */
-	public static Client getGremlinClient() {
+	public static Client getSingleClient() {
 		return singleClient;
 	}
 
@@ -57,7 +54,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		return searchClient;
 	}
 
-	private static void setGremlinClient(Client client) {
+	private static void setSingleClient(Client client) {
 		singleClient = client;
 	}
 
@@ -112,8 +109,8 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			@Override
 			public Builder builder(String address) {
 				Builder singleBuilder = defaulBuilder();
-				singleBuilder.addContactPoint(checkAndGetAddress(address)
-						.get(0));// only add one
+				List<String> addressList = checkAndGetAddress(address);
+				singleBuilder.addContactPoint(addressList.get(RandomUtils.nextInt(addressList.size())));// only add one
 				// address;
 				singleBuilder.minConnectionPoolSize(50);
 				singleBuilder.maxConnectionPoolSize(50);
@@ -124,12 +121,12 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 			@Override
 			public Client getClient() {
-				return getGremlinClient();
+				return getSingleClient();
 			}
 
 			@Override
 			public void setClient(Client client) {
-				setGremlinClient(client);
+				setSingleClient(client);
 			}
 		}, // 单个节点（暂时固定一台机器）
 		search {
@@ -295,7 +292,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 	/****************************** TEST ********************************/
 	public static void main(String[] args) {
-		String address = " 172.24.133.42 , 172.24.133.99 ";
+		String address = "172.24.133.42 , 172.24.133.99 ";
 		ClientType clientType = ClientType.search;
 		System.out.println(clientType.isConnection());
 		clientType.init(address);
