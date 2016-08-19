@@ -1,1 +1,1 @@
-INSERT into synchronized_table SET pid = 5, vlaue =0   //个环境只允许一个任务(@MarkAspect4ImportData)
+INSERT into synchronized_table SET pid = 5, value =0   //个环境只允许一个任务(@MarkAspect4ImportData)
