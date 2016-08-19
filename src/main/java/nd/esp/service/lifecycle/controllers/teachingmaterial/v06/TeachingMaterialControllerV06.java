@@ -197,7 +197,7 @@ public class TeachingMaterialControllerV06 {
 //		CommonHelper.inputParamValid(tmvm,"10111",OperationType.UPDATE);
 
 		//model入参转换，部分数据初始化
-		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials);
+		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials, true);
 
 		//修改教材
 		tmm = teachingMaterialService.patchTeachingMaterial(resType,tmm);

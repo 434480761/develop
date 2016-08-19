@@ -52,7 +52,9 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         Map<String,Object> scriptParams = new HashMap<>();
         scriptParams.put("parentId",parentId);
         scriptParams.put("chapterId",chapterId);
-
+        if(leftValue == null){
+        	leftValue = 0;
+        }
         scriptParams.put("treeOrder",new Float(leftValue));
 
 //        client.submit(createScript,scriptParams);

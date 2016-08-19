@@ -97,4 +97,29 @@ public class TitanRepositoryImpl<M extends EspEntity> implements TitanRepository
 
         return null;
     }
+
+    @Override
+    public boolean delete(String id) {
+        try {
+            String label = titanCommonRepository.getEdgeLabelById(id);
+            TitanEspRepository espRepository = repositoryFactory.getEspRepositoryByLabel(label);
+            if(espRepository == null){
+                LOG.info("titan batch update error");
+            } else {
+                espRepository.delete(id);
+            }
+        } catch (Exception e) {
+            LOG.info("titan batch update error");
+        }
+        return true;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> ids) {
+        for (String id : ids){
+            delete(id);
+        }
+
+        return true;
+    }
 }
