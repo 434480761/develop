@@ -16,4 +16,7 @@ public interface TitanRepository<M extends EspEntity> {
 
     List<M> batchUpdate(List<M> models);
 
+    boolean delete(String id);
+
+    boolean batchDelete(List<String> ids);
 }

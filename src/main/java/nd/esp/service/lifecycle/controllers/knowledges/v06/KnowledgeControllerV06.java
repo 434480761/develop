@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
+import nd.esp.service.lifecycle.controllers.AdapterDBDataController;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
@@ -45,6 +46,8 @@ import nd.esp.service.lifecycle.vos.valid.LessPropertiesDefault;
 import nd.esp.service.lifecycle.vos.valid.ValidCreateLessPropertiesGroup;
 import nd.esp.service.lifecycle.vos.valid.ValidUpdateLessPropertiesGroup;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -69,6 +72,8 @@ import com.nd.gaea.WafException;
 @RestController
 @RequestMapping("/v0.6/knowledges")
 public class KnowledgeControllerV06 {
+	private static final Logger LOG = LoggerFactory.getLogger(KnowledgeControllerV06.class);
+	
     @Autowired
     @Qualifier("knowledgeServiceV06")
     KnowledgeService knowledgeService;
@@ -153,9 +158,13 @@ public class KnowledgeControllerV06 {
              }
         }
 
+        long t0 = System.currentTimeMillis();
         model = knowledgeService.createKnowledge(model);
+        LOG.info("数据库耗时："+(System.currentTimeMillis() - t0));
        
+        long t1 = System.currentTimeMillis();
         titanTreeMoveService.addNode(titanTreeModel);
+        LOG.info("TITAN耗时："+(System.currentTimeMillis() - t1));
 
         KnowledgeViewModel4Out viewModelOut = CommonHelper.convertViewModelOut(model, KnowledgeViewModel4Out.class);
 

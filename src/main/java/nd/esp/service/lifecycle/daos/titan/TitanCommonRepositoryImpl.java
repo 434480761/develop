@@ -162,6 +162,14 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
     }
 
+    @Override
+    public String getEdgeLabelById(String identifier) throws Exception {
+        String script = "g.E().has('identifier',identifier).label();";
+        Map<String, Object> param = new HashMap<>();
+        param.put("identifier", identifier);
+        return executeScriptUniqueString(script, param);
+    }
+
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
             return null;
