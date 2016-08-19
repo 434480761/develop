@@ -1,12 +1,19 @@
 package nd.esp.service.lifecycle.controllers.titan;
 
 import nd.esp.service.lifecycle.services.titan.TitanResourceService;
+import nd.esp.service.lifecycle.support.annotation.MarkAspect4ImportData;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 用于导数据到titan，从mysql 数据库取数据
@@ -17,8 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/titan/index/data")
 public class TitanResourceController {
-	// private static final Logger LOG = LoggerFactory
-	// .getLogger(TitanResourceController.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(TitanResourceController.class);
 
 	@Autowired
 	private TitanResourceService titanResourceService;
@@ -212,5 +219,25 @@ public class TitanResourceController {
 	public String importCode(){
 	   	titanResourceService.code();
 		return null;
+	}
+	
+	/**
+	 * 测试导数据时：一个环境只允许一个任务
+	 * 
+	 * @author linsm
+	 * @return
+	 */
+	@MarkAspect4ImportData
+	@RequestMapping(value = "testImportDataSync", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String testImportDataSync() {
+		for (int i = 0; i < 10; i++) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				LOG.info(e.getLocalizedMessage());
+			}
+			LOG.info("task_running");
+		}
+		return "task_complete";
 	}
 }
