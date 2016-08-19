@@ -115,7 +115,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
     @Override
     public ResultSet search(String script, Map<String, Object> scriptParamMap) {
     	try {
-            return titanCommonRepository.executeScriptResultSet(script, scriptParamMap);
+            return titanCommonRepository.executeScriptSearchResultSet(script, scriptParamMap);
         } catch (Exception e) {
 			LOG.error("titan_repository error:{}", e.getMessage());
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
