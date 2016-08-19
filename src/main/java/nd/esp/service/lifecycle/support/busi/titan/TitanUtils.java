@@ -18,35 +18,37 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes, String resType) {
-		if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
+	public static String generateScriptForInclude(List<String> includes, String resType,boolean needRelationValues) {
+		//if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
-		String end = ")";
+		String end = ")";// 取回label
+		String defaultStr=".valueMap(true);";
 
 		if(CollectionUtils.isNotEmpty(includes)) {
 			for (String include : includes) {
 				if (include.equals(IncludesConstant.INCLUDE_TI)) {
 					scriptBuffer.append(",out('has_tech_info')");
 				} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
-					scriptBuffer.append(",out('has_category_code')");
-					// cg_taxoncode identifier
+					// scriptBuffer.append(",out('has_category_code')");
+					// code、id和path都从边上取(cg_taxoncode identifier cg_taxonpath)
 					scriptBuffer.append(",outE('has_category_code')");
-					scriptBuffer.append(",out('has_categories_path')");
+					// scriptBuffer.append(",out('has_categories_path')");
 				}
 			}
 		}
-		if (ResourceNdCode.knowledges.toString().equals(resType)) {
-
+		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
 			// order
 			scriptBuffer.append(",inE('has_knowledge')");
-
 			// parent
 			scriptBuffer.append(",inE('has_knowledge').outV()");
 		}
+		if (needRelationValues) {
+			scriptBuffer.append(",select('e')");
+		}
 
-		if ("".equals(scriptBuffer.toString())) return "";
-		return begin + scriptBuffer.toString() + end;
+		if ("".equals(scriptBuffer.toString())) return defaultStr;
+		return begin + scriptBuffer.toString() + end + defaultStr;
 	}
 
 	// 生成脚本参数名字，避免多个值冲突

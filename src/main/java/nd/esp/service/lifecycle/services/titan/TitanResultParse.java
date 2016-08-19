@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.titan;
 
 import com.google.gson.reflect.TypeToken;
+
 import nd.esp.service.lifecycle.educommon.models.*;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
@@ -9,9 +10,13 @@ import nd.esp.service.lifecycle.models.v06.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.BigDecimalUtils;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+
+import org.apache.commons.collections4.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,248 +53,396 @@ public class TitanResultParse {
 
     private static final Logger LOG = LoggerFactory.getLogger(TitanResultParse.class);
 
-
     /**
      * 解析资源
+     *
      * @param resType
      * @param resultStr
      * @return
      */
-    public static ListViewModel<ResourceModel> parseToListView(String resType, List<String> resultStr,List<String> includes) {
-        long start = System.currentTimeMillis();
+    public static ListViewModel<ResourceModel> parseToListViewResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
-        List<ResourceModel> items = new ArrayList<>();
-
-        List<String> otherLines = new ArrayList<>();
-        String taxOnPath = null;
-        String mainResult = null;
-        int count = 0;
-        for (String line : resultStr) {
-            if (count > 0 && (line.contains(ES_SearchField.lc_create_time.toString()) || line.startsWith(TitanKeyWords.TOTALCOUNT.toString()))) {
-                items.add(TitanResultParse.parseResource(resType, mainResult, otherLines, taxOnPath,includes));
-                otherLines.clear();
-                taxOnPath = null;
+        List<ResourceModel> items = null;
+        if (CollectionUtils.isNotEmpty(resultStr)) {
+            int resultSize = resultStr.size();
+            // 处理count
+            String countStr = resultStr.get(resultSize - 1);
+            if (StringUtils.isNotEmpty(countStr) && countStr.contains(TitanKeyWords.TOTALCOUNT.toString())) {
+                viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
+                resultStr.remove(resultSize - 1);
             }
-
-            if (line.contains(TitanKeyWords.TOTALCOUNT.toString())) {
-                viewModels.setTotal(Long.parseLong(line.split("=")[1].trim()));
-            } else if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                Map<String, String> map = TitanResultParse.toMap(line);
-                taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-            } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                mainResult = line;
-            } else {
-                otherLines.add(line);
-            }
-            count++;
+            // 解析items
+            items = parseToItemsResourceModel(resType, resultStr, includes, isCommonQuery);
         }
-
         viewModels.setItems(items);
-        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
         return viewModels;
     }
 
+
     /**
-     * 解析资源
+     *
      * @param resType
-     * @param mainResult
-     * @param otherLines
-     * @param taxOnPath
+     * @param resultStr
+     * @param includes
+     * @param isCommonQuery
      * @return
      */
-    public static ResourceModel parseResource(String resType, String mainResult, List<String> otherLines, String taxOnPath,List<String> includes) {
+    public static List<ResourceModel> parseToItemsResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
+        long start = System.currentTimeMillis();
+        List<ResourceModel> items = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(resultStr)) {
+            // 数据转成key-value
+            List<Map<String, String>> resultStrMap = changeStrToKeyValue(resultStr);
+            // 切割资源
+            List<List<Map<String, String>>> allItemMaps = cutOneItemMaps(resType, resultStrMap);
+            // 解析资源
+            for (List<Map<String, String>> oneItemMaps : allItemMaps) {
+                items.add(parseResource(resType, oneItemMaps, includes, isCommonQuery));
+            }
+        }
+        LOG.info("parse consume times:" + (System.currentTimeMillis() - start));
+        return items;
+    }
+
+    /**
+     *
+     * @param resultStr
+     * @return
+     */
+    public static List<Map<String, String>> changeStrToKeyValue(List<String> resultStr) {
+        List<Map<String, String>> resultStrMap = new ArrayList<>();
+        for (String str : resultStr) {
+            Map<String, String> tmp = toMapForRelationQuery(str);
+            if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
+        }
+        return resultStrMap;
+    }
+
+    /**
+     *
+     * @param resType
+     * @param resultStrMap
+     * @return
+     */
+    public static List<List<Map<String, String>>> cutOneItemMaps(String resType, List<Map<String, String>> resultStrMap) {
+        // 切割资源
+        List<Integer> indexArray = getIndexByLabel(resType, resultStrMap);
+        List<List<Map<String, String>>> allItemMaps = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(indexArray) && indexArray.size() > 1) {
+            for (int i = 0; i < indexArray.size() - 1; i++) {
+                int begin = indexArray.get(i);
+                int end = indexArray.get(i + 1);
+                allItemMaps.add(resultStrMap.subList(begin, end));
+            }
+
+        }
+        return allItemMaps;
+    }
+
+
+
+
+    /**
+     * 返回数据切割的index
+     *
+     * @return
+     */
+    public static List<Integer> getIndexByLabel(String resType, List<Map<String, String>> resultStrMap) {
+        List<Integer> indexArray = new ArrayList<>();
+        indexArray.add(0);
+        boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+        int size = resultStrMap.size();
+        int endSize = size - 1;
+        for (int i = 0; i < size; i++) {
+            String label = resultStrMap.get(i).get("label");
+            if (isKnowledge) {
+                // 发现存在order跳过下一行数据 order-->has_knowledge
+                if ("has_knowledge".equals(label)) i++;
+            }
+            // 检查切割点
+            boolean isEnd = (i == endSize) || ((i < endSize) && resType.equals(resultStrMap.get(i + 1).get("label")));
+            if (isEnd) indexArray.add(i + 1);
+        }
+        return indexArray;
+    }
+
+    /**
+     *
+     * @param resType
+     * @param oneItemMaps
+     * @param includes
+     * @param isCommonQuery
+     * @return
+     */
+    private static ResourceModel parseResource(String resType, List<Map<String, String>> oneItemMaps, List<String> includes, Boolean isCommonQuery) {
+        // 识别数据
+        boolean isKnowledge = ResourceNdCode.knowledges.toString().equals(resType);
+        TitanResultItem titanItem = discernData(resType, oneItemMaps, isCommonQuery);
+
         if (ResourceNdCode.ebooks.toString().equals(resType)) {
-            return generateEbookModel(mainResult, otherLines, taxOnPath,includes);
+            return generateEbookModel(titanItem, includes);
         } else if (ResourceNdCode.teachingmaterials.toString().equals(resType)) {
-            generateTeachingMaterialModel(mainResult, otherLines, taxOnPath,includes);
+            generateTeachingMaterialModel(titanItem, includes);
         } /*else if (ResourceNdCode.guidancebooks.toString().equals(resType)) {
         } */ else if (ResourceNdCode.questions.toString().equals(resType)) {
-            return generateQuestionModel(mainResult, otherLines, taxOnPath,includes);
-        }else if (ResourceNdCode.knowledges.toString().equals(resType)) {
-            return generateKnowledgeModel(mainResult, otherLines, taxOnPath,includes);
+            return generateQuestionModel(titanItem, includes);
+        } else if (isKnowledge) {
+            return generateKnowledgeModel(titanItem, includes);
         }
-        return generateResourceModel(mainResult, otherLines, taxOnPath,includes);
+        return generateResourceModel(titanItem,includes);
+
+
     }
 
+
     /**
-     * Ebook的扩展属性
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
+     *
+     * @param resType
+     * @param singleItemMaps
+     * @param isCommonQuery
      * @return
      */
-    private static KnowledgeModel generateKnowledgeModel(String mainResult, List<String> strInOneItem, String taxOnPath, List<String> includes) {
+    public static TitanResultItem discernData(String resType, List<Map<String, String>> singleItemMaps, Boolean isCommonQuery) {
+        TitanResultItem item = new TitanResultItem();
+        if (CollectionUtils.isNotEmpty(singleItemMaps)) {
+            Map<String, String> resource = new HashMap<>();
+            List<Map<String, String>> category = new ArrayList<>();
+            List<Map<String, String>> techInfo = new ArrayList<>();
+            int size = singleItemMaps.size();
+            for (int i = 0; i < size; i++) {
+                Map<String, String> map = singleItemMaps.get(i);
+                String label = map.get("label");
+                if (resType.equals(label)) {
+                    resource.putAll(map);
+                } else if ("has_category_code".equals(label)) {
+                    category.add(map);
+                } else if ("tech_info".equals(label)) {
+                    techInfo.add(map);
+                } else if ("has_knowledge".equals(label)) {
+                    resource.put("order", map.get("order"));
+                    // 处理parent
+                    if (i < size - 1) {
+                        i++;
+                        Map<String, String> parent = singleItemMaps.get(i);
+                        String label2 = parent.get("label");
+                        if ("category_code".equals(label2)) {
+                            resource.put("parent", parent.get("cg_taxoncode"));
+                        } else if ("knowledges".equals(label2)) {
+                            resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
+                        }else if("chapters".equals(label2)){
+                            if (!isCommonQuery) {
+                                resource.put("parent", "ROOT");
+                            } else {
+                                resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
+                            }
+                        } else {
+                            LOG.warn("parent--未能识别");
+                        }
+                    }
+                } else {
+                    LOG.warn("未能识别");
+                }
+            }
+            item.setResource(resource);
+            item.setCategory(category);
+            item.setTechInfo(techInfo);
+        }
+
+        return item;
+    }
+
+
+    /**
+     *
+     * @param titanItem
+     * @param includes
+     * @return
+     */
+    private static KnowledgeModel generateKnowledgeModel(TitanResultItem titanItem, List<String> includes) {
         KnowledgeModel item = new KnowledgeModel();
-        Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap,includes);
-        KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
+        Map<String, String> mainResult = titanItem.getResource();
+        if(CollectionUtils.isNotEmpty(mainResult)) {
+            dealMainResult(item, mainResult, includes);
+            KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
-        extProperties.setParent(fieldMap.get("parent"));
-        String order=fieldMap.get("order");
-        if (order != null && !"".equals(order.trim())) {
-            extProperties.setOrder_num((int)Float.parseFloat(order));
+            extProperties.setParent(mainResult.get("parent"));
+            String order = mainResult.get("order");
+            if (order != null && !"".equals(order.trim())&& !"null".equals(order.trim())) {
+                extProperties.setOrder_num((int) Float.parseFloat(order));
+            }
+
+            //extProperties.setTarget(fieldMap.get("ext_target"));
+            //extProperties.setDirection(fieldMap.get("ext_direction"));
+            //extProperties.setRootNode(fieldMap.get("ext_rootnode"));
+
+            item.setExtProperties(extProperties);
         }
-
-        //extProperties.setTarget(fieldMap.get("ext_target"));
-        //extProperties.setDirection(fieldMap.get("ext_direction"));
-        //extProperties.setRootNode(fieldMap.get("ext_rootnode"));
-
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath,includes);
+        generateModel(item, titanItem, includes);
         return item;
     }
 
 
     /**
-     * TeachingMaterial的扩展属性
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
+     *
+     * @param titanItem
+     * @param includes
      * @return
      */
-    private static TeachingMaterialModel generateTeachingMaterialModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
+    private static TeachingMaterialModel generateTeachingMaterialModel(TitanResultItem titanItem, List<String> includes) {
         TeachingMaterialModel item = new TeachingMaterialModel();
-        Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap,includes);
-        TmExtPropertiesModel extProperties = new TmExtPropertiesModel();
-        extProperties.setIsbn(fieldMap.get("ext_isbn"));
-        extProperties.setCriterion(fieldMap.get("ext_criterion"));
-        String attachments = fieldMap.get("ext_attachments");
-        if (attachments != null) {
-            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+        Map<String, String> mainResult = titanItem.getResource();
+        if (CollectionUtils.isNotEmpty(mainResult)) {
+            dealMainResult(item, mainResult, includes);
+            TmExtPropertiesModel extProperties = new TmExtPropertiesModel();
+            extProperties.setIsbn(mainResult.get("ext_isbn"));
+            extProperties.setCriterion(mainResult.get("ext_criterion"));
+            String attachments = mainResult.get("ext_attachments");
+            if (attachments != null) {
+                extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+            }
+            item.setExtProperties(extProperties);
         }
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath,includes);
+        generateModel(item, titanItem, includes);
         return item;
     }
 
     /**
-     * Ebook的扩展属性
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
+     * @param titanItem
+     * @param includes
      * @return
      */
-    private static EbookModel generateEbookModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
+    private static EbookModel generateEbookModel(TitanResultItem titanItem, List<String> includes) {
         EbookModel item = new EbookModel();
-        Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap,includes);
-        EbookExtPropertiesModel extProperties = new EbookExtPropertiesModel();
-        extProperties.setIsbn(fieldMap.get("ext_isbn"));
-        extProperties.setCriterion(fieldMap.get("ext_criterion"));
-        String attachments = fieldMap.get("ext_attachments");
-        if (attachments != null) {
-            extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+        Map<String, String> mainResult = titanItem.getResource();
+        if (CollectionUtils.isNotEmpty(mainResult)) {
+            dealMainResult(item, mainResult, includes);
+            EbookExtPropertiesModel extProperties = new EbookExtPropertiesModel();
+            extProperties.setIsbn(mainResult.get("ext_isbn"));
+            extProperties.setCriterion(mainResult.get("ext_criterion"));
+            String attachments = mainResult.get("ext_attachments");
+            if (attachments != null) {
+                extProperties.setAttachments(Arrays.asList(attachments.replaceAll("\"", "").split(",")));
+            }
+            item.setExtProperties(extProperties);
         }
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath,includes);
+        generateModel(item, titanItem, includes);
         return item;
     }
 
     /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
+     *
+     * @param titanItem
+     * @param includes
      * @return
      */
-    private static QuestionModel generateQuestionModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
+    private static QuestionModel generateQuestionModel(TitanResultItem titanItem,List<String> includes) {
         QuestionModel item = new QuestionModel();
-        Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap,includes);
-        QuestionExtPropertyModel extProperties = new QuestionExtPropertyModel();
+         Map<String, String> mainResult=titanItem.getResource();
+        if (CollectionUtils.isNotEmpty(mainResult)) {
+            dealMainResult(item, mainResult, includes);
+            QuestionExtPropertyModel extProperties = new QuestionExtPropertyModel();
 
-        String discrimination = fieldMap.get("ext_discrimination");
-        if (discrimination != null) {
-            extProperties.setDiscrimination(Float.parseFloat(discrimination.trim()));
-        }
-        String answer = fieldMap.get("ext_answer");
-        if (answer != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> answerMap = ObjectUtils.fromJson(answer, Map.class);
-            extProperties.setAnswer(answerMap);
-        }
-        String content = fieldMap.get("ext_item_content");
-        if (content != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> contentMap = ObjectUtils.fromJson(content, Map.class);
-            extProperties.setItemContent(contentMap);
-        }
-        String criterion = fieldMap.get("ext_criterion");
-        if (criterion != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> criterionMap = ObjectUtils.fromJson(criterion, Map.class);
-            extProperties.setCriterion(criterionMap);
-        }
-        String score = fieldMap.get("ext_score");
-        if (score != null) {
-            extProperties.setScore(Float.parseFloat(score.trim()));
-        }
-        String secrecy = fieldMap.get("ext_secrecy");
-        if (secrecy != null) {
-            extProperties.setSecrecy(Integer.parseInt(secrecy.trim()));
-        }
-        String modifiedDifficulty = fieldMap.get("ext_modified_difficulty");
-        if (modifiedDifficulty != null) {
-            extProperties.setModifiedDifficulty(Float.parseFloat(modifiedDifficulty.trim()));
-        }
-        String difficulty = fieldMap.get("ext_ext_difficulty");
-        if (difficulty != null) {
-            extProperties.setExtDifficulty(Float.parseFloat(difficulty.trim()));
-        }
-        String modifiedDiscrimination = fieldMap.get("ext_modified_discrimination");
-        if (modifiedDiscrimination != null) {
-            extProperties.setModifiedDiscrimination(Float.parseFloat(modifiedDiscrimination.trim()));
-        }
-        String usedTime = fieldMap.get("ext_used_time");
-        if (usedTime != null) {
-            extProperties.setUsedTime(Integer.parseInt(usedTime.trim()));
-        }
-        String exposalDate = fieldMap.get("ext_exposal_date");
-        if (exposalDate != null) {
-            extProperties.setExposalDate(new Date(new Long(exposalDate)));
-        }
-        extProperties.setAutoRemark("true".equals(fieldMap.get("ext_is_auto_remark")));
+            String discrimination = mainResult.get("ext_discrimination");
+            if (discrimination != null) {
+                extProperties.setDiscrimination(Float.parseFloat(discrimination.trim()));
+            }
+            String answer = mainResult.get("ext_answer");
+            if (answer != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> answerMap = ObjectUtils.fromJson(answer, Map.class);
+                extProperties.setAnswer(answerMap);
+            }
+            String content = mainResult.get("ext_item_content");
+            if (content != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> contentMap = ObjectUtils.fromJson(content, Map.class);
+                extProperties.setItemContent(contentMap);
+            }
+            String criterion = mainResult.get("ext_criterion");
+            if (criterion != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> criterionMap = ObjectUtils.fromJson(criterion, Map.class);
+                extProperties.setCriterion(criterionMap);
+            }
+            String score = mainResult.get("ext_score");
+            if (score != null) {
+                extProperties.setScore(Float.parseFloat(score.trim()));
+            }
+            String secrecy = mainResult.get("ext_secrecy");
+            if (secrecy != null) {
+                extProperties.setSecrecy(Integer.parseInt(secrecy.trim()));
+            }
+            String modifiedDifficulty = mainResult.get("ext_modified_difficulty");
+            if (modifiedDifficulty != null) {
+                extProperties.setModifiedDifficulty(Float.parseFloat(modifiedDifficulty.trim()));
+            }
+            String difficulty = mainResult.get("ext_ext_difficulty");
+            if (difficulty != null) {
+                extProperties.setExtDifficulty(Float.parseFloat(difficulty.trim()));
+            }
+            String modifiedDiscrimination = mainResult.get("ext_modified_discrimination");
+            if (modifiedDiscrimination != null) {
+                extProperties.setModifiedDiscrimination(Float.parseFloat(modifiedDiscrimination.trim()));
+            }
+            String usedTime = mainResult.get("ext_used_time");
+            if (usedTime != null) {
+                extProperties.setUsedTime(Integer.parseInt(usedTime.trim()));
+            }
+            String exposalDate = mainResult.get("ext_exposal_date");
+            if (exposalDate != null) {
+                extProperties.setExposalDate(new Date(new Long(exposalDate)));
+            }
+            extProperties.setAutoRemark("true".equals(mainResult.get("ext_is_auto_remark")));
 
-        item.setQuestionType(fieldMap.get("ext_question_type"));
-        item.setExtProperties(extProperties);
-        generateModel(item, strInOneItem, taxOnPath,includes);
+            item.setQuestionType(mainResult.get("ext_question_type"));
+            item.setExtProperties(extProperties);
+        }
+        generateModel(item, titanItem, includes);
         return item;
     }
 
+
     /**
-     * @param mainResult
-     * @param strInOneItem
-     * @param taxOnPath
+     *
+     * @param titanItem
+     * @param includes
      * @return
      */
-    private static ResourceModel generateResourceModel(String mainResult, List<String> strInOneItem, String taxOnPath,List<String> includes) {
+    private static ResourceModel generateResourceModel(TitanResultItem titanItem, List<String> includes) {
         ResourceModel item = new ResourceModel();
-        Map<String, String> fieldMap = toMap(mainResult);
-        dealMainResult(item, fieldMap,includes);
-        generateModel(item, strInOneItem, taxOnPath,includes);
+        dealMainResult(item, titanItem.getResource(), includes);
+        generateModel(item, titanItem, includes);
         return item;
     }
 
     /**
-     * @param strInOneItem
-     * @param taxOnPath
+     *
+     * @param item
+     * @param titanItem
+     * @param includes
      */
-    private static void generateModel(ResourceModel item, List<String> strInOneItem, String taxOnPath,List<String> includes) {
+    private static void generateModel(ResourceModel item, TitanResultItem titanItem,List<String> includes) {
         List<ResTechInfoModel> techInfoList = new ArrayList<>();
         List<ResClassificationModel> categoryList = new ArrayList<>();
 
-        for (String str : strInOneItem) {
-            Map<String, String> fieldMap = toMap(str);
-            if (str.contains(ES_SearchField.ti_format.toString())) { //tech_info
-                if (includes.contains(IncludesConstant.INCLUDE_TI)) {
-                    techInfoList.add(dealTI(fieldMap));
-                }
-            } else if (str.contains(ES_SearchField.cg_taxoncode.toString())) {// categoryList
-                if (includes.contains(IncludesConstant.INCLUDE_CG)) {
-                    categoryList.add(dealCG(fieldMap, taxOnPath));
+        if (includes.contains(IncludesConstant.INCLUDE_TI)) {
+            List<Map<String, String>> techInfo = titanItem.getTechInfo();
+            if (CollectionUtils.isNotEmpty(techInfo)) {
+                for (Map<String, String> fieldMap : techInfo) {
+                    if (CollectionUtils.isNotEmpty(fieldMap)) techInfoList.add(dealTI(fieldMap));
                 }
             }
         }
+
+        if (includes.contains(IncludesConstant.INCLUDE_CG)) {
+            List<Map<String, String>> category=titanItem.getCategory();
+            if (CollectionUtils.isNotEmpty(category)) {
+                for (Map<String, String> fieldMap : category) {
+                    if (CollectionUtils.isNotEmpty(fieldMap)) categoryList.add(dealCG(fieldMap));
+                }
+            }
+        }
+
         item.setTechInfoList(techInfoList);
         item.setCategoryList(categoryList);
     }
@@ -304,57 +457,59 @@ public class TitanResultParse {
      * @param fieldMap
      */
     public static void dealMainResult(ResourceModel item, Map<String, String> fieldMap,List<String> includes) {
-        if (includes.contains(IncludesConstant.INCLUDE_LC)) {
-            item.setLifeCycle(dealLC(fieldMap));// LifeCycle
-        }
-        if (includes.contains(IncludesConstant.INCLUDE_CR)) {
-            item.setCopyright(dealCR(fieldMap));// Copyright
-        }
-        if (includes.contains(IncludesConstant.INCLUDE_EDU)) {
-            item.setEducationInfo(dealEDU(fieldMap));// edu
-        }
-        item.setIdentifier(fieldMap.get(ES_SearchField.identifier.toString()));
-        item.setTitle(fieldMap.get(ES_SearchField.title.toString()));
-        item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
-        item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
-        item.setmIdentifier(fieldMap.get(ES_SearchField.m_identifier.toString()));
-        item.setNdresCode(fieldMap.get(ES_SearchField.ndres_code.toString()));
-
-        String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
-        if (customProperties != null) {
-            if (customProperties.startsWith("{\"") && customProperties.endsWith("\"}")) {
-                item.setCustomProperties(customProperties);
-            } else {
-                item.setCustomProperties("{}");
+        if (CollectionUtils.isNotEmpty(fieldMap)) {
+            if (includes.contains(IncludesConstant.INCLUDE_LC)) {
+                item.setLifeCycle(dealLC(fieldMap));// LifeCycle
             }
-        }
-        String preview = fieldMap.get(ES_SearchField.preview.toString());
-        if (preview != null) {
-            if (preview.startsWith("{\"") && preview.endsWith("\"}")) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> previewMap = ObjectUtils.fromJson(preview, Map.class);
-                if(previewMap == null){
-                    previewMap = new HashMap<>();
+            if (includes.contains(IncludesConstant.INCLUDE_CR)) {
+                item.setCopyright(dealCR(fieldMap));// Copyright
+            }
+            if (includes.contains(IncludesConstant.INCLUDE_EDU)) {
+                item.setEducationInfo(dealEDU(fieldMap));// edu
+            }
+            item.setIdentifier(fieldMap.get(ES_SearchField.identifier.toString()));
+            item.setTitle(fieldMap.get(ES_SearchField.title.toString()));
+            item.setDescription(fieldMap.get(ES_SearchField.description.toString()));
+            item.setLanguage(fieldMap.get(ES_SearchField.language.toString()));
+            item.setmIdentifier(fieldMap.get(ES_SearchField.m_identifier.toString()));
+            item.setNdresCode(fieldMap.get(ES_SearchField.ndres_code.toString()));
+
+            String customProperties = fieldMap.get(ES_SearchField.custom_properties.toString());
+            if (customProperties != null) {
+                if (customProperties.startsWith("{\"") && customProperties.endsWith("\"}")) {
+                    item.setCustomProperties(customProperties);
+                } else {
+                    item.setCustomProperties("{}");
                 }
-                item.setPreview(previewMap);
+            }
+            String preview = fieldMap.get(ES_SearchField.preview.toString());
+            if (preview != null) {
+                if (preview.startsWith("{\"") && preview.endsWith("\"}")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> previewMap = ObjectUtils.fromJson(preview, Map.class);
+                    if (previewMap == null) {
+                        previewMap = new HashMap<>();
+                    }
+                    item.setPreview(previewMap);
+                } else {
+                    item.setPreview(new HashMap<String, String>());
+                }
             } else {
+                //教学目标、知识点、课时没有这个值，但需要返回一个空的map集合
                 item.setPreview(new HashMap<String, String>());
             }
-        } else {
-            //教学目标、知识点、课时没有这个值，但需要返回一个空的map集合
-            item.setPreview(new HashMap<String, String>());
-        }
-        String tags = fieldMap.get(ES_SearchField.tags.toString());
-        if (StringUtils.isNotEmpty(tags)) {
-            item.setTags(Arrays.asList(tags.replaceAll("\"", "").split(",")));
-        } else if(tags !=null){
-            item.setTags(new ArrayList<String>());
-        }
-        String keywords = fieldMap.get(ES_SearchField.keywords.toString());
-        if (StringUtils.isNotEmpty(keywords)) {
-            item.setKeywords(Arrays.asList(keywords.replaceAll("\"", "").split(",")));
-        } else if(keywords != null){
-            item.setKeywords(new ArrayList<String>());
+            String tags = fieldMap.get(ES_SearchField.tags.toString());
+            if (StringUtils.isNotEmpty(tags)) {
+                item.setTags(Arrays.asList(tags.replaceAll("\"", "").split(",")));
+            } else if (tags != null) {
+                item.setTags(new ArrayList<String>());
+            }
+            String keywords = fieldMap.get(ES_SearchField.keywords.toString());
+            if (StringUtils.isNotEmpty(keywords)) {
+                item.setKeywords(Arrays.asList(keywords.replaceAll("\"", "").split(",")));
+            } else if (keywords != null) {
+                item.setKeywords(new ArrayList<String>());
+            }
         }
     }
 
@@ -407,37 +562,23 @@ public class TitanResultParse {
 
     /**
      * @param tmpMap
-     * @param taxOnPath
-     * @return
-     */
-    public static ResClassificationModel dealCG(Map<String, String> tmpMap, String taxOnPath) {
-        ResClassificationModel rcm = new ResClassificationModel();
-        rcm.setTaxoncode(tmpMap.get(ES_SearchField.cg_taxoncode.toString()));
-        rcm.setTaxonname(tmpMap.get(ES_SearchField.cg_taxonname.toString()));
-        rcm.setCategoryCode(tmpMap.get(ES_SearchField.cg_category_code.toString()));
-        rcm.setShortName(tmpMap.get(ES_SearchField.cg_short_name.toString()));
-        rcm.setCategoryName(tmpMap.get(ES_SearchField.cg_category_name.toString()));
-        //System.out.println("cg_category_name:" + rcm.getCategoryName());
-        if (taxOnPath != null) {
-            if (taxOnPath.contains(tmpMap.get(ES_SearchField.cg_taxoncode.toString()))) {
-                rcm.setTaxonpath(taxOnPath);
-            }
-        }
-        return rcm;
-    }
-
-    /**
-     * @param tmpMap
      * @return
      */
     public static ResClassificationModel dealCG(Map<String, String> tmpMap) {
         ResClassificationModel rcm = new ResClassificationModel();
-        rcm.setTaxoncode(tmpMap.get("search_code"));
-        rcm.setCategoryCode(tmpMap.get("search_coverage"));
-        rcm.setTaxonpath(tmpMap.get("search_path"));
+        rcm.setIdentifier(tmpMap.get(ES_SearchField.identifier.toString()));
+        String code = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+        if (code == null) code = "";
+        rcm.setTaxoncode(code);
+        rcm.setTaxonname(tmpMap.get(ES_SearchField.cg_taxonname.toString()));
+        rcm.setCategoryCode(tmpMap.get(ES_SearchField.cg_category_code.toString()));
+        rcm.setShortName(tmpMap.get(ES_SearchField.cg_short_name.toString()));
+        rcm.setCategoryName(tmpMap.get(ES_SearchField.cg_category_name.toString()));
+        rcm.setTaxonpath(tmpMap.get(ES_SearchField.cg_taxonpath.toString()));
 
         return rcm;
     }
+
 
     /**
      * @param tmpMap
@@ -455,7 +596,13 @@ public class TitanResultParse {
         if (requirements != null) {
             if (!"".equals(requirements.trim()) && !"null".equals(requirements.trim())) {
                 // System.out.println("requirements:" + requirements);
-                List<TechnologyRequirementModel> requirementsList = ObjectUtils.fromJson("[" + requirements + "]", new TypeToken<List<TechnologyRequirementModel>>() {
+                if (!requirements.startsWith("[")) {
+                    requirements = "[" + requirements;
+                }
+                if (!requirements.endsWith("]")) {
+                    requirements = requirements + "]";
+                }
+                List<TechnologyRequirementModel> requirementsList = ObjectUtils.fromJson(requirements, new TypeToken<List<TechnologyRequirementModel>>() {
                 });
                 techInfo.setRequirements(requirementsList);
             }
@@ -480,6 +627,9 @@ public class TitanResultParse {
         copyright.setAuthor(tmpMap.get(ES_SearchField.cr_author.toString()));
         copyright.setRight(tmpMap.get(ES_SearchField.cr_right.toString()));
         copyright.setDescription(tmpMap.get(ES_SearchField.cr_description.toString()));
+        copyright.setHasRight("true".equals(tmpMap.get(ES_SearchField.cr_has_right.toString())));
+        copyright.setRightStartDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_start_date.toString())));
+        copyright.setRightEndDate(BigDecimalUtils.toBigDecimal(tmpMap.get(ES_SearchField.cr_right_end_date.toString())));
         return copyright;
     }
 
@@ -501,9 +651,115 @@ public class TitanResultParse {
         lifeCycle.setProviderSource(tmpMap.get(ES_SearchField.lc_provider_source.toString()));
         lifeCycle.setCreateTime(StringUtils.strTimeStampToDate(tmpMap.get(ES_SearchField.lc_create_time.toString())));
         lifeCycle.setLastUpdate(StringUtils.strTimeStampToDate(tmpMap.get(ES_SearchField.lc_last_update.toString())));
+        lifeCycle.setProviderMode(tmpMap.get(ES_SearchField.lc_provider_mode.toString()));
         return lifeCycle;
     }
 
+
+    /**
+     * 资源数据示例(点)：特殊字段（label,id）
+     * {preview=[{"png":"${ref-path}/prepub_content_edu_product/esp/assets/abc.png"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[["title","qatest"]], edu_description=[{"zh_CN":"如何使用学习对象进行描述"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{"key":"test"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[["nd","sdp.esp"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}
+     * {identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], id=356900872, ti_entry=[入口地址], ti_requirements=[[{"identifier":null,"type":"HARDWARE","name":"resolution","minVersion":null,"maxVersion":null,"installation":null,"installationFile":null,"value":"435*237","ResourceModel":null}]]}
+     * 关系上的数据示例（边）：特殊字段（tags）
+     * {res_type=chapters, identifier=094ee58e-b446-4093-853a-118e046f77fe, enable=true, sort_num=5000.0, target_uuid=b453a4fa-f82d-4a90-9693-36ff1b8341bb, source_uuid=5001185b-07b5-43af-90c1-9872cddbe1ce, relation_type=ASSOCIATE, order_num=3.0, resource_target_type=lessons, id=fu7nde-20s5s-2nmd-1kv4i8, tags=[], label=has_relation}
+     * @param str
+     * @return
+     */
+    public static Map<String, String> toMapForRelationQuery(String str) {
+        Map<String, String> tmpMap = new HashMap<>();
+        if(StringUtils.isNotEmpty(str)) {
+            // 分割前，预处理
+            str = preProcessData(str);
+            // 上面预处理已经把边上的"[]"都去掉了，所以简单的以：
+            // 1、包含"], "，说明是点，按点方式分割；
+            // 2、不包含"], "，而包含", "，按边方式分割；
+            // 3、都不包含，说明只有一个字段，直接分割
+            if (str.contains("], ")) {
+                str = str.replaceAll("=\\[", "=").replaceAll("=\\[", "=").replaceAll("]],", "],");
+                String[] fields = str.split("], ");
+                for (String s : fields) {
+                    if (s.startsWith("label=") || s.startsWith("id=")) {
+                        //点上的label和id特殊处理
+                        dealSpecialField(s, tmpMap);
+                    } else {
+                        String[] kv = s.split("=");
+                        if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                    }
+                }
+            } else if (str.contains(", ")) {//edge
+                String[] fields = str.split(", ");
+                for (String s : fields) {
+                    String[] kv = s.split("=");
+                    if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                }
+            } else {
+                String[] kv = str.split("=");
+                if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+            }
+        }
+        return tmpMap;
+    }
+
+    /**
+     * 预处理
+     * @param str
+     * @return
+     */
+    public static String preProcessData(String str) {
+        // 去掉数据头部的特殊字符
+        if (str.startsWith("==>")) str = str.substring(3, str.length());
+        // 去掉最外层的{}
+        str = str.substring(1, str.length() - 1);
+        // 去掉最后一个字段的右中括号"]"
+        if (str.endsWith("]")) str = str.substring(0, str.length() - 1);
+        // 边上的字段特殊处理，把边上数据的"[]"都去掉，就可以用", "分割：如上面的边上数据示例
+        if (str.contains("label=has_relation")) {
+            if (str.contains("tags=")) str = dealSpecialField("tags=", str);
+            // keywords好像不会出现在边上，不用处理也没关系
+            if (str.contains("keywords=")) str = dealSpecialField("keywords=", str);
+        }
+        return str;
+    }
+
+    /**
+     * 处理点上的特殊字段
+     * @param field
+     * @param tmpMap
+     */
+    public static void dealSpecialField(String field, Map<String, String> tmpMap) {
+        //点上的label和id特殊处理
+        int end = field.indexOf(", ");
+        if (end > 0) {
+            String label = field.substring(0, end);
+            String[] kv1 = label.split("=");
+            if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
+            String other = field.substring(end + 1, field.length());
+            String[] kv2 = other.split("=");
+            if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
+        } else {
+            String[] kv = field.split("=");
+            if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+        }
+    }
+
+    /**
+     * 处理边上的特殊字段
+     * @param field
+     * @param line
+     * @return
+     */
+    public static String dealSpecialField(String field, String line) {
+        if (line.contains(field)) {
+            String[] tmp = line.split(field);
+            int end = tmp[1].indexOf("]");
+            if (end > 0) {
+                String value = field + tmp[1].substring(0, end + 1);
+                String replace = value.replaceAll("=\\[", "=").replaceAll("]", "").trim();
+                line = line.replace(value, replace);
+            }
+        }
+        return line;
+    }
 
     /**
      * @param str
@@ -521,30 +777,115 @@ public class TitanResultParse {
         }
         return tmpMap;
     }
+    
+	/**
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		testToMapForRelationQuery();
+	}
 
-    public static Map<String, String> toMapForSearchES(String str) {
-        Map<String, String> tmpMap = new HashMap<>();
-        str = str.replaceAll("==>", "").replaceAll("vp\\[", "");
-        str = str.substring(1, str.length() - 2);
-        String[] fields = str.split("], ");
+	/**
+	 * 测试方法：toMapForRelationQuery
+	 */
+	private static void testToMapForRelationQuery() {
+		// 44 key
+		String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
+		// System.out.println("resource: "+resource);
+		Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+		// System.out.println("resultResourceMap: "+resultResourceMap.size());
 
-        for (String s : fields) {
-            String[] kv = s.split("->");
-            if (kv.length != 2) continue;
-            String k = kv[0];
-            String v = kv[1];
-            if (tmpMap.containsKey(k)) {
-                tmpMap.put(k, tmpMap.get(k) + "," + v);
-            } else {
-                tmpMap.put(k, v);
-            }
+		Map<String, String> expectResourceMap = new HashedMap<String, String>();
+		expectResourceMap
+				.put("preview",
+						"{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}");
+		expectResourceMap.put("cr_author", "880508");
+		expectResourceMap.put("search_path_string",
+				"k12/$on030000/$on030200/$sb0501012/$e004000/$e004001");
+		expectResourceMap.put("keywords", "[\"title\",\"qatest\"]");
+		expectResourceMap
+				.put("edu_description", "{\"zh_CN\":\"如何使用学习对象进行描述\"}");
+		expectResourceMap.put("search_path",
+				"K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001");
+		expectResourceMap
+				.put("description", "lcms_special_description_qa_test");
+		expectResourceMap
+				.put("search_coverage_string",
+						"debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/");
+		expectResourceMap.put("language", "zh_CN");
+		expectResourceMap.put("lc_status", "CREATING");
+		expectResourceMap.put("custom_properties", "{\"key\":\"test\"}");
+		expectResourceMap.put("cr_has_right", "true");
+		expectResourceMap
+				.put("title",
+						"lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61");
+		expectResourceMap.put("cr_right_end_date", "7258089000000");
+		expectResourceMap.put("lc_provider", "lcms_special_provider_qa_test");
+		expectResourceMap.put("label", "assets");
+		expectResourceMap.put("cr_description", "版权描述信息");
+		expectResourceMap.put("lc_create_time", "1471416133155");
+		expectResourceMap.put("primary_category", "assets");
+		expectResourceMap.put("search_code_string",
+				"$f050005,$on030000,pt01001,$ra0100");
+		expectResourceMap
+				.put("search_coverage",
+						"Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//");
+		expectResourceMap.put("lc_publisher", "lcms_special_publisher_qa_test");
+		expectResourceMap.put("id", "356896776");
+		expectResourceMap.put("edu_context", "基础教育");
+		expectResourceMap.put("lc_provider_mode", "qatest_provider_mode");
+		expectResourceMap.put("cr_right_start_date", "946656000000");
+		expectResourceMap.put("identifier",
+				"1e80454b-ae80-4dbd-994a-b3d8e55ee6b5");
+		expectResourceMap.put("cr_right", "版权信息");
+		expectResourceMap.put("lc_last_update", "1471416133155");
+		expectResourceMap.put("edu_interactivity", "2");
+		expectResourceMap.put("lc_version", "qav0.1");
+		expectResourceMap.put("edu_semantic_density", "1");
+		expectResourceMap.put("edu_difficulty", "easy");
+		expectResourceMap.put("edu_end_user_type", "教师，管理者");
+		expectResourceMap.put("tags", "[\"nd\",\"sdp.esp\"]");
+		expectResourceMap.put("search_code",
+				"$F050005, $ON030000, $RA0100, PT01001");
+		expectResourceMap.put("m_identifier",
+				"1e80454b-ae80-4dbd-994a-b3d8e55ee6b5");
+		expectResourceMap.put("edu_interactivity_level", "2");
+		expectResourceMap.put("lc_enable", "true");
+		expectResourceMap.put("lc_provider_source",
+				"八年级地理第一学期期末考试试卷_201407282056.doc");
+		expectResourceMap.put("lc_creator", "lcms_special_creator_qa_test");
+		expectResourceMap.put("edu_language", "zh_CN");
+		expectResourceMap.put("edu_learning_time", "45");
+		expectResourceMap.put("edu_age_range", "7岁以上");
+		// System.out.println("expectResourceMap: "+expectResourceMap.size());
+		checkMapEqual(resultResourceMap, expectResourceMap);
+		
+		//FIXME toMapForRelationQuery方法测试：暂时把其它两种情况也做下 ->龚世文
+	}
 
-        }
+	/**
+	 * 校验map
+	 * 
+	 * @param resultResourceMap
+	 * @param expectResourceMap
+	 */
+	private static void checkMapEqual(Map<String, String> resultResourceMap,
+			Map<String, String> expectResourceMap) {
+		if (resultResourceMap.size() != expectResourceMap.size()) {
+			System.out.println("size not equal");
+		}
 
+		for (Map.Entry<String, String> expectEntry : expectResourceMap
+				.entrySet()) {
+			String key = expectEntry.getKey();
+			if (!expectEntry.getValue().equals(resultResourceMap.get(key))) {
+				System.out.println("key: " + key + "; expectValue "
+						+ expectEntry.getValue() + "; resultValue: "
+						+ resultResourceMap.get(key));
+			}
+		}
+	}
 
-        return tmpMap;
-
-
-    }
 
 }

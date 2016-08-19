@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -132,6 +133,29 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 	}
 
 	@Override
+	public boolean delete(String id) {
+		try {
+			titanCommonRepository.deleteEdgeById(id);
+		} catch (Exception e) {
+			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DELETE_CATEGORY_ERROR,
+					TitanKeyWords.category_code.toString(),id);
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean batchDelete(List<String> ids) {
+		if(CollectionUtils.isEmpty(ids)){
+			return true;
+		}
+		for (String id : ids){
+			delete(id);
+		}
+		return true;
+	}
+
+	@Override
 	/**
 	 * 删除维度数据和相关的冗余数据
 	 * */
@@ -147,7 +171,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			titanCommonRepository.executeScript(deleteScript, param);
 			titanCommonRepository.executeScript(deleteScript2, param);
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			//TODO titan sync
 //			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
@@ -287,6 +311,9 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return resourceCategory;
 	}
 
+	/**
+	 * 添加path，如果path已经存在者不进行其它的操作
+	 * */
 	private String addPath(String resource ,String resourcePrimaryCategory,String path ){
 		//检查path是否已经存在
 		String checkPathExist = "g.V().hasLabel(resourcePrimaryCategory).has('identifier',resource)" +
@@ -384,6 +411,9 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		return taxoncodeId;
 	}
 
+	/**
+	 * 更新数据的冗余字段
+	 * */
 	private void updateResourceProperty(Set<String> pathSet , Set<String> codeSet , String primaryCategory, String identifier){
 		StringBuffer script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
 		Map<String, Object> param = new HashMap<>();
@@ -410,7 +440,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),identifier);
 			// TODO Auto-generated catch block
 			//TODO titan sync
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 

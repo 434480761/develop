@@ -456,12 +456,24 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
     
 	TeachingMaterialDisable("LC/TEACHING_MATERIAL_DISABLE",getPropertyValue("teachingMaterialControllerV06.operateTeachingMaterial.check.fail")),
 
-
 	ConvertCallbackSuccess("LC/CONVERT_CALLBACK_SUCCESS","TransCodeController.convertCallback.success"),
 	
 	StoreSdkFail("LC/STORE_SDK_FAIL",getPropertyValue("store.sdk.fail")),
 	InvokingCSFail("CS/INVOKING_CS_FAIL",getPropertyValue("invoking.cs.fail")),
 	InvokingUCFail("UC/INVOKING_UC_FAIL",getPropertyValue("invoking.uc.fail")),
+	
+	//提供商
+	CreateProviderFail("LC/CREATE_PROVIDER_FAIL",getPropertyValue("resourceProviderServiceImpl.createResourceProvider.operation.fail")),
+	UpdateProviderFail("LC/UPDATE_PROVIDER_FAIL",getPropertyValue("resourceProviderServiceImpl.updateResourceProvider.operation.fail")),
+	DeleteProviderSuccess("LC/DELETE_PROVIDER_SUCCESS",getPropertyValue("resourceProviderServiceImpl.deleteResourceProvider.operation.success")),
+	CheckDuplicateProviderTitleFail("LC/CHECK_DUPLICATE_PROVIDER_TITLE_FAIL",getPropertyValue("resourceProviderServiceImpl.createResourceProvider.check.titleDuplicate.fail")),
+	ResourceProviderNotFound("LC/RESOURCE_PROVIDER_NOT_FOUND",getPropertyValue("resourceProviderServiceImpl.updateResourceProvider.check.providerNotExist.fail")),
+	//版权方
+	CreateCopyrightOwnerFail("LC/CREATE_PROVIDER_FAIL",getPropertyValue("copyrightOwnerServiceImpl.createCopyrightOwner.operation.fail")),
+	UpdateCopyrightOwnerFail("LC/UPDATE_PROVIDER_FAIL",getPropertyValue("copyrightOwnerServiceImpl.updateCopyrightOwner.operation.fail")),
+	DeleteCopyrightOwnerSuccess("LC/DELETE_PROVIDER_SUCCESS",getPropertyValue("copyrightOwnerServiceImpl.deleteCopyrightOwner.operation.success")),
+	CheckDuplicateCopyrightOwnerTitleFail("LC/CHECK_DUPLICATE_PROVIDER_TITLE_FAIL",getPropertyValue("copyrightOwnerServiceImpl.createCopyrightOwner.check.titleDuplicate.fail")),
+	CopyrightOwnerNotFound("LC/RESOURCE_PROVIDER_NOT_FOUND",getPropertyValue("copyrightOwnerServiceImpl.updateCopyrightOwner.check.copyrightOwnerNotExist.fail")),
 
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),

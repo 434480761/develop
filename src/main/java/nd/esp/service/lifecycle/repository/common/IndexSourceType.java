@@ -31,7 +31,7 @@ public enum IndexSourceType {
 	/**电子书*/
 	EbookType("ebooks",100,105),
 	/**试卷*/
-	ExaminationPapersType("ExaminationPapers", 100, 106),
+	ExaminationPapersType("examinationpapers", 100, 106),
 	/**教材*/
 	TeachingMaterialType("teachingmaterials", 200, 201),
 	/**章节*/

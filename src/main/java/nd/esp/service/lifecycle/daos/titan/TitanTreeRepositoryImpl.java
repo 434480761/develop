@@ -2,7 +2,9 @@ package nd.esp.service.lifecycle.daos.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanTreeRepository;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanTreeType;
+import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +44,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
 
     @Override
     public void createNewRelation(TitanTreeType treeType, Long parentNodeId, Long nodeId, Double order) {
-        String script = "g.V(parentNodeId).next().addEdge(relationType,g.V(nodeId).next(),'order',order);";
+        String script = "g.V(parentNodeId).next().addEdge(relationType,g.V(nodeId).next(),'"+TitanKeyWords.tree_order+"',order);";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId", parentNodeId);
         paramMap.put("nodeId", nodeId);
@@ -58,37 +60,82 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
     }
 
     @Override
-    public List<Double> getAllChildOrderByParent(TitanTreeType treeType, Long parentNodeId) {
-        String script = "g.V(parentNodeId).outE().hasLabel(relationType).values('order')";
+    public Double getChildOrderByParentAndTargetOrder(TitanTreeType treeType, Long parentNodeId, TreeDirection direction , Double targetOrder) {
+
+        TitanKeyWords operation ;
+        TitanKeyWords orderBy ;
+        if(direction.equals(TreeDirection.next)){
+            operation = TitanKeyWords.gt;
+            orderBy = TitanKeyWords.incr;
+        } else {
+            operation = TitanKeyWords.lt;
+            orderBy = TitanKeyWords.decr;
+        }
+
+        String script = "g.V(parentNodeId).outE(relationType).has('"+TitanKeyWords.tree_order+"',"
+                +operation.toString()+"(new Double(targetOrder))).values('"+TitanKeyWords.tree_order+"').order().by("+orderBy.toString()+").limit(1);";
+
+//        String script = "g.V(parentNodeId).outE().hasLabel(relationType).values('order')";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("parentNodeId",parentNodeId);
         paramMap.put("relationType",treeType.relation());
+        paramMap.put("targetOrder",targetOrder);
+
+        Double order = null;
         try {
-            return titanCommonRepository.executeScriptListDouble(script, paramMap);
+            order = titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
         } catch (Exception e) {
             LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
 
-        return null;
+        return order;
+    }
+
+    @Override
+    public Double getChildMaxOrderByParent(TitanTreeType treeType, Long parentNodeId) {
+        Double maxValue =  100000D;//by lsm 目前生产环境最多有4万多知识点，最大值是88761.0 所以暂时设置成这个值
+        String script = "g.V(parentNodeId).outE().hasLabel(relationType).has('"+TitanKeyWords.tree_order.toString()+"',gt(new Double(maxValue))).values('"+TitanKeyWords.tree_order+"').order().by("
+                +TitanKeyWords.decr.toString()+").limit(1)";
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("parentNodeId",parentNodeId);
+        paramMap.put("relationType",treeType.relation());
+        paramMap.put("maxValue", maxValue);
+
+        Double order = null;
+        try {
+            order = titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
+        } catch (Exception e) {
+            LOG.error("titan_repository error:{}" ,e.getMessage());
+            //TODO titan 异常处理
+        }
+
+        if(order == null || order < 0){
+            return maxValue;
+        }
+
+        return order;
     }
 
     @Override
     public Double getTargetOrder(TitanTreeType treeType,Long parentNodeId, String identifier) {
-        String script = "g.V(parentNodeId).outE().hasLabel(relationType)" +
-                ".as('x').inV().has(primaryCategory,'identifier',identifier).select('x').values('order')";
+//        String script = "g.V(parentNodeId).outE().hasLabel(relationType)" +
+//                ".as('x').inV().has(primaryCategory,'identifier',identifier).select('x').values('order')";
+        String script = "g.V().has(primaryCategory,'identifier',identifier).inE(relationType).values('"+TitanKeyWords.tree_order+"')";
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("parentNodeId", parentNodeId);
+//        paramMap.put("parentNodeId", parentNodeId);
         paramMap.put("relationType", treeType.relation());
         paramMap.put("primaryCategory", treeType.primaryCategory());
         paramMap.put("identifier", identifier);
+
+        Double order = null;
         try {
-            return titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
+            order = titanCommonRepository.executeScriptUniqueDouble(script, paramMap);
         } catch (Exception e) {
             LOG.error("titan_repository error:{}" ,e.getMessage());
             //TODO titan 异常处理
         }
-        return null;
+        return order;
     }
 
     @Override
@@ -191,7 +238,7 @@ public class TitanTreeRepositoryImpl implements TitanTreeRepository{
         try {
             return titanCommonRepository.executeScriptUniqueLong(script, param);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("titan_repository error:{}" ,e.getMessage());
         }
         return null;
     }

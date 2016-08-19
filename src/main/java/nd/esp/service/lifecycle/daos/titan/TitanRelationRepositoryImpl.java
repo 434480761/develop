@@ -121,7 +121,7 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		try {
 			titanCommonRepository.executeScript(script, paramMap);
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 //			LOG.info("resourceRelation出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					primaryCategory,identifier);
@@ -131,6 +131,11 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 	@Override
 	public boolean delete(String identifier) {
 		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean batchDelete(List<String> ids) {
 		return false;
 	}
 
@@ -144,6 +149,20 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 		for (ResourceRelation resourceRelation : resourceRelations) {
 			addRelation(resourceRelation);
+		}
+	}
+
+	@Override
+	public void batchUpdate4Import(List<ResourceRelation> resourceRelations) {
+		for (ResourceRelation resourceRelation : resourceRelations){
+			updateRelation(resourceRelation);
+		}
+	}
+
+	@Override
+	public void batchDeleteRelationSoft(String primaryCategory, List<String> ids) {
+		for (String id : ids){
+			deleteRelationSoft(primaryCategory, id);
 		}
 	}
 
@@ -201,7 +220,6 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		Map<String, Object> graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer,
 				resourceRelation);
 		graphParams.put("identifier", resourceRelation.getIdentifier());
-		System.out.println(scriptBuffer.toString());
 		String edgeId;
 		try {
 			edgeId = titanCommonRepository.executeScriptUniqueString(scriptBuffer.toString() ,graphParams);

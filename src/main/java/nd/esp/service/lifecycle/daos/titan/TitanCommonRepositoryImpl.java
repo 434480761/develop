@@ -70,6 +70,16 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
         return executeScriptUniqueLong(script, param);
     }
+    @Override
+    public Long getEnableVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
+        String script = "g.V().has('primary_category',primaryCategory).has('identifier',identifier).has('lc_enable',lc_enable).id()";
+        Map<String, Object> param = new HashMap<>();
+        param.put("primaryCategory", primaryCategory);
+        param.put("identifier", identifier);
+        param.put("lc_enable", true);
+
+        return executeScriptUniqueLong(script, param);
+    }
 
     @Override
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception {
@@ -132,6 +142,13 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     @Override
+    public void batchDeleteEdgeByIds(List<String> ids) throws Exception {
+        for (String id : ids){
+            deleteEdgeById(id);
+        }
+    }
+
+    @Override
     public void butchDeleteVertexById(List<String> ids) throws Exception {
         for(String id : ids){
             deleteVertexById(id);
@@ -147,7 +164,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     private Double submitUniqueDouble(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return -1D;
+            return null;
         }
         Double id = null;
         try {
@@ -222,7 +239,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      */
     private Long submitUniqueLong(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return -1L;
+            return null;
         }
         Long id = null;
         try {
@@ -245,7 +262,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
      */
     private String submitUniqueString(String script, Map<String, Object> params) throws Exception {
         if(!StaticDatas.TITAN_SWITCH){
-            return "****";
+            return null;
         }
         String id = null;
         try {

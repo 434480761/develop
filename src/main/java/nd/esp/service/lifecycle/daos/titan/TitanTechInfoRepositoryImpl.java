@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -82,6 +83,29 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
         //FIXME batchUpdate
         batchAdd(techInfos);
         return null;
+    }
+
+    @Override
+    public boolean delete(String id) {
+
+        try {
+            titanCommonRepository.deleteEdgeById(id);
+            titanCommonRepository.deleteVertexById(id);
+        } catch (Exception e) {
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DELETE_TECH_INFO_ERROR,
+                    TitanKeyWords.tech_info.toString(),id);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> ids) {
+        for (String id : ids){
+            delete(id);
+        }
+        return false;
     }
 
     /**

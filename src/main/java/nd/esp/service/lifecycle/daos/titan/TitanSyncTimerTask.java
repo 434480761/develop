@@ -38,10 +38,10 @@ public class TitanSyncTimerTask {
 
     @Autowired
     @Qualifier(value = "defaultJdbcTemplate")
-    private JdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;;
 
 
-    @Scheduled(fixedDelay=300000)
+    @Scheduled(fixedDelay=30000)
     public void syncTask(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_closed");
@@ -56,7 +56,7 @@ public class TitanSyncTimerTask {
             try{
                 syncData();
             } catch (Exception e){
-                e.printStackTrace();
+                LOG.info("titan_sync_error {}",e.getLocalizedMessage());
             }
         }
     }

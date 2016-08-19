@@ -638,69 +638,14 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
         }
 
         //分组查询返回结
-//        List<List<String>> resultList = new ArrayList<>();
         List<String> resultList = new ArrayList<>();
         Iterator<Result> iterator = resultSet.iterator();
-        List<String> resultTemp = new ArrayList<>();
         while (iterator.hasNext()) {
             String line = iterator.next().getString();
-//            Map<String, String> valueMap = TitanResultParse.toMap(line);
-//            if(valueMap.containsKey(ES_SearchField.lc_last_update.toString()) ||
-//                    valueMap.containsKey(ES_SearchField.lc_create_time.toString())){
-//                resultTemp = new ArrayList<>();
-//                resultList.add(resultTemp);
-//            }
             resultList.add(line);
         }
-        resultList.add(TitanKeyWords.TOTALCOUNT.toString()+"=999");
 
-//        //解析资源
-//        for (List<String> result : resultList) {
-//            Map<String, String> mainResult = null;
-//            List<Map<String, String>> otherLines = new ArrayList<>();
-//            String taxOnPath = null;
-//            for (String line : result) {
-//                Map<String, String> map = TitanResultParse2.toMap(line);
-//
-//                if (map.containsKey(ES_SearchField.cg_taxonpath.toString())) {
-//                    taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-//                } else if (map.containsKey(ES_SearchField.lc_create_time.toString())) {
-//                    mainResult = map;
-//                } else {
-//                    otherLines.add(map);
-//                }
-//            }
-//            if (CollectionUtils.isEmpty(mainResult)) {
-//                continue;
-//            }
-//            resourceModelList.add(TitanResultParse2.parseResource(
-//                    resourceType, mainResult, otherLines, taxOnPath, includeList));
-//        }
-
-
-        //解析资源
-        /*for (List<String> result : resultList){
-            String mainResult = null;
-            List<String> otherLines = new ArrayList<String>();
-            String taxOnPath = null;
-            for (String line : result) {
-                if (line.contains(ES_SearchField.cg_taxonpath.toString())) {
-                    Map<String, String> map = TitanResultParse.toMap(line);
-                    taxOnPath = map.get(ES_SearchField.cg_taxonpath.toString());
-                } else if (line.contains(ES_SearchField.lc_create_time.toString())) {
-                    mainResult = line;
-                } else {
-                    otherLines.add(line);
-                }
-            }
-            if(StringUtils.isEmpty(mainResult)){
-                continue;
-            }
-            resourceModelList.add(TitanResultParse.parseResource(
-                    resourceType, mainResult, otherLines, taxOnPath,includeList));
-        }*/
-
-        return TitanResultParse2.parseToListView(resourceType,resultList,includeList,true).getItems();
+        return TitanResultParse.parseToItemsResourceModel(resourceType,resultList,includeList,true);
     }
 
 

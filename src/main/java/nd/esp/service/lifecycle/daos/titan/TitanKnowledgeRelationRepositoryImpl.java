@@ -5,8 +5,10 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepositor
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+
 import org.apache.tinkerpop.shaded.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,12 +82,16 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
             return false;
         }
 
-        String createScript = "g.V(parentId).next().addEdge('has_knowledge',g.V(childId).next(),'left',leftValue)";
+        String createScript = "g.V(parentId).next().addEdge('"+TitanKeyWords.tree_has_knowledge.toString()
+        		+"',g.V(childId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
 
         Map<String, Object> createScriptParams = new HashMap<>();
         createScriptParams.put("parentId", parentId);
         createScriptParams.put("childId", childId);
-        createScriptParams.put("leftValue", leftValue);
+        if(leftValue == null){
+        	leftValue = 0;
+        }
+        createScriptParams.put("treeOrder", new Float(leftValue));
         try {
             titanCommonRepository.executeScript(createScript, createScriptParams);
         } catch (Exception e) {
@@ -159,6 +165,16 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
     @Override
     public List<KnowledgeRelation> batchUpdate(List<KnowledgeRelation> knowledgeRelations) {
         return null;
+    }
+
+    @Override
+    public boolean delete(String id) {
+        return false;
+    }
+
+    @Override
+    public boolean batchDelete(List<String> ids) {
+        return false;
     }
 
     private boolean isSubjectCode(String parent) {

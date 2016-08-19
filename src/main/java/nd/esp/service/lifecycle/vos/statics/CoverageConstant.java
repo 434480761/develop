@@ -130,7 +130,11 @@ public class CoverageConstant {
         /**
          * 对于应用进行资源隔离
          */
-        TARGET_TYPE_APP("App",true,true)
+        TARGET_TYPE_APP("App",true,true),
+        /**
+         * 对于班级进行资源隔离
+         */
+        TARGET_TYPE_CLASS("Class",true,true),
         ;
         
         //属性

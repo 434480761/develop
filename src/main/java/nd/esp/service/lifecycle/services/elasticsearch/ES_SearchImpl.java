@@ -352,14 +352,27 @@ public class ES_SearchImpl implements ES_Search {
 																// copyright
 				copyright.setRight((String) (crMap.get(ES_Field.right
 						.toString())));
-				copyright.setHasRight(adaptBooleanToBool((crMap
-						.get(ES_Field.has_right.toString()))));
-				copyright.setRightStartDate(new BigDecimal(
-						adapterLongForDate(crMap
-								.get(ES_Field.right_start_date.toString()))));
-				copyright.setRightEndDate(new BigDecimal(
-						adapterLongForDate(crMap
-								.get(ES_Field.right_end_date.toString()))));
+				
+				if(crMap.get(ES_Field.has_right.toString()) == null){
+					copyright.setHasRight(null);
+				}else{
+					copyright.setHasRight(adaptBooleanToBool((crMap
+							.get(ES_Field.has_right.toString()))));
+				}
+				if(crMap.get(ES_Field.right_start_date.toString()) == null){
+					copyright.setRightStartDate(null);
+				}else{
+					copyright.setRightStartDate(new BigDecimal(
+							adapterLongForDate(crMap
+									.get(ES_Field.right_start_date.toString()))));
+				}
+				if(crMap.get(ES_Field.right_end_date.toString()) == null){
+					copyright.setRightEndDate(null);
+				}else{
+					copyright.setRightEndDate(new BigDecimal(
+							adapterLongForDate(crMap
+									.get(ES_Field.right_end_date.toString()))));
+				}
 				
 				item.setCopyright(copyright);
 			}

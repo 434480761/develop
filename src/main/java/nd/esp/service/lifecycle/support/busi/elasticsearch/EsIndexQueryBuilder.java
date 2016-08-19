@@ -125,7 +125,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append(getRangeIds());
         baseQuery.append("results = g.V(rangeids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false));
         baseQuery.append(".valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
@@ -165,8 +165,8 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".limit(").append(this.size).append(");");
         baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
         baseQuery.append("results = g.V(ids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
-        baseQuery.append(".valueMap();");
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false));
+        //baseQuery.append(".valueMap();");
         query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 
         return query.toString();

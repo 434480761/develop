@@ -15,4 +15,5 @@ public interface TitanRepository<M extends EspEntity> {
     M update(M model);
 
     List<M> batchUpdate(List<M> models);
+
 }

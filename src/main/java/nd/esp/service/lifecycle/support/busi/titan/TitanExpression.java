@@ -20,6 +20,21 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
     private List<String> includes;
+    private boolean needRelationValues = false;
+    private boolean orderByEdgeField = false;
+    private String orderByEdgeFieldName;
+
+    public void setOrderByEdgeFieldName(String orderByEdgeFieldName) {
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+    }
+
+    public void setOrderByEdgeField(boolean orderByEdgeField) {
+        this.orderByEdgeField = orderByEdgeField;
+    }
+
+    public void setNeedRelationValues(boolean needRelationValues) {
+        this.needRelationValues = needRelationValues;
+    }
 
     public void setIncludes(List<String> includes) {
         this.includes = includes;
@@ -128,24 +143,29 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        scriptBuffer.append(".order()");
-        for (String field : this.orderMap.keySet()) {
-            if (field == null)
-                continue;
-            final String value = orderMap.get(field);
-            String sortBy = null;
-            if (value != null) {
-                if (value.trim().toUpperCase()
-                        .equals(PropOperationConstant.OP_ASC)) {
-                    sortBy = TitanKeyWords.incr.toString();
+        if (this.orderByEdgeField) {
+            //.select('e').order().by('order_num',decr).select('x')
+            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by('").append(this.orderByEdgeFieldName).append("',incr).select('x')");
+        } else {
+            scriptBuffer.append(".order()");
+            for (String field : this.orderMap.keySet()) {
+                if (field == null)
+                    continue;
+                final String value = orderMap.get(field);
+                String sortBy = null;
+                if (value != null) {
+                    if (value.trim().toUpperCase()
+                            .equals(PropOperationConstant.OP_ASC)) {
+                        sortBy = TitanKeyWords.incr.toString();
+                    } else {
+                        sortBy = TitanKeyWords.decr.toString();
+                    }
                 } else {
                     sortBy = TitanKeyWords.decr.toString();
                 }
-            } else {
-                sortBy = TitanKeyWords.decr.toString();
+                scriptBuffer.append(".by('").append(field).append("',")
+                        .append(sortBy).append(")");
             }
-            scriptBuffer.append(".by('").append(field).append("',")
-                    .append(sortBy).append(")");
         }
 
         // FIXME for now only get the identifier
@@ -159,8 +179,8 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType));
-        scriptBuffer.append(".valueMap();");
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.needRelationValues));
+        //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
     }

@@ -13,4 +13,8 @@ public interface TitanRelationRepository extends TitanEspRepository<ResourceRela
 
 	public void batchAdd4Import(List<ResourceRelation> resourceRelations);
 
+	public void batchUpdate4Import(List<ResourceRelation> resourceRelations);
+
+	void batchDeleteRelationSoft(String primaryCategory, List<String> ids);
+
 }
