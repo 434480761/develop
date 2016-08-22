@@ -388,16 +388,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		@Override
 		public void method(List<ResourceRelation> resourceRelations) {
 			List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
-//			titanImportRepository.batchImportRelation(existRelation);
-			for(ResourceRelation relation :existRelation){
-				StringBuffer script = new StringBuffer();
-				Map<String, Object> param = TitanScritpUtils.buildRelationScript(script, resourceRelations);
-				try {
-					titanCommonRepository.executeScript(script.toString(), param);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-				}
-			}
+			titanImportRepository.batchImportRelation(existRelation);
 		}
 	}
 
@@ -1068,10 +1059,21 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	public List<ResourceRelation> getAllExistRelation(List<ResourceRelation> resourceRelationList){
 		StringBuffer inSql = new StringBuffer();
+		StringBuffer inSqlChpater = new StringBuffer();
 		Set<String> ids = new HashSet<>();
+		Set<String> chaptersIds = new HashSet<String>();
 		for (ResourceRelation relation : resourceRelationList){
-			ids.add(relation.getSourceUuid());
-			ids.add(relation.getTarget());
+			if("chapters".equals(relation.getResType())||"knowledges".equals(relation.getResType())){
+				chaptersIds.add(relation.getSourceUuid());
+			}else{				
+				ids.add(relation.getSourceUuid());
+			}
+			
+			if("chapters".equals(relation.getResourceTargetType())||"knowledges".equals(relation.getResType())){
+				chaptersIds.add(relation.getTarget());
+			} else {
+				ids.add(relation.getTarget());
+			}
 		}
 
 		int index = 0;
@@ -1084,14 +1086,38 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 			index ++;
 		}
+		
+		index = 0;
+		for (String id : chaptersIds){
+			if (index == 0){
+				inSqlChpater.append("'").append(id).append("'");
+			} else {
+				inSqlChpater.append(",").append("'").append(id).append("'");
+			}
+
+			index ++;
+		}
+		
 
 		String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
-		List<String> questionsResult = questionJdbcTemplate.queryForList(sql, String.class);
-		List<String> resultDefault = defaultJdbcTemplate.queryForList(sql, String.class);
+		String sqlChapter = "select identifier from chapters where identifier IN (" + inSqlChpater + ")";
+		
+		List<String> questionsResult = new ArrayList<String>();
+		List<String> resultDefault = new ArrayList<String>();
+		List<String> resultDefaultChpater = new ArrayList<String>();
+		
+		if(CollectionUtils.isNotEmpty(ids)){
+			questionsResult = questionJdbcTemplate.queryForList(sql, String.class);
+			resultDefault = defaultJdbcTemplate.queryForList(sql, String.class);
+		}
+		if(CollectionUtils.isNotEmpty(chaptersIds)){
+			resultDefaultChpater = defaultJdbcTemplate.queryForList(sqlChapter, String.class);
+		}
 
 		List<String> existIds = new ArrayList<>();
 		existIds.addAll(questionsResult);
 		existIds.addAll(resultDefault);
+		existIds.addAll(resultDefaultChpater);
 		List<ResourceRelation> resultRelation = new ArrayList<>();
 		for (ResourceRelation relation : resourceRelationList){
 			if(existIds.contains(relation.getSourceUuid()) && existIds.contains(relation.getTarget())){

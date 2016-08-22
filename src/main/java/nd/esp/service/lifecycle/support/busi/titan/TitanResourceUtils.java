@@ -81,20 +81,22 @@ public class TitanResourceUtils {
 
     public static List<TechInfo> distinctTechInfo(List<TechInfo> techInfos){
         Map<String, TechInfo> techInfoMap = new HashMap<>();
-        for (TechInfo techInfo : techInfos){
-            techInfoMap.put(techInfo.getTitle(),techInfo);
+        if(CollectionUtils.isNotEmpty(techInfos)) {
+            for (TechInfo techInfo : techInfos) {
+                techInfoMap.put(techInfo.getTitle(), techInfo);
+            }
         }
-
         return new ArrayList<>(techInfoMap.values());
     }
 
     public static List<ResCoverage> distinctCoverage(List<ResCoverage> coverages){
         Map<String, ResCoverage> coverageMap = new HashMap<>();
-        for (ResCoverage coverage : coverages){
-            String key = coverage.getResType()+coverage.getTarget()+coverage.getTargetType();
-            coverageMap.put(key,coverage);
+        if(CollectionUtils.isNotEmpty(coverages)) {
+            for (ResCoverage coverage : coverages) {
+                String key = coverage.getResType() + coverage.getTarget() + coverage.getTargetType();
+                coverageMap.put(key, coverage);
+            }
         }
-
         return new ArrayList<>(coverageMap.values());
     }
 

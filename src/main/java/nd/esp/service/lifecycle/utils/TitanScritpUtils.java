@@ -659,13 +659,13 @@ public class TitanScritpUtils {
 
             appendParamAndScript(scriptBuffer, result, createRelationParams,suffix);
 
-            scriptBuffer.append(");");
+            scriptBuffer.append(").id();");
 
-            createRelationParams.put(sourcePrimaryCategoryName, resourceRelation.getResType());
-            createRelationParams.put(sourceIdentifierName, resourceRelation.getSourceUuid());
-            createRelationParams.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
-            createRelationParams.put(targetIdentifierName, resourceRelation.getTarget());
-            createRelationParams.put(edgeIdentifierName, resourceRelation.getIdentifier());
+            result.put(sourcePrimaryCategoryName, resourceRelation.getResType());
+            result.put(sourceIdentifierName, resourceRelation.getSourceUuid());
+            result.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
+            result.put(targetIdentifierName, resourceRelation.getTarget());
+            result.put(edgeIdentifierName, resourceRelation.getIdentifier());
 
             script.append(scriptBuffer);
         }
