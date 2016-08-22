@@ -49,9 +49,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
      * */
     public boolean importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
 
-        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
-        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
-        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
+        List<ResCoverage> coverageList = TitanResourceUtils.groupCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.groupCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.groupTechInfo(techInfos).get(education.getIdentifier());
         List<String> categoryPathList = TitanResourceUtils.distinctCategoryPath(resourceCategoryList);
 
         //生成导入资源的脚本
@@ -141,9 +141,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         String baseScript = "g.V().has(primaryCategory,'identifier',identifier)";
 
         List<String> categoryPathSet = TitanResourceUtils.distinctCategoryPath(resourceCategoryList);
-        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
-        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
-        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
+        List<ResCoverage> coverageList = TitanResourceUtils.groupCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.groupCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.groupTechInfo(techInfos).get(education.getIdentifier());
 
         //产生资源校验的脚本
         List<String> innerScriptList = new ArrayList<>();

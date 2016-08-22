@@ -13,7 +13,7 @@ import java.util.*;
  * Created by liuran on 2016/8/12.
  */
 public class TitanResourceUtils {
-    public static Map<String, List<ResCoverage>> distinctCoverage(List<ResCoverage> coverages ){
+    public static Map<String, List<ResCoverage>> groupCoverage(List<ResCoverage> coverages ){
         Map<String, List<ResCoverage>> coverageMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(coverages)) {
             for (ResCoverage resCoverage : coverages){
@@ -30,7 +30,7 @@ public class TitanResourceUtils {
         return coverageMap;
     }
 
-    public static Map<String, List<ResourceCategory>> distinctCategory(List<ResourceCategory> categories){
+    public static Map<String, List<ResourceCategory>> groupCategory(List<ResourceCategory> categories){
         Map<String, List<ResourceCategory>> categoryMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(categories)) {
             for(ResourceCategory category : categories){
@@ -47,7 +47,7 @@ public class TitanResourceUtils {
         return categoryMap;
     }
 
-    public static Map<String, List<TechInfo>> distinctTechInfo(List<TechInfo> techInfos){
+    public static Map<String, List<TechInfo>> groupTechInfo(List<TechInfo> techInfos){
         Map<String, List<TechInfo>> techInfoMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(techInfos)){
 		    for (TechInfo techInfo : techInfos){
@@ -63,7 +63,7 @@ public class TitanResourceUtils {
         return techInfoMap;
     }
 
-    public static Map<String, List<ResourceStatistical>> distinctStatistical(List<ResourceStatistical> statisticalList){
+    public static Map<String, List<ResourceStatistical>> groupStatistical(List<ResourceStatistical> statisticalList){
         Map<String, List<ResourceStatistical>> techInfoMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(statisticalList)){
             for (ResourceStatistical statistical : statisticalList){
