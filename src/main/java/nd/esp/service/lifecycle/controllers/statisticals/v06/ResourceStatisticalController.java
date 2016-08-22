@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nd.gaea.WafException;
 
 /**
- * 课件颗粒模板接口V0.6API
+ * 资源评注接口
  * @author liur
  * */
 @RestController
@@ -93,12 +93,14 @@ public class ResourceStatisticalController {
     }
     
     /**
-     * 增加资源评价统计指标数据
-     * @param svms 评价数据
-     * @param resType 资源类型
-     * @param id 资源ID
-     * */
-    @RequestMapping(value = "/{id}/statisticals/cumulative ", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+     * 增加资源评价统计指标数据 -- 累加方式
+     * @author xiezy
+     * @date 2016年8月22日
+     * @param svms
+     * @param resType
+     * @param id
+     */
+    @RequestMapping(value = "/{id}/statisticals/cumulative", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public void addByCumulative(@RequestBody List<ResourceStatisticalViewModel> svms, @PathVariable("res_type") String resType,
             @PathVariable String id) {
 
