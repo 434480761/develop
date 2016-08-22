@@ -289,6 +289,9 @@ public class TitanScritpUtils {
             techInfoParamMap = buildTechInfoScript(script, techInfoList);
             param.putAll(techInfoParamMap);
         }
+        
+        Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
+        param.putAll(checkParam);
 
         //调用脚本方法
         script.append("if(!checkExist()){");
