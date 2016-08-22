@@ -54,7 +54,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
                 //TODO titan 异常处理
             }
         } else if (isUuid(knowledge.getParent())) {
-            queryParent = "g.V().has('knowledges','identifier',identifier).next().id()";
+            queryParent = "g.V().has('identifier',identifier).next().id()";
             queryParentParam = new HashMap<>();
             queryParentParam.put("identifier", knowledge.getParent());
             try {
