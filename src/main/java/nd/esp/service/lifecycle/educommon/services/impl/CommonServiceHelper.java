@@ -601,7 +601,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getTechInfoRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getTechInfoRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return techInfoRepository;
     	}else{
@@ -614,7 +615,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getResourceCategoryRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getResourceCategoryRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return resourceCategoryRepository;
     	}else{
@@ -627,7 +629,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getResCoverageRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getResCoverageRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return resCoverageRepository;
     	}else{
