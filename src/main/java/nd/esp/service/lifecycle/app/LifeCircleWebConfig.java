@@ -178,13 +178,7 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
     public Client getClient(){
     	return EsClientSupport.getClient();
     }
-    
-    //titan
-    @Bean
-	public org.apache.tinkerpop.gremlin.driver.Client getGremlinClient(
-			GremlinClientFactory gremlinClientFactory) {
-		return gremlinClientFactory.getGremlinClient();
-	}
+
     /**
      * 加载packageUtil
      * @return
