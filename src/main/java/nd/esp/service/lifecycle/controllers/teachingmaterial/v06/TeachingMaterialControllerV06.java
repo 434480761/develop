@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.controllers.teachingmaterial.v06;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
@@ -214,5 +216,19 @@ public class TeachingMaterialControllerV06 {
 					new Resource(resType, id));
 		}
 		return tmvm;
+	}
+	
+	
+	/**
+	 * 根据教材id查找章节资源
+	 * @param tmId		教材id
+	 * @param resTypes	查找的资源类型，多个用逗号分隔
+	 * @return
+	 */
+	public List<Map<String,Object>> queryResourcesByTmId(@PathVariable String tmId,@RequestParam String resTypes){
+		//1、判断参数的合法性
+		//2、判断教材id是否存在
+		//3、调用service层接口
+		return null;
 	}
 }
