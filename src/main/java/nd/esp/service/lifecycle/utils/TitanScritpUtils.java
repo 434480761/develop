@@ -416,9 +416,10 @@ public class TitanScritpUtils {
             techInfoScript.append(");");
             //TODO 边上添加属性
             techInfoScript.append("g.V(education).next().addEdge('has_tech_info',")
-                    .append(techInfoNode)
-                    .append(",'identifier',edgeIdentifier")
-                    .append(suffix).append(");");
+                    .append(techInfoNode);
+            appendParamAndScript(techInfoScript,resultParam,techInfoParam,suffix);
+            techInfoScript.append(");");
+
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
 
             techinfoScriptMethd.append(techInfoScript);
@@ -467,8 +468,10 @@ public class TitanScritpUtils {
                     "}else{"+categoryNode+"="+categoryNodeAll+".next()};";
 
             //TODO 边上添加属性
-            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_category_code',"
-                    +categoryNode+",'identifier',"+edgeIdentifierName+");");
+            StringBuffer addEdgeScript = new StringBuffer("g.V(education).next().addEdge('has_category_code',"
+                    +categoryNode+",'identifier',"+edgeIdentifierName);
+            appendParamAndScript(addEdgeScript,resultParam,categoryNodeParam,suffix);
+            addEdgeScript.append(");");
 
             categorieScript.append(ifScript).append(addEdgeScript);
 
@@ -550,8 +553,12 @@ public class TitanScritpUtils {
             String ifScript = "if(!"+coverageNodeNameAll+".iterator().hasNext()){"+addCoverageNodeScript+"" +
                     "}else{"+coverageNodeName+"="+coverageNodeNameAll+".next()};";
             //TODO 边上添加属性
-            String addEdgeScript = "g.V(education).next()" +
-                    ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+").id();";
+            StringBuffer addEdgeScript = new StringBuffer("g.V(education).next()" +
+                    ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+"");
+            Map<String, Object> valueMap = getParam4NotNull(coverage);
+            appendParamAndScript(addEdgeScript,resultParam,valueMap,suffix);
+            addEdgeScript.append(").id();");
+
 
             coverageScript.append(ifScript).append(addEdgeScript);
 
