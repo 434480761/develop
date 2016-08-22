@@ -71,6 +71,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                 return  false;
             }
             if(educationId == null){
+            	titanSync(education);
                 return false;
             }
         }
