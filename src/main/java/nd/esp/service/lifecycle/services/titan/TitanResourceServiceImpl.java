@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
@@ -36,6 +37,10 @@ import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 @Service
 public class TitanResourceServiceImpl implements TitanResourceService {
@@ -80,6 +85,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Autowired
 	private TitanUpdateDataRepository titanUpdateDataRepository;
+
+
+	@Qualifier(value="defaultJdbcTemplate")
+	@Autowired
+	private JdbcTemplate defaultJdbcTemplate;
+	@Qualifier(value="questionJdbcTemplate")
+	@Autowired
+	private JdbcTemplate questionJdbcTemplate;
 
 	@Autowired
 	@Qualifier(value = "defaultJdbcTemplate")
@@ -379,7 +392,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		public void method(List<ResourceRelation> resourceRelations) {
-			titanImportRepository.batchImportRelation(resourceRelations);
+			List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+			titanImportRepository.batchImportRelation(existRelation);
 		}
 	}
 
@@ -387,7 +401,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		public void method(List<ResourceRelation> resourceRelations) {
-			titanUpdateDataRepository.batchUpdateRelation(resourceRelations);
+			List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+			titanUpdateDataRepository.batchUpdateRelation(existRelation);
 		}
 	}
 
@@ -650,7 +665,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 			titanImportRepository.importOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 		}
-
+		
 		return educations.size();
 	}
 
@@ -1045,6 +1060,42 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		s_primaryCategory = primaryCategory;
 		s_totalPage = totalPage;
 		s_page = page;
+	}
+
+	public List<ResourceRelation> getAllExistRelation(List<ResourceRelation> resourceRelationList){
+		StringBuffer inSql = new StringBuffer();
+		Set<String> ids = new HashSet<>();
+		for (ResourceRelation relation : resourceRelationList){
+			ids.add(relation.getSourceUuid());
+			ids.add(relation.getTarget());
+		}
+
+		int index = 0;
+		for (String id : ids){
+			if (index == 0){
+				inSql.append("'").append(id).append("'");
+			} else {
+				inSql.append(",").append("'").append(id).append("'");
+			}
+
+			index ++;
+		}
+
+		String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
+		List<String> questionsResult = questionJdbcTemplate.queryForList(sql, String.class);
+		List<String> resultDefault = defaultJdbcTemplate.queryForList(sql, String.class);
+
+		List<String> existIds = new ArrayList<>();
+		existIds.addAll(questionsResult);
+		existIds.addAll(resultDefault);
+		List<ResourceRelation> resultRelation = new ArrayList<>();
+		for (ResourceRelation relation : resourceRelationList){
+			if(existIds.contains(relation.getSourceUuid()) && existIds.contains(relation.getTarget())){
+				resultRelation.add(relation);
+			}
+		}
+
+		return resultRelation;
 	}
 
 }
