@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.repository.model;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 
 import javax.persistence.Column;
