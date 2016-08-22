@@ -290,9 +290,6 @@ public class TitanScritpUtils {
             param.putAll(techInfoParamMap);
         }
 
-        Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
-        param.putAll(checkParam);
-
         //调用脚本方法
         script.append("if(!checkExist()){");
         script.append("educationId=createEducation();");
@@ -414,6 +411,7 @@ public class TitanScritpUtils {
 
             appendParamAndScript(techInfoScript, resultParam, techInfoParam, suffix);
             techInfoScript.append(");");
+            //TODO 边上添加属性
             techInfoScript.append("g.V(education).next().addEdge('has_tech_info',")
                     .append(techInfoNode)
                     .append(",'identifier',edgeIdentifier")
@@ -465,6 +463,7 @@ public class TitanScritpUtils {
             String ifScript = "if(!"+categoryNodeAll+".iterator().hasNext()){"+addNodeScript.toString()+
                     "}else{"+categoryNode+"="+categoryNodeAll+".next()};";
 
+            //TODO 边上添加属性
             StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_category_code',"
                     +categoryNode+",'identifier',"+edgeIdentifierName+");");
 
@@ -547,6 +546,7 @@ public class TitanScritpUtils {
                     ",'strategy',"+strategyName+",'target',"+targetName+");");
             String ifScript = "if(!"+coverageNodeNameAll+".iterator().hasNext()){"+addCoverageNodeScript+"" +
                     "}else{"+coverageNodeName+"="+coverageNodeNameAll+".next()};";
+            //TODO 边上添加属性
             String addEdgeScript = "g.V(education).next()" +
                     ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+").id();";
 
@@ -586,6 +586,45 @@ public class TitanScritpUtils {
         }
     }
 
+    public static  Map<KeyWords,Object> buildStatisticalScript(List<ResourceStatistical> resourceStatisticalList){
+        if(CollectionUtils.isEmpty(resourceStatisticalList)){
+            return new HashMap<>();
+        }
+
+        int indexNum = 0;
+        StringBuffer statisticalMethod = new StringBuffer("public void createStatistical(){");
+        Map<String, Object> param = new HashMap<>();
+        for (ResourceStatistical statistical : resourceStatisticalList){
+            String suffix = "_st"+indexNum;
+            String nodeName = "node"+suffix;
+            String resourceName = "resource"+suffix;
+
+            StringBuffer scriptNode = new StringBuffer(nodeName+"=graph.addVertex(T.label,"+TitanKeyWords.statistical);
+            Map<String, Object> categoryNodeParam = getParam4NotNull(statistical);
+            appendParamAndScript(scriptNode,param,categoryNodeParam,suffix);
+            scriptNode.append(");");
+
+            scriptNode.append("g.V().has('identifier',"+resourceName+").next().addEdge('").append(TitanKeyWords.has_resource_statistical.toString()).append("',")
+                    .append(nodeName);
+
+            appendParamAndScript(scriptNode,param,categoryNodeParam,suffix);
+            scriptNode.append(");");
+            statisticalMethod.append(scriptNode);
+            param.put(resourceName, statistical.getResource());
+
+            indexNum ++;
+        }
+
+        statisticalMethod.append("};");
+
+        Map<KeyWords,Object> result = new HashMap<>();
+        result.put(KeyWords.script, statisticalMethod.toString());
+        result.put(KeyWords.params, param);
+        return result;
+
+    }
+
+
     public static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
         int orderNumber = 0;
         Map<String, Object> result = new HashMap<>();
@@ -623,6 +662,7 @@ public class TitanScritpUtils {
 
         return result;
     }
+
 
     /**
      * 生成获取详情的脚本

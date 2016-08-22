@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.support.busi.titan;
 
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -58,6 +59,22 @@ public class TitanResourceUtils {
 		
 		        techInfoList.add(techInfo);
 		    }
+        }
+        return techInfoMap;
+    }
+
+    public static Map<String, List<ResourceStatistical>> distinctStatistical(List<ResourceStatistical> statisticalList){
+        Map<String, List<ResourceStatistical>> techInfoMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(statisticalList)){
+            for (ResourceStatistical statistical : statisticalList){
+                List<ResourceStatistical> techInfoList = techInfoMap.get(statistical.getResource());
+                if(techInfoList == null){
+                    techInfoList = new ArrayList<>();
+                    techInfoMap.put(statistical.getResource(), techInfoList);
+                }
+
+                techInfoList.add(statistical);
+            }
         }
         return techInfoMap;
     }

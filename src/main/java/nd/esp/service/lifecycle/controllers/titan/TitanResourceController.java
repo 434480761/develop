@@ -220,6 +220,13 @@ public class TitanResourceController {
 	   	titanResourceService.code();
 		return null;
 	}
+
+	@RequestMapping(value = "/all/statistical", method = RequestMethod.GET)
+	public void importAllStatistical() {
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.importStatistical(resourceType);
+		}
+	}
 	
 	/**
 	 * 测试导数据时：一个环境只允许一个任务

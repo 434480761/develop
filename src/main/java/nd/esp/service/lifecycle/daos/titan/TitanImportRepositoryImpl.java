@@ -1,9 +1,6 @@
 package nd.esp.service.lifecycle.daos.titan;
 
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
+import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.services.titanV07.NDResourceTitanService;
@@ -43,6 +40,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     @Autowired
     private NDResourceService ndResourceService;
 
+    @Autowired
+    private TitanStatisticalRepository titanStatisticalRepository;
+
     @Override
     /**
      * @return false 导入数据失败 ；true 导入成功
@@ -76,6 +76,20 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
 
         return true;
+    }
+
+    @Override
+    public boolean importStatistical(List<ResourceStatistical> statisticalList) {
+//        Map<TitanScritpUtils.KeyWords, Object> result = TitanScritpUtils.buildStatisticalScript(statisticalList);
+//        String script = result.get(TitanScritpUtils.KeyWords.script).toString();
+//        Map<String, Object> param = (Map<String, Object>) result.get(TitanScritpUtils.KeyWords.params);
+//        try {
+//            titanCommonRepository.executeScript(script, param);
+//        } catch (Exception e) {
+//            LOG.info(e.getLocalizedMessage());
+//        }
+        titanStatisticalRepository.batchAdd4Import(statisticalList);
+        return false;
     }
 
     /**

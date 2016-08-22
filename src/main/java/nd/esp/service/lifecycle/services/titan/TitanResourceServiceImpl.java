@@ -260,6 +260,12 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
+	public void importStatistical(String type) {
+		AbstractPageQuery abstractPageQuery = new ImportStatisticalPageQuery();
+		abstractPageQuery.doing(type);
+	}
+
+	@Override
 	public void checkAllData(String primaryCategory){
 		AbstractPageQuery abstractPageQuery = new CheckResourceAllPageQuery();
 		abstractPageQuery.doing(primaryCategory);
@@ -646,6 +652,27 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 
 		return educations.size();
+	}
+
+	class ImportStatisticalPageQuery extends AbstractPageQuery{
+
+		@Override
+		long operate(List<Education> educations, String primaryCategory) {
+			Set<String> uuids = new HashSet<String>();
+			for (Education education : educations) {
+				uuids.add(education.getIdentifier());
+			}
+			List<String> types = new ArrayList<>();
+			types.add(primaryCategory);
+
+			List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(types, uuids);
+
+			Map<String, List<ResourceStatistical>> stringListMap = TitanResourceUtils.distinctStatistical(statisticalList);
+			for (List<ResourceStatistical> statisticals : stringListMap.values()){
+				titanImportRepository.importStatistical(statisticals);
+			}
+			return 0;
+		}
 	}
 
 
