@@ -79,6 +79,25 @@ public class TitanResourceUtils {
         return techInfoMap;
     }
 
+    public static List<TechInfo> distinctTechInfo(List<TechInfo> techInfos){
+        Map<String, TechInfo> techInfoMap = new HashMap<>();
+        for (TechInfo techInfo : techInfos){
+            techInfoMap.put(techInfo.getTitle(),techInfo);
+        }
+
+        return new ArrayList<>(techInfoMap.values());
+    }
+
+    public static List<ResCoverage> distinctCoverage(List<ResCoverage> coverages){
+        Map<String, ResCoverage> coverageMap = new HashMap<>();
+        for (ResCoverage coverage : coverages){
+            String key = coverage.getResType()+coverage.getTarget()+coverage.getTargetType();
+            coverageMap.put(key,coverage);
+        }
+
+        return new ArrayList<>(coverageMap.values());
+    }
+
     public static List<String> distinctCategoryPath(List<ResourceCategory> categoryList){
         Set<String> path = new HashSet<>();
         if (CollectionUtils.isNotEmpty(categoryList)) {

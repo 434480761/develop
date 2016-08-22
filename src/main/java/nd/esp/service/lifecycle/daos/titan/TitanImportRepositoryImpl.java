@@ -49,13 +49,12 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
      * */
     public boolean importOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
 
-        List<ResCoverage> coverageList = TitanResourceUtils.groupCoverage(resCoverageList).get(education.getIdentifier());
-        List<ResourceCategory> categoryList = TitanResourceUtils.groupCategory(resourceCategoryList).get(education.getIdentifier());
-        List<TechInfo> techInfoList = TitanResourceUtils.groupTechInfo(techInfos).get(education.getIdentifier());
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
         List<String> categoryPathList = TitanResourceUtils.distinctCategoryPath(resourceCategoryList);
 
         //生成导入资源的脚本
-        Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,categoryList,techInfoList,categoryPathList);
+        Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,resourceCategoryList,techInfoList,categoryPathList);
         //校验addVertex中的参数个数过多，个数超过250返回为null
         if(CollectionUtils.isEmpty(result)){
             //TODO 这种错误情况保存到数据库中，返回true
