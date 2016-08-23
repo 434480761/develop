@@ -261,9 +261,7 @@ public class TitanResourceController {
 	@MarkAspect4ImportData
 	@RequestMapping(value = "/all/statistical", method = RequestMethod.GET)
 	public void importAllStatistical() {
-		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
-			titanResourceService.importStatistical(resourceType);
-		}
+		titanResourceService.importStatistical();
 	}
 	
 	/**
