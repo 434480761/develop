@@ -288,8 +288,34 @@ public class NDResourceServiceImpl implements NDResourceService{
 		listViewModel.setLimit(limit);
 		return listViewModel;
 	}
-    
-    /**
+
+	/**
+	 * 资源检索(titan)
+	 * @author linsm
+	 */
+	@Override
+	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(String resType,
+															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
+															 List<Map<String, String>> relations, List<String> coverages,
+															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
+															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
+		// 返回的结果集
+		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
+
+		// 参数整理
+		Map<String, Map<String, List<String>>> params = this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey);
+		Integer result[] = ParamCheckUtil.checkLimit(limit);
+		if(includes == null){
+			includes = new ArrayList<String>();
+		}
+		listViewModel =
+				titanSearchService.searchWithStatistics(resType, includes, params, orderMap,
+						result[0], result[1],reverse,words,statisticsType, statisticsPlatform, forceStatus, tags, showVersion);
+		if (listViewModel != null)listViewModel.setLimit(limit);
+		return listViewModel;
+	}
+
+	/**
      * 资源检索(titan)
      * @author linsm
      */
