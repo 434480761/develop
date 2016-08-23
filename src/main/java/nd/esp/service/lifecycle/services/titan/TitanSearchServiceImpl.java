@@ -785,8 +785,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     script = "outE('has_resource_statistical').has('sta_key_title','views')";
                     orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant('0'))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
-                } else if ("viplevel".equals(field)) {
-                    script = "choose(__.outE('has_category_code').has('cg_taxoncode',textRegex('RL.*')),__.values('cg_taxoncode'),__.constant(''))";
+                } else if ("cg_taxoncode".equals(field)) {//viplevel
+                    script = "choose(__.outE('has_category_code').has('cg_taxoncode',textRegex('\\$RL.*')),__.values('cg_taxoncode'),__.constant(''))";
                     orderList.add(new TitanOrder("cg_taxoncode", script, orderBy));
                 } else if (isBySortNum) {
                     titanExpression.setRelationQueryOrderBy(true, TitanKeyWords.sort_num.toString());
