@@ -787,6 +787,7 @@ public class NDResourceController {
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean, printable, printableKey);*/
+                //Set<String> resTypeSet = verificateAndDealResType(resType, resCodes);
                 rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
@@ -1877,7 +1878,15 @@ public class NDResourceController {
             }else{
                 Set<String> resTypeSetTmp = new HashSet<>();
                 resTypeSetTmp.addAll(Arrays.asList(resCodes.split(",")));
-                ResourceNdCode.fromStringCode("");
+                for(String code:resTypeSetTmp){
+                    if (ResourceNdCode.fromStringCode(code) == null) {
+                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                LifeCircleErrorMessageMapper.CommonSearchParamError
+                                        .getCode(), "resCode为"+ code+ ",不存在");
+                    }else{
+                        resTypeSet.add(ResourceNdCode.fromStringCode(code).toString());
+                    }
+                }
             }
         } else {
             commonServiceHelper.getRepository(resType);
