@@ -98,7 +98,7 @@ public interface NDResourceDao {
      * @param coverages
      * @return
      */
-    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages);
+    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages, Map<String, String> orderMap);
 
     /**
      * 获取通用查询的count值
