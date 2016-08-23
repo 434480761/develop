@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.http.HttpStatus;
 
@@ -20,11 +21,36 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
     private List<String> includes;
-    private boolean needRelationValues = false;
-    private boolean orderByEdgeField = false;
+    //private boolean needRelationValues = false;
+    //private boolean orderByEdgeField = false;
+    private boolean relationQueryOrderBy = false;
     private String orderByEdgeFieldName;
+    private List<TitanOrder> orderList;
+    private boolean needStatistics = false;
+    private String statisticsScript;
+    private boolean needPrintable = false;
+    private String printableScript;
 
-    public void setOrderByEdgeFieldName(String orderByEdgeFieldName) {
+    public void setStatistics(boolean needStatistics, String statisticsScript) {
+        this.needStatistics = needStatistics;
+        this.statisticsScript = statisticsScript;
+    }
+
+    public void setPrintable(boolean needPrintable, String printableScript) {
+        this.needPrintable = needPrintable;
+        this.printableScript = printableScript;
+    }
+
+    public void setRelationQueryOrderBy(boolean relationQueryOrderBy, String orderByEdgeFieldName) {
+        this.relationQueryOrderBy = relationQueryOrderBy;
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+    }
+
+    public void setOrderList(List<TitanOrder> orderList) {
+        this.orderList = orderList;
+    }
+
+    /*public void setOrderByEdgeFieldName(String orderByEdgeFieldName) {
         this.orderByEdgeFieldName = orderByEdgeFieldName;
     }
 
@@ -35,7 +61,7 @@ public class TitanExpression implements TitanScriptGenerator {
     public void setNeedRelationValues(boolean needRelationValues) {
         this.needRelationValues = needRelationValues;
     }
-
+*/
     public void setIncludes(List<String> includes) {
         this.includes = includes;
     }
@@ -143,11 +169,12 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        if (this.orderByEdgeField) {
+        if (this.relationQueryOrderBy) {
             //.select('e').order().by('order_num',decr).select('x')
             scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by('").append(this.orderByEdgeFieldName).append("',incr).select('x')");
         } else {
-            scriptBuffer.append(".order()");
+            appendOrderBy(scriptBuffer);
+            /*scriptBuffer.append(".order()");
             for (String field : this.orderMap.keySet()) {
                 if (field == null)
                     continue;
@@ -165,7 +192,7 @@ public class TitanExpression implements TitanScriptGenerator {
                 }
                 scriptBuffer.append(".by('").append(field).append("',")
                         .append(sortBy).append(")");
-            }
+            }*/
         }
 
         // FIXME for now only get the identifier
@@ -179,10 +206,25 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.needRelationValues));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript,this.needPrintable,this.printableScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
+    }
+
+    /**
+     * 拼接order by
+     * @param scriptBuffer
+     */
+    private void appendOrderBy(StringBuffer scriptBuffer) {
+        if (CollectionUtils.isNotEmpty(this.orderList)) {
+            int size = this.orderList.size();
+            for (int i = size - 1; i >= 0; i--) {
+                TitanOrder order = this.orderList.get(i);
+                scriptBuffer.append(".order().by(").append(order.getScript()).append(",")
+                        .append(order.getSortOrder()).append(")");
+            }
+        }
     }
 
     public String generateScriptForResultAndCount(Map<String, Object> scriptParamMap) {
