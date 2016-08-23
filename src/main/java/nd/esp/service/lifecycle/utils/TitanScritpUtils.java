@@ -289,7 +289,7 @@ public class TitanScritpUtils {
             techInfoParamMap = buildTechInfoScript(script, techInfoList);
             param.putAll(techInfoParamMap);
         }
-
+        
         Map<String, Object> checkParam = buildCheckExistScript(script,education.getPrimaryCategory(),education.getIdentifier());
         param.putAll(checkParam);
 
@@ -414,10 +414,12 @@ public class TitanScritpUtils {
 
             appendParamAndScript(techInfoScript, resultParam, techInfoParam, suffix);
             techInfoScript.append(");");
+            //TODO 边上添加属性
             techInfoScript.append("g.V(education).next().addEdge('has_tech_info',")
-                    .append(techInfoNode)
-                    .append(",'identifier',edgeIdentifier")
-                    .append(suffix).append(");");
+                    .append(techInfoNode);
+            appendParamAndScript(techInfoScript,resultParam,techInfoParam,suffix);
+            techInfoScript.append(");");
+
             resultParam.put("edgeIdentifier"+suffix, techInfo.getIdentifier());
 
             techinfoScriptMethd.append(techInfoScript);
@@ -465,8 +467,11 @@ public class TitanScritpUtils {
             String ifScript = "if(!"+categoryNodeAll+".iterator().hasNext()){"+addNodeScript.toString()+
                     "}else{"+categoryNode+"="+categoryNodeAll+".next()};";
 
-            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_category_code',"
-                    +categoryNode+",'identifier',"+edgeIdentifierName+");");
+            //TODO 边上添加属性
+            StringBuffer addEdgeScript = new StringBuffer("g.V(education).next().addEdge('has_category_code',"
+                    +categoryNode+",'identifier',"+edgeIdentifierName);
+            appendParamAndScript(addEdgeScript,resultParam,categoryNodeParam,suffix);
+            addEdgeScript.append(");");
 
             categorieScript.append(ifScript).append(addEdgeScript);
 
@@ -547,8 +552,13 @@ public class TitanScritpUtils {
                     ",'strategy',"+strategyName+",'target',"+targetName+");");
             String ifScript = "if(!"+coverageNodeNameAll+".iterator().hasNext()){"+addCoverageNodeScript+"" +
                     "}else{"+coverageNodeName+"="+coverageNodeNameAll+".next()};";
-            String addEdgeScript = "g.V(education).next()" +
-                    ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+").id();";
+            //TODO 边上添加属性
+            StringBuffer addEdgeScript = new StringBuffer("g.V(education).next()" +
+                    ".addEdge('has_coverage',"+coverageNodeName+",'identifier',"+edgeIdentifierName+"");
+            Map<String, Object> valueMap = getParam4NotNull(coverage);
+            appendParamAndScript(addEdgeScript,resultParam,valueMap,suffix);
+            addEdgeScript.append(").id();");
+
 
             coverageScript.append(ifScript).append(addEdgeScript);
 
@@ -586,6 +596,45 @@ public class TitanScritpUtils {
         }
     }
 
+    public static  Map<KeyWords,Object> buildStatisticalScript(List<ResourceStatistical> resourceStatisticalList){
+        if(CollectionUtils.isEmpty(resourceStatisticalList)){
+            return new HashMap<>();
+        }
+
+        int indexNum = 0;
+        StringBuffer statisticalMethod = new StringBuffer("public void createStatistical(){");
+        Map<String, Object> param = new HashMap<>();
+        for (ResourceStatistical statistical : resourceStatisticalList){
+            String suffix = "_st"+indexNum;
+            String nodeName = "node"+suffix;
+            String resourceName = "resource"+suffix;
+
+            StringBuffer scriptNode = new StringBuffer(nodeName+"=graph.addVertex(T.label,"+TitanKeyWords.statistical);
+            Map<String, Object> categoryNodeParam = getParam4NotNull(statistical);
+            appendParamAndScript(scriptNode,param,categoryNodeParam,suffix);
+            scriptNode.append(");");
+
+            scriptNode.append("g.V().has('identifier',"+resourceName+").next().addEdge('").append(TitanKeyWords.has_resource_statistical.toString()).append("',")
+                    .append(nodeName);
+
+            appendParamAndScript(scriptNode,param,categoryNodeParam,suffix);
+            scriptNode.append(");");
+            statisticalMethod.append(scriptNode);
+            param.put(resourceName, statistical.getResource());
+
+            indexNum ++;
+        }
+
+        statisticalMethod.append("};");
+
+        Map<KeyWords,Object> result = new HashMap<>();
+        result.put(KeyWords.script, statisticalMethod.toString());
+        result.put(KeyWords.params, param);
+        return result;
+
+    }
+
+
     public static Map<String, Object> buildRelationScript(StringBuffer script, List<ResourceRelation> resourceRelations){
         int orderNumber = 0;
         Map<String, Object> result = new HashMap<>();
@@ -610,19 +659,20 @@ public class TitanScritpUtils {
 
             appendParamAndScript(scriptBuffer, result, createRelationParams,suffix);
 
-            scriptBuffer.append(");");
+            scriptBuffer.append(").id();");
 
-            createRelationParams.put(sourcePrimaryCategoryName, resourceRelation.getResType());
-            createRelationParams.put(sourceIdentifierName, resourceRelation.getSourceUuid());
-            createRelationParams.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
-            createRelationParams.put(targetIdentifierName, resourceRelation.getTarget());
-            createRelationParams.put(edgeIdentifierName, resourceRelation.getIdentifier());
+            result.put(sourcePrimaryCategoryName, resourceRelation.getResType());
+            result.put(sourceIdentifierName, resourceRelation.getSourceUuid());
+            result.put(targetPrimaryCategoryName, resourceRelation.getResourceTargetType());
+            result.put(targetIdentifierName, resourceRelation.getTarget());
+            result.put(edgeIdentifierName, resourceRelation.getIdentifier());
 
             script.append(scriptBuffer);
         }
 
         return result;
     }
+
 
     /**
      * 生成获取详情的脚本
