@@ -789,6 +789,8 @@ public class TitanResultParse {
         testToMapForRelationQuery2();
         System.out.println("测试边1");
         testToMapForRelationQuery3();
+        System.out.println("测试分割1");
+        testGetIndexByLabel1();
 	}
 
 	/**
@@ -914,6 +916,14 @@ public class TitanResultParse {
         expectResourceMap.put("id", "x4se1h-6e5odk-2qs5-72ptl4");
 
         checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+
+    private static void testGetIndexByLabel1(){
+        String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+        List<Map<String, String>> resultStrMap=new ArrayList<>();
+        resultStrMap.add(resultResourceMap);
+        System.out.println(getIndexByLabel("assets",resultStrMap));
     }
 
 
