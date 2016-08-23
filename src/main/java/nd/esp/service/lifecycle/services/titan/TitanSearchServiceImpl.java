@@ -108,7 +108,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
 
-        dealWithOrder(titanExpression, orderMap, false,isOrderBySortNum(reverse,orderMap,params.get("relation")),null,null);
+        // FIXME 处理order by
+        List<TitanOrder> orderList = new ArrayList<>();
+        //dealWithShowVersionOrder(orderMap,showVersion,orderList);
+        dealWithOrder(titanExpression, orderMap,null,null,orderList);
+        if(isOrderBySortNum(reverse,orderMap,params.get("relation"))) titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+        titanExpression.setOrderList(orderList);
         //dealWithOrderAndRange(titanExpression, orderMap, from, size);
         dealWithRelation(titanExpression, params.get("relation"), reverse);
         params.remove("relation");
@@ -170,7 +175,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
-        dealWithOrder(titanExpression, orderMap, showVersion,isOrderBySortNum(reverse,orderMap,params.get("relation")),statisticsType,statisticsPlatform);
+        List<TitanOrder> orderList = new ArrayList<>();
+        dealWithShowVersionOrder(orderMap, showVersion, orderList);
+        dealWithOrder(titanExpression, orderMap, statisticsType, statisticsPlatform, orderList);
+        if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
+            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+        }
+        titanExpression.setOrderList(orderList);
         // FIXME "ti_printable" -> " size = 1"
         dealWithPrintable(titanExpression, params.get("ti_printable"));
         params.remove("ti_printable");
@@ -746,18 +757,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param titanExpression
      * @param orderMap
      */
-    private void dealWithOrder(TitanExpression titanExpression, Map<String, String> orderMap, boolean showVersion, boolean isBySortNum, String statisticsType, String statisticsPlatform) {
-        List<TitanOrder> orderList = new ArrayList<>();
-        if (showVersion) {
-            orderList.add(new TitanOrder(ES_SearchField.m_identifier.toString(), ES_SearchField.m_identifier.toString(), TitanOrder.SORTORDER.ASC.toString()));
-        }
-        if (CollectionUtils.isEmpty(orderMap)) {
-            if (showVersion) {// 当为true的时候且oderby为空的时候
-                orderList.add(new TitanOrder(ES_SearchField.lc_version.toString(), ES_SearchField.lc_version.toString(), TitanOrder.SORTORDER.ASC.toString()));
-            }
-        } else {
+    private void dealWithOrder(TitanExpression titanExpression, Map<String, String> orderMap, String statisticsType, String statisticsPlatform,List<TitanOrder> orderList) {
             // 加入order by中的排序
             // TODO 1、参数和脚本分离 2、常量字符替换成枚举
+        if(CollectionUtils.isNotEmpty(orderMap)) {
             Set<String> orderFields = orderMap.keySet();
             for (String field : orderFields) {
                 String orderBy = TitanOrder.checkSortOrder(orderMap.get(field));
@@ -788,19 +791,53 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 } else if ("cg_taxoncode".equals(field)) {//viplevel
                     script = "choose(__.outE('has_category_code').has('cg_taxoncode',textRegex('\\$RL.*')),__.values('cg_taxoncode'),__.constant(''))";
                     orderList.add(new TitanOrder("cg_taxoncode", script, orderBy));
-                } else if (isBySortNum) {
-                    titanExpression.setRelationQueryOrderBy(true, TitanKeyWords.sort_num.toString());
-                    return;
                 } else {
-                    orderList.add(new TitanOrder(field, field, TitanOrder.checkSortOrder(orderMap.get(field))));
+                    orderList.add(new TitanOrder(field, field, orderBy));
                 }
             }
         }
         if (CollectionUtils.isEmpty(orderList)) {// 默认排序
             orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(), ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
         }
-        titanExpression.setOrderMap(orderMap);
         titanExpression.setOrderList(orderList);
+    }
+
+    /**
+     *
+     * @param titanExpression
+     * @param orderMap
+     * @param statisticsType
+     * @param statisticsPlatform
+     * @param orderList
+     */
+    private void dealWithOrderByEnum(TitanExpression titanExpression, Map<String, String> orderMap, String statisticsType, String statisticsPlatform,List<TitanOrder> orderList) {
+        // TODO 通过枚举生成order by 的脚本
+        Set<String> orderFields = orderMap.keySet();
+        for (String field : orderFields) {
+            String orderBy = TitanOrder.checkSortOrder(orderMap.get(field));
+            String script = TitanOrderFields.fromString(field).generateScipt(titanExpression, null);
+            orderList.add(new TitanOrder(field, script, orderBy));
+        }
+        if (CollectionUtils.isEmpty(orderList)) {// 默认排序
+            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(), ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
+        }
+        titanExpression.setOrderList(orderList);
+    }
+
+    /**
+     *
+     * @param orderMap
+     * @param showVersion
+     * @param orderList
+     */
+    private void dealWithShowVersionOrder(Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
+        if (showVersion) {
+            orderList.add(new TitanOrder(ES_SearchField.m_identifier.toString(), ES_SearchField.m_identifier.toString(), TitanOrder.SORTORDER.ASC.toString()));
+            if (CollectionUtils.isEmpty(orderMap)) {
+                // 当为true的时候且oderby为空的时候
+                orderList.add(new TitanOrder(ES_SearchField.lc_version.toString(), ES_SearchField.lc_version.toString(), TitanOrder.SORTORDER.ASC.toString()));
+            }
+        }
     }
 
     private void dealWithTaxonpath(TitanExpression titanExpression,

@@ -1,5 +1,10 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * ******************************************
  * <p/>
@@ -69,6 +74,13 @@ public class TitanOrder {
         return SORTORDER.DESC.toString();
     }
 
+    /*public enum OrderFields {
+        title, ti_size, lc_create_time, lc_last_update, sort_num, cg_taxoncode, key_value, sta_key_value, top, scores, votes, views;
+        public String generateScipt(String field, Map<String, Object> scriptParamMap) {
+            StringBuffer scriptBuffer = new StringBuffer();
+            return scriptBuffer.toString();
+        }
+    }*/
     public enum SORTORDER {
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
         DESC("decr"), ASC("incr");

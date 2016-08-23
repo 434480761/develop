@@ -24,6 +24,7 @@ public class TitanExpression implements TitanScriptGenerator {
     //private boolean needRelationValues = false;
     //private boolean orderByEdgeField = false;
     private boolean relationQueryOrderBy = false;
+    private boolean isOrderBySortNum = false;
     private String orderByEdgeFieldName;
     private List<TitanOrder> orderList;
     private boolean needStatistics = false;
@@ -43,6 +44,10 @@ public class TitanExpression implements TitanScriptGenerator {
 
     public void setRelationQueryOrderBy(boolean relationQueryOrderBy, String orderByEdgeFieldName) {
         this.relationQueryOrderBy = relationQueryOrderBy;
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+    }
+    public void setOrderBySortNum(boolean isOrderBySortNum, String orderByEdgeFieldName) {
+        this.isOrderBySortNum = isOrderBySortNum;
         this.orderByEdgeFieldName = orderByEdgeFieldName;
     }
 
@@ -169,7 +174,7 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        if (this.relationQueryOrderBy) {
+        if (this.relationQueryOrderBy || this.isOrderBySortNum) {
             //.select('e').order().by('order_num',decr).select('x')
             scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by('").append(this.orderByEdgeFieldName).append("',incr).select('x')");
         } else {
