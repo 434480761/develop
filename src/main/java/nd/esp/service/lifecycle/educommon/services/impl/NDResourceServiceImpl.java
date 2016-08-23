@@ -288,8 +288,34 @@ public class NDResourceServiceImpl implements NDResourceService{
 		listViewModel.setLimit(limit);
 		return listViewModel;
 	}
-    
-    /**
+
+	/**
+	 * 资源检索(titan)
+	 * @author linsm
+	 */
+	@Override
+	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(String resType,
+															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
+															 List<Map<String, String>> relations, List<String> coverages,
+															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
+															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
+		// 返回的结果集
+		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
+
+		// 参数整理
+		Map<String, Map<String, List<String>>> params = this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey,forceStatus);
+		Integer result[] = ParamCheckUtil.checkLimit(limit);
+		if(includes == null){
+			includes = new ArrayList<String>();
+		}
+		listViewModel =
+				titanSearchService.searchWithStatistics(resType, includes, params, orderMap,
+						result[0], result[1],reverse,words,statisticsType, statisticsPlatform, forceStatus, tags, showVersion);
+		if (listViewModel != null)listViewModel.setLimit(limit);
+		return listViewModel;
+	}
+
+	/**
      * 资源检索(titan)
      * @author linsm
      */
@@ -316,7 +342,15 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
-    
+
+
+	private Map<String, Map<String, List<String>>> dealFieldAndValues(
+			Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,
+			List<String> coverages, Map<String, Set<String>> propsMap, boolean isNotManagement,
+			Boolean printable, String printableKey) {
+		return this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey,false);
+	}
+
     /**
      * ES的参数处理
      * @param categories
@@ -330,7 +364,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 	private Map<String, Map<String, List<String>>> dealFieldAndValues(
 			Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,
 			List<String> coverages, Map<String, Set<String>> propsMap, boolean isNotManagement,
-			Boolean printable, String printableKey) {
+			Boolean printable, String printableKey,boolean forceStatus) {
 		Map<String, Map<String, List<String>>> params = CommonHelper
 				.newHashMap();
 
@@ -375,7 +409,8 @@ public class NDResourceServiceImpl implements NDResourceService{
 		List<String> cvIn = new ArrayList<String>();
 		if (CollectionUtils.isNotEmpty(coverages)) {
 			if(isNotManagement){
-				cvIn.addAll(coverageParam4DealOnline(coverages));
+				// force_status=false
+				cvIn.addAll(coverageParam4DealOnline(coverages,forceStatus));
 			}else{
 				cvIn.addAll(coverages);
 			}
@@ -500,15 +535,19 @@ public class NDResourceServiceImpl implements NDResourceService{
 	 * @param coverages
 	 * @return
 	 */
-	private List<String> coverageParam4DealOnline(List<String> coverages){
+	private List<String> coverageParam4DealOnline(List<String> coverages,boolean forceStatus){
 		List<String> cvIn = new ArrayList<String>();
         
         for(String coverage : coverages){
             List<String> coverageElemnt = Arrays.asList(coverage.split("/"));
             if(coverageElemnt.get(0).equals(CoverageConstant.TargetType.TARGET_TYPE_ORG.getCode()) &&
             		coverageElemnt.get(1).equals(CoverageConstant.ORG_CODE_ND)){//ND库
-            	cvIn.add(coverage + "/ONLINE");
-            }else{
+				if (!forceStatus) {
+					cvIn.add(coverage + "/ONLINE");
+				} else {
+					cvIn.add(coverage);
+				}
+			}else{
             	cvIn.add(coverage);
             }
         }

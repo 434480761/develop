@@ -451,6 +451,7 @@ public class TitanScritpUtils {
             String categoryNodeAll = "categoryNodeAll"+suffix;
             String taxoncodeName = "taxoncode"+suffix;
             String edgeIdentifierName = "edgeIdentifier" + suffix;
+            String taxonpathName = "taxonpath" + suffix;
 //            Map<String, Object> techInfoParam = getParam4NotNull(category);
             categorieScript = new StringBuffer(categoryNodeAll+"=g.V().hasLabel('category_code').has('cg_taxoncode',"+taxoncodeName+");");
             StringBuffer addNodeScript = new StringBuffer(categoryNode+"=graph.addVertex(T.label,'category_code'");
@@ -470,6 +471,10 @@ public class TitanScritpUtils {
             //TODO 边上添加属性
             StringBuffer addEdgeScript = new StringBuffer("g.V(education).next().addEdge('has_category_code',"
                     +categoryNode+",'identifier',"+edgeIdentifierName);
+            if(category.getTaxonpath() !=null){
+                addEdgeScript.append(",'cg_taxonpath',"+taxonpathName);
+                resultParam.put(taxonpathName, category.getTaxonpath());
+            }
             appendParamAndScript(addEdgeScript,resultParam,categoryNodeParam,suffix);
             addEdgeScript.append(");");
 
@@ -510,7 +515,8 @@ public class TitanScritpUtils {
             String ifScript = "if(!"+categoryPathNodeAll+".iterator().hasNext()){"+addNodeScript+"" +
                     "}else{"+categoryPathNode+"="+categoryPathNodeAll+".next()};";
 
-            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next().addEdge('has_categories_path',"+categoryPathNode+");");
+            StringBuilder addEdgeScript = new StringBuilder("g.V(education).next()" +
+                    ".addEdge('has_categories_path',"+categoryPathNode+",'cg_taxonpath',"+taxonpathName+");");
             categroyPath.append(ifScript).append(addEdgeScript);
 
             categroyPathMethod.append(categroyPath);
@@ -703,7 +709,7 @@ public class TitanScritpUtils {
         }
         params.put("primary_category", primaryCategory);
 
-        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,primaryCategory,false));
+        scriptBuilder.append(TitanUtils.generateScriptForInclude(includeList,primaryCategory,false,false,null,false,null));
         //scriptBuilder.append(".valueMap();");
 
         Map<KeyWords, Object> result = new HashMap<>();

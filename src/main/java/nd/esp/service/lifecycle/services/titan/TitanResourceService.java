@@ -33,7 +33,7 @@ public interface TitanResourceService {
 	void code();
 	void repairData(String primaryCategory);
 
-	void importStatistical(String type);
+	void importStatistical();
 
 
     void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate);
