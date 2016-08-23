@@ -8,3 +8,4 @@ requirements=ti_requirements
 secureKey=ti_secure_key
 size=ti_size
 title=ti_title
+printable=ti_printable
