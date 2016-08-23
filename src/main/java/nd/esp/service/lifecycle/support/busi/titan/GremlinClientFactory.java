@@ -71,8 +71,9 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			@Override
 			public void run() {
 				while (true) {
-					boolean ClientAllConnectSuccess = connect(ClientType.single)
-							&& connect(ClientType.search);
+					//优先保证查询 （search and then single) (add by lsm)
+					boolean ClientAllConnectSuccess = connect(ClientType.search)
+							&& connect(ClientType.single);
 					if (ClientAllConnectSuccess) {
 						sleepTime = 1000 * 60 * 5;
 					} else {
@@ -86,12 +87,11 @@ public class GremlinClientFactory implements ApplicationContextAware {
 				}
 			}
 
-			private boolean connect(ClientType single) {
-				if (single.isConnection()) {
+			private boolean connect(ClientType clientType) {
+				if (clientType.isConnection()) {
 					return true;
 				} else {
-					single.reConnectServer();
-					return false;
+					return clientType.reConnectServer();
 				}
 			}
 		});
@@ -110,13 +110,16 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			public Builder builder(String address) {
 				Builder singleBuilder = defaulBuilder();
 				List<String> addressList = checkAndGetAddress(address);
-				singleBuilder.addContactPoint(addressList.get(RandomUtils.nextInt(addressList.size())));// only add one
-				// address;
-				singleBuilder.minConnectionPoolSize(50);
-				singleBuilder.maxConnectionPoolSize(50);
-				singleBuilder.nioPoolSize(24);
-				singleBuilder.workerPoolSize(24);
+				// only add one address;
+				singleBuilder.addContactPoint(addressList.get(RandomUtils.nextInt(addressList.size())));
+				checkAndSetPoolSizePoolSize(singleBuilder);
 				return singleBuilder;
+			}
+			
+			@Override
+			protected void checkAndSetPoolSizePoolSize(Builder singleBuilder) {
+				checkAndSetPoolSizePoolSize(singleBuilder,
+						Constant.TITAN_SINGLE_POOL_SIZE);
 			}
 
 			@Override
@@ -135,11 +138,14 @@ public class GremlinClientFactory implements ApplicationContextAware {
 				Builder searchBuilder = defaulBuilder();
 				searchBuilder.addContactPoints(checkAndGetAddress(address)
 						.toArray(new String[1]));
-				searchBuilder.minConnectionPoolSize(100);
-				searchBuilder.maxConnectionPoolSize(100);
-				searchBuilder.nioPoolSize(48);
-				searchBuilder.workerPoolSize(48);
+				checkAndSetPoolSizePoolSize(searchBuilder);
 				return searchBuilder;
+			}
+
+			@Override
+			protected void checkAndSetPoolSizePoolSize(
+					Builder searchBuilder) {
+				checkAndSetPoolSizePoolSize(searchBuilder,Constant.TITAN_SEARCH_POOL_SIZE);
 			}
 
 			@Override
@@ -153,6 +159,12 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			}
 		}, // 用于查询接口（使用集群中的所有结点）
 		;
+		
+		
+		private static final int minConnectionPoolSize = 0;
+		private static final int maxConnectionPoolSize = 1;
+		private static final int nioPoolSize = 2;
+		private static final int workerPoolSize = 3;
 
 		/**
 		 * 对所有client 默认的配置
@@ -180,11 +192,57 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		}
 
 		/**
+		 * 读取并验证titan线程池相关配置
+		 * 
+		 * @param titanSearchPoolSize
+		 * @return
+		 */
+		protected void checkAndSetPoolSizePoolSize(Builder searchBuilder, String titanSearchPoolSize) {
+			// minConnectionPoolSize,maxConnectionPoolSize,nioPoolSize,workerPoolSize
+			if (StringUtils.isEmpty(titanSearchPoolSize)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/titan/conf", "pool size conf is empty");
+			}
+			String[] poolSizeStrings = titanSearchPoolSize.split(",");
+			if (poolSizeStrings == null || poolSizeStrings.length != 4) {
+				throw new LifeCircleException(
+						HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/titan/conf",
+						"pool size conf is invalid(minConnectionPoolSize,maxConnectionPoolSize,nioPoolSize,workerPoolSize)");
+			}
+			List<Integer> poolSizes = new ArrayList<Integer>();
+			for (String value : poolSizeStrings) {
+				poolSizes.add(Integer.valueOf(value.trim()));
+			}
+
+			// valid the conf value;
+			for (Integer value : poolSizes) {
+				if (value <= 0) {
+					throw new LifeCircleException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/conf",
+							"pool size must be great than 0");
+				}
+			}
+
+			if (poolSizes.get(minConnectionPoolSize) > poolSizes
+					.get(maxConnectionPoolSize)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"LC/titan/conf",
+						"minConnectionPoolSize must not be greater than maxConnectionPoolSize");
+			}
+			
+			searchBuilder.minConnectionPoolSize(poolSizes.get(minConnectionPoolSize));
+			searchBuilder.maxConnectionPoolSize(poolSizes.get(maxConnectionPoolSize));
+			searchBuilder.nioPoolSize(poolSizes.get(nioPoolSize));
+			searchBuilder.workerPoolSize(poolSizes.get(workerPoolSize));
+		}
+
+		/**
 		 * 重新连接服务
 		 * 
 		 * @param address
 		 */
-		public void reConnectServer(String address) {
+		public boolean reConnectServer(String address) {
 			Client client = getClient();
 			try {
 				if (client != null) {
@@ -194,13 +252,14 @@ public class GremlinClientFactory implements ApplicationContextAware {
 				Log.error(ex.getLocalizedMessage());
 			}
 			init(address);
+			return isConnection();
 		}
 
 		/**
 		 * 重新连接服务
 		 */
-		public void reConnectServer() {
-			reConnectServer(null);
+		public boolean reConnectServer() {
+			return reConnectServer(null);
 		}
 
 		/**
@@ -288,6 +347,9 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		public abstract Client getClient();
 
 		public abstract void setClient(Client client);
+		
+		protected abstract void checkAndSetPoolSizePoolSize(
+				Builder searchBuilder);
 	}
 
 	/****************************** TEST ********************************/

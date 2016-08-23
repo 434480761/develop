@@ -39,9 +39,9 @@ public class TitanUpdateDataRepositoryImpl implements TitanUpdateDataRepository 
      * */
     @Override
     public boolean updateOneData(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos) {
-        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList).get(education.getIdentifier());
-        List<ResourceCategory> categoryList = TitanResourceUtils.distinctCategory(resourceCategoryList).get(education.getIdentifier());
-        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos).get(education.getIdentifier());
+        List<ResCoverage> coverageList = TitanResourceUtils.groupCoverage(resCoverageList).get(education.getIdentifier());
+        List<ResourceCategory> categoryList = TitanResourceUtils.groupCategory(resourceCategoryList).get(education.getIdentifier());
+        List<TechInfo> techInfoList = TitanResourceUtils.groupTechInfo(techInfos).get(education.getIdentifier());
 
         //更新资源并检查资源在titan中是否存在，不存在不进行后续的操作
         if(!updateEducation(education)){
