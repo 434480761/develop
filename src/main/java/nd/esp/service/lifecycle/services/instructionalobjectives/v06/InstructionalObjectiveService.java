@@ -41,10 +41,10 @@ public interface InstructionalObjectiveService{
 
 	/***
 	 * 根据教学目标Id查询它的Title
-	 * @param ids 教学目标Id
+	 * @param idWithTitle 教学目标Id
 	 */
-	String getInstructionalObjectiveTitle(String ids);
-	Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids);
+	String getInstructionalObjectiveTitle(Map.Entry<String, String> idWithTitle);
+	Map<String, String> getInstructionalObjectiveTitle(Collection<Map.Entry<String, String>> idWithTitles);
 
 	/***
 	 * 获取未关联到章节/课时的教学目标

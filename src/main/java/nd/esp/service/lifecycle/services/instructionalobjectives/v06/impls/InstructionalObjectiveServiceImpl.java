@@ -316,25 +316,25 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	}
 
 	@Override
-	public String getInstructionalObjectiveTitle(String id) {
-		List<String> ids = new ArrayList<>();
-		ids.add(id);
-		return getInstructionalObjectiveTitle(ids).get(id);
+	public String getInstructionalObjectiveTitle(Map.Entry<String, String> idWithTitle) {
+		List<Map.Entry<String, String>> idWithTitles = new ArrayList<>();
+		idWithTitles.add(idWithTitle);
+		return getInstructionalObjectiveTitle(idWithTitles).get(idWithTitle.getKey());
 	}
 
 	@Override
-	public Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids) {
+	public Map<String, String> getInstructionalObjectiveTitle(Collection<Map.Entry<String, String>> idWithTitles) {
 
-		if (0 == ids.size()) {
+		if (0 == idWithTitles.size()) {
 			return Collections.emptyMap();
 		}
 
 		try {
-			Collection<String> idString = Collections2.transform(ids, new Function<String, String>() {
+			Collection<String> idString = Collections2.transform(idWithTitles, new Function<Map.Entry<String, String>, String>() {
 				@Nullable
 				@Override
-				public String apply(@Nullable String s) {
-					return String.format("\"%s\"", s);
+				public String apply(@Nullable Map.Entry<String, String> idWithTitle) {
+					return String.format("\"%s\"", idWithTitle.getKey());
 				}
 			});
 
@@ -382,7 +382,9 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 			Map<String, String> results = new HashMap<>();
 
-			for (String id : ids) {
+			for (Map.Entry<String, String> idWithTitle : idWithTitles) {
+				String id = idWithTitle.getKey();
+
 				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
 				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
 				if (CollectionUtils.isEmpty(knowledges) || CollectionUtils.isEmpty(instructionalObjective2Type)) {
@@ -398,7 +400,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 				});
 
 				String typeString = (String) instructionalObjective2Type.get("description");
-				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle));
+				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle, idWithTitle.getValue()));
 			}
 
 			return results;
@@ -499,7 +501,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	 * @param knowledgeTitle 知识点title
 	 * @return 拼接后的字符串
 	 */
-	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle) {
+	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle, String originTitle) {
 		Pattern pattern = Pattern.compile("<span.*?>.*?</span>");
 		String[] split = pattern.split(typeString);
 		String[] knowledges = knowledgeTitle.toArray(new String[knowledgeTitle.size()]);
@@ -508,6 +510,26 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		for (int i = 0;i < split.length;i++) {
 			sb.append(split[i]);
 			sb.append(knowledges.length > i ? knowledges[i]:"");
+		}
+		// 替换（X）
+		String xn = sb.toString();
+		String[] xs = xn.split("（X）");
+		int pos = xs[0].length();
+
+		sb = new StringBuilder();
+		sb.append(xs[0]);
+
+		for (int i = 1;i < xs.length;i++) {
+			int index = originTitle.indexOf(xs[i], pos);
+
+			if (-1 == index) {
+				break;
+			}
+
+			sb.append(originTitle.substring(pos, index));
+			sb.append(xs[i]);
+
+			pos = index + xs[i].length();
 		}
 
 		return sb.toString();
