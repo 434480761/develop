@@ -1323,15 +1323,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		Set<String> ids = new HashSet<>();
 		Set<String> chaptersIds = new HashSet<String>();
 		for (ResourceRelation relation : resourceRelationList){
-			if("chapters".equals(relation.getResType())
-					||"knowledges".equals(relation.getResType())){
+			if(ResourceNdCode.chapters.toString().equals(relation.getResType())
+					||ResourceNdCode.knowledges.toString().equals(relation.getResType())){
 				chaptersIds.add(relation.getSourceUuid());
 			}else{				
 				ids.add(relation.getSourceUuid());
 			}
 			
-			if("chapters".equals(relation.getResourceTargetType())
-					||"knowledges".equals(relation.getResourceTargetType())){
+			if(ResourceNdCode.chapters.toString().equals(relation.getResourceTargetType())
+					||ResourceNdCode.knowledges.toString().equals(relation.getResourceTargetType())){
 				chaptersIds.add(relation.getTarget());
 			} else {
 				ids.add(relation.getTarget());
