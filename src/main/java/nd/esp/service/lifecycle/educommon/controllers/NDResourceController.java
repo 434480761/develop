@@ -78,6 +78,7 @@ import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -453,14 +454,20 @@ public class NDResourceController {
             @RequestParam String words,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
-            @RequestParam String limit) {
-		QueryType queryType = QueryType.TITAN;
+            @RequestParam(required=false,value="statistics_type") String statisticsType,
+            @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
+            @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
+            @RequestParam(required=false,value="tags") List<String> tags,
+            @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
+            @RequestParam String limit){
+
+        QueryType queryType = QueryType.TITAN;
 		if (isRT) {
 			queryType = QueryType.TITAN_REALTIME;
 		}
         return requestQuering(resType,null, resCodes, includes, categories,
-                categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, !isAll,
-                reverse,printable, printableKey,null,null,false,null,false);
+                categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, forceStatus,
+                reverse,printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
     }
 
     @RequestMapping(value = "/actions/retrieve", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
@@ -639,7 +646,7 @@ public class NDResourceController {
      * @return
      */
     @SuppressWarnings("unchecked")
-    private ListViewModel<ResourceViewModel> requestQuering(String resType,String retrieveFileds, String resCodes, String includes,
+    private ListViewModel<ResourceViewModel> requestQuering(String resType,String retrieveFields, String resCodes, String includes,
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
                                                             List<String> orderBy, String words, String limit, QueryType queryType, boolean isNotManagement, String reverse,
                                                             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,
@@ -672,7 +679,7 @@ public class NDResourceController {
 
         //参数校验和处理
         Map<String, Object> paramMap =
-                requestParamVerifyAndHandle(resType,retrieveFileds, resCodes, includes, categories, categoryExclude,
+                requestParamVerifyAndHandle(resType,retrieveFields, resCodes, includes, categories, categoryExclude,
                         relations, coverages, props, orderBy,words, limit, queryType, reverse);
 
         // include
@@ -776,10 +783,14 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                /*rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean, printable, printableKey);
+                        isNotManagement, reverseBoolean, printable, printableKey);*/
+                rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resType,
+                        includesList, categories, categoryExclude, relationsMap,
+                        coveragesList, propsMap, orderMap, words, limit,
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_REALTIME:
                 rListViewModel = resourceQueryByTitanRealTime(resType,
@@ -1564,6 +1575,8 @@ public class NDResourceController {
                 break;
             case ES:
             case TITAN:
+                properties = LifeCircleApplicationInitializer.props_properties_es;
+                break;
             case TITAN_REALTIME:
                 properties = LifeCircleApplicationInitializer.props_properties_es;
                 break;
@@ -1836,6 +1849,41 @@ public class NDResourceController {
         } else {
             commonServiceHelper.getRepository(resType);
         }
+    }
+
+    /**
+     * 校验处理 resType
+     * @param resType
+     * @param resCodes
+     * @return
+     */
+    private Set<String> verificateAndDealResType(String resType, String resCodes){
+
+        Set<String> resTypeSet=new HashSet<>();
+        if (resType.equals(IndexSourceType.ChapterType.getName())) {
+
+            LOG.error("resType不能为chapters");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError
+                            .getCode(), "resType不能为chapters");
+        } else if (resType.equals(Constant.RESTYPE_EDURESOURCE)) {
+            if (StringUtils.isEmpty(resCodes)) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CommonSearchParamError
+                                .getCode(), "resType为"
+                        + Constant.RESTYPE_EDURESOURCE
+                        + "时,rescode不能为空");
+            }else{
+                Set<String> resTypeSetTmp = new HashSet<>();
+                resTypeSetTmp.addAll(Arrays.asList(resCodes.split(",")));
+                ResourceNdCode.fromStringCode("");
+            }
+        } else {
+            commonServiceHelper.getRepository(resType);
+            resTypeSet.add(resType);
+        }
+        return resTypeSet;
     }
 
     /**
