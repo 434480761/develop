@@ -234,12 +234,23 @@ public class TitanResourceController {
         return "执行成功";
     }
 
+    
+//    @RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
+//            produces = { MediaType.APPLICATION_JSON_VALUE })
+//    public long checkAllData() {
+//        titanResourceService.checkResource(ResourceNdCode.chapters.toString());
+//        for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+//            titanResourceService.checkResource(resourceType);
+//        }
+//        return 0;
+//    }
+    
 	@RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkAllData() {
-		titanResourceService.checkResource(ResourceNdCode.chapters.toString());
+//		titanResourceService.checkResource(ResourceNdCode.chapters.toString());
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
-			titanResourceService.checkResource(resourceType);
+			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1262275200000L), new Date(1483200000000L));
 		}
 		return 0;
 	}

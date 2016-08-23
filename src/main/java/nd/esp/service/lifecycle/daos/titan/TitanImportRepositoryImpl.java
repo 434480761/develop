@@ -199,9 +199,70 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
     }
     
-    public void checkTechInfos(Education education,List<ResourceCategory> resourceCategoryList){
-        String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title"};
-        
+    String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title"};
+    String techInfoEdgeLabel = "has_tech_info";
+    /**
+     * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
+     * @param education
+     * @param sourceTechInfo
+     * @since 1.2.6
+     * @see
+     */
+    public void checkTechInfos(Education education,List<TechInfo> sourceTechInfo){
+        Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(sourceTechInfo);
+        Set<String> keySet = techInfoMultiMap.keySet();
+        int size = keySet.size();
+        String[] arr = keySet.toArray(new String[size]);
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+        Builder builder = null;
+        Map<String, Object> paramMap = null;
+        for (int i = 0; i < size; i++) {
+            Long count = 0L;
+            Collection<TechInfo> teachInfos = techInfoMultiMap.get(arr[i]);
+            for (TechInfo techInfo : teachInfos) {
+                paramMap = initParamMap(education, techInfoEdgeLabel);
+                List<Object> techInfoPartField = fillTeachInfoPartField(techInfo);
+                fillParamMap(paramMap, techInfoPartField, techInfoField);
+                
+                builder = generateCheckResourceCategoryScript(baseScript, techInfoPartField, techInfoField, techInfoEdgeLabel);
+                
+                Long tmp = executeScriptUniqueLong(paramMap, builder.count());
+                if (tmp != null) {
+                    count += tmp;
+                }
+            }
+//            count = 1 为正常
+            if (count == 0) {
+                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
+            } else if(count >= 2){
+                LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
+            }
+        }
+    }
+    
+    private List<Object> fillTeachInfoPartField(TechInfo techInfo) {
+        List<Object> techInfoPartField = new ArrayList<Object>();
+        techInfoPartField.add(techInfo.getDescription());
+        techInfoPartField.add(techInfo.getIdentifier());
+        techInfoPartField.add(techInfo.getEntry());
+        techInfoPartField.add(techInfo.getFormat());
+        techInfoPartField.add(techInfo.getLocation());
+        techInfoPartField.add(techInfo.getMd5());
+        techInfoPartField.add(techInfo.getRequirements());
+        techInfoPartField.add(techInfo.getSecureKey());
+        techInfoPartField.add(techInfo.getSize());
+        techInfoPartField.add(techInfo.getTitle());
+        return techInfoPartField;
+    }
+    
+    private Multimap<String, TechInfo> toTechInfoMultimap(List<TechInfo> techInfos){
+        Multimap<String, TechInfo> multimap = ArrayListMultimap.create();
+        for (TechInfo techInfo : techInfos) {
+            multimap.put(techInfo.getTitle(), techInfo);
+        }
+        return multimap;
     }
     
     public void checkNdResource(Education education){
@@ -254,47 +315,64 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
     
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
-        checkCategoryEdges(education, resourceCategoryList);
+//        checkCategoryEdges(education, resourceCategoryList);
+        checkTechInfos(education, techInfos);
+//        checkCategoryNodes(education, resourceCategoryList);
     }
-
-    String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name"};
-    String hasCategoryCode = "has_category_code";
+    
+    final String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name", "identifier"};
+    final String categoryEdgeLabel = "has_category_code";
+    final String educationIdentifier = "educationIdentifier";
+    final String primaryCategory = "primaryCategory";
     public void checkCategoryEdges(Education education,List<ResourceCategory> resourceCategoryList){
         
-        String baseScript = "g.V().has(primaryCategory, 'identifier', identifier)";
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         
         for (int index =0 ;index <resourceCategoryList.size() ;index++){
-            Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
+            Map<String, Object> paramMap = initParamMap(education, categoryEdgeLabel);
             List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategoryList.get(index));
-            fillParamMap(categoryEdgesField, paramMap, resourceCategoryPartField);
+            fillParamMap(paramMap, resourceCategoryPartField, categoryEdgesField);
             
             Builder builder = generateCheckResourceCategoryScript(baseScript,
-                    resourceCategoryPartField);
+                    resourceCategoryPartField, categoryEdgesField, categoryEdgeLabel);
     
-            Long count = executeScriptUniqueLong(paramMap, builder);
-            saveExceptionData(education, paramMap, builder, count);
+            Long count = executeScriptUniqueLong(paramMap, builder.count());
+            saveCheckCategoryExceptionData(education, paramMap, builder, count);
         }
     }
 
+    String[] categoryNodeField = new String[]{"cg_category_code"};
+    String techInfoLabel = "has_tech_info";
+    
+    /**
+     * 和刘然沟通后，目前category_code_v只需要校验 cg_category_code 字段
+     */
     public void checkCategoryNodes(Education education,List<ResourceCategory> resourceCategoryList){
         
-//        String baseScript = "g.V().has(primaryCategory, 'identifier', identifier)";
-//        
-//        for (int index =0 ;index <resourceCategoryList.size() ;index++){
-//            Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
-//            List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategoryList.get(index));
-//            fillParamMap(categoryEdgesField, paramMap, resourceCategoryPartField);
-//            
-//            Builder builder = generateCheckResourceCategoryScript(baseScript,
-//                    resourceCategoryPartField);
-//    
-//            Long count = executeScriptUniqueLong(paramMap, builder);
-//            saveExceptionData(education, paramMap, builder, count);
-//        }
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+   
+        for (int index =0 ;index <resourceCategoryList.size() ;index++){
+            Map<String, Object> paramMap = initParamMap(education, techInfoLabel);
+            List<Object> resourceCategoryPartField = new ArrayList<Object>();
+            resourceCategoryPartField.add(resourceCategoryList.get(index).getCategoryCode());
+            fillParamMap(paramMap, resourceCategoryPartField, categoryNodeField);
+            
+            Builder builder = generateCheckResourceCategoryScript(baseScript,
+                    resourceCategoryPartField, categoryNodeField, techInfoLabel);
+            
+            Long count = executeScriptUniqueLong(paramMap, builder.inV().count());
+            saveCheckCategoryExceptionData(education, paramMap, builder, count);
+        }
     }
     
-    private void saveExceptionData(Education education, Map<String, Object> paramMap, Builder builder, Long count) {
+    private void saveCheckCategoryExceptionData(Education education, Map<String, Object> paramMap, Builder builder, Long count) {
         // count 等于 1 正常，其他情况都不正常
+        if (count == null) {
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                    "查询脚本发生异常" + builder.builder());
+        }
         if (count == 0) {
             LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
             titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
@@ -307,7 +385,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     private Long executeScriptUniqueLong(Map<String, Object> paramMap, Builder builder) {
         Long count = 0L;
         try {
-            count = titanCommonRepository.executeScriptUniqueLong(builder.count().builder(), paramMap);
+            count = titanCommonRepository.executeScriptUniqueLong(builder.builder(), paramMap);
         } catch (Exception e) {
             LOG.error("与 titan 的连接断开或查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -317,84 +395,86 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return count;
     }
 
-    private Multimap<String, ResourceCategory> toResourceCategoryMultimap(List<ResourceCategory> categories){
-        Multimap<String, ResourceCategory> multimap = ArrayListMultimap.create();
-        for (ResourceCategory resourceCategory : categories) {
-            multimap.put(resourceCategory.getTaxoncode(), resourceCategory);
-        }
-        return multimap;
-    }
+//    private Multimap<String, ResourceCategory> toResourceCategoryMultimap(List<ResourceCategory> categories){
+//        Multimap<String, ResourceCategory> multimap = ArrayListMultimap.create();
+//        for (ResourceCategory resourceCategory : categories) {
+//            multimap.put(resourceCategory.getTaxoncode(), resourceCategory);
+//        }
+//        return multimap;
+//    }
     
-    private void checkCategoriesLTCriticalDate(Education education, List<ResourceCategory> resourceCategoryList, String baseScript) {
-        
-        Multimap<String, ResourceCategory> resourceCategoryMap = toResourceCategoryMultimap(resourceCategoryList);
-        Set<String> keySet = resourceCategoryMap.keySet();
-        int size = keySet.size();
-        String[] arr = keySet.toArray(new String[size]);
-        for (int i = 0; i < size; i++) {
-            Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
-            Long count = 0L;
-            Collection<ResourceCategory> resourceCategories = resourceCategoryMap.get(arr[i]);
-            for (ResourceCategory resourceCategory : resourceCategories) {
-                List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategory);
-                fillParamMap(categoryEdgesField, paramMap, resourceCategoryPartField);
-                
-                Builder builder = generateCheckResourceCategoryScript(baseScript, resourceCategoryPartField);
-                
-                try {
-                    Long scriptReturnCount = titanCommonRepository.executeScriptUniqueLong(builder.count().builder(), paramMap);
-                    if (scriptReturnCount == null) {
-                        count = null;
-                    }else{
-                        count += scriptReturnCount;
-                    }
-                    System.out.println(builder.builder());
-                    System.out.println(paramMap);
-                    System.out.println(count);
-                } catch (Exception e) {
-                    LOG.error(e.getLocalizedMessage());
-                }
-            }
-//            count = 1 || 2 为正常
-            if (count == null) {
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                        "与 titan 的连接断开或查询脚本发生异常");
-            }
-            if (count == 0) {
-                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
-            } else if(count >= 3){
-                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
-            }
-        }
-    }
+//    private void checkCategoriesLTCriticalDate(Education education, List<ResourceCategory> resourceCategoryList, String baseScript) {
+//        
+//        Multimap<String, ResourceCategory> resourceCategoryMap = toResourceCategoryMultimap(resourceCategoryList);
+//        Set<String> keySet = resourceCategoryMap.keySet();
+//        int size = keySet.size();
+//        String[] arr = keySet.toArray(new String[size]);
+//        for (int i = 0; i < size; i++) {
+//            Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
+//            Long count = 0L;
+//            Collection<ResourceCategory> resourceCategories = resourceCategoryMap.get(arr[i]);
+//            for (ResourceCategory resourceCategory : resourceCategories) {
+//                List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategory);
+//                fillParamMap(paramMap, resourceCategoryPartField);
+//                
+//                Builder builder = generateCheckResourceCategoryScript(baseScript, resourceCategoryPartField);
+//                
+//                try {
+//                    Long scriptReturnCount = titanCommonRepository.executeScriptUniqueLong(builder.count().builder(), paramMap);
+//                    if (scriptReturnCount == null) {
+//                        count = null;
+//                    }else{
+//                        count += scriptReturnCount;
+//                    }
+//                    System.out.println(builder.builder());
+//                    System.out.println(paramMap);
+//                    System.out.println(count);
+//                } catch (Exception e) {
+//                    LOG.error(e.getLocalizedMessage());
+//                }
+//            }
+////            count = 1 || 2 为正常
+//            if (count == null) {
+//                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+//                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+//                        "与 titan 的连接断开或查询脚本发生异常");
+//            }
+//            if (count == 0) {
+//                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
+//            } else if(count >= 3){
+//                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
+//            }
+//        }
+//    }
 
-    private Builder generateCheckResourceCategoryScript(String baseScript, List<Object> resourceCategoryPartField) {
-        Builder builder = new Builder(baseScript).outE().hasLabel(hasCategoryCode, hasCategoryCode);
-        for (int j = 0; j < categoryEdgesField.length; j++) {
-            if (resourceCategoryPartField.get(j) != null) {
-                // builder = g.V().has(primaryCategory, 'identifier', identifier).outE().hasLabel('has_category_code',has_category_code).has('cg_taxonpath',cg_taxonpath).has('cg_taxoncode',cg_taxoncode).has('cg_taxonname',cg_taxonname).has('cg_category_code',cg_category_code).has('cg_short_name',cg_short_name).has('cg_category_name',cg_category_name)
-                builder.has(categoryEdgesField[j], categoryEdgesField[j]);
+    /**
+     * 生成类似字符串： builder = g.V().has(primaryCategory, 'identifier', educationIdentifier).outE().hasLabel('has_category_code',has_category_code).has('x',x).has('a',a).has('b',b).has('c',c)
+     * @param label TODO
+     */
+    private Builder generateCheckResourceCategoryScript(String baseScript, List<Object> partField, String[] field, String label) {
+        Builder builder = new Builder(baseScript).outE().hasLabel(label, label);
+        for (int j = 0; j < field.length; j++) {
+            if (partField.get(j) != null) {
+                builder.has(field[j], field[j]);
             }
         }
         return builder;
     }
 
-    private void fillParamMap(String[] categoryField, Map<String, Object> paramMap,
-            List<Object> resourceCategoryPartField) {
-        for (int j = 0; j < categoryField.length; j++) {
-            if (resourceCategoryPartField.get(j) != null) {
-                paramMap.put(categoryField[j], resourceCategoryPartField.get(j));
+    private void fillParamMap(Map<String, Object> paramMap, List<Object> partFieldValue, String[] field) {
+        for (int j = 0; j < field.length; j++) {
+            if (partFieldValue.get(j) != null) {
+                paramMap.put(field[j], partFieldValue.get(j));
             }
         }
     }
 
-    private Map<String, Object> initParamMap(Education education, String hasCategoryCode) {
+    private Map<String, Object> initParamMap(Education education, String label) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
-        paramMap.put("primaryCategory", education.getPrimaryCategory());
-        paramMap.put("identifier",education.getIdentifier());
+        paramMap.put(primaryCategory, education.getPrimaryCategory());
+        paramMap.put(educationIdentifier,education.getIdentifier());
         
-        paramMap.put(hasCategoryCode, hasCategoryCode);
+        paramMap.put(label, label);
         return paramMap;
     }
 
@@ -406,40 +486,41 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         resourceCategoryPartField.add(resourceCategory.getCategoryCode());
         resourceCategoryPartField.add(resourceCategory.getShortName());
         resourceCategoryPartField.add(resourceCategory.getCategoryName());
+        resourceCategoryPartField.add(resourceCategory.getIdentifier());
         return resourceCategoryPartField;
     }
 
-    private void checkCategoriesGECriticalDate(Education education, List<ResourceCategory> resourceCategoryList, String baseScript) {
-        Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
-        for (int index =0 ;index <resourceCategoryList.size() ;index++){
-            ResourceCategory resourceCategory = resourceCategoryList.get(index);
-            List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategory);
-            fillParamMap(categoryEdgesField, paramMap, resourceCategoryPartField);
-            
-            Builder builder = generateCheckResourceCategoryScript(baseScript, resourceCategoryPartField);
-    
-            Long count = 0L;
-            try {
-                count = titanCommonRepository.executeScriptUniqueLong(builder.count().builder(), paramMap);
-                System.out.println(builder.builder());
-                System.out.println(paramMap);
-                System.out.println(count);
-            } catch (Exception e) {
-                LOG.error(e.getLocalizedMessage());
-            }
-            if (count == null) {
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                        "与 titan 的连接断开或查询脚本发生异常" + builder.builder());
-            }
-            if (count == 0) {
-                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
-            } else if(count > 1){
-                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
-            }
-            
-        }
-    }
+//    private void checkCategoriesGECriticalDate(Education education, List<ResourceCategory> resourceCategoryList, String baseScript) {
+//        Map<String, Object> paramMap = initParamMap(education, hasCategoryCode);
+//        for (int index =0 ;index <resourceCategoryList.size() ;index++){
+//            ResourceCategory resourceCategory = resourceCategoryList.get(index);
+//            List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategory);
+//            fillParamMap(paramMap, resourceCategoryPartField);
+//            
+//            Builder builder = generateCheckResourceCategoryScript(baseScript, resourceCategoryPartField);
+//    
+//            Long count = 0L;
+//            try {
+//                count = titanCommonRepository.executeScriptUniqueLong(builder.count().builder(), paramMap);
+//                System.out.println(builder.builder());
+//                System.out.println(paramMap);
+//                System.out.println(count);
+//            } catch (Exception e) {
+//                LOG.error(e.getLocalizedMessage());
+//            }
+//            if (count == null) {
+//                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+//                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+//                        "与 titan 的连接断开或查询脚本发生异常" + builder.builder());
+//            }
+//            if (count == 0) {
+//                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
+//            } else if(count > 1){
+//                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
+//            }
+//            
+//        }
+//    }
     
     /**
      * 检查资源的coverage、techInfo、category是否存在
