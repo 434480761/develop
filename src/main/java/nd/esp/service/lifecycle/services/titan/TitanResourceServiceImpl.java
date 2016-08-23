@@ -1076,48 +1076,28 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			}
 		}
 
-		int index = 0;
-		for (String id : ids){
-			if (index == 0){
-				inSql.append("'").append(id).append("'");
-			} else {
-				inSql.append(",").append("'").append(id).append("'");
-			}
-
-			index ++;
-		}
-		
-		index = 0;
-		for (String id : chaptersIds){
-			if (index == 0){
-				inSqlChpater.append("'").append(id).append("'");
-			} else {
-				inSqlChpater.append(",").append("'").append(id).append("'");
-			}
-
-			index ++;
-		}
-		
+		appendSqlInScript(inSql,ids);
+		appendSqlInScript(inSqlChpater, chaptersIds);
 
 		String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
 		String sqlChapter = "select identifier from chapters where identifier IN (" + inSqlChpater + ")";
 		
 		List<String> questionsResult = new ArrayList<String>();
 		List<String> resultDefault = new ArrayList<String>();
-		List<String> resultDefaultChpater = new ArrayList<String>();
+		List<String> resultDefaultChapter = new ArrayList<String>();
 		
 		if(CollectionUtils.isNotEmpty(ids)){
 			questionsResult = questionJdbcTemplate.queryForList(sql, String.class);
 			resultDefault = defaultJdbcTemplate.queryForList(sql, String.class);
 		}
 		if(CollectionUtils.isNotEmpty(chaptersIds)){
-			resultDefaultChpater = defaultJdbcTemplate.queryForList(sqlChapter, String.class);
+			resultDefaultChapter = defaultJdbcTemplate.queryForList(sqlChapter, String.class);
 		}
 
 		List<String> existIds = new ArrayList<>();
 		existIds.addAll(questionsResult);
 		existIds.addAll(resultDefault);
-		existIds.addAll(resultDefaultChpater);
+		existIds.addAll(resultDefaultChapter);
 		List<ResourceRelation> resultRelation = new ArrayList<>();
 		for (ResourceRelation relation : resourceRelationList){
 			if(existIds.contains(relation.getSourceUuid()) && existIds.contains(relation.getTarget())){
@@ -1126,6 +1106,22 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 
 		return resultRelation;
+	}
+
+	private void appendSqlInScript(StringBuffer sql, Set<String> values){
+		if (CollectionUtils.isEmpty(values)){
+			return;
+		}
+
+		int index = 0;
+		for (String id : values){
+			if (index == 0){
+				sql.append("'").append(id).append("'");
+			} else {
+				sql.append(",").append("'").append(id).append("'");
+			}
+			index ++;
+		}
 	}
 
 }
