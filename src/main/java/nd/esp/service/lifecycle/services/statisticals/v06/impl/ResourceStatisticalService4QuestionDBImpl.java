@@ -132,6 +132,9 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
         	ResourceStatistical temp = resourceStatisticalsDao.getResourceStatistical(resType, id, sm.getKeyTitle());
         	if(temp == null){
         		statistical.setIdentifier(UUID.randomUUID().toString());
+        		if(sm.getKeyValue() < 0){
+        			statistical.setKeyValue(0D);
+        		}
         	}else{
         		statistical.setIdentifier(temp.getIdentifier());
         		

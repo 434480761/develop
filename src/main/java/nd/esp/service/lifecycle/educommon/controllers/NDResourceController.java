@@ -1205,7 +1205,7 @@ public class NDResourceController {
      * @return
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,
-                                  Map<String, String>orderMap, String words, List<String> coveragesList, boolean isNotManagement,
+                                  Map<String, String> orderMap, String words, List<String> coveragesList, boolean isNotManagement,
                                   boolean forceStatus,List<String> tags,boolean showVersion){
         boolean haveUserCoverage = false;
         if(CollectionUtils.isNotEmpty(coveragesList)){

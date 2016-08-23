@@ -30,4 +30,5 @@ public interface TitanResourceService {
 	String importStatus();
 	void code();
 	void repairData(String primaryCategory);
+	void importStatistical(String type);
 }
