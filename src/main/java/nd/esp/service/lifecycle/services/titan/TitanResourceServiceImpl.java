@@ -301,7 +301,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
-	public void importStatistical(String type) {
+	public void importStatistical() {
 		AbstractPageQueryStatistical abstractPageQuery = new ImportPageQueryStatistical(ResourceNdCode.assets.toString());
 		abstractPageQuery.pageQueryStatistical();
 
