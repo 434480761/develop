@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.services.titan;
 
+import java.util.Date;
+
 public interface TitanResourceService {
 	long importData4Script(String primaryCategory);
 
@@ -30,5 +32,10 @@ public interface TitanResourceService {
 	String importStatus();
 	void code();
 	void repairData(String primaryCategory);
+
 	void importStatistical(String type);
+
+
+    void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate);
+
 }
