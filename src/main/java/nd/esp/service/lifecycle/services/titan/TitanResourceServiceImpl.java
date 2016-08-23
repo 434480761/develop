@@ -19,6 +19,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanUpdateDataRepository;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
@@ -34,13 +35,11 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
-import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
-import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
@@ -119,6 +118,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	@Autowired
 	@Qualifier(value = "defaultJdbcTemplate")
 	private JdbcTemplate jdbcTemplate;
+
+
+	@Autowired
+	private ResourceStatisticalRepository resourceStatisticalRepository;
+
+	@Autowired
+	private ResourceStatistical4QuestionDBRepository resourceStatistical4QuestionDBRepository;
 
 	@Override
 	public long importData4Script(String primaryCategory) {
@@ -296,8 +302,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Override
 	public void importStatistical(String type) {
-		AbstractPageQuery abstractPageQuery = new ImportStatisticalPageQuery();
-		abstractPageQuery.doing(type);
+		AbstractPageQueryStatistical abstractPageQuery = new ImportPageQueryStatistical(ResourceNdCode.assets.toString());
+		abstractPageQuery.pageQueryStatistical();
+
+		abstractPageQuery = new ImportPageQueryStatistical(ResourceNdCode.questions.toString());
+		abstractPageQuery.pageQueryStatistical();
 	}
 
 	@Override
@@ -804,6 +813,117 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		return educations.size();
 	}
 
+	public abstract class AbstractPageQueryStatistical{
+		private ResourceRepository resourceRepository;
+		private String dbType;
+
+		public String getDbType() {
+			return dbType;
+		}
+
+		public AbstractPageQueryStatistical(String dbType){
+			this.dbType = dbType;
+			if(CommonServiceHelper.isQuestionDb(dbType)){
+				resourceRepository = resourceStatistical4QuestionDBRepository;
+			} else {
+				resourceRepository = resourceStatisticalRepository;
+			}
+		}
+		public long pageQueryStatistical() {
+			String fieldName = "identifier";
+
+			long indexNum = 0;
+			// 分页
+			int page = 0;
+			int row = 500;
+			@SuppressWarnings("rawtypes")
+			Page resourcePage = new PageImpl(new ArrayList());;
+			@SuppressWarnings("rawtypes")
+			List entitylist = null;
+
+			List<Item<? extends Object>> items = new ArrayList<>();
+
+			Sort sort = new Sort(Direction.ASC, fieldName);
+			do {
+				Pageable pageable = new PageRequest(page, row, sort);
+
+				try {
+					resourcePage = resourceRepository.findByItems(items, pageable);
+					if (resourcePage == null) {
+						break;
+					}
+					entitylist = resourcePage.getContent();
+					if (entitylist == null) {
+						continue;
+					}
+					List<ResourceStatistical> resourceStatisticals = new ArrayList<ResourceStatistical>();
+					for (Object object : entitylist) {
+						ResourceStatistical statistical = (ResourceStatistical) object;
+						resourceStatisticals.add(statistical);
+					}
+					if(entitylist.size()==0){
+						continue;
+					}
+					method(resourceStatisticals);
+					LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
+				} catch (Exception e) {
+					LOG.error(e.getLocalizedMessage());
+				}
+				setStatisticParam("relations", resourcePage.getTotalPages(), page);
+			} while (++page < resourcePage.getTotalPages());
+
+			return indexNum;
+		}
+
+		public abstract void method(List<ResourceStatistical> resourceStatisticals);
+	}
+
+	private class ImportPageQueryStatistical extends AbstractPageQueryStatistical{
+
+		public ImportPageQueryStatistical(String dbType) {
+			super(dbType);
+		}
+
+		@Override
+		public void method(List<ResourceStatistical> resourceStatisticals) {
+			titanImportRepository.importStatistical(getAllExistStaistical(resourceStatisticals));
+		}
+
+		private List<ResourceStatistical> getAllExistStaistical(List<ResourceStatistical> resourceStatisticalList){
+
+			StringBuffer inSql = new StringBuffer();
+			Set<String> ids = new HashSet<>();
+			for (ResourceStatistical statistical : resourceStatisticalList){
+				ids.add(statistical.getResource());
+			}
+
+			if (CollectionUtils.isEmpty(ids)){
+				return new ArrayList<>();
+			}
+
+			appendSqlInScript(inSql,ids);
+
+			String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
+
+			List<String> resultId = new ArrayList<String>();
+
+			if(CommonServiceHelper.isQuestionDb(getDbType())){
+				resultId = questionJdbcTemplate.queryForList(sql, String.class);
+			} else {
+				resultId = defaultJdbcTemplate.queryForList(sql, String.class);
+			}
+
+			List<ResourceStatistical> result = new ArrayList<>();
+			for (ResourceStatistical statistical : resourceStatisticalList){
+				if (resultId.contains(statistical.getResource())){
+					result.add(statistical);
+				}
+			}
+
+			return result;
+		}
+	}
+
 	class ImportStatisticalPageQuery extends AbstractPageQuery{
 
 		@Override
@@ -1203,13 +1323,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		Set<String> ids = new HashSet<>();
 		Set<String> chaptersIds = new HashSet<String>();
 		for (ResourceRelation relation : resourceRelationList){
-			if("chapters".equals(relation.getResType())||"knowledges".equals(relation.getResType())){
+			if("chapters".equals(relation.getResType())
+					||"knowledges".equals(relation.getResType())){
 				chaptersIds.add(relation.getSourceUuid());
 			}else{				
 				ids.add(relation.getSourceUuid());
 			}
 			
-			if("chapters".equals(relation.getResourceTargetType())||"knowledges".equals(relation.getResType())){
+			if("chapters".equals(relation.getResourceTargetType())
+					||"knowledges".equals(relation.getResourceTargetType())){
 				chaptersIds.add(relation.getTarget());
 			} else {
 				ids.add(relation.getTarget());
