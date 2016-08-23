@@ -28,10 +28,17 @@ public class TitanExpression implements TitanScriptGenerator {
     private List<TitanOrder> orderList;
     private boolean needStatistics = false;
     private String statisticsScript;
+    private boolean needPrintable = false;
+    private String printableScript;
 
     public void setStatistics(boolean needStatistics, String statisticsScript) {
         this.needStatistics = needStatistics;
         this.statisticsScript = statisticsScript;
+    }
+
+    public void setPrintable(boolean needPrintable, String printableScript) {
+        this.needPrintable = needPrintable;
+        this.printableScript = printableScript;
     }
 
     public void setRelationQueryOrderBy(boolean relationQueryOrderBy, String orderByEdgeFieldName) {
@@ -199,7 +206,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript,this.needPrintable,this.printableScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
