@@ -18,11 +18,11 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes, String resType,boolean needRelationValues) {
+	public static String generateScriptForInclude(List<String> includes, String resType,boolean relationQuery,boolean needStatistics,String statisticsScript) {
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
-		String end = ")";// 取回label
-		String defaultStr=".valueMap(true);";
+		String end = ")";
+		String defaultStr=".valueMap(true);";// 取回label
 
 		if(CollectionUtils.isNotEmpty(includes)) {
 			for (String include : includes) {
@@ -36,14 +36,19 @@ public class TitanUtils {
 				}
 			}
 		}
-		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
+		// queryListByResType、batchQueryResources（relationQuery=true）这两个查询需要关系边上的数据（但不需要取回tree_has_knowledge）
+		if (ResourceNdCode.knowledges.toString().equals(resType) && !relationQuery) {
 			// order
 			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("')");
 			// parent
 			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("').outV()");
 		}
-		if (needRelationValues) {
+		if (relationQuery) {
 			scriptBuffer.append(",select('e')");
+		}
+
+		if (needStatistics) {
+			scriptBuffer.append(statisticsScript);
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;
@@ -87,16 +92,16 @@ public class TitanUtils {
 	 */
 	public static void main(String[] args) {
 		System.out.println("测试非knowledges");
-		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), false));
-		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), true));
-		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), false));
-		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), true));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), true,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), true,false,null));
 
 		System.out.println("测试knowledges");
-		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), false));
-		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), true));
-		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), false));
-		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), true));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), true,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), true,false,null));
 	}
 
 }
