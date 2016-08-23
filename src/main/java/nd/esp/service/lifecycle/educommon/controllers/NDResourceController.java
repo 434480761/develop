@@ -466,7 +466,7 @@ public class NDResourceController {
 			queryType = QueryType.TITAN_REALTIME;
 		}
         return requestQuering(resType,null, resCodes, includes, categories,
-                categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, forceStatus,
+                categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, !isAll,
                 reverse,printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
     }
 
