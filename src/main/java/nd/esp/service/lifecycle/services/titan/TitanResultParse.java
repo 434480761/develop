@@ -733,9 +733,15 @@ public class TitanResultParse {
             String label = field.substring(0, end);
             String[] kv1 = label.split("=");
             if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
-            String other = field.substring(end + 1, field.length());
-            String[] kv2 = other.split("=");
-            if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
+            String other = field.substring(end + 1, field.length()).trim();
+            if (other.startsWith("label=") || other.startsWith("id=")) {
+                dealSpecialField(other, tmpMap);
+            } else {
+                String[] kv2 = other.split("=");
+                if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
+            }
+
+
         } else {
             String[] kv = field.split("=");
             if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
@@ -785,6 +791,8 @@ public class TitanResultParse {
 	public static void main(String[] args) {
         System.out.println("测试点1");
 		testToMapForRelationQuery1();
+        System.out.println("测试点1.1");
+        testToMapForRelationQuery4();
         System.out.println("测试点2");
         testToMapForRelationQuery2();
         System.out.println("测试边1");
@@ -796,7 +804,7 @@ public class TitanResultParse {
 	 */
 	private static void testToMapForRelationQuery1() {
 		// 44 key
-		String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
+		String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], id=1658912, label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
 		// System.out.println("resource: "+resource);
 		Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
 		// System.out.println("resultResourceMap: "+resultResourceMap.size());
@@ -837,7 +845,7 @@ public class TitanResultParse {
 				.put("search_coverage",
 						"Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//");
 		expectResourceMap.put("lc_publisher", "lcms_special_publisher_qa_test");
-		expectResourceMap.put("id", "356896776");
+		expectResourceMap.put("id", "1658912");
 		expectResourceMap.put("edu_context", "基础教育");
 		expectResourceMap.put("lc_provider_mode", "qatest_provider_mode");
 		expectResourceMap.put("cr_right_start_date", "946656000000");
@@ -869,7 +877,84 @@ public class TitanResultParse {
 		//FIXME toMapForRelationQuery方法测试：暂时把其它两种情况也做下 ->龚世文
 	}
     /**
-     * {identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], id=356900872, ti_entry=[入口地址], ti_requirements=[[{"identifier":null,"type":"HARDWARE","name":"resolution","minVersion":null,"maxVersion":null,"installation":null,"installationFile":null,"value":"435*237","ResourceModel":null}]]}
+     * 测试方法：toMapForRelationQuery
+     */
+    private static void testToMapForRelationQuery4() {
+        // 44 key
+        String resource = "==>{preview=[{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[[\"title\",\"qatest\"]], edu_description=[{\"zh_CN\":\"如何使用学习对象进行描述\"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{\"key\":\"test\"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], id=1658912, cr_description=[版权描述信息], label=assets, lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[[\"nd\",\"sdp.esp\"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}";
+        // System.out.println("resource: "+resource);
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+        // System.out.println("resultResourceMap: "+resultResourceMap.size());
+
+        Map<String, String> expectResourceMap = new HashedMap<String, String>();
+        expectResourceMap
+                .put("preview",
+                        "{\"png\":\"${ref-path}/prepub_content_edu_product/esp/assets/abc.png\"}");
+        expectResourceMap.put("cr_author", "880508");
+        expectResourceMap.put("search_path_string",
+                "k12/$on030000/$on030200/$sb0501012/$e004000/$e004001");
+        expectResourceMap.put("keywords", "[\"title\",\"qatest\"]");
+        expectResourceMap
+                .put("edu_description", "{\"zh_CN\":\"如何使用学习对象进行描述\"}");
+        expectResourceMap.put("search_path",
+                "K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001");
+        expectResourceMap
+                .put("description", "lcms_special_description_qa_test");
+        expectResourceMap
+                .put("search_coverage_string",
+                        "debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/");
+        expectResourceMap.put("language", "zh_CN");
+        expectResourceMap.put("lc_status", "CREATING");
+        expectResourceMap.put("custom_properties", "{\"key\":\"test\"}");
+        expectResourceMap.put("cr_has_right", "true");
+        expectResourceMap
+                .put("title",
+                        "lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61");
+        expectResourceMap.put("cr_right_end_date", "7258089000000");
+        expectResourceMap.put("lc_provider", "lcms_special_provider_qa_test");
+        expectResourceMap.put("label", "assets");
+        expectResourceMap.put("cr_description", "版权描述信息");
+        expectResourceMap.put("lc_create_time", "1471416133155");
+        expectResourceMap.put("primary_category", "assets");
+        expectResourceMap.put("search_code_string",
+                "$f050005,$on030000,pt01001,$ra0100");
+        expectResourceMap
+                .put("search_coverage",
+                        "Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//");
+        expectResourceMap.put("lc_publisher", "lcms_special_publisher_qa_test");
+        expectResourceMap.put("id", "1658912");
+        expectResourceMap.put("edu_context", "基础教育");
+        expectResourceMap.put("lc_provider_mode", "qatest_provider_mode");
+        expectResourceMap.put("cr_right_start_date", "946656000000");
+        expectResourceMap.put("identifier",
+                "1e80454b-ae80-4dbd-994a-b3d8e55ee6b5");
+        expectResourceMap.put("cr_right", "版权信息");
+        expectResourceMap.put("lc_last_update", "1471416133155");
+        expectResourceMap.put("edu_interactivity", "2");
+        expectResourceMap.put("lc_version", "qav0.1");
+        expectResourceMap.put("edu_semantic_density", "1");
+        expectResourceMap.put("edu_difficulty", "easy");
+        expectResourceMap.put("edu_end_user_type", "教师，管理者");
+        expectResourceMap.put("tags", "[\"nd\",\"sdp.esp\"]");
+        expectResourceMap.put("search_code",
+                "$F050005, $ON030000, $RA0100, PT01001");
+        expectResourceMap.put("m_identifier",
+                "1e80454b-ae80-4dbd-994a-b3d8e55ee6b5");
+        expectResourceMap.put("edu_interactivity_level", "2");
+        expectResourceMap.put("lc_enable", "true");
+        expectResourceMap.put("lc_provider_source",
+                "八年级地理第一学期期末考试试卷_201407282056.doc");
+        expectResourceMap.put("lc_creator", "lcms_special_creator_qa_test");
+        expectResourceMap.put("edu_language", "zh_CN");
+        expectResourceMap.put("edu_learning_time", "45");
+        expectResourceMap.put("edu_age_range", "7岁以上");
+        // System.out.println("expectResourceMap: "+expectResourceMap.size());
+        checkMapEqual(resultResourceMap, expectResourceMap);
+
+        //FIXME toMapForRelationQuery方法测试：暂时把其它两种情况也做下 ->龚世文
+    }
+    /**
+     * {identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], id=356900872, label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], ti_entry=[入口地址], ti_requirements=[[{"identifier":null,"type":"HARDWARE","name":"resolution","minVersion":null,"maxVersion":null,"installation":null,"installationFile":null,"value":"435*237","ResourceModel":null}]]}
      * 测试方法：toMapForRelationQuery
      */
     private static void testToMapForRelationQuery2() {
