@@ -51,7 +51,6 @@ public class ResourceTypeSupport {
 
 	private static boolean isValidEsResourceType(ResourceNdCode resourceNdCode) {
 		if (resourceNdCode == null || resourceNdCode == ResourceNdCode.chapters
-				|| resourceNdCode == ResourceNdCode.examinationpapers
 				|| resourceNdCode == ResourceNdCode.instructionalprototypes
 				|| resourceNdCode == ResourceNdCode.prototypeactivities
 				|| resourceNdCode == ResourceNdCode.activitiesteps) {

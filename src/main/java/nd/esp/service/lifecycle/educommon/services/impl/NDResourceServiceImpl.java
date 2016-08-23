@@ -2015,47 +2015,7 @@ public class NDResourceServiceImpl implements NDResourceService{
      */
     @Override
     public ResourceModel getDetail(String resourceType, String uuid, List<String> includeList, Boolean isAll) {
-        ResourceRepository<? extends EspEntity> resourceRepository = commonServiceHelper.getRepository(resourceType);
-        EspEntity beanResult = null;
-        try {
-            beanResult = resourceRepository.get(uuid);
-        } catch (EspStoreException e) {
-           
-            LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-           
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
-        }
-        if (!isAll) {
-            if (beanResult == null || ((Education) beanResult).getEnable() == null
-                    || !((Education) beanResult).getEnable() || !resourceType.equals(((Education)beanResult).getPrimaryCategory())) {
-
-                LOG.error(LifeCircleErrorMessageMapper.ResourceNotFound.getMessage() + " resourceType:" + resourceType
-                        + " uuid:" + uuid);
-
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
-                                              LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()
-                                                      + " resourceType:" + resourceType + " uuid:" + uuid);
-            }
-        } else {
-            if (beanResult == null||!resourceType.equals(((Education)beanResult).getPrimaryCategory())) {
-
-                LOG.info("never created");
-                
-                LOG.error(LifeCircleErrorMessageMapper.ResourceNotFound.getMessage() + " resourceType:" + resourceType
-                        + " uuid:" + uuid);
-
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
-                                              LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()
-                                                      + " resourceType:" + resourceType + " uuid:" + uuid);
-            }
-        }
-        
-        
-        
+        EspEntity beanResult = checkResourceExist(resourceType, uuid, isAll);
         ResourceModel modelResult = null;
         try {
             modelResult = changeToModel(beanResult, resourceType,includeList);
@@ -2069,6 +2029,94 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
         return modelResult;
     }
+    
+   
+	/**
+	 * 判断资源是否存在
+	 * 
+	 * @param resourceType
+	 * @param uuid
+	 * @param isAll
+	 * @return
+	 */
+	private EspEntity checkResourceExist(String resourceType, String uuid,
+			Boolean isAll) {
+		return checkResourceExist(commonServiceHelper, resourceType, uuid,
+				isAll);
+	}
+
+	/**
+	 * 判断资源是否存在（后期可与另一个同名方法结合在一起，目前只是异常存在差异，需要与QA确认）
+	 * 
+	 * @param commonServiceHelper
+	 * @param resourceType
+	 * @param uuid
+	 * @param isAll
+	 * @return
+	 */
+	public static EspEntity checkResourceExist(
+			CommonServiceHelper commonServiceHelper, String resourceType,
+			String uuid, Boolean isAll) {
+		ResourceRepository<? extends EspEntity> resourceRepository = commonServiceHelper
+				.getRepository(resourceType);
+		EspEntity beanResult = null;
+		try {
+			beanResult = resourceRepository.get(uuid);
+		} catch (EspStoreException e) {
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
+		}
+		if (!isAll) {
+			if (beanResult == null
+					|| ((Education) beanResult).getEnable() == null
+					|| !((Education) beanResult).getEnable()
+					|| !resourceType.equals(((Education) beanResult)
+							.getPrimaryCategory())) {
+
+				LOG.error(LifeCircleErrorMessageMapper.ResourceNotFound
+						.getMessage()
+						+ " resourceType:"
+						+ resourceType
+						+ " uuid:" + uuid);
+
+				throw new LifeCircleException(
+						HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
+						LifeCircleErrorMessageMapper.ResourceNotFound
+								.getMessage()
+								+ " resourceType:"
+								+ resourceType
+								+ " uuid:" + uuid);
+			}
+		} else {
+			if (beanResult == null
+					|| !resourceType.equals(((Education) beanResult)
+							.getPrimaryCategory())) {
+
+				LOG.info("never created");
+
+				LOG.error(LifeCircleErrorMessageMapper.ResourceNotFound
+						.getMessage()
+						+ " resourceType:"
+						+ resourceType
+						+ " uuid:" + uuid);
+
+				throw new LifeCircleException(
+						HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
+						LifeCircleErrorMessageMapper.ResourceNotFound
+								.getMessage()
+								+ " resourceType:"
+								+ resourceType
+								+ " uuid:" + uuid);
+			}
+		}
+		return beanResult;
+	}
 
     /*
      * 创建资源 (non-Javadoc)

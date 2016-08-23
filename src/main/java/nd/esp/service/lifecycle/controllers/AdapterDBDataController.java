@@ -388,7 +388,7 @@ public class AdapterDBDataController {
     }
     
     /**
-     * 06通用查询是否可以查询到QA覆盖范围的开关
+     * 06通用查询是否可以查询到提供商为智能出题的开关
      * <p>Create Time: 2015年11月26日   </p>
      * <p>Create author: xiezy   </p>
      * @param canquery

@@ -206,12 +206,12 @@ public class TeachingMaterialControllerV06 {
 		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);
 
 		if(notice) {
-			offlineService.writeToCsAsync(ResourceNdCode.teachingmaterials.toString(), id);
+			offlineService.writeToCsAsync(resType, id);
 		}
 		// offline metadata(coverage) to elasticsearch
-		if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.teachingmaterials.toString())) {
+		if (ResourceTypeSupport.isValidEsResourceType(resType)) {
 			esResourceOperation.asynAdd(
-					new Resource(ResourceNdCode.teachingmaterials.toString(), id));
+					new Resource(resType, id));
 		}
 		return tmvm;
 	}

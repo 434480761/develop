@@ -19,8 +19,12 @@ import java.util.*;
 public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 	private final static Logger LOG = LoggerFactory.getLogger(TitanCommonRepositoryImpl.class);
 
-    public Client client() {
-        return GremlinClientFactory.getGremlinClient();
+    public Client singleClient() {
+        return GremlinClientFactory.getSingleClient();
+    }
+
+    public Client searchClient(){
+        return GremlinClientFactory.getSearchClient();
     }
 
     @Override
@@ -87,6 +91,11 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     @Override
+    public ResultSet executeScriptSearchResultSet(String script, Map<String, Object> params) throws Exception {
+        return submitScriptSearchResultRet(script, params);
+    }
+
+    @Override
     public ResultSet executeScriptResultSet(String script) throws Exception {
         return submitScriptResultRet(script, null);
     }
@@ -150,9 +159,20 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     @Override
     public void butchDeleteVertexById(List<String> ids) throws Exception {
-        for(String id : ids){
-            deleteVertexById(id);
+        Map<String, Object> params = new HashMap<>();
+        StringBuffer withInScript = new StringBuffer("within(");
+        for (int i=0; i <ids.size() ;i ++){
+            String indentifierName = "identifier"+i;
+            if(i == 0){
+                withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
+            }
+            params.put(indentifierName, ids.get(i));
         }
+        withInScript.append(")");
+        String script = "g.V().has('identifier',"+withInScript.toString()+").drop();";
+        executeScript(script, params);
     }
 
     @Override
@@ -176,7 +196,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         Double id = null;
         try {
-            ResultSet resultSet = client().submit(script, params);
+            ResultSet resultSet = singleClient().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getDouble();
@@ -195,7 +215,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         List<Double> ids = new LinkedList<>();
         try {
-            ResultSet resultSet = client().submit(script, params);
+            ResultSet resultSet = singleClient().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             while (iterator.hasNext()) {
                 Double id = iterator.next().getDouble();
@@ -215,7 +235,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
             return;
         }
         try {
-            ResultSet resultSet = client().submit(script, params);
+            ResultSet resultSet = singleClient().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 iterator.next();
@@ -232,7 +252,22 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         ResultSet resultSet = null;
         try {
-            resultSet = client().submit(script, params);
+            resultSet = singleClient().submit(script, params);
+        } catch (RuntimeException ex) {
+            LOG.error("gremlin submit script:{" + script + "}|params:{" + params + "}");
+            throw ex;
+        }
+
+        return resultSet;
+    }
+
+    private ResultSet submitScriptSearchResultRet(String script, Map<String, Object> params) throws Exception{
+        if(!StaticDatas.TITAN_SWITCH){
+            return null;
+        }
+        ResultSet resultSet = null;
+        try {
+            resultSet = searchClient().submit(script, params);
         } catch (RuntimeException ex) {
             LOG.error("gremlin submit script:{" + script + "}|params:{" + params + "}");
             throw ex;
@@ -251,7 +286,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         Long id = null;
         try {
-            ResultSet resultSet = client().submit(script, params);
+            ResultSet resultSet = singleClient().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getLong();
@@ -274,7 +309,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
         }
         String id = null;
         try {
-            ResultSet resultSet = client().submit(script, params);
+            ResultSet resultSet = singleClient().submit(script, params);
             Iterator<Result> iterator = resultSet.iterator();
             if (iterator.hasNext()) {
                 id = iterator.next().getString();
@@ -287,17 +322,16 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     public static void main(String[] args) {
-        GremlinClientFactory factory = new GremlinClientFactory();
-        factory.init();
-        Client client = factory.getGremlinClient();
-
-        String script = "g.V().has('identifier','004516e5-a1f9-4c5a-b03a-ded9048412a0').outE().hasLabel('has_chapter').values('left')";
-
-        ResultSet resultSet = client.submit(script);
-        Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()){
-            System.out.println(iterator.next().getLong());
-        }
+//        GremlinClientFactory factory = new GremlinClientFactory();
+////        factory.init();
+//
+//        String script = "g.V().has('identifier','004516e5-a1f9-4c5a-b03a-ded9048412a0').outE().hasLabel('has_chapter').values('left')";
+//
+//        ResultSet resultSet = client.submit(script);
+//        Iterator<Result> iterator = resultSet.iterator();
+//        while (iterator.hasNext()){
+//            System.out.println(iterator.next().getLong());
+//        }
 
     }
 }

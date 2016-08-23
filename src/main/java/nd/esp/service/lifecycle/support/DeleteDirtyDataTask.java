@@ -79,7 +79,7 @@ public class DeleteDirtyDataTask {
 	 * 执行定时任务
 	 * @param createTime
 	 */
-	@Scheduled(cron="0 0/15 5-7 * * ?")
+	@Scheduled(cron="0 0/45 4-8 * * ?")
 	public void init(){
 		if(commonServiceHelper.queryAndUpdateSynVariable(SynVariable.deleteDirtyTask.getValue()) == 0){
 			return;

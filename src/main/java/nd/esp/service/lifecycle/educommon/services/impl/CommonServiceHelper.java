@@ -30,6 +30,7 @@ import nd.esp.service.lifecycle.models.v06.AssetModel;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectTemplateModel;
 import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.ExaminationPaperModel;
 import nd.esp.service.lifecycle.models.v06.HomeworkModel;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeBaseModel;
@@ -50,6 +51,7 @@ import nd.esp.service.lifecycle.repository.model.Courseware;
 import nd.esp.service.lifecycle.repository.model.CoursewareObject;
 import nd.esp.service.lifecycle.repository.model.CoursewareObjectTemplate;
 import nd.esp.service.lifecycle.repository.model.Ebook;
+import nd.esp.service.lifecycle.repository.model.ExaminationPaper;
 import nd.esp.service.lifecycle.repository.model.HomeWork;
 import nd.esp.service.lifecycle.repository.model.InstructionalObjective;
 import nd.esp.service.lifecycle.repository.model.KnowledgeBase;
@@ -67,6 +69,7 @@ import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectRepository;
 import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectTemplateRepository;
 import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
+import nd.esp.service.lifecycle.repository.sdk.ExaminationPaperRepository;
 import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
 import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeBaseRepository;
@@ -93,6 +96,7 @@ import nd.esp.service.lifecycle.vos.coursewareobjects.v06.CourseWareObjectViewMo
 import nd.esp.service.lifecycle.vos.coursewareobjecttemplate.v06.CoursewareObjectTemplateViewModel;
 import nd.esp.service.lifecycle.vos.coursewares.v06.CoursewareViewModel;
 import nd.esp.service.lifecycle.vos.ebooks.v06.EbookViewModel;
+import nd.esp.service.lifecycle.vos.examinationpapers.v06.ExaminationPaperViewModel;
 import nd.esp.service.lifecycle.vos.homeworks.v06.HomeworkViewModel;
 import nd.esp.service.lifecycle.vos.instructionalobjectives.v06.InstructionalObjectiveViewModel;
 import nd.esp.service.lifecycle.vos.knowledgebase.v06.KnowledgeBaseViewModel;
@@ -205,6 +209,9 @@ public class CommonServiceHelper {
     KnowledgeBaseRepository knowledgeBaseRepository;
     
     @Autowired
+    ExaminationPaperRepository examinationPaperRepository;
+    
+    @Autowired
     private NDResourceDao ndResourceDao;
     
 	@PersistenceContext(unitName="entityManagerFactory")
@@ -261,6 +268,14 @@ public class CommonServiceHelper {
                                                                                      CourseWareObjectModel.class,
                                                                                      CourseWareObjectViewModel.class,
                                                                                      CoursewareObject.class,
+                                                                                     true,
+                                                                                     true));
+        
+        // 试卷
+        repositoryAndModelMap.put("examinationpapers", new RepositoryAndModelAndView(examinationPaperRepository,
+                                                                                     ExaminationPaperModel.class,
+                                                                                     ExaminationPaperViewModel.class,
+                                                                                     ExaminationPaper.class,
                                                                                      true,
                                                                                      true));
         

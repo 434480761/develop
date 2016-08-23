@@ -178,13 +178,7 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
     public Client getClient(){
     	return EsClientSupport.getClient();
     }
-    
-    //titan
-    @Bean
-	public org.apache.tinkerpop.gremlin.driver.Client getGremlinClient(
-			GremlinClientFactory gremlinClientFactory) {
-		return gremlinClientFactory.getGremlinClient();
-	}
+
     /**
      * 加载packageUtil
      * @return
@@ -242,6 +236,6 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
 	 */
 	@Override
 	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-		taskRegistrar.setScheduler(Executors.newScheduledThreadPool(3));
+		taskRegistrar.setScheduler(Executors.newScheduledThreadPool(5));
 	}
 }

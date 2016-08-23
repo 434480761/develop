@@ -50,13 +50,7 @@ import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.Ebook;
-import nd.esp.service.lifecycle.repository.model.FullModel;
-import nd.esp.service.lifecycle.repository.model.Question;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
@@ -2907,8 +2901,27 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
 		return resultMap;
 	}
-	
-	/**
+
+    @Override
+    public List<ResourceStatistical> queryStatisticalUseHql(List<String> resTypes, Set<String> keySet) {
+        if(CollectionUtils.isEmpty(resTypes)){
+            return null;
+        }
+
+        Query query = null;
+        if(getDBName4CommonQuery(resTypes.size()>1 ? false : true , resTypes).equals(DbName.QUESTION)){
+            query = questionEm.createNamedQuery("commonQueryGetStatistical");
+        }else{
+            query = defaultEm.createNamedQuery("commonQueryGetStatistical");
+        }
+
+        query.setParameter("rts", resTypes);
+        query.setParameter("sids", keySet);
+
+        return query.getResultList();
+    }
+
+    /**
 	 * 关系相关参数处理
 	 * @author xiezy
 	 * @date 2016年7月13日

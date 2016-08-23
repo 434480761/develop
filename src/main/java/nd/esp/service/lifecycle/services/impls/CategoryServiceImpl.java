@@ -14,8 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.print.DocFlavor.STRING;
-
 import nd.esp.service.lifecycle.models.CategoryDataModel;
 import nd.esp.service.lifecycle.models.CategoryModel;
 import nd.esp.service.lifecycle.models.CategoryPatternModel;

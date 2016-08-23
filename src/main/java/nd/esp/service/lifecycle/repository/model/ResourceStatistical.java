@@ -22,8 +22,8 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 @Entity
 @Table(name = "resource_statisticals")
 @NamedQueries({ 
-    @NamedQuery(name = "getStatisticalBuResource", query = "select rs from ResourceStatistical rs where rs.resource=:resourceId") 
-    
+    @NamedQuery(name = "getStatisticalBuResource", query = "select rs from ResourceStatistical rs where rs.resource=:resourceId"),
+        @NamedQuery(name = "commonQueryGetStatistical", query = "SELECT rs from ResourceStatistical rs where rs.resType IN (:rts) AND rs.resource IN  (:sids)")
 })
 public class ResourceStatistical extends EspEntity {
 
