@@ -240,7 +240,7 @@ public class TitanResultParse {
                             LOG.warn("parent--未能识别");
                         }
                     }
-                } else if ("has_resource_statistical".equals(label)) {
+                } else if (TitanKeyWords.has_resource_statistical.toString().equals(label)) {
                     statistics.putAll(map);
                 } else {
                     LOG.warn("未能识别");
@@ -693,22 +693,35 @@ public class TitanResultParse {
                         //点上的label和id特殊处理
                         dealSpecialField(s, tmpMap);
                     } else {
-                        String[] kv = s.split("=");
-                        if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                        splitKeyValue(tmpMap,s);
+                        //String[] kv = s.split("=");
+                        //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
                     }
                 }
             } else if (str.contains(", ")) {//edge
                 String[] fields = str.split(", ");
                 for (String s : fields) {
-                    String[] kv = s.split("=");
-                    if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                    splitKeyValue(tmpMap,s);
+                    //String[] kv = s.split("=");
+                    //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
                 }
             } else {
-                String[] kv = str.split("=");
-                if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                splitKeyValue(tmpMap,str);
+                //String[] kv = str.split("=");
+                //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
             }
         }
         return tmpMap;
+    }
+
+    /**
+     * 从第一个等号开始分割
+     * @param tmpMap
+     * @param keyValue
+     */
+    private static void splitKeyValue(Map<String, String> tmpMap, String keyValue) {
+        int begin = keyValue.indexOf("=");
+        tmpMap.put(keyValue.substring(0, begin), keyValue.substring(begin + 1, keyValue.length()));
     }
 
     /**
@@ -742,20 +755,23 @@ public class TitanResultParse {
         int end = field.indexOf(", ");
         if (end > 0) {
             String label = field.substring(0, end);
-            String[] kv1 = label.split("=");
-            if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
+            splitKeyValue(tmpMap,label);
+            //String[] kv1 = label.split("=");
+            //if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
             String other = field.substring(end + 1, field.length()).trim();
             if (other.startsWith("label=") || other.startsWith("id=")) {
                 dealSpecialField(other, tmpMap);
             } else {
-                String[] kv2 = other.split("=");
-                if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
+                splitKeyValue(tmpMap,other);
+                //String[] kv2 = other.split("=");
+                //if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
             }
 
 
         } else {
-            String[] kv = field.split("=");
-            if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+            splitKeyValue(tmpMap,field);
+            //String[] kv = field.split("=");
+            //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
         }
     }
 
@@ -800,16 +816,18 @@ public class TitanResultParse {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-        System.out.println("测试点1");
+        System.out.println("测试资源1：id和label相连");
 		testToMapForRelationQuery1();
-        System.out.println("测试点1.1");
+        System.out.println("测试资源2：id和label不相连");
         testToMapForRelationQuery4();
-        System.out.println("测试点2");
+        System.out.println("测试点：tech_info");
         testToMapForRelationQuery2();
-        System.out.println("测试边1");
+        System.out.println("测试边:has_relation");
         testToMapForRelationQuery3();
-        System.out.println("测试分割1");
+        System.out.println("测试分割");
         testGetIndexByLabel1();
+        System.out.println("测试统计数据：has_resource_statistical");
+        testToMapForRelationQuery5();
 	}
 
 	/**
@@ -1010,6 +1028,28 @@ public class TitanResultParse {
         expectResourceMap.put("order_num", "0.0");
         expectResourceMap.put("rr_label", "weo");
         expectResourceMap.put("id", "x4se1h-6e5odk-2qs5-72ptl4");
+
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+
+    /**
+     * ==>{identifier=531e9c35-02ec-4574-92ee-9d757c316df2, id=4qca38-134m8w-2exh-2hzby8, sta_data_from=TOTAL, sta_update_time=1470627616000, sta_res_type=assets, sta_key_value=10.0, label=has_resource_statistical, sta_key_title=downloads, sta_resource=046b6d6c-ba14-4561-8672-eaf19efc830d}
+     * 测试统计数据（边）
+     */
+    private static void testToMapForRelationQuery5() {
+        String resource = "==>{identifier=531e9c35-02ec-4574-92ee-9d757c316df2, id=4qca38-134m8w-2exh-2hzby8, sta_data_from=TOTAL, sta_update_time=1470627616000, sta_res_type=assets, sta_key_value=10.0, label=has_resource_statistical, sta_key_title=downloads, sta_resource=046b6d6c-ba14-4561-8672-eaf19efc830d}";
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "531e9c35-02ec-4574-92ee-9d757c316df2");
+        expectResourceMap.put("id", "4qca38-134m8w-2exh-2hzby8");
+        expectResourceMap.put("sta_data_from", "TOTAL");
+        expectResourceMap.put("sta_update_time", "1470627616000");
+        expectResourceMap.put("sta_res_type", "assets");
+        expectResourceMap.put("sta_key_value", "10.0");
+        expectResourceMap.put("label","has_resource_statistical");
+        expectResourceMap.put("sta_key_title","downloads");
+        expectResourceMap.put("sta_resource", "046b6d6c-ba14-4561-8672-eaf19efc830d");
 
         checkMapEqual(resultResourceMap, expectResourceMap);
     }

@@ -163,6 +163,9 @@ public class TitanExpression implements TitanScriptGenerator {
 
         }
         scriptBuffer.append(".select('x')");
+        // 在这里去重和加上处理printable
+        // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
+        if (this.needPrintable) scriptBuffer.append(printableScript);
         this.innerCondition = scriptBuffer.toString();
     }
 
@@ -211,7 +214,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript,this.needPrintable,this.printableScript));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
