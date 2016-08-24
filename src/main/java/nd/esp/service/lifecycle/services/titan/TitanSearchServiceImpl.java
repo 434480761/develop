@@ -732,6 +732,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (tiTitle.contains("#")) {
             script = script + ".has('ti_title','" + tiTitle.split("#")[1] + "')";
         }
+        // limit(1) 当printableKey为null时任意取一条
+        script = script + ".limit(1)";
         // TODO 1、参数和脚本分离 2、常量字符替换成枚举
         titanExpression.setPrintable(true, script);
     }
