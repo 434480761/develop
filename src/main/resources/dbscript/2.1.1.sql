@@ -1,4 +1,19 @@
 INSERT into synchronized_table SET pid = 5, value =0   //个环境只允许一个任务(@MarkAspect4ImportData)
+
+---库分享表
+CREATE TABLE `coverages_sharing` (`identifier` CHAR(36) CHARACTER
+                                                  SET utf8 COLLATE utf8_general_ci NOT NULL , `title` VARCHAR(1024) CHARACTER
+                                                  SET utf8 COLLATE utf8_general_ci NULL , `description` TEXT CHARACTER
+                                                  SET utf8 COLLATE utf8_general_ci NULL , `source_coverage` VARCHAR(500) CHARACTER
+                                                  SET utf8 COLLATE utf8_general_ci NULL COMMENT '分享来源' , `target_coverage` VARCHAR(500) CHARACTER
+                                                  SET utf8 COLLATE utf8_general_ci NULL COMMENT '分享对象' , `creator` VARCHAR(255) NULL , `create_time` BIGINT(20) NULL) ENGINE = InnoDB CHARACTER
+SET utf8 COLLATE utf8_general_ci COMMENT = '库分享';
+
+ALTER TABLE `coverages_sharing` ADD PRIMARY KEY(`identifier`);
+ALTER TABLE `coverages_sharing` ADD INDEX `index_source_coverage` (`source_coverage`) COMMENT '';
+ALTER TABLE `coverages_sharing` ADD INDEX `index_target_coverage` (`target_coverage`) COMMENT '';
+ALTER TABLE `coverages_sharing` ADD INDEX `index_source_and_target` (`source_coverage`, `target_coverage`) COMMENT '';
+
 --增加分区
 ALTER TABLE ndresource ADD PARTITION (PARTITION p_metacurriculums VALUES in ('metacurriculums') ENGINE = InnoDB);
 ALTER TABLE resource_categories ADD PARTITION (PARTITION p_metacurriculums VALUES in ('metacurriculums') ENGINE = InnoDB);
