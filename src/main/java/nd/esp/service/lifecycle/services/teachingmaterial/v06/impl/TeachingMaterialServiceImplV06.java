@@ -158,7 +158,7 @@ public class TeachingMaterialServiceImplV06 implements
 
 	@Override
 	public List<Map<String, Object>> queryResourcesByTmId(String tmId,
-			List<String> resTypes,List<String> includes,String coverage) {
+			Set<String> resTypes,List<String> includes,String coverage) {
 		//1、校验教材是否存在
 		try {
 			TeachingMaterial tm = teachingMaterialRepository.get(tmId);

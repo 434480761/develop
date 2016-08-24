@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
@@ -234,13 +235,8 @@ public class TeachingMaterialControllerV06 {
 	 * @return
 	 */
 	@RequestMapping(value="/{tmId}/resources",method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public List<Map<String,Object>> queryResourcesByTmId(@PathVariable String tmId,@RequestParam String resTypes,@RequestParam(required=false) String include,@RequestParam String coverage){
-		List<String> resTypeList = null;
+	public List<Map<String,Object>> queryResourcesByTmId(@PathVariable String tmId,@RequestParam(value="res_type") Set<String> resTypeList,@RequestParam(required=false) String include,@RequestParam String coverage){
 		//1、判断参数的合法性
-		if(StringUtils.isNotEmpty(resTypes)){
-			String[] array = resTypes.split(",");
-			resTypeList = Arrays.asList(array);
-		}
 		if(CollectionUtils.isNotEmpty(resTypeList)){
 			Map<String, Object> map = commonServiceHelper.getRepositoryAndModelMap();
 			for (String rt : resTypeList) {
