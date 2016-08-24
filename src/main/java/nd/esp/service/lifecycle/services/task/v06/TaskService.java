@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface TaskService {
 
@@ -32,5 +33,7 @@ public interface TaskService {
 
     //处理无效任务，改状态为失败，写入错误信息
     void DealInvalidTask(String taskId, String errMsg);
+
+    void DealInvalidTask(String taskId, String errMsg, String status);
 
 }

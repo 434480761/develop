@@ -120,6 +120,14 @@ public class TitanStatisticalRepositoryImpl implements TitanStatisticalRepositor
         return true;
     }
 
+    @Override
+    public boolean batchAdd4Import(List<ResourceStatistical> statisticalList) {
+        for (ResourceStatistical statistical : statisticalList){
+            addOrUpdateStatistical(statistical);
+        }
+        return true;
+    }
+
     private ResourceStatistical addOrUpdateStatistical(ResourceStatistical statistical){
         String checkTechInfoExist = "g.E().hasLabel('"+ TitanKeyWords.has_resource_statistical.toString()+"').has('identifier',edgeIdentifier).id()";
         Map<String, Object> checkTechInfoParam = new HashMap<>();

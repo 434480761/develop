@@ -42,11 +42,15 @@ public class DeleteDirtyDataTask {
 	public final static String QA_DERAULT_CREATOR="lcms_special_creator_qa_test";
 	public final static String QA_DERAULT_DESCRIPTION="lcms_special_description_qa_test";
 	public final static String QA_DERAULT_PUBLISHER="lcms_special_publisher_qa_test";
+	public final static String QA_DERAULT_PROVIDER="lcms_special_provider_qa_test";
+	public final static String QA_DERAULT_RIGHT="lcms_special_right_qa_test";
 	
 	//开发单元测试默认值
 	public final static String DERAULT_CREATOR="lcms-special-creator-dev-test"; 
 	public final static String DERAULT_DESCRIPTION="lcms-special-description-dev-test";
 	public final static String DERAULT_PUBLISHER="lcms-special-publisher-dev-test";
+	public final static String DERAULT_PROVIDER="lcms-special-provider-dev-test";
+	public final static String DERAULT_RIGHT="lcms-special-right-dev-test";
 	
 	@Autowired
 	@Qualifier(value="defaultJdbcTemplate")
@@ -98,6 +102,11 @@ public class DeleteDirtyDataTask {
 					dealDirtyData(createTime,resType);
 					syncEs(resType);
 					syncTitan(resType);
+				}
+				
+				if(!CommonServiceHelper.isQuestionDb(resType)){
+					deleteResourceProviders(resType);
+					deleteCopyrightOwners(resType);
 				}
 			}else{
 				commonServiceHelper.initSynVariable(SynVariable.deleteDirtyTask.getValue());
@@ -319,6 +328,30 @@ public class DeleteDirtyDataTask {
 	}
 	
 	/**
+	 * 删除resource_providers表中的测试数据
+	 * @author xiezy
+	 * @date 2016年8月22日
+	 * @param resType
+	 * @return
+	 */
+	private int deleteResourceProviders(String resType){
+		String sql = "delete rp from resource_providers rp where rp.title like '" + QA_DERAULT_PROVIDER + "%' OR rp.title like '" + DERAULT_PROVIDER + "%'";
+		return excuteSql(resType,sql);
+	}
+	
+	/**
+	 * 删除copyright_owners表中的测试数据
+	 * @author xiezy
+	 * @date 2016年8月22日
+	 * @param resType
+	 * @return
+	 */
+	private int deleteCopyrightOwners(String resType){
+		String sql = "delete rp from copyright_owners rp where rp.title like '" + QA_DERAULT_RIGHT + "%' OR rp.title like '" + DERAULT_RIGHT + "%'";
+		return excuteSql(resType,sql);
+	}
+	
+	/**
 	 * 执行sql
 	 * @param sql
 	 * @return
@@ -344,6 +377,10 @@ public class DeleteDirtyDataTask {
         MDC.clear();
 	}
 	
+	/**
+	 * 同步报表系统
+	 * @param resType
+	 */
 	private void syncReport(String resType){
 		//筛选出nd库的数据
 		String sql = "select dd.identifier from dirty_data dd,res_coverages rc where dd.primary_category = rc.res_type and rc.resource = dd.identifier and rc.target_type='Org' and rc.target = 'nd'";
@@ -368,7 +405,11 @@ public class DeleteDirtyDataTask {
 			npjt.update(deleteNdresourceSql, paramMap);
 		}
 	}
-
+	
+	/**
+	 * 同步 TITAN
+	 * @param resType
+	 */
 	private void syncTitan(String resType){
 		Set<Resource> resourceSet = queryResources(resType);
 		titanSyncService.batchDeleteResource(resourceSet);

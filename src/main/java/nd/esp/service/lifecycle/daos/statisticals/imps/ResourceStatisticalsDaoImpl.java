@@ -23,7 +23,8 @@ public class ResourceStatisticalsDaoImpl implements ResourceStatisticalsDao {
         Query query = em.createNamedQuery("getStatisticalBuResource") ;
         query.setParameter("resourceId", resourceId) ;
         
-        List<ResourceStatistical> list =  query.getResultList() ;
+        @SuppressWarnings("unchecked")
+		List<ResourceStatistical> list =  query.getResultList() ;
         
         return list;
     }
@@ -32,6 +33,8 @@ public class ResourceStatisticalsDaoImpl implements ResourceStatisticalsDao {
 	public double getMaxTopValue(String resType) {
 		String sql = "SELECT max(key_value) FROM resource_statisticals where res_type='"+resType+"' and key_title='top'";
 		Query query = em.createNativeQuery(sql);
+		
+		@SuppressWarnings("unchecked")
 		List<Double> list = query.getResultList();
 		if(CollectionUtils.isNotEmpty(list)){
 			return list.get(0) != null ? list.get(0) : 0;
@@ -39,4 +42,22 @@ public class ResourceStatisticalsDaoImpl implements ResourceStatisticalsDao {
 		return 0;
 	}
 
+	@Override
+	public ResourceStatistical getResourceStatistical(String resType, String id, String keyTitle) {
+		String sql = "SELECT rs.* FROM resource_statisticals rs WHERE "
+				+ "rs.res_type=:rt AND rs.resource=:rid AND rs.key_title=:kt for update";
+		
+		Query query = em.createNativeQuery(sql, ResourceStatistical.class);
+		query.setParameter("rt", resType);
+		query.setParameter("rid", id);
+		query.setParameter("kt", keyTitle);
+		
+		@SuppressWarnings("unchecked")
+		List<ResourceStatistical> list = query.getResultList();
+		if(CollectionUtils.isNotEmpty(list)){
+			return list.get(0);
+		}
+		
+		return null;
+	}
 }

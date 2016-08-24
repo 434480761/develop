@@ -72,6 +72,7 @@ public enum ResourceNdCode {
         }
     }
 
+
     /**
      * 通过字符串获取 对应资源的枚举
      * 
@@ -81,6 +82,28 @@ public enum ResourceNdCode {
      */
     public static ResourceNdCode fromString(String resourceType) {
         return stringToEnum.get(resourceType);
+    }
+
+
+    /**
+     * 用于保存字符串code与枚举的一一对应
+     */
+    private static final Map<String, ResourceNdCode> stringCodeToEnum = new HashMap<String, ResourceNdCode>();
+    static {
+        for (ResourceNdCode value : values()) {
+            stringCodeToEnum.put(value.getNdCode(), value);
+        }
+    }
+
+    /**
+     * 通过字符串获取 对应资源的枚举
+     *
+     * @param resourceCode
+     * @return
+     * @author gsw
+     */
+    public static ResourceNdCode fromStringCode(String resourceCode) {
+        return stringCodeToEnum.get(resourceCode);
     }
 
     public String getNdCode() {

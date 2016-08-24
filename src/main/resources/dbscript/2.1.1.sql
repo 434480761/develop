@@ -1,3 +1,4 @@
+INSERT into synchronized_table SET pid = 5, value =0   //个环境只允许一个任务(@MarkAspect4ImportData)
 --增加分区
 ALTER TABLE ndresource ADD PARTITION (PARTITION p_metacurriculums VALUES in ('metacurriculums') ENGINE = InnoDB);
 ALTER TABLE resource_categories ADD PARTITION (PARTITION p_metacurriculums VALUES in ('metacurriculums') ENGINE = InnoDB);
