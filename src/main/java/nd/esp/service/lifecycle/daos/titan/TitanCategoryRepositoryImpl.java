@@ -355,7 +355,7 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if(sourcePathId == null){
 			addPathScript = new StringBuilder("categories_path = graph.addVertex(T.label,'categories_path','cg_taxonpath',taxonpath);");
 			addPathScript.append("g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
-					".addEdge('has_categories_path',categories_path).id()");
+					".addEdge('has_categories_path',categories_path,'cg_taxonpath',taxonpath).id()");
 			addScriptParams.put("taxonpath",path);
 			addScriptParams.put("source_primaryCategory",resourcePrimaryCategory);
 			addScriptParams.put("source_identifier",resource);
@@ -369,10 +369,11 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			}
 		} else {
 			addPathScript = new StringBuilder("g.V().hasLabel(source_primaryCategory).has('identifier',source_identifier).next()" +
-					".addEdge('has_categories_path',g.V(sourcePathId).next()).id()");
+					".addEdge('has_categories_path',g.V(sourcePathId).next(),'cg_taxonpath',taxonpath).id()");
 			addScriptParams.put("sourcePathId",sourcePathId);
 			addScriptParams.put("source_primaryCategory",resourcePrimaryCategory);
 			addScriptParams.put("source_identifier",resource);
+			addScriptParams.put("taxonpath",path);
 			try {
 				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
 			} catch (Exception e) {
