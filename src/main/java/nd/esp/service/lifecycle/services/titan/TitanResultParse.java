@@ -240,7 +240,7 @@ public class TitanResultParse {
                             LOG.warn("parent--未能识别");
                         }
                     }
-                } else if ("has_resource_statistical".equals(label)) {
+                } else if (TitanKeyWords.has_resource_statistical.toString().equals(label)) {
                     statistics.putAll(map);
                 } else {
                     LOG.warn("未能识别");
@@ -800,16 +800,18 @@ public class TitanResultParse {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-        System.out.println("测试点1");
+        System.out.println("测试资源1：id和label相连");
 		testToMapForRelationQuery1();
-        System.out.println("测试点1.1");
+        System.out.println("测试资源2：id和label不相连");
         testToMapForRelationQuery4();
-        System.out.println("测试点2");
+        System.out.println("测试点：tech_info");
         testToMapForRelationQuery2();
-        System.out.println("测试边1");
+        System.out.println("测试边:has_relation");
         testToMapForRelationQuery3();
-        System.out.println("测试分割1");
+        System.out.println("测试分割");
         testGetIndexByLabel1();
+        System.out.println("测试统计数据：has_resource_statistical");
+        testToMapForRelationQuery5();
 	}
 
 	/**
@@ -1010,6 +1012,28 @@ public class TitanResultParse {
         expectResourceMap.put("order_num", "0.0");
         expectResourceMap.put("rr_label", "weo");
         expectResourceMap.put("id", "x4se1h-6e5odk-2qs5-72ptl4");
+
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+
+    /**
+     * ==>{identifier=531e9c35-02ec-4574-92ee-9d757c316df2, id=4qca38-134m8w-2exh-2hzby8, sta_data_from=TOTAL, sta_update_time=1470627616000, sta_res_type=assets, sta_key_value=10.0, label=has_resource_statistical, sta_key_title=downloads, sta_resource=046b6d6c-ba14-4561-8672-eaf19efc830d}
+     * 测试统计数据（边）
+     */
+    private static void testToMapForRelationQuery5() {
+        String resource = "==>{identifier=531e9c35-02ec-4574-92ee-9d757c316df2, id=4qca38-134m8w-2exh-2hzby8, sta_data_from=TOTAL, sta_update_time=1470627616000, sta_res_type=assets, sta_key_value=10.0, label=has_resource_statistical, sta_key_title=downloads, sta_resource=046b6d6c-ba14-4561-8672-eaf19efc830d}";
+        Map<String, String> resultResourceMap = toMapForRelationQuery(resource);
+
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "531e9c35-02ec-4574-92ee-9d757c316df2");
+        expectResourceMap.put("id", "4qca38-134m8w-2exh-2hzby8");
+        expectResourceMap.put("sta_data_from", "TOTAL");
+        expectResourceMap.put("sta_update_time", "1470627616000");
+        expectResourceMap.put("sta_res_type", "assets");
+        expectResourceMap.put("sta_key_value", "10.0");
+        expectResourceMap.put("label","has_resource_statistical");
+        expectResourceMap.put("sta_key_title","downloads");
+        expectResourceMap.put("sta_resource", "046b6d6c-ba14-4561-8672-eaf19efc830d");
 
         checkMapEqual(resultResourceMap, expectResourceMap);
     }
