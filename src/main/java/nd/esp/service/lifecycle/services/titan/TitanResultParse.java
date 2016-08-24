@@ -818,16 +818,30 @@ public class TitanResultParse {
 	public static void main(String[] args) {
         System.out.println("测试资源1：id和label相连");
 		testToMapForRelationQuery1();
+        System.out.println("###########################################################################################################################################");
         System.out.println("测试资源2：id和label不相连");
         testToMapForRelationQuery4();
+        System.out.println("###########################################################################################################################################");
         System.out.println("测试点：tech_info");
         testToMapForRelationQuery2();
+        System.out.println("###########################################################################################################################################");
         System.out.println("测试边:has_relation");
         testToMapForRelationQuery3();
-        System.out.println("测试分割");
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试分割的index:查询结果只有一条数据（资源），应返回[0, 1]");
         testGetIndexByLabel1();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试分割的index：常规返回多条数据，应返回[0, 7, 13, 19, 25],下一个测试可参考对比此结果");
+        testGetIndexByLabel2();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试按照index分割：常规返回多条数据");
+        testGetIndexByLabel3();
+        System.out.println("###########################################################################################################################################");
         System.out.println("测试统计数据：has_resource_statistical");
         testToMapForRelationQuery5();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试解析：无异常信息，即为通过");
+        testParse();
 	}
 
 	/**
@@ -1061,6 +1075,38 @@ public class TitanResultParse {
         resultStrMap.add(resultResourceMap);
         System.out.println(getIndexByLabel("assets",resultStrMap));
     }
+    private static void testGetIndexByLabel2(){
+        List<String> data = testData();
+        // 数据转成key-value
+        List<Map<String, String>> resultStrMap = changeStrToKeyValue(data);
+        // 切割资源
+        //List<List<Map<String, String>>> allItemMaps = cutOneItemMaps("assets", resultStrMap);
+        /*// 解析资源
+        for (List<Map<String, String>> oneItemMaps : allItemMaps) {
+            parseResource("assets", oneItemMaps, IncludesConstant.getIncludesList(), false);
+        }*/
+        System.out.println(getIndexByLabel("assets",resultStrMap));
+    }
+
+    private static void testGetIndexByLabel3(){
+        List<String> data = testData();
+        // 数据转成key-value
+        List<Map<String, String>> resultStrMap = changeStrToKeyValue(data);
+        // 切割资源
+        List<List<Map<String, String>>> allItemMaps = cutOneItemMaps("assets", resultStrMap);
+        int count = 0;
+        for(List<Map<String, String>> list:allItemMaps){
+            count = count +list.size();
+            System.out.println("map size:"+list.size()+"     first map is resource:" +list.get(0).get("label").equals("assets"));
+        }
+        System.out.println("afterCut:"+count+" input:"+data.size()+" isCountRight:" + (count == data.size()));
+
+    }
+
+    private static void testParse() {
+        List<String> data = testData();
+        parseToItemsResourceModel("assets",data,IncludesConstant.getIncludesList(),false);
+    }
 
 
     /**
@@ -1085,6 +1131,37 @@ public class TitanResultParse {
 			}
 		}
 	}
+
+    private static List<String> testData() {
+        List<String> data = new ArrayList<>();
+        data.add("==>{preview=[{\"previewKey\":\"previewValue\"}], identifier=[046b6d6c-ba14-4561-8672-eaf19efc830d], lc_last_update=[1438332053000], keywords=[[]], lc_version=[v0.3], description=[北京版纸牌屋延时摄影《麻将屋》 (1).mp4], search_coverage_string=[user/2107169263/shareing/transcode_waiting,user/2107169263//transcode_waiting,user/2107169263/owner/,user/2107169263/owner/transcode_waiting,user/2107169263/shareing/,user/2107169263//], language=[zh-CN], lc_status=[TRANSCODE_WAITING], cr_has_right=[false], title=[北京版纸牌屋延时摄影《麻将屋》 (1)], tags=[[]], search_code=[$F030001, $RA0100, $RA0103], id=65753280, label=assets, lc_enable=[true], lc_creator=[2107169263], lc_create_time=[1438246171000], primary_category=[assets], search_code_string=[$f030001,$ra0100,$ra0103], search_coverage=[User/2107169263//TRANSCODE_WAITING, User/2107169263/OWNER/TRANSCODE_WAITING, User/2107169263/OWNER/, User/2107169263/SHAREING/TRANSCODE_WAITING, User/2107169263/SHAREING/, User/2107169263//], lc_publisher=[]}");
+        data.add("==>{cg_taxonpath=, identifier=94712c0c-2998-4590-a2b2-25dec7354026, cg_taxoncode=$RA0100, id=17norc-135bk0-2nmd-b9rzk, label=has_category_code, cg_taxonname=媒体素材, cg_category_code=$R, cg_short_name=assets, cg_category_name=resourcetype}");
+        data.add("==>{identifier=97e63a9e-8518-45a4-b046-5c2668ceda40, cg_taxoncode=$F030001, id=17nod4-135bk0-2nmd-135uew, label=has_category_code, cg_taxonname=mp4视频文件, cg_category_code=$F, cg_short_name=video/mp4, cg_category_name=mediatype}");
+        data.add("==>{cg_taxonpath=, identifier=9419e7ce-d939-4fb4-83ee-27bdb0851b51, cg_taxoncode=$RA0103, id=17np5k-135bk0-2nmd-13ixcw, label=has_category_code, cg_taxonname=视频, cg_category_code=$R, cg_short_name=video, cg_category_name=resourcetype}");
+        data.add("==>{identifier=[2a4729df-62a3-4d7b-931f-73c2450b15de], id=66035872, label=tech_info, ti_title=[href], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/046b6d6c-ba14-4561-8672-eaf19efc830d.pkg/北京版纸牌屋延时摄影《麻将屋》 (1).mp4], ti_size=[6500269], ti_format=[video/mp4]}");
+        data.add("==>{identifier=[f39dec51-82a1-4669-b722-315be3b62dc2], id=66359408, label=tech_info, ti_title=[source], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/046b6d6c-ba14-4561-8672-eaf19efc830d.pkg/北京版纸牌屋延时摄影《麻将屋》 (1).mp4], ti_size=[6500269], ti_format=[video/mp4]}");
+        data.add("==>{identifier=531e9c35-02ec-4574-92ee-9d757c316df2, id=4vrzmg-135bk0-2fpx-2hqthc, label=has_resource_statistical, sta_data_from=TOTAL, sta_update_time=1470627616000, sta_res_type=assets, sta_key_value=10.0, sta_key_title=downloads, sta_resource=046b6d6c-ba14-4561-8672-eaf19efc830d}");
+        data.add("==>{preview=[{\"previewKey\":\"previewValue\"}], identifier=[2960018c-4a12-4ccd-a81d-974c7a97f939], lc_last_update=[1438332054000], keywords=[[]], lc_version=[v0.3], description=[李行亮-回忆里的0150那个人.mp3], search_coverage_string=[user/2107169263/owner/,user/2107169263/owner/created,user/2107169263/shareing/,user/2107169263/shareing/created,user/2107169263//created,user/2107169263//], language=[zh-CN], lc_status=[CREATED], cr_has_right=[false], title=[李行亮-回忆里的0150那个人], tags=[[]], search_code=[$F020001, $RA0100, $RA0102], id=65847488, label=assets, lc_enable=[true], lc_creator=[2107169263], lc_create_time=[1438248043000], primary_category=[assets], search_code_string=[$f020001,$ra0100,$ra0102], search_coverage=[User/2107169263//CREATED, User/2107169263/OWNER/CREATED, User/2107169263/OWNER/, User/2107169263/SHAREING/CREATED, User/2107169263/SHAREING/, User/2107169263//], lc_publisher=[]}");
+        data.add("==>{cg_taxonpath=, identifier=b7ce2cdc-2b38-46d5-9bc0-fcfe225dd4ff, cg_taxoncode=$RA0100, id=17s4d4-137c8w-2nmd-b9rzk, label=has_category_code, cg_taxonname=媒体素材, cg_category_code=$R, cg_short_name=assets, cg_category_name=resourcetype}");
+        data.add("==>{identifier=0a104d9f-45ad-416f-b5bc-4142e68ff05f, cg_taxoncode=$F020001, id=17s3yw-137c8w-2nmd-13arjk, label=has_category_code, cg_taxonname=mp3音频文件, cg_category_code=$F, cg_short_name=audio/mp3, cg_category_name=mediatype}");
+        data.add("==>{cg_taxonpath=, identifier=e7c40d95-e1ed-4350-a9c8-d9f28ce8c6ee, cg_taxoncode=$RA0102, id=17s4rc-137c8w-2nmd-13j3og, label=has_category_code, cg_taxonname=音频, cg_category_code=$R, cg_short_name=audio, cg_category_name=resourcetype}");
+        data.add("==>{identifier=[6e5358d6-61ab-4d93-b233-335454fe8d93], id=66105480, label=tech_info, ti_title=[href], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/2960018c-4a12-4ccd-a81d-974c7a97f939.pkg/李行亮-回忆里的0150那个人.mp3], ti_size=[3642747], ti_format=[audio/mp3]}");
+        data.add("==>{identifier=[d511c92d-15ad-4a0f-b733-3a0ad9526639], id=66146464, label=tech_info, ti_title=[source], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/2960018c-4a12-4ccd-a81d-974c7a97f939.pkg/李行亮-回忆里的0150那个人.mp3], ti_size=[3642747], ti_format=[audio/mp3]}");
+        data.add("==>{preview=[{\"previewKey\":\"previewValue\"}], identifier=[23c6c5b9-de0a-46bd-a010-294f8a35e30c], lc_last_update=[1438332053000], keywords=[[]], lc_version=[v0.3], description=[IMG_1024.mp4], search_coverage_string=[user/2107169263/shareing/transcode_waiting,user/2107169263//transcode_waiting,user/2107169263/owner/,user/2107169263/owner/transcode_waiting,user/2107169263/shareing/,user/2107169263//], language=[zh-CN], lc_status=[TRANSCODE_WAITING], cr_has_right=[false], title=[IMG_1024], tags=[[]], search_code=[$F030001, $RA0100, $RA0103], id=66027656, label=assets, lc_enable=[true], lc_creator=[2107169263], lc_create_time=[1438246163000], primary_category=[assets], search_code_string=[$f030001,$ra0100,$ra0103], search_coverage=[User/2107169263//TRANSCODE_WAITING, User/2107169263/OWNER/TRANSCODE_WAITING, User/2107169263/OWNER/, User/2107169263/SHAREING/TRANSCODE_WAITING, User/2107169263/SHAREING/, User/2107169263//], lc_publisher=[]}");
+        data.add("==>{cg_taxonpath=, identifier=c5c8b92c-9082-49b1-b1de-82209084ae9d, cg_taxoncode=$RA0100, id=17vhn5-13b79k-2nmd-b9rzk, label=has_category_code, cg_taxonname=媒体素材, cg_category_code=$R, cg_short_name=assets, cg_category_name=resourcetype}");
+        data.add("==>{identifier=b7d3a4de-a8f2-4093-9409-029f76256ebe, cg_taxoncode=$F030001, id=17vh8x-13b79k-2nmd-135uew, label=has_category_code, cg_taxonname=mp4视频文件, cg_category_code=$F, cg_short_name=video/mp4, cg_category_name=mediatype}");
+        data.add("==>{cg_taxonpath=, identifier=5984e1a0-cf91-46f9-ad91-df5577e9de17, cg_taxoncode=$RA0103, id=17vi1d-13b79k-2nmd-13ixcw, label=has_category_code, cg_taxonname=视频, cg_category_code=$R, cg_short_name=video, cg_category_name=resourcetype}");
+        data.add("==>{identifier=[34601bd1-6a1d-478a-a1f8-9190eee60b17], id=65781952, label=tech_info, ti_title=[href], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/23c6c5b9-de0a-46bd-a010-294f8a35e30c.pkg/IMG_1024.mp4], ti_size=[2034979], ti_format=[video/mp4]}");
+        data.add("==>{identifier=[582ee625-2e72-4adc-b837-e8add2860403], id=66011376, label=tech_info, ti_title=[source], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/23c6c5b9-de0a-46bd-a010-294f8a35e30c.pkg/IMG_1024.mp4], ti_size=[2034979], ti_format=[video/mp4]}");
+        data.add("==>{preview=[{\"previewKey\":\"previewValue\"}], identifier=[3a9ade51-14a2-4e66-851e-18279a8f16cb], lc_last_update=[1438332054000], keywords=[[]], lc_version=[v0.3], description=[song.mp3], search_coverage_string=[user/2107169263/owner/,user/2107169263/owner/created,user/2107169263/shareing/,user/2107169263/shareing/created,user/2107169263//created,user/2107169263//], language=[zh-CN], lc_status=[CREATED], cr_has_right=[false], title=[song], tags=[[]], search_code=[$F020001, $RA0100, $RA0102], id=132272144, label=assets, lc_enable=[true], lc_creator=[2107169263], lc_create_time=[1438245183000], primary_category=[assets], search_code_string=[$f020001,$ra0100,$ra0102], search_coverage=[User/2107169263//CREATED, User/2107169263/OWNER/CREATED, User/2107169263/OWNER/, User/2107169263/SHAREING/CREATED, User/2107169263/SHAREING/, User/2107169263//], lc_publisher=[]}");
+        data.add("==>{cg_taxonpath=, identifier=210962ed-05ba-40ab-b36a-e9b44356748f, cg_taxoncode=$RA0100, id=2g30n6-26r1u8-2nmd-b9rzk, label=has_category_code, cg_taxonname=媒体素材, cg_category_code=$R, cg_short_name=assets, cg_category_name=resourcetype}");
+        data.add("==>{identifier=4abc1ec2-a7a7-463d-9336-5b11c9087c98, cg_taxoncode=$F020001, id=2g308y-26r1u8-2nmd-13arjk, label=has_category_code, cg_taxonname=mp3音频文件, cg_category_code=$F, cg_short_name=audio/mp3, cg_category_name=mediatype}");
+        data.add("==>{cg_taxonpath=, identifier=518ae10b-32b8-4387-8795-5cbd223174e7, cg_taxoncode=$RA0102, id=2g311e-26r1u8-2nmd-13j3og, label=has_category_code, cg_taxonname=音频, cg_category_code=$R, cg_short_name=audio, cg_category_name=resourcetype}");
+        data.add("==>{identifier=[66d04dce-d4a8-4b2d-8174-4544844d4304], id=65904696, label=tech_info, ti_title=[source], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/3a9ade51-14a2-4e66-851e-18279a8f16cb.pkg/song.mp3], ti_size=[160545], ti_format=[audio/mp3]}");
+        data.add("==>{identifier=[bc77f29d-5057-4b27-962c-10cb21a4a07c], id=66465904, label=tech_info, ti_title=[href], ti_printable=[false], ti_location=[${ref-path}/qa_content_edu/esp/assets/3a9ade51-14a2-4e66-851e-18279a8f16cb.pkg/song.mp3], ti_size=[160545], ti_format=[audio/mp3]}");
+
+        return data;
+    }
 
 
 }
