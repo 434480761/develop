@@ -693,22 +693,35 @@ public class TitanResultParse {
                         //点上的label和id特殊处理
                         dealSpecialField(s, tmpMap);
                     } else {
-                        String[] kv = s.split("=");
-                        if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                        splitKeyValue(tmpMap,s);
+                        //String[] kv = s.split("=");
+                        //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
                     }
                 }
             } else if (str.contains(", ")) {//edge
                 String[] fields = str.split(", ");
                 for (String s : fields) {
-                    String[] kv = s.split("=");
-                    if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                    splitKeyValue(tmpMap,s);
+                    //String[] kv = s.split("=");
+                    //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
                 }
             } else {
-                String[] kv = str.split("=");
-                if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                splitKeyValue(tmpMap,str);
+                //String[] kv = str.split("=");
+                //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
             }
         }
         return tmpMap;
+    }
+
+    /**
+     * 从第一个等号开始分割
+     * @param tmpMap
+     * @param keyValue
+     */
+    private static void splitKeyValue(Map<String, String> tmpMap, String keyValue) {
+        int begin = keyValue.indexOf("=");
+        tmpMap.put(keyValue.substring(0, begin), keyValue.substring(begin + 1, keyValue.length()));
     }
 
     /**
@@ -742,20 +755,23 @@ public class TitanResultParse {
         int end = field.indexOf(", ");
         if (end > 0) {
             String label = field.substring(0, end);
-            String[] kv1 = label.split("=");
-            if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
+            splitKeyValue(tmpMap,label);
+            //String[] kv1 = label.split("=");
+            //if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
             String other = field.substring(end + 1, field.length()).trim();
             if (other.startsWith("label=") || other.startsWith("id=")) {
                 dealSpecialField(other, tmpMap);
             } else {
-                String[] kv2 = other.split("=");
-                if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
+                splitKeyValue(tmpMap,other);
+                //String[] kv2 = other.split("=");
+                //if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
             }
 
 
         } else {
-            String[] kv = field.split("=");
-            if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+            splitKeyValue(tmpMap,field);
+            //String[] kv = field.split("=");
+            //if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
         }
     }
 
