@@ -256,7 +256,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		List<ResourceRelation> resourceRelations = educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
 
-		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
+		titanImportRepository.checkResourceAllInTitan2(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
 
 	}
 
