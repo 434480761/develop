@@ -203,8 +203,106 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
     }
     
-    String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title"};
+    String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title", "ti_printable"};
     String techInfoEdgeLabel = "has_tech_info";
+    
+    private void checkTechInfoHandle(Education education,List<TechInfo> techInfos){
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(techInfoEdgeLabel, techInfoEdgeLabel);
+        checkTechInfos(education, techInfos, baseBuilder);
+        baseBuilder = new Builder(baseScript).outE().hasLabel(techInfoEdgeLabel, techInfoEdgeLabel).inV();
+        checkTechInfos(education, techInfos, baseBuilder);
+    }
+    
+    private void checkCoverageHandle(Education education,List<ResCoverage> resCoverage){
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
+        checkResCoverage(education, resCoverage, baseBuilder);
+        baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
+        checkResCoverage(education, resCoverage, baseBuilder);
+    }
+    /**
+     * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
+     * @param education
+     * @param techInfos
+     * @since 1.2.6
+     * @see
+     */
+    private void checkTechInfos(Education education,List<TechInfo> techInfos, Builder baseBuilder){
+        Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(techInfos);
+        Set<String> keySet = techInfoMultiMap.keySet();
+        int size = keySet.size();
+        String[] arr = keySet.toArray(new String[size]);
+//        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+//        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(techInfoEdgeLabel, techInfoEdgeLabel);
+        Builder builder = null;
+        Map<String, Object> paramMap = null;
+        for (int i = 0; i < size; i++) {
+            Long count = 0L;
+            Collection<TechInfo> teachInfoList = techInfoMultiMap.get(arr[i]);
+            for (TechInfo techInfo : teachInfoList) {
+                paramMap = initParamMap(education, techInfoEdgeLabel);
+                List<Object> techInfoPartField = fillTeachInfoPartField(techInfo);
+                fillParamMap(paramMap, techInfoPartField, techInfoField);
+                
+                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, techInfoField);
+                
+                Long tmp = executeScriptUniqueLong(paramMap, builder.count());
+                count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
+            }
+            saveAbnormalData(education, builder, paramMap, count);
+        }
+    }
+
+    private void saveAbnormalData(Education education, Builder builder, Map<String, Object> paramMap, Long count) {
+        // count = 1 为正常
+        if (count == 0) {
+            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+            titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
+        } else if(count >= 2){
+            LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+            titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
+        }
+    }
+
+    private Long techInfoEdgeScriptExecutionException(Builder builder, Map<String, Object> paramMap, Long count, Long tmp) {
+        if (tmp != null) {
+            count += tmp;
+        }else {
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                    "查询脚本发生异常" + builder.builder());
+        }
+        return count;
+    }
+    
+    String[] coverageField = new String[]{"identifier", "strategy", "target", "target_type"};
+    String coverageEdgeLabel = "has_coverage";
+    private void checkResCoverage(Education education,List<ResCoverage> resCoverages, Builder baseBuilder){
+        Multimap<String, ResCoverage> coverageMultiMap = toCoverageMultimap(resCoverages);
+        Set<String> keySet = coverageMultiMap.keySet();
+        int size = keySet.size();
+        String[] arr = keySet.toArray(new String[size]);
+        Builder builder = null;
+        Map<String, Object> paramMap = null;
+        for (int i = 0; i < size; i++) {
+            Long count = 0L;
+            Collection<ResCoverage> coverages = coverageMultiMap.get(arr[i]);
+            for (ResCoverage coverage : coverages) {
+                paramMap = initParamMap(education, coverageEdgeLabel);
+                List<Object> techInfoPartField = fillResCoveragePartField(coverage);
+                fillParamMap(paramMap, techInfoPartField, coverageField);
+                
+                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, coverageField);
+                
+                Long tmp = executeScriptUniqueLong(paramMap, builder.count());
+                count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
+            }
+            saveAbnormalData(education, builder, paramMap, count);
+        }
+    }
+    
     /**
      * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
      * @param education
@@ -212,13 +310,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
      * @since 1.2.6
      * @see
      */
-    public void checkTechInfos(Education education,List<TechInfo> sourceTechInfo){
+    private void checkTechInfoNode(Education education,List<TechInfo> sourceTechInfo, Builder baseBuilder){
         Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(sourceTechInfo);
         Set<String> keySet = techInfoMultiMap.keySet();
         int size = keySet.size();
         String[] arr = keySet.toArray(new String[size]);
-        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
-        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(techInfoEdgeLabel, techInfoEdgeLabel);
         Builder builder = null;
         Map<String, Object> paramMap = null;
         for (int i = 0; i < size; i++) {
@@ -232,54 +328,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                 builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, techInfoField);
                 
                 Long tmp = executeScriptUniqueLong(paramMap, builder.count());
-                if (tmp != null) {
-                    count += tmp;
-                }
+                count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
             }
-//            count = 1 为正常
-            if (count == 0) {
-                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
-                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
-            } else if(count >= 2){
-                LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
-                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
-            }
+            saveAbnormalData(education, builder, paramMap, count);
         }
     }
     
-    
-    public void checkTechInfoNode(Education education,List<TechInfo> sourceTechInfo){
-//        Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(sourceTechInfo);
-//        Set<String> keySet = techInfoMultiMap.keySet();
-//        int size = keySet.size();
-//        String[] arr = keySet.toArray(new String[size]);
-//        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
-//        Builder baseBuilder = null;
-//        Map<String, Object> paramMap = null;
-//        for (int i = 0; i < size; i++) {
-//            Long count = 0L;
-//            Collection<TechInfo> teachInfos = techInfoMultiMap.get(arr[i]);
-//            for (TechInfo techInfo : teachInfos) {
-//                paramMap = initParamMap(education, techInfoEdgeLabel);
-//                List<Object> techInfoPartField = fillTeachInfoPartField(techInfo);
-//                fillParamMap(paramMap, techInfoPartField, techInfoField);
-//                
-//                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, techInfoField);
-//                
-//                Long tmp = executeScriptUniqueLong(paramMap, builder.count());
-//                if (tmp != null) {
-//                    count += tmp;
-//                }
-//            }
-////            count = 1 为正常
-//            if (count == 0) {
-//                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
-//                titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
-//            } else if(count >= 2){
-//                LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
-//                titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
-//            }
-//        }
+    private List<Object> fillResCoveragePartField(ResCoverage coverage) {
+        List<Object> coveragePartField = new ArrayList<Object>();
+        coveragePartField.add(coverage.getIdentifier());
+        coveragePartField.add(coverage.getStrategy());
+        coveragePartField.add(coverage.getTarget());
+        coveragePartField.add(coverage.getTargetType());
+        return coveragePartField;
     }
     
     
@@ -295,6 +356,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         techInfoPartField.add(techInfo.getSecureKey());
         techInfoPartField.add(techInfo.getSize());
         techInfoPartField.add(techInfo.getTitle());
+        techInfoPartField.add(techInfo.getPrintable());
         return techInfoPartField;
     }
     
@@ -302,6 +364,21 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         Multimap<String, TechInfo> multimap = ArrayListMultimap.create();
         for (TechInfo techInfo : techInfos) {
             multimap.put(techInfo.getTitle(), techInfo);
+        }
+        return multimap;
+    }
+    
+    /**
+     * 根据 target,target_type,strategy 的唯一性去重
+     * @param resCoverages
+     * @return
+     * @since 1.2.6
+     * @see
+     */
+    private Multimap<String, ResCoverage> toCoverageMultimap(List<ResCoverage> resCoverages){
+        Multimap<String, ResCoverage> multimap = ArrayListMultimap.create();
+        for (ResCoverage coverage : resCoverages) {
+            multimap.put(new StringBuilder(coverage.getTarget()).append(coverage.getTargetType()).append(coverage.getStrategy()).toString(), coverage);
         }
         return multimap;
     }
@@ -355,10 +432,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         
     }
     
-    public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
-        checkCategoryEdges(education, resourceCategoryList);
-        checkTechInfos(education, techInfos);
-        checkCategoryNodes(education, resourceCategoryList);
+    public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
+//        checkCategoryEdges(education, resourceCategoryList);
+//        checkCategoryNodes(education, resourceCategoryList);
+//        checkTechInfoHandle(education, techInfos);
+        checkCoverageHandle(education, resCoverages);
     }
     
     final String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name", "identifier"};

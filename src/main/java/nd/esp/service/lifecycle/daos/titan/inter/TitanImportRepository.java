@@ -32,5 +32,5 @@ public interface TitanImportRepository {
     
     public void checkCategoryNodes(Education education,List<ResourceCategory> resourceCategoryList);
     
-    void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList);
+    void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList);
 }
