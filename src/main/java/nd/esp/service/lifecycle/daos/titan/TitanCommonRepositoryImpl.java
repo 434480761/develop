@@ -159,9 +159,20 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     @Override
     public void butchDeleteVertexById(List<String> ids) throws Exception {
-        for(String id : ids){
-            deleteVertexById(id);
+        Map<String, Object> params = new HashMap<>();
+        StringBuffer withInScript = new StringBuffer("within(");
+        for (int i=0; i <ids.size() ;i ++){
+            String indentifierName = "identifier"+i;
+            if(i == 0){
+                withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
+            }
+            params.put(indentifierName, ids.get(i));
         }
+        withInScript.append(")");
+        String script = "g.V().has('identifier',"+withInScript.toString()+").drop();";
+        executeScript(script, params);
     }
 
     @Override

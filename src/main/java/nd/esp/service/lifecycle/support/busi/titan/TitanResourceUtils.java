@@ -79,6 +79,9 @@ public class TitanResourceUtils {
         return techInfoMap;
     }
 
+    /**
+     * 通过title对同一个资源的techInfo进行去重
+     * */
     public static List<TechInfo> distinctTechInfo(List<TechInfo> techInfos){
         Map<String, TechInfo> techInfoMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(techInfos)) {
@@ -89,17 +92,23 @@ public class TitanResourceUtils {
         return new ArrayList<>(techInfoMap.values());
     }
 
+    /**
+     * 通过Strategy、Target、TargetType覆盖对同一个资源的coverage进行去重
+     * */
     public static List<ResCoverage> distinctCoverage(List<ResCoverage> coverages){
         Map<String, ResCoverage> coverageMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(coverages)) {
             for (ResCoverage coverage : coverages) {
-                String key = coverage.getResType() + coverage.getTarget() + coverage.getTargetType();
+                String key = getCoverageUniqueKey(coverage);
                 coverageMap.put(key, coverage);
             }
         }
         return new ArrayList<>(coverageMap.values());
     }
 
+    /**
+     * 获取一个资源的所有path
+     * */
     public static List<String> distinctCategoryPath(List<ResourceCategory> categoryList){
         Set<String> path = new HashSet<>();
         if (CollectionUtils.isNotEmpty(categoryList)) {
@@ -113,6 +122,9 @@ public class TitanResourceUtils {
         return new ArrayList<>(path);
     }
 
+    /**
+     * 获取一个资源的所有维度数据
+     * */
     public static Set<String> distinctCategoryCode(List<ResourceCategory> categoryList){
         Set<String> codes = new HashSet<>();
         if(CollectionUtils.isNotEmpty(categoryList)){
@@ -124,5 +136,12 @@ public class TitanResourceUtils {
         }
 
         return codes;
+    }
+
+    public static String getCoverageUniqueKey(ResCoverage coverage){
+        if (coverage == null){
+            return null;
+        }
+        return  coverage.getStrategy()+coverage.getTarget()+coverage.getTargetType();
     }
 }
