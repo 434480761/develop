@@ -1,9 +1,9 @@
 package nd.esp.service.lifecycle.daos.titan.inter;
 
+import java.util.List;
+
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.*;
-
-import java.util.List;
 
 /**
  * Created by liuran on 2016/7/26.
@@ -28,4 +28,9 @@ public interface TitanImportRepository {
                                     List<ResourceCategory> resourceCategoryList,
                                     List<TechInfo> techInfos,
                                     List<ResourceRelation> resourceRelationList);
+    public void checkCategoryEdges(Education education,List<ResourceCategory> resourceCategoryList);
+    
+    public void checkCategoryNodes(Education education,List<ResourceCategory> resourceCategoryList);
+    
+    void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverageList, List<ResourceCategory> resourceCategoryList, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList);
 }
