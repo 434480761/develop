@@ -185,7 +185,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         dealWithPrintable(titanExpression, params.get("ti_printable"));
         params.remove("ti_printable");
         dealWithRelation(titanExpression, params.get("relation"), reverse);
-        //dealWithRelation4Statistics(titanExpression, params.get("relation"), reverse);
         params.remove("relation");
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
@@ -716,7 +715,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
     /**
-     *
+     * .outE('has_tech_info').has('ti_printable',false).select('x').dedup()
      * @param titanExpression
      * @param print
      */
@@ -727,12 +726,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (CollectionUtils.isEmpty(eqPrint)) return;
         // 只处理第一个 .append(",out('").append(TitanKeyWords.has_tech_info.toString()).append("')")
         String tiTitle = eqPrint.get(0);
-        String script = ".has('ti_printable',true)";
+        String script = ".outE('has_tech_info').has('ti_printable',true)";
         if (tiTitle.contains("#")) {
             script = script + ".has('ti_title','" + tiTitle.split("#")[1] + "')";
         }
-        // limit(1) 当printableKey为null时任意取一条
-        script = script + ".limit(1)";
+        script = script + ".select('x').dedup()";
         // TODO 1、参数和脚本分离 2、常量字符替换成枚举
         titanExpression.setPrintable(true, script);
     }
@@ -755,6 +753,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * out('has_tech_info').has('ti_title','href').values('ti_size'),incr
      * out('has_resource_statistical').has('sta_key_title','download').has('sta_data_from','TOTAL').values('sta_key_value'),incr
      * .order().by(choose(__.out('has_category_code').has('cg_taxoncode',textRegex('RL.*')),__.values('cg_taxoncode'),__.constant('RL9999999')),incr)
+     * :> g.V().has('identifier','a10f58dc-e6ab-4d16-9699-c1fab3e154d0').has('lc_enable',true).has('primary_category','chapters').outE('has_relation').has('enable',true).as('e').inV().has('lc_enable',true).has('primary_category','assets').as('x').select('x')
+     * .choose(__.outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL'),select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value'),__.constant('0.0'))
      * @param titanExpression
      * @param orderMap
      */
@@ -767,34 +767,35 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 String orderBy = TitanOrder.checkSortOrder(orderMap.get(field));
                 String script = null;
                 if ("ti_size".equals(field)) {
-                    script = "choose(__.outE('has_tech_info').has('ti_title','href'),__.values('ti_size'),__.constant(0))";
-                    orderList.add(new TitanOrder("ti_title", script, orderBy));
+                    script = "outE('" + TitanKeyWords.has_tech_info.toString() + "').has('ti_title','href')";
+                    //script = "choose(__.outE('" + TitanKeyWords.has_tech_info.toString() + "').has('ti_title','href'),__.values('ti_size'),__.constant(0))";
+                    orderList.add(new TitanOrder("ti_title", "choose(select('x')." + script + ",select('x')." + script + ".values('ti_size'),__.constant(0))", orderBy));
                 } else if ("sta_key_value".equals(field)) {
                     //desc#downloads#TOTAL
                     String[] tmp = orderMap.get(field).split("#");
                     orderBy = TitanOrder.checkSortOrder(tmp[0]);
-                    script = "outE('has_resource_statistical').has('sta_key_title','" + tmp[1] + "').has('sta_data_from','" + tmp[2] + "')";
-                    orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant(''))", orderBy));
+                    script = "outE('" + TitanKeyWords.has_resource_statistical.toString() + "').has('sta_key_title','" + tmp[1] + "').has('sta_data_from','" + tmp[2] + "')";
+                    orderList.add(new TitanOrder("sta_key_value", "choose(select('x')." + script + ",select('x')." + script + ".values('sta_key_value'),__.constant(''))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
                 } else if ("top".equals(field)) {
-                    script = "outE('has_resource_statistical').has('sta_key_title','top')";
-                    orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant('0'))", orderBy));
+                    script = "outE('" + TitanKeyWords.has_resource_statistical.toString() + "').has('sta_key_title','top')";
+                    orderList.add(new TitanOrder("sta_key_value", "choose(select('x')." + script + ",select('x')." + script + ".values('sta_key_value'),__.constant(''))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
                 } else if ("scores".equals(field)) {
-                    script = "outE('has_resource_statistical').has('sta_key_title','scores')";
-                    orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant('0'))", orderBy));
+                    script = "outE('" + TitanKeyWords.has_resource_statistical.toString() + "').has('sta_key_title','scores')";
+                    orderList.add(new TitanOrder("sta_key_value", "choose(select('x')." + script + ",select('x')." + script + ".values('sta_key_value'),__.constant(''))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
                 } else if ("votes".equals(field)) {
-                    script = "outE('has_resource_statistical').has('sta_key_title','votes')";
-                    orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant('0'))", orderBy));
+                    script = "outE('" + TitanKeyWords.has_resource_statistical.toString() + "').has('sta_key_title','votes')";
+                    orderList.add(new TitanOrder("sta_key_value", "choose(select('x')." + script + ",select('x')." + script + ".values('sta_key_value'),__.constant(''))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
                 } else if ("views".equals(field)) {
-                    script = "outE('has_resource_statistical').has('sta_key_title','views')";
-                    orderList.add(new TitanOrder("sta_key_value", "choose(__." + script + ",__.values('sta_key_value'),__.constant('0'))", orderBy));
+                    script = "outE('" + TitanKeyWords.has_resource_statistical.toString() + "').has('sta_key_title','views')";
+                    orderList.add(new TitanOrder("sta_key_value", "choose(select('x')." + script + ",select('x')." + script + ".values('sta_key_value'),__.constant(''))", orderBy));
                     titanExpression.setStatistics(true, "," + script);
                 } else if ("cg_taxoncode".equals(field)) {//viplevel
-                    script = "choose(__.outE('has_category_code').has('cg_taxoncode',textRegex('\\$RL.*')),__.values('cg_taxoncode'),__.constant(''))";
-                    orderList.add(new TitanOrder("cg_taxoncode", script, orderBy));
+                    script = "outE('" + TitanKeyWords.has_category_code.toString() + "').has('cg_taxoncode',textRegex('\\$RL.*'))";
+                    orderList.add(new TitanOrder("cg_taxoncode", "choose(select('x')." + script + ",select('x')." + script + ".values('cg_taxoncode'),__.constant(''))", orderBy));
                 } else {
                     orderList.add(new TitanOrder(field, field, orderBy));
                 }
