@@ -822,23 +822,24 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             orderList.add(new TitanOrder(field, script, orderBy));
         }
         if (CollectionUtils.isEmpty(orderList)) {// 默认排序
-            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(), ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
+            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
         }
         titanExpression.setOrderList(orderList);
     }
 
     /**
      *
+     * choose(select('x').has('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL'),select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value'),__.constant('0.0'))
      * @param orderMap
      * @param showVersion
      * @param orderList
      */
     private void dealWithShowVersionOrder(Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
         if (showVersion) {
-            orderList.add(new TitanOrder(ES_SearchField.m_identifier.toString(), ES_SearchField.m_identifier.toString(), TitanOrder.SORTORDER.ASC.toString()));
+            orderList.add(new TitanOrder(ES_SearchField.m_identifier.toString(), "choose(select('x').has('" + ES_SearchField.m_identifier.toString()+ "'),select('x').values('"+ES_SearchField.m_identifier.toString()+"'),__.constant(''))", TitanOrder.SORTORDER.ASC.toString()));
             if (CollectionUtils.isEmpty(orderMap)) {
                 // 当为true的时候且oderby为空的时候
-                orderList.add(new TitanOrder(ES_SearchField.lc_version.toString(), ES_SearchField.lc_version.toString(), TitanOrder.SORTORDER.ASC.toString()));
+                orderList.add(new TitanOrder(ES_SearchField.lc_version.toString(), "choose(select('x').has('" +ES_SearchField.lc_version.toString()+ "'),select('x').values('"+ES_SearchField.lc_version.toString()+"'),__.constant(''))", TitanOrder.SORTORDER.ASC.toString()));
             }
         }
     }

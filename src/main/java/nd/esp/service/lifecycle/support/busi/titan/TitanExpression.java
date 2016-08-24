@@ -179,7 +179,7 @@ public class TitanExpression implements TitanScriptGenerator {
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
         if (this.relationQueryOrderBy || this.isOrderBySortNum) {
             //.select('e').order().by('order_num',decr).select('x')
-            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by('").append(this.orderByEdgeFieldName).append("',incr).select('x')");
+            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),incr).select('x')");
         } else {
             appendOrderBy(scriptBuffer);
             /*scriptBuffer.append(".order()");
