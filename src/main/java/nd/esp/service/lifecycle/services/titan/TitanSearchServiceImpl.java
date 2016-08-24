@@ -797,12 +797,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     script = "outE('" + TitanKeyWords.has_category_code.toString() + "').has('cg_taxoncode',textRegex('\\$RL.*'))";
                     orderList.add(new TitanOrder("cg_taxoncode", "choose(select('x')." + script + ",select('x')." + script + ".values('cg_taxoncode'),__.constant(''))", orderBy));
                 } else {
-                    orderList.add(new TitanOrder(field, field, orderBy));
+                    orderList.add(new TitanOrder(field, "'" + field + "'", orderBy));
                 }
             }
         }
         if (CollectionUtils.isEmpty(orderList)) {// 默认排序
-            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(), ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
+            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),"'" + ES_SearchField.lc_create_time.toString()+"'" , TitanOrder.SORTORDER.DESC.toString()));
         }
         titanExpression.setOrderList(orderList);
     }
