@@ -34,7 +34,7 @@ public class ParameterVerificationHelper {
      * @return
      */
     public static String coverageVerification(String coverage){
-      //对于入参的coverage每个在最后追加一个空格，以保证elemnt的size为3,用于支持Org/LOL/的模糊查询
+    	//对于入参的coverage每个在最后追加一个空格，以保证elemnt的size为3,用于支持Org/LOL/的模糊查询
         coverage = coverage + " ";
         List<String> elements = Arrays.asList(coverage.split("/"));
         //格式错误判断

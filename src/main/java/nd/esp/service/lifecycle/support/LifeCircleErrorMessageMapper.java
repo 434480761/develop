@@ -1,6 +1,8 @@
 package nd.esp.service.lifecycle.support;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+
+import org.apache.zookeeper.txn.CreateTxnV0;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -474,7 +476,14 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	DeleteCopyrightOwnerSuccess("LC/DELETE_PROVIDER_SUCCESS",getPropertyValue("copyrightOwnerServiceImpl.deleteCopyrightOwner.operation.success")),
 	CheckDuplicateCopyrightOwnerTitleFail("LC/CHECK_DUPLICATE_PROVIDER_TITLE_FAIL",getPropertyValue("copyrightOwnerServiceImpl.createCopyrightOwner.check.titleDuplicate.fail")),
 	CopyrightOwnerNotFound("LC/RESOURCE_PROVIDER_NOT_FOUND",getPropertyValue("copyrightOwnerServiceImpl.updateCopyrightOwner.check.copyrightOwnerNotExist.fail")),
-
+	
+	//库分享
+	CoverageSharingParamFail("LC/COVERAGE_SHARING_PARAM_FAIL",getPropertyValue("coverageSharingController.createCoverageSharing.check.coverage.fail")),
+	CoverageSharingExistFail("LC/COVERAGE_SHARING_EXIST_FAIL",getPropertyValue("coverageSharingController.createCoverageSharing.coveragesharing.exist.fail")),
+	CreateCoverageSharingFail("LC/CREATE_COVERAGE_SHARING_FAIL",getPropertyValue("coverageSharingServiceImpl.createCoverageSharing.operation.fail")),
+	CoverageSharingNotFound("LC/COVERAGE_SHARING_NOT_FOUND",getPropertyValue("coverageSharingServiceImpl.deleteCoverageSharing.check.coverageSharingNotExist.fail")),
+	DeleteCoverageSharingSuccess("LC/DELETE_COVERAGE_SHARING_SUCCESS",getPropertyValue("coverageSharingController.deleteCoverageSharing.operation.success")),
+	
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
@@ -492,12 +501,8 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	Forbidden("LC/FORBIDDEN",getPropertyValue("forbidden"));
 	//====End=====
 
-
-
 	private static final Logger log = LoggerFactory.getLogger(LifeCircleErrorMessageMapper.class);
 
-
-	
 	private String code;
 	
 	private String message;
@@ -529,5 +534,4 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 		}
 		return "";
 	}
-
 }

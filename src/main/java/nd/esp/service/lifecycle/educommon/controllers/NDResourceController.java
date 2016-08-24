@@ -56,9 +56,11 @@ import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
+import nd.esp.service.lifecycle.models.coveragesharing.v06.CoverageSharingModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.coveragesharing.v06.CoverageSharingService;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
@@ -191,7 +193,9 @@ public class NDResourceController {
 
     @Autowired
     private OfflineService offlineService;
-
+    
+    @Autowired
+	private CoverageSharingService coverageSharingService;
 
     /**
      * 资源获取详细接口
@@ -689,6 +693,12 @@ public class NDResourceController {
 
         // coverages,格式:Org/uuid/SHAREING
         List<String> coveragesList = (List<String>)paramMap.get("coverage");
+        if(CollectionUtils.isNotEmpty(coveragesList)){
+        	List<String> sharingCoverageList = dealCoverageSharing(coveragesList);
+        	if(CollectionUtils.isNotEmpty(sharingCoverageList)){
+        		coveragesList.addAll(sharingCoverageList);
+        	}
+        }
 
         // props,语法 [属性] [操作] [值]
         Map<String,Set<String>> propsMap = (Map<String,Set<String>>)paramMap.get("prop");
@@ -812,6 +822,59 @@ public class NDResourceController {
         result.setItems(items);
 
         return result;
+    }
+    
+    /**
+     * 处理库分享
+     * @author xiezy
+     * @date 2016年8月24日
+     * @param coverageList
+     * @return
+     */
+    private List<String> dealCoverageSharing(List<String> coverageList){
+    	List<String> result = new ArrayList<String>();
+    	
+		if(CollectionUtils.isNotEmpty(coverageList)){
+			//用于存放前两段覆盖范围,用于查询库分享
+			Set<String> targetCoverageSet = new HashSet<String>();
+			for(String coverage : coverageList){
+				String subCoverage = coverage.substring(0, coverage.lastIndexOf("/"));
+				targetCoverageSet.add(subCoverage);
+			}
+			
+			if(CollectionUtils.isNotEmpty(targetCoverageSet)){
+				for(String target : targetCoverageSet){
+					List<CoverageSharingModel> sharingModels = coverageSharingService.getCoverageSharingByTarget(target);
+					if(CollectionUtils.isNotEmpty(sharingModels)){
+						//用于存放覆盖范围第三段
+						List<String> strategies = new ArrayList<String>();
+						for(String cv : coverageList){
+							if(cv.startsWith(target)){
+								strategies.add(cv.substring(cv.lastIndexOf("/") + 1));
+							}
+						}
+						
+						if(CollectionUtils.isNotEmpty(strategies)){
+							if(strategies.contains("*")){//表示所有资源操作类型都可以查
+								for(CoverageSharingModel csm : sharingModels){
+									String sharingCoverage = csm.getSourceCoverage() + "/*";
+									result.add(sharingCoverage);
+								}
+							}else{
+								for(CoverageSharingModel csm : sharingModels){
+									for(String strategy : strategies){
+										String sharingCoverage = csm.getSourceCoverage() + "/" + strategy;
+										result.add(sharingCoverage);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+    	
+    	return result;
     }
 
     @SuppressWarnings("unchecked")
