@@ -2,13 +2,8 @@ package nd.esp.service.lifecycle.services.task.v06.impls;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import org.apache.log4j.MDC;
 import org.hibernate.mapping.Collection;
@@ -222,10 +217,16 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             Map<String, Object> metadataMap = ObjectUtils.fromJson(metadata, Map.class);
             // List<TechnologyRequirementModel> requirementModels = new ArrayList<TechnologyRequirementModel>();
             List<TechnologyRequirementModel> requirementModels = techInfo.getRequirements();
-//            if(requirementModels == null){
+            if(requirementModels == null){
                 requirementModels = new ArrayList<TechnologyRequirementModel>();
                 techInfo.setRequirements(requirementModels);
-//            }
+            } else {
+                for (Iterator<TechnologyRequirementModel> iterator = requirementModels.iterator();iterator.hasNext();) {
+                    if(metadataMap.keySet().contains(iterator.next().getName())) {
+                        iterator.remove();
+                    }
+                }
+            }
             for (Entry<String, Object> techData : metadataMap.entrySet()) {
                 TechnologyRequirementModel technologyRequirementModel = new TechnologyRequirementModel();
                 technologyRequirementModel.setIdentifier(UUID.randomUUID().toString());
