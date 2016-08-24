@@ -77,7 +77,7 @@ public class TeachingMaterialDaoImpl implements TeachingMaterialDao {
 
 	@Override
 	public List<Map<String, Object>> queryChaptersByTmId(String tmId) {
-		String sql = "SELECT c.identifier as cid,c.title,c.parent from ndresource nd,chapters c where nd.primary_category = 'chapters' and nd.enable = 1 and nd.identifier = c.identifier and c.teaching_material = '"+tmId+"' order by c.tree_left";
+		String sql = "SELECT c.identifier as cid,nd.title,c.parent from ndresource nd,chapters c where nd.primary_category = 'chapters' and nd.enable = 1 and nd.identifier = c.identifier and c.teaching_material = '"+tmId+"' order by c.tree_left";
 		return jdbcTemplate.queryForList(sql);
 	}
 
