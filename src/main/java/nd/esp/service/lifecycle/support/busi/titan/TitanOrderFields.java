@@ -1,6 +1,11 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
+import nd.esp.service.lifecycle.support.enums.ES_Field;
+import nd.esp.service.lifecycle.support.enums.ES_SearchField;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,36 +38,124 @@ import java.util.Map;
 public enum TitanOrderFields {
     title, lc_create_time, lc_last_update, ti_size, sort_num, cg_taxoncode, sta_key_value, top, scores, votes, views;
 
+    private final static String VIP_LEVEL_LIKE = "\\$RL.*";
     /**
      * 放置字符串值与枚举值的对应关系
      */
     private static Map<String, TitanOrderFields> map = new HashMap<>();
+
     // 初始化值
     static {
         for (TitanOrderFields field : TitanOrderFields.values()) {
             map.put(field.toString(), field);
         }
     }
+
     // 通过字符串值返回枚举值
     public static TitanOrderFields fromString(String opString) {
         return map.get(opString);
     }
 
-    public String generateScipt( TitanExpression titanExpression,Map<String, Object> scriptParamMap) {
-        StringBuffer scriptBuffer = new StringBuffer();
-        if (this.equals(title)) {
-
-        } else if (this.equals(lc_create_time)) {
-        } else if (this.equals(lc_last_update)) {
+    /**
+     * String valueKey = TitanUtils.generateKey(scriptParamMap, field);
+     * scriptBuffer.append(valueKey).append(",");
+     * scriptParamMap.put(valueKey, value);
+     *
+     * @param titanExpression
+     * @param fieldValue
+     * @param scriptParamMap
+     * @param orderList
+     */
+    public void generateScript(TitanExpression titanExpression, String fieldValue, Map<String, Object> scriptParamMap, List<TitanOrder> orderList) {
+        String orderBy = checkSortOrder(fieldValue);
+        String edgeScript = "";
+        StringBuffer script = new StringBuffer();
+        TitanOrder order = new TitanOrder();
+        if (this.equals(title) || this.equals(lc_create_time) || this.equals(lc_last_update)) {
+            script.append("'").append(this.toString()).append("'");
+        } else if (this.equals(sta_key_value)) {
+            //desc#downloads#TOTAL
+            String[] tmp = fieldValue.split("#");
+            orderBy = checkSortOrder(tmp[0]);
+            String keyTitle = TitanUtils.generateKey(scriptParamMap, "sta_key_title");
+            scriptParamMap.put(keyTitle, tmp[1]);
+            String dataFrom = TitanUtils.generateKey(scriptParamMap, "sta_data_from");
+            scriptParamMap.put(dataFrom, tmp[2]);
+            edgeScript = "outE('"
+                    + TitanKeyWords.has_resource_statistical.toString()
+                    + "').has('sta_key_title','"
+                    + keyTitle
+                    + "').has('sta_data_from','"
+                    + dataFrom + "')";
+            script.append("choose(select('x').")
+                    .append(edgeScript)
+                    .append(",select('x').")
+                    .append(edgeScript)
+                    .append(".values('sta_key_value'),__.constant(''))");
+            // 边上的统计数据需要取回
+            titanExpression.setStatistics(true, "," + edgeScript);
+        } else if (this.equals(top) || this.equals(scores) || this.equals(votes) || this.equals(views)) {
+            String keyTitle = TitanUtils.generateKey(scriptParamMap, "sta_key_title");
+            scriptParamMap.put(keyTitle, this.toString());
+            edgeScript = "outE('"
+                    + TitanKeyWords.has_resource_statistical.toString()
+                    + "').has('sta_key_title','"
+                    + keyTitle
+                    + "')";
+            script.append("choose(select('x').")
+                    .append(edgeScript)
+                    .append(",select('x').")
+                    .append(edgeScript)
+                    .append(".values('sta_key_value'),__.constant(''))");
+            // 边上的统计数据需要取回
+            titanExpression.setStatistics(true, "," + edgeScript);
         } else if (this.equals(ti_size)) {
-            return "choose(__.outE('has_tech_info').has('ti_title','href'),__.values('ti_size'),__.constant(0))";
-        } else if (this.equals(sort_num)) {
-        } else if (this.equals(cg_taxoncode)) {
-        } else if (this.equals(top)) {
-        } else if (this.equals(scores)) {
-        } else if (this.equals(votes)) {
-        } else if (this.equals(views)) {
+            String valueKey = TitanUtils.generateKey(scriptParamMap, "ti_title");
+            scriptParamMap.put(valueKey, "href");
+            edgeScript = "outE('"
+                    + TitanKeyWords.has_tech_info.toString()
+                    + "').has('ti_title','"
+                    + valueKey
+                    + "')";
+            script.append("choose(select('x').")
+                    .append(edgeScript)
+                    .append(",select('x').")
+                    .append(edgeScript)
+                    .append(".values('ti_size'),__.constant(0))");
+        } /*else if (this.equals(sort_num)) {
+        }*/ else if (this.equals(cg_taxoncode)) {
+            String valueKey = TitanUtils.generateKey(scriptParamMap, ES_SearchField.cg_taxoncode.toString());
+            scriptParamMap.put(valueKey, VIP_LEVEL_LIKE);
+            edgeScript = "outE('"
+                    + TitanKeyWords.has_category_code.toString()
+                    + "').has('" + ES_SearchField.cg_taxoncode.toString()
+                    + "',textRegex('"
+                    + valueKey
+                    + "'))";
+            script.append("choose(select('x').")
+                    .append(edgeScript)
+                    .append(",select('x').")
+                    .append(edgeScript)
+                    .append(".values('")
+                    .append(ES_SearchField.cg_taxoncode.toString())
+                    .append("'),__.constant(''))");
+        } else {
+            //script.append("'").append(this.toString()).append("'");
+            return;
         }
-        return scriptBuffer.toString();
+
+        order.setField(this.toString()).setScript(script.toString()).setSortOrder(orderBy);
+        orderList.add(order);
+    }
+
+    /**
+     * @param order
+     * @return
+     */
+    private String checkSortOrder(String order) {
+        if (TitanOrder.SORTORDER.ASC.toString().equals(order)) {
+            return TitanOrder.SORTORDER.ASC.toString();
+        }
+        return TitanOrder.SORTORDER.DESC.toString();
     }
 }

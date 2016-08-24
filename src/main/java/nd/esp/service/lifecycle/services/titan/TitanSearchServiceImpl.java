@@ -810,19 +810,22 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     /**
      *
      * @param titanExpression
+     * @param scriptParamMap
      * @param orderMap
      * @param orderList
      */
-    private void dealWithOrderByEnum(TitanExpression titanExpression, Map<String, String> orderMap, List<TitanOrder> orderList) {
+    private void dealWithOrderByEnum(TitanExpression titanExpression,
+                                     Map<String, Object> scriptParamMap,
+                                     Map<String, String> orderMap,
+                                     List<TitanOrder> orderList) {
         // TODO 通过枚举生成order by 的脚本
         Set<String> orderFields = orderMap.keySet();
         for (String field : orderFields) {
-            String orderBy = TitanOrder.checkSortOrder(orderMap.get(field));
-            String script = TitanOrderFields.fromString(field).generateScipt(titanExpression, null);
-            orderList.add(new TitanOrder(field, script, orderBy));
+            TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList);
         }
-        if (CollectionUtils.isEmpty(orderList)) {// 默认排序
-            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
+        // 默认排序
+        if (CollectionUtils.isEmpty(orderList)) {
+            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),"'" + ES_SearchField.lc_create_time.toString()+"'" , TitanOrder.SORTORDER.DESC.toString()));
         }
         titanExpression.setOrderList(orderList);
     }
