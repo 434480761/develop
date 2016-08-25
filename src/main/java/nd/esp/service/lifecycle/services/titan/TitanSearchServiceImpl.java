@@ -112,7 +112,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         List<TitanOrder> orderList = new ArrayList<>();
         //dealWithShowVersionOrder(orderMap,showVersion,orderList);
         dealWithOrder(titanExpression, orderMap,orderList);
-        if(isOrderBySortNum(reverse,orderMap,params.get("relation"))) titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+        if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
+            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
+        }
         titanExpression.setOrderList(orderList);
         //dealWithOrderAndRange(titanExpression, orderMap, from, size);
         dealWithRelation(titanExpression, params.get("relation"), reverse);
@@ -179,7 +181,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         //dealWithOrder(titanExpression, orderMap, orderList);
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList);
         if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
-            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
         }
         titanExpression.setOrderList(orderList);
         // FIXME "ti_printable" -> " size = 1"
