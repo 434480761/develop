@@ -217,9 +217,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     private void checkCoverageHandle(Education education,List<ResCoverage> resCoverage){
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         Builder baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
-        checkResCoverage(education, resCoverage, baseBuilder);
+        checkResCoverageEdges(education, resCoverage);
         baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
-        checkResCoverage(education, resCoverage, baseBuilder);
+        checkResCoverageEdges(education, resCoverage);
     }
     /**
      * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
@@ -277,9 +277,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return count;
     }
     
-    String[] coverageField = new String[]{"identifier", "strategy", "target", "target_type"};
+    String[] coverageEdgeField = new String[]{"identifier", "strategy", "target", "target_type"};
     String coverageEdgeLabel = "has_coverage";
-    private void checkResCoverage(Education education,List<ResCoverage> resCoverages, Builder baseBuilder){
+    private void checkResCoverageEdges(Education education,List<ResCoverage> resCoverages){
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+        Builder baseBuilderEdge = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
         Multimap<String, ResCoverage> coverageMultiMap = toCoverageMultimap(resCoverages);
         Set<String> keySet = coverageMultiMap.keySet();
         int size = keySet.size();
@@ -291,41 +293,44 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             Collection<ResCoverage> coverages = coverageMultiMap.get(arr[i]);
             for (ResCoverage coverage : coverages) {
                 paramMap = initParamMap(education, coverageEdgeLabel);
-                List<Object> techInfoPartField = fillResCoveragePartField(coverage);
-                fillParamMap(paramMap, techInfoPartField, coverageField);
-                
-                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, coverageField);
-                
+                List<Object> techInfoPartFieldEdges = fillResCoverageEdgePartField(coverage);
+                fillParamMap(paramMap, techInfoPartFieldEdges, coverageEdgeField);
+                builder = generateCheckResourceCategoryScript(baseBuilderEdge, techInfoPartFieldEdges, coverageEdgeField);
                 Long tmp = executeScriptUniqueLong(paramMap, builder.count());
                 count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
+                
+                if (count == 1) {
+                    Builder baseBuilderNode = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
+                    List<Object> techInfoPartFieldNodes = fillResCoverageNodePartField(coverage);
+//                    fillParamMap(paramMap, techInfoPartFieldNodes, coverageNodeField);
+                    Builder nodeBuilder = generateCheckResourceCategoryScript(baseBuilderNode, techInfoPartFieldNodes, coverageNodeField);
+                    Long nodeCount = executeScriptUniqueLong(paramMap, nodeBuilder.count());
+                    saveAbnormalData(education, nodeBuilder, paramMap, nodeCount);
+                }
             }
             saveAbnormalData(education, builder, paramMap, count);
         }
     }
     
-    /**
-     * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
-     * @param education
-     * @param sourceTechInfo
-     * @since 1.2.6
-     * @see
-     */
-    private void checkTechInfoNode(Education education,List<TechInfo> sourceTechInfo, Builder baseBuilder){
-        Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(sourceTechInfo);
-        Set<String> keySet = techInfoMultiMap.keySet();
+    String[] coverageNodeField = new String[]{"strategy", "target", "target_type"};
+    private void checkResCoverageNodes(Education education,List<ResCoverage> resCoverages){
+        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
+        Multimap<String, ResCoverage> coverageMultiMap = toCoverageMultimap(resCoverages);
+        Set<String> keySet = coverageMultiMap.keySet();
         int size = keySet.size();
         String[] arr = keySet.toArray(new String[size]);
         Builder builder = null;
         Map<String, Object> paramMap = null;
         for (int i = 0; i < size; i++) {
             Long count = 0L;
-            Collection<TechInfo> teachInfos = techInfoMultiMap.get(arr[i]);
-            for (TechInfo techInfo : teachInfos) {
-                paramMap = initParamMap(education, techInfoEdgeLabel);
-                List<Object> techInfoPartField = fillTeachInfoPartField(techInfo);
-                fillParamMap(paramMap, techInfoPartField, techInfoField);
+            Collection<ResCoverage> coverages = coverageMultiMap.get(arr[i]);
+            for (ResCoverage coverage : coverages) {
+                paramMap = initParamMap(education, coverageEdgeLabel);
+                List<Object> techInfoPartField = fillResCoverageNodePartField(coverage);
+                fillParamMap(paramMap, techInfoPartField, coverageNodeField);
                 
-                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, techInfoField);
+                builder = generateCheckResourceCategoryScript(baseBuilder, techInfoPartField, coverageNodeField);
                 
                 Long tmp = executeScriptUniqueLong(paramMap, builder.count());
                 count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
@@ -334,7 +339,15 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
     }
     
-    private List<Object> fillResCoveragePartField(ResCoverage coverage) {
+    private List<Object> fillResCoverageNodePartField(ResCoverage coverage) {
+        List<Object> coveragePartField = new ArrayList<Object>();
+        coveragePartField.add(coverage.getStrategy());
+        coveragePartField.add(coverage.getTarget());
+        coveragePartField.add(coverage.getTargetType());
+        return coveragePartField;
+    }
+    
+    private List<Object> fillResCoverageEdgePartField(ResCoverage coverage) {
         List<Object> coveragePartField = new ArrayList<Object>();
         coveragePartField.add(coverage.getIdentifier());
         coveragePartField.add(coverage.getStrategy());
@@ -436,7 +449,9 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 //        checkCategoryEdges(education, resourceCategoryList);
 //        checkCategoryNodes(education, resourceCategoryList);
 //        checkTechInfoHandle(education, techInfos);
-        checkCoverageHandle(education, resCoverages);
+//        checkCoverageHandle(education, resCoverages);
+        checkResCoverageEdges(education, resCoverages);
+//        checkResCoverageNodes(education, resCoverages);
     }
     
     final String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name", "identifier"};
