@@ -1,13 +1,14 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanPrimaryKey;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
+import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
+import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
 
 /**
  * Created by Administrator on 2016/8/24.
  */
 public class TitanEducation extends TitanModel{
-    @TitanPrimaryKey
+    @TitanCompositeKey
+    @TitanField
     private String identifier;
 
     public String getIdentifier() {

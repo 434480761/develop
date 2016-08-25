@@ -7,7 +7,6 @@ import java.lang.annotation.*;
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface TitanEdge {
-    String label() default "";
+@Target(ElementType.FIELD)
+public @interface TitanEdgeResource {
 }

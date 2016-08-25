@@ -7,8 +7,16 @@ import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
  * Created by Administrator on 2016/8/24.
  */
 @TitanVertex(label = "questions")
-public class TitanEducationQustions {
+public class TitanEducationQuestions extends TitanEducation{
 
-    @TitanField()
+    @TitanField(name = "preview")
     private String dbpreview;
+
+    public String getDbpreview() {
+        return dbpreview;
+    }
+
+    public void setDbpreview(String dbpreview) {
+        this.dbpreview = dbpreview;
+    }
 }

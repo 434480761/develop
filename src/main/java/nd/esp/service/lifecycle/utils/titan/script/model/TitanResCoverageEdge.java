@@ -1,8 +1,8 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanEdge;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
+import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
+
+import javax.persistence.Column;
 
 /**
  * Created by Administrator on 2016/8/24.
@@ -10,14 +10,51 @@ import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
 @TitanEdge(label = "has_coverage")
 public class TitanResCoverageEdge {
 
+    @TitanEdgeTarget
     @TitanField(name = "target_type")
     private String targetType;
 
+    @TitanEdgeTarget
     @TitanField(name = "strategy")
     private String strategy;
 
+    @TitanEdgeTarget
     @TitanField(name = "target")
     private String target;
+
+    @TitanCompositeKey
+    @TitanField(name = "identifier")
+    private String identifier;
+
+    @TitanEdgeResource
+    private String resource;
+
+    @TitanEdgeResource
+    private String resType;
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
+    }
+
+    public String getResType() {
+        return resType;
+    }
+
+    public void setResType(String resType) {
+        this.resType = resType;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
 
     public String getTargetType() {
         return targetType;

@@ -803,6 +803,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
 		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.groupTechInfo(techInfos);
 
+
+
 		for (Education education : educations){
 			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
 			List<ResCoverage> sourceResCoverage = resCoverageMap.get(education.getIdentifier());

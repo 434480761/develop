@@ -1,32 +1,27 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
+import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
+import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
 
 /**
  * Created by Administrator on 2016/8/24.
  */
 @TitanVertex(label = "coverage")
 public class TitanResCoverageVertex {
-    @TitanField(name = "identifier")
-    private String identifier;
 
+    @TitanCompositeKey
     @TitanField(name = "target_type")
     private String targetType;
 
+    @TitanCompositeKey
     @TitanField(name = "strategy")
     private String strategy;
 
+    @TitanCompositeKey
     @TitanField(name = "target")
     private String target;
-
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
 
     public String getTargetType() {
         return targetType;
