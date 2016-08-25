@@ -112,6 +112,8 @@ public class TitanResultParse {
     public static List<Map<String, String>> changeStrToKeyValue(List<String> resultStr) {
         List<Map<String, String>> resultStrMap = new ArrayList<>();
         for (String str : resultStr) {
+            // 异常数据处理
+            if (str.endsWith("null")) continue;
             Map<String, String> tmp = toMapForRelationQuery(str);
             if (CollectionUtils.isNotEmpty(tmp)) resultStrMap.add(tmp);
         }
