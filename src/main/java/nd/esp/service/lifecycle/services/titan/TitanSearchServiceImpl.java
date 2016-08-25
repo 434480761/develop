@@ -461,7 +461,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      *  b.多个tags之间为OR的关系, 如 tags=A&tags=B
      *  c.AND关系支持方式为 tags=A and B,表示tags同时有A和B的时候才满足
      *  d.注意:tags是数组的json串存储在数据库中，假设有 tags1=["A","BC"] 和 tags2=["AB","C”]，若tags=A，则只有tags满足，也就是对单个tags是完全匹配的
-     *  tags=nd and sdp.esp -->.*\"nd\",\"sdp.esp\".*
+     *  tags=nd and sdp.esp -->.*\"nd\".*\"sdp.esp\".*
      *  tags=nd -->.*\"nd\".*
      *  "nd","sdp.esp"
      * @param vertexPropertiesMap
