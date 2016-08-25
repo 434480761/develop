@@ -1034,7 +1034,7 @@ public class NDResourceController {
         }
         
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
-        if (!titanQueryResultItems.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(titanQueryResultItems)) {
             mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, field, sort);
             
             interceptResultFromMergedResult(moreOffset, begin, size, titanQueryResult);
