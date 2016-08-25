@@ -112,7 +112,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         List<TitanOrder> orderList = new ArrayList<>();
         //dealWithShowVersionOrder(orderMap,showVersion,orderList);
         dealWithOrder(titanExpression, orderMap,orderList);
-        if(isOrderBySortNum(reverse,orderMap,params.get("relation"))) titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+        if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
+            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
+        }
         titanExpression.setOrderList(orderList);
         //dealWithOrderAndRange(titanExpression, orderMap, from, size);
         dealWithRelation(titanExpression, params.get("relation"), reverse);
@@ -176,9 +178,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
         dealWithShowVersionOrder(orderMap, showVersion, orderList);
-        dealWithOrder(titanExpression, orderMap, orderList);
+        //dealWithOrder(titanExpression, orderMap, orderList);
+        dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList);
         if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
-            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
+            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
         }
         titanExpression.setOrderList(orderList);
         // FIXME "ti_printable" -> " size = 1"
@@ -810,19 +813,24 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     /**
      *
      * @param titanExpression
+     * @param scriptParamMap
      * @param orderMap
      * @param orderList
      */
-    private void dealWithOrderByEnum(TitanExpression titanExpression, Map<String, String> orderMap, List<TitanOrder> orderList) {
+    private void dealWithOrderByEnum(TitanExpression titanExpression,
+                                     Map<String, Object> scriptParamMap,
+                                     Map<String, String> orderMap,
+                                     List<TitanOrder> orderList) {
         // TODO 通过枚举生成order by 的脚本
-        Set<String> orderFields = orderMap.keySet();
-        for (String field : orderFields) {
-            String orderBy = TitanOrder.checkSortOrder(orderMap.get(field));
-            String script = TitanOrderFields.fromString(field).generateScipt(titanExpression, null);
-            orderList.add(new TitanOrder(field, script, orderBy));
+        if (CollectionUtils.isNotEmpty(orderMap)) {
+            Set<String> orderFields = orderMap.keySet();
+            for (String field : orderFields) {
+                TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList);
+            }
         }
-        if (CollectionUtils.isEmpty(orderList)) {// 默认排序
-            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),ES_SearchField.lc_create_time.toString(), TitanOrder.SORTORDER.DESC.toString()));
+        // 默认排序
+        if (CollectionUtils.isEmpty(orderList)) {
+            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),"'" + ES_SearchField.lc_create_time.toString()+"'" , TitanOrder.SORTORDER.DESC.toString()));
         }
         titanExpression.setOrderList(orderList);
     }

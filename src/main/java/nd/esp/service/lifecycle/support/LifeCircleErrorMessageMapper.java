@@ -1,12 +1,11 @@
 package nd.esp.service.lifecycle.support;
 
+import java.io.UnsupportedEncodingException;
+
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 
-import org.apache.zookeeper.txn.CreateTxnV0;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * @title 资源生命周期错误信息定义

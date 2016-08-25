@@ -42,29 +42,33 @@ public class TitanOrder {
         this.script = script;
         this.sortOrder = sortOrder;
     }
+    public TitanOrder() {}
 
     public String getField() {
         return field;
     }
 
-    public void setField(String field) {
+    public TitanOrder setField(String field) {
         this.field = field;
+        return this;
     }
 
     public String getScript() {
         return script;
     }
 
-    public void setScript(String script) {
+    public TitanOrder setScript(String script) {
         this.script = script;
+        return this;
     }
 
     public String getSortOrder() {
         return sortOrder;
     }
 
-    public void setSortOrder(String sortOrder) {
+    public TitanOrder setSortOrder(String sortOrder) {
         this.sortOrder = sortOrder;
+        return this;
     }
 
     public static String checkSortOrder(String order) {
