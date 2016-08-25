@@ -1013,7 +1013,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             String tagsLike="*";
             for (String tag : tagSet) {
                 //加上双引号
-                tagsLike = tagsLike  +"\""+tag+"\"*";
+                tagsLike = tagsLike  +"\\\""+tag+"\\\"*";
             }
             if(!"*".equals(tagsLike)) edgePropertiesMap.put(ES_SearchField.tags.toString(), generateFieldCondtionWithLike(ES_SearchField.tags.toString(), tagsLike));
         }
@@ -1069,7 +1069,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             tagSet.addAll(Arrays.asList(tags.split(",")));
             String tagsLike="*";
             for (String tag : tagSet) {
-                tagsLike = tagsLike  +"\""+tag+"\"" + "*";
+                tagsLike = tagsLike  +"\\\""+tag+"\\\"" + "*";
             }
             if(!"*".equals(tagsLike)) edgePropertiesMap.put(ES_SearchField.tags.toString(), generateFieldCondtionWithLike(ES_SearchField.tags.toString(), tagsLike));
         }
