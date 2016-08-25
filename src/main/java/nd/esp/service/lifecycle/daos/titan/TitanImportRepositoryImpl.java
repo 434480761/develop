@@ -172,7 +172,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             sb.append(".hasLabel(").append("'").append(key).append("'").append(",").append(value).append(")");
             return this;
         }
-        
+
         public Builder outE(){
             sb.append(".outE()");
             return this;
@@ -201,6 +201,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         public String toString() {
             return "Builder [sb=" + sb + "]";
         }
+
     }
     
     String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title", "ti_printable"};
@@ -447,7 +448,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
         checkCategoryEdges(education, resourceCategories);
-        checkCategoryNodes(education, resourceCategories);
         checkTechInfoHandle(education, techInfos);
         checkResCoverage(education, resCoverages);
     }
@@ -462,18 +462,20 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         Builder baseBuilder = new Builder(baseScript).outE().hasLabel(categoryEdgeLabel, categoryEdgeLabel);
         for (int index =0 ;index <resourceCategoryList.size() ;index++){
             Map<String, Object> paramMap = initParamMap(education, categoryEdgeLabel);
-            List<Object> resourceCategoryPartField = fillResourceCategoryPartField(resourceCategoryList.get(index));
-            fillParamMap(paramMap, resourceCategoryPartField, categoryEdgesField);
+            List<Object> resourceCategoryEdgePartField = fillResourceCategoryPartField(resourceCategoryList.get(index));
+            fillParamMap(paramMap, resourceCategoryEdgePartField, categoryEdgesField);
             
-            Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceCategoryPartField, categoryEdgesField);
+            Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceCategoryEdgePartField, categoryEdgesField).inV();
     
-            Long count = executeScriptUniqueLong(paramMap, builder.count());
+            List<Object> resourceCategoryNodePartField = new ArrayList<Object>();
+            resourceCategoryNodePartField.add(resourceCategoryList.get(index).getCategoryCode());
+            Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceCategoryNodePartField, categoryNodeField);
+            Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
             saveCheckCategoryExceptionData(education, paramMap, builder, count);
         }
     }
 
-    String[] categoryNodeField = new String[]{"cg_category_code"};
-//    String techInfoLabel = "has_tech_info";
+    String[] categoryNodeField = new String[]{"cg_taxoncode"};
     
     /**
      * 和刘然沟通后，目前category_code_v只需要校验 cg_category_code 字段

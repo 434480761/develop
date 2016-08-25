@@ -316,6 +316,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     public void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate) {
         AbstractPageQuery abstractPageQuery = new CheckResource(BigDecimal.valueOf(beginDate.getTime()), BigDecimal.valueOf(endDate.getTime()));
         abstractPageQuery.doing(primaryCategory);
+        AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCheck();
+//        abstractPageQueryRelation.method(resourceRelations);
     }
     
 	@Override
@@ -422,6 +424,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		public abstract void method(List<ResourceRelation> resourceRelations);
 	}
 
+	public class AbstractPageQueryRelationCheck extends AbstractPageQueryRelation{
+
+        @Override
+        public void method(List<ResourceRelation> resourceRelations) {
+            List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+            titanImportRepository.batchImportRelation(existRelation);
+        }
+    }
+	
  	public class AbstractPageQueryRelationCreate extends AbstractPageQueryRelation{
 
 		@Override
