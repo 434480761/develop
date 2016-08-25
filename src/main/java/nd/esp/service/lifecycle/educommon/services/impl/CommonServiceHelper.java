@@ -333,6 +333,14 @@ public class CommonServiceHelper {
                 false,
                 false));
         
+        //元课程
+        repositoryAndModelMap.put("metacurriculums", new RepositoryAndModelAndView(teachingMaterialRepository, 
+                TeachingMaterialModel.class,
+                TeachingMaterialViewModel.class, 
+                TeachingMaterial.class,
+                true,
+                true));
+        
         //教学活动
         repositoryAndModelMap.put("teachingactivities", new RepositoryAndModelAndView(teachingActivitiesRepository,
                                                                              CoursewareModel.class,
@@ -776,4 +784,9 @@ public class CommonServiceHelper {
 					"PT维度在该环境未录入");
 		}
 	}
+	
+    public Map<String, Object> getRepositoryAndModelMap() {
+		return new HashMap<String, Object>(repositoryAndModelMap);
+	}
+
 }

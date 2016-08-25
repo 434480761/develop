@@ -1,6 +1,12 @@
 package nd.esp.service.lifecycle.controllers.titan;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import nd.esp.service.lifecycle.services.titan.TitanResourceService;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4ImportData;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -8,6 +14,7 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -207,12 +214,25 @@ public class TitanResourceController {
 		titanResourceService.checkOneData(resourceType, id);
 		return 0;
 	}
-	@RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
-			produces = { MediaType.APPLICATION_JSON_VALUE })
-	public long checkAllData(@PathVariable String resourceType) {
-		titanResourceService.checkAllData(resourceType);
-		return 0;
-	}
+	
+    @RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
+            produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String checkAllData(@PathVariable String resourceType, @RequestParam(required = true,value="beginDate") String beginDate, @RequestParam(required = true,value="endDate")String endDate) {
+        SimpleDateFormat sdf= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            Date begin = sdf.parse(beginDate);
+            Date end = sdf.parse(endDate);
+            if (begin.after(end)) {
+                return "开始时间必须小于结束时间";
+            }
+            titanResourceService.checkOneResourceTypeData(resourceType, begin, end);
+        } catch (ParseException e) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
+        }
+        return "执行成功";
+    }
 
 	@RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -241,9 +261,7 @@ public class TitanResourceController {
 	@MarkAspect4ImportData
 	@RequestMapping(value = "/all/statistical", method = RequestMethod.GET)
 	public void importAllStatistical() {
-		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
-			titanResourceService.importStatistical(resourceType);
-		}
+		titanResourceService.importStatistical();
 	}
 	
 	/**

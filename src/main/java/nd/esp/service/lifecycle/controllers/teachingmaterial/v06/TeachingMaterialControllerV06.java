@@ -1,7 +1,13 @@
 package nd.esp.service.lifecycle.controllers.teachingmaterial.v06;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
@@ -19,12 +25,15 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.transcode.TransCodeManager;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewModel;
 import nd.esp.service.lifecycle.vos.valid.Valid4UpdateGroup;
 import nd.esp.service.lifecycle.vos.valid.ValidGroup;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -53,10 +62,12 @@ public class TeachingMaterialControllerV06 {
 
 	@Autowired
 	private OfflineService offlineService;
+	
 	@Autowired
 	private AsynEsResourceService esResourceOperation;
 	
-	
+	@Autowired
+	private CommonServiceHelper commonServiceHelper;
 	/**
 	 * 创建教材对象（带id）
 	 * @param rm		教材对象
@@ -67,7 +78,7 @@ public class TeachingMaterialControllerV06 {
 	@RequestMapping(value="/{id}",method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public TeachingMaterialViewModel create4Id(@PathVariable String resType,@PathVariable String id,@Validated(ValidGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult){
 		
-	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType))){
+	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType)||ResourceNdCode.metacurriculums.toString().equals(resType))){
 	        throw new LifeCircleException("类型不对");
 	    }
 	    
@@ -109,7 +120,7 @@ public class TeachingMaterialControllerV06 {
 	public TeachingMaterialViewModel create(
 	                                         @PathVariable String resType,@Validated(ValidGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult){
 		
-	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType))){
+	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType)||ResourceNdCode.metacurriculums.toString().equals(resType))){
 	        throw new LifeCircleException("类型不对");
 	    }
 	    
@@ -135,7 +146,7 @@ public class TeachingMaterialControllerV06 {
 	public TeachingMaterialViewModel update(@PathVariable String resType,@Validated(Valid4UpdateGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult,@PathVariable String id){
 		
 	    
-	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType))){
+	    if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType)||ResourceNdCode.metacurriculums.toString().equals(resType))){
             throw new LifeCircleException("类型不对");
         }
 	    
@@ -185,7 +196,7 @@ public class TeachingMaterialControllerV06 {
 										   @PathVariable String id, @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
 
 
-		if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType))){
+		if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType)||ResourceNdCode.metacurriculums.toString().equals(resType))){
 			throw new LifeCircleException("类型不对");
 		}
 
@@ -214,5 +225,48 @@ public class TeachingMaterialControllerV06 {
 					new Resource(resType, id));
 		}
 		return tmvm;
+	}
+	
+	
+	/**
+	 * 根据教材id查找章节资源
+	 * @param tmId		教材id
+	 * @param resTypes	查找的资源类型，多个用逗号分隔
+	 * @return
+	 */
+	@RequestMapping(value="/{tmId}/resources",method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<Map<String,Object>> queryResourcesByTmId(@PathVariable String tmId,@RequestParam(value="res_type") Set<String> resTypeList,@RequestParam(required=false) String include,@RequestParam String coverage){
+		//1、判断参数的合法性
+		if(CollectionUtils.isNotEmpty(resTypeList)){
+			Map<String, Object> map = commonServiceHelper.getRepositoryAndModelMap();
+			for (String rt : resTypeList) {
+				if(!map.containsKey(rt)){
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/RES_TYPE_ERROR","资源类型有误");
+				}
+			}
+		}else{
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/RES_TYPE_EMPTY","资源类型不能为空");
+		}
+		
+		if(StringUtils.isNotEmpty(coverage)){
+			String[] cs = coverage.split("/");
+			if(cs.length != 2 && cs.length != 3){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CHECK_PARAM_VALID_FAIL","coverage格式不对");
+			}else if(StringUtils.isEmpty(cs[0]) || StringUtils.isEmpty(cs[1])){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CHECK_PARAM_VALID_FAIL","coverage格式不对");
+			}
+		}else{
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,"LC/CHECK_PARAM_VALID_FAIL","coverage不能为空");
+		}
+		
+		//2、调用service层接口
+		List<String> includes;
+		if(StringUtils.isNotEmpty(include)){
+			String[] s = include.split(",");
+			includes = Arrays.asList(s);
+		}else{
+			includes = new ArrayList<String>();
+		}
+		return teachingMaterialService.queryResourcesByTmId(tmId,resTypeList,includes,coverage);
 	}
 }
