@@ -29,6 +29,7 @@ public class ParseAnnotation {
             Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
             Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
 
+            vertex.setType(TitanScriptModel.Type.V);
             vertex.setCompositeKeyMap(compositeKeyMap);
             vertex.setFieldMap(fieldMap);
 
@@ -48,6 +49,7 @@ public class ParseAnnotation {
             Map<String, Object> resourceMap = getTitanEdgeResourceNameAndValue(titanModel,annotationMap);
             Map<String, Object> targetMap = getTitanEdgeTargetNameAndValue(titanModel, annotationMap);
 
+            edge.setType(TitanScriptModel.Type.E);
             edge.setCompositeKeyMap(compositeKeyMap);
             edge.setFieldMap(fieldMap);
             edge.setResourceKeyMap(resourceMap);
