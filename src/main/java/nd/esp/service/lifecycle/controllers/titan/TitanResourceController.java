@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4ImportData;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanCacheData;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
 import org.slf4j.Logger;
@@ -282,5 +283,14 @@ public class TitanResourceController {
 			LOG.info("task_running");
 		}
 		return "task_complete";
+	}
+	
+	/**
+	 * 清理Titan缓存数据
+	 */
+	@RequestMapping(value = "/clearTitanCache", method = RequestMethod.GET)
+	public void clearTitanCache() {
+		// TitanCacheData.coverage.getCacheMap().put("123", 333L);
+		TitanCacheData.clearAllCacheMap();
 	}
 }
