@@ -87,11 +87,12 @@ public class TeachingMaterialDaoImpl implements TeachingMaterialDao {
 		Map<String,Object> params = new HashMap<String, Object>();
 		String[] cs = coverage.split("/");
 		
-		String sql = "SELECT "+selectSql(resType, includes)+",rr.source_uuid from resource_relations rr,ndresource nd,res_coverages cov where rr.res_type='chapters' and rr.resource_target_type= '"+resType+"' and rr.enable = 1 and nd.primary_category='"+resType+"' and nd.enable = 1 and rr.source_uuid in (:cids) and rr.target = nd.identifier and cov.res_type='"+resType+"' and cov.resource = nd.identifier and cov.target_type = :targetType and cov.target = :target";
+		String sql = "SELECT "+selectSql(resType, includes)+",rr.source_uuid from resource_relations rr,ndresource nd,res_coverages cov where rr.res_type='chapters' and rr.resource_target_type= '"+resType+"' and rr.enable = 1 and nd.primary_category='"+resType+"' and nd.enable = 1 and rr.source_uuid in (:cids) and rr.target = nd.identifier and cov.res_type='"+resType+"' and cov.resource = nd.identifier and cov.target_type = :targetType and cov.target = :target ";
 		if(cs.length > 2 && StringUtils.isNotEmpty(cs[2])){
 			sql += " and cov.strategy = :strategy";
 			params.put("strategy", cs[2]);
 		}
+		sql += " order by rr.sort_num";
 		NamedParameterJdbcTemplate npjt = new NamedParameterJdbcTemplate(jdbcTemplate);
 		params.put("targetType", cs[0]);
 		params.put("target", cs[1]);
@@ -120,7 +121,7 @@ public class TeachingMaterialDaoImpl implements TeachingMaterialDao {
 			List<String> cids, String resType,final List<String> includes,String coverage) {
 		String[] cs = coverage.split("/");
 		
-		String sql = "SELECT rr.source_uuid,rr.target from resource_relations rr where rr.res_type='chapters' and rr.resource_target_type= '"+resType+"' and rr.source_uuid in (:cids) and rr.enable = 1";
+		String sql = "SELECT rr.source_uuid,rr.target from resource_relations rr where rr.res_type='chapters' and rr.resource_target_type= '"+resType+"' and rr.source_uuid in (:cids) and rr.enable = 1 order by rr.sort_num";
 		NamedParameterJdbcTemplate npjt = new NamedParameterJdbcTemplate(jdbcTemplate);
 		Map<String,Object> params = new HashMap<String, Object>();
 		params.put("cids", cids);
