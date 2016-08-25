@@ -1,15 +1,12 @@
 package nd.esp.service.lifecycle.utils.titan.script.utils;
 
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanEdge;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
+import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanEducationQuestions;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
+import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModel;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelVertex;
-import nd.esp.service.lifecycle.utils.xstream.MapConverter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -20,13 +17,22 @@ import java.util.*;
  */
 public class ParseAnnotation {
     public static TitanScriptModel createScriptModel(TitanModel titanModel) {
-        TitanScriptModel titanScriptModel;
+        TitanScriptModel titanScriptModel = null;
         //处理节点
         if (titanModel.getClass().getAnnotation(TitanVertex.class) != null) {
             TitanScriptModelVertex vertex = new TitanScriptModelVertex();
             TitanVertex annotation = titanModel.getClass().getAnnotation(TitanVertex.class);
             vertex.setLabel(annotation.label());
-            Map<String, Object> test = getTitanFieldNameAndValue(titanModel, getAllFieldAnnotationMap(titanModel));
+            Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
+
+            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
+
+            vertex.setCompositeKeyMap(compositeKeyMap);
+            vertex.setFieldMap(fieldMap);
+
+            titanScriptModel = vertex;
+
         }
         //处理边
         else if (titanModel.getClass().getAnnotation(TitanEdge.class) != null) {
@@ -34,10 +40,22 @@ public class ParseAnnotation {
             TitanEdge annotation = titanModel.getClass().getAnnotation(TitanEdge.class);
             edge.setLabel(annotation.label());
 
+            Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
 
+            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
+            Map<String, Object> resourceMap = getTitanEdgeResourceNameAndValue(titanModel,annotationMap);
+            Map<String, Object> targetMap = getTitanEdgeTargetNameAndValue(titanModel, annotationMap);
+
+            edge.setCompositeKeyMap(compositeKeyMap);
+            edge.setFieldMap(fieldMap);
+            edge.setResourceKeyMap(resourceMap);
+            edge.setTargetKeyMap(targetMap);
+
+            titanScriptModel = edge;
         }
 
-        return null;
+        return titanScriptModel;
     }
 
     public static Map<Field, List<Annotation>> getAllFieldAnnotationMap(TitanModel titanModel) {
@@ -62,65 +80,147 @@ public class ParseAnnotation {
         getAllDeclareField(className.getSuperclass(), fields);
     }
 
+    /**
+     * 获取所有的属性名和属性值
+     * */
     public static Map<String, Object> getTitanFieldNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
-            for (Annotation annotation : annotations) {
-                if (annotation instanceof TitanField) {
-                    field.setAccessible(true);
-                    TitanField titanField = (TitanField) annotation;
-                    try {
-                        if (titanField.name() == null || "".equals(titanField.name())) {
-                            fieldMap.put(field.getName(), field.get(model));
-                        }else{
-                            fieldMap.put(titanField.name(),field.get(model));
-                        }
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                }
-            }
+            fieldMap.putAll(getOneTitanFieldNameAndValue(field,model,annotations));
         }
 
         return fieldMap;
     }
 
-    public static Map<String, Object> getTitanCompositeKeyAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
+    /**
+     * 获取所有有@TitanCompositeKey注解标记的属性和属性值
+     * */
+    public static Map<String, Object> getTitanCompositeKeyNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
             for (Annotation comAnnotation : annotations) {
                 if (comAnnotation instanceof TitanCompositeKey) {
-                    field.setAccessible(true);
-                    TitanCompositeKey titanField = (TitanCompositeKey) comAnnotation;
-                    for (Annotation fieldAnnontation : annotations){
-                        if (fieldAnnontation instanceof TitanField) {
-                            field.setAccessible(true);
-                            TitanField fieldAnnon = (TitanField) fieldAnnontation;
-                            try {
-                                if (fieldAnnon.name() == null || "".equals(fieldAnnon.name())) {
-                                    fieldMap.put(field.getName(), field.get(model));
-                                }else{
-                                    fieldMap.put(fieldAnnon.name(),field.get(model));
-                                }
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            }
-                            break;
-                        }
-                    }
+                    fieldMap.putAll(getOneTitanFieldNameAndValue(field, model, annotations));
+                    break;
                 }
+            }
+        }
+        return fieldMap;
+    }
+
+    public static Map<String, Object>  getTitanEdgeResourceNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
+        Map<String, Object> fieldMap = new HashMap<>();
+        for (Field field : fieldListMap.keySet()) {
+            List<Annotation> annotations = fieldListMap.get(field);
+            for (Annotation comAnnotation : annotations) {
+                if (comAnnotation instanceof TitanEdgeResource) {
+                    fieldMap.putAll(getOneTitanFieldNameAndValue(field, model, annotations));
+                    break;
+                }
+            }
+        }
+        return fieldMap;
+    }
+
+    public static Map<String, Object>  getTitanEdgeTargetNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
+        Map<String, Object> fieldMap = new HashMap<>();
+        for (Field field : fieldListMap.keySet()) {
+            List<Annotation> annotations = fieldListMap.get(field);
+            for (Annotation comAnnotation : annotations) {
+                if (comAnnotation instanceof TitanEdgeTarget) {
+                    fieldMap.putAll(getOneTitanFieldNameAndValue(field, model, annotations));
+                    break;
+                }
+            }
+        }
+        return fieldMap;
+    }
+
+
+    /**
+     * 获取所有通过Field和@TitanField注解获取属性名和属性值
+     * */
+    private static Map<String, Object> getOneTitanFieldNameAndValue(Field field, TitanModel model, List<Annotation> annotations){
+        Map<String, Object> fieldMap = new HashMap<>();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof TitanField) {
+                field.setAccessible(true);
+                TitanField titanField = (TitanField) annotation;
+                try {
+                    if (titanField.name() == null || "".equals(titanField.name())) {
+                        fieldMap.put(field.getName(), field.get(model));
+                    }else{
+                        fieldMap.put(titanField.name(),field.get(model));
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                break;
             }
         }
 
         return fieldMap;
     }
 
+    private static Map<String, Object> getOneTitanRsourceNameAndValue(Field field, TitanModel model, List<Annotation> annotations){
+        Map<String, Object> fieldMap = new HashMap<>();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof TitanEdgeResource) {
+                field.setAccessible(true);
+                TitanEdgeResource titanField = (TitanEdgeResource) annotation;
+                try {
+                    if (titanField.name() == null || "".equals(titanField.name())) {
+                        fieldMap.put(field.getName(), field.get(model));
+                    }else{
+                        fieldMap.put(titanField.name(),field.get(model));
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
+
+        return fieldMap;
+    }
+
+    private static Map<String, Object> getOneTitanTargetAndValue(Field field, TitanModel model, List<Annotation> annotations){
+        Map<String, Object> fieldMap = new HashMap<>();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof TitanEdgeTarget) {
+                field.setAccessible(true);
+                TitanEdgeTarget titanField = (TitanEdgeTarget) annotation;
+                try {
+                    if (titanField.name() == null || "".equals(titanField.name())) {
+                        fieldMap.put(field.getName(), field.get(model));
+                    }else{
+                        fieldMap.put(titanField.name(),field.get(model));
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
+
+        return fieldMap;
+    }
+
+
+
     public static void main(String[] args) {
         TitanEducationQuestions qustions = new TitanEducationQuestions();
         qustions.setDbpreview("123");
+        qustions.setIdentifier(UUID.randomUUID().toString());
         createScriptModel(qustions);
+
+        TitanResCoverageVertex resCoverageVertex = new TitanResCoverageVertex();
+        resCoverageVertex.setStrategy("User");
+        resCoverageVertex.setTarget("123");
+        resCoverageVertex.setTargetType("999");
+        createScriptModel(resCoverageVertex);
+
     }
 }

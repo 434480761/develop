@@ -1,7 +1,5 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
-import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
-
 import java.util.Map;
 
 /**
@@ -9,7 +7,7 @@ import java.util.Map;
  */
 public class TitanScriptModelEdge extends TitanScriptModel{
     private Map<String, Object> resourceKeyMap;
-    private String targetKeyMap;
+    private Map<String, Object> targetKeyMap;
 
     public Map<String, Object> getResourceKeyMap() {
         return resourceKeyMap;
@@ -19,11 +17,11 @@ public class TitanScriptModelEdge extends TitanScriptModel{
         this.resourceKeyMap = resourceKeyMap;
     }
 
-    public String getTargetKeyMap() {
+    public Map<String, Object> getTargetKeyMap() {
         return targetKeyMap;
     }
 
-    public void setTargetKeyMap(String targetKeyMap) {
+    public void setTargetKeyMap(Map<String, Object> targetKeyMap) {
         this.targetKeyMap = targetKeyMap;
     }
 }

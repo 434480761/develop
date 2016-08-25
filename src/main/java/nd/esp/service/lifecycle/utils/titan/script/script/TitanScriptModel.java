@@ -8,8 +8,8 @@ import java.util.Objects;
  */
 public class TitanScriptModel {
     private String label;
-    private Map<String, Objects> primaryKeyMap;
-    private Map<String, Objects> valueMap;
+    private Map<String, Object> compositeKeyMap;
+    private Map<String, Object> fieldMap;
 
     public String getLabel() {
         return label;
@@ -19,19 +19,19 @@ public class TitanScriptModel {
         this.label = label;
     }
 
-    public Map<String, Objects> getPrimaryKeyMap() {
-        return primaryKeyMap;
+    public Map<String, Object> getCompositeKeyMap() {
+        return compositeKeyMap;
     }
 
-    public void setPrimaryKeyMap(Map<String, Objects> primaryKeyMap) {
-        this.primaryKeyMap = primaryKeyMap;
+    public void setCompositeKeyMap(Map<String, Object> compositeKeyMap) {
+        this.compositeKeyMap = compositeKeyMap;
     }
 
-    public Map<String, Objects> getValueMap() {
-        return valueMap;
+    public Map<String, Object> getFieldMap() {
+        return fieldMap;
     }
 
-    public void setValueMap(Map<String, Objects> valueMap) {
-        this.valueMap = valueMap;
+    public void setFieldMap(Map<String, Object> fieldMap) {
+        this.fieldMap = fieldMap;
     }
 }

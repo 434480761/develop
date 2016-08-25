@@ -9,7 +9,7 @@ import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
  * Created by Administrator on 2016/8/24.
  */
 @TitanVertex(label = "coverage")
-public class TitanResCoverageVertex {
+public class TitanResCoverageVertex extends TitanModel{
 
     @TitanCompositeKey
     @TitanField(name = "target_type")
