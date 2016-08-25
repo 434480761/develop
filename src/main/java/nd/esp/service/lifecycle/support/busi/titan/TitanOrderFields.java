@@ -57,9 +57,6 @@ public enum TitanOrderFields {
     }
 
     /**
-     * String valueKey = TitanUtils.generateKey(scriptParamMap, field);
-     * scriptBuffer.append(valueKey).append(",");
-     * scriptParamMap.put(valueKey, value);
      *
      * @param titanExpression
      * @param fieldValue
@@ -83,10 +80,10 @@ public enum TitanOrderFields {
             scriptParamMap.put(dataFrom, tmp[2]);
             edgeScript = "outE('"
                     + TitanKeyWords.has_resource_statistical.toString()
-                    + "').has('sta_key_title','"
+                    + "').has('sta_key_title',"
                     + keyTitle
-                    + "').has('sta_data_from','"
-                    + dataFrom + "')";
+                    + ").has('sta_data_from',"
+                    + dataFrom + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
@@ -99,9 +96,9 @@ public enum TitanOrderFields {
             scriptParamMap.put(keyTitle, this.toString());
             edgeScript = "outE('"
                     + TitanKeyWords.has_resource_statistical.toString()
-                    + "').has('sta_key_title','"
+                    + "').has('sta_key_title',"
                     + keyTitle
-                    + "')";
+                    + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
@@ -114,9 +111,9 @@ public enum TitanOrderFields {
             scriptParamMap.put(valueKey, "href");
             edgeScript = "outE('"
                     + TitanKeyWords.has_tech_info.toString()
-                    + "').has('ti_title','"
+                    + "').has('ti_title',"
                     + valueKey
-                    + "')";
+                    + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
@@ -129,9 +126,9 @@ public enum TitanOrderFields {
             edgeScript = "outE('"
                     + TitanKeyWords.has_category_code.toString()
                     + "').has('" + ES_SearchField.cg_taxoncode.toString()
-                    + "',textRegex('"
+                    + "',textRegex("
                     + valueKey
-                    + "'))";
+                    + "))";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")

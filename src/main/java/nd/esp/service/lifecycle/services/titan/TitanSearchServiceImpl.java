@@ -176,7 +176,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
         dealWithShowVersionOrder(orderMap, showVersion, orderList);
-        dealWithOrder(titanExpression, orderMap, orderList);
+        //dealWithOrder(titanExpression, orderMap, orderList);
+        dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList);
         if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
             titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString());
         }
@@ -819,9 +820,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                      Map<String, String> orderMap,
                                      List<TitanOrder> orderList) {
         // TODO 通过枚举生成order by 的脚本
-        Set<String> orderFields = orderMap.keySet();
-        for (String field : orderFields) {
-            TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList);
+        if (CollectionUtils.isNotEmpty(orderMap)) {
+            Set<String> orderFields = orderMap.keySet();
+            for (String field : orderFields) {
+                TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList);
+            }
         }
         // 默认排序
         if (CollectionUtils.isEmpty(orderList)) {
