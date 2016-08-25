@@ -461,6 +461,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      *  b.多个tags之间为OR的关系, 如 tags=A&tags=B
      *  c.AND关系支持方式为 tags=A and B,表示tags同时有A和B的时候才满足
      *  d.注意:tags是数组的json串存储在数据库中，假设有 tags1=["A","BC"] 和 tags2=["AB","C”]，若tags=A，则只有tags满足，也就是对单个tags是完全匹配的
+     *  tags=nd and sdp.esp -->.*\"nd\".*\"sdp.esp\".*
+     *  tags=nd -->.*\"nd\".*
+     *  "nd","sdp.esp"
      * @param vertexPropertiesMap
      * @param tags
      */
@@ -473,14 +476,16 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             for (String tag : tagSet) {
                 if (tag.contains(" and ")) {
                     String[] andTags = tag.split(" and ");
-                    String tagsLike = "*";
-                    for (String t : andTags) {
-                        tagsLike = tagsLike + "\"" + t + "\"*";
+                    int length = andTags.length;
+                    String tmp="";
+                    for (int i = 0; i < length; i++) {
+                        tmp = tmp + "\\\"" + andTags[i] + "\\\"";
+                        if (i != length - 1) tmp = tmp + "*";
                     }
-                    tagsList.add(tagsLike);
+                    tmp = "*" + tmp + "*";
+                    tagsList.add(tmp);
                 } else {
-                    //tag = "*\""+tag+"\"*";
-                    tagsList.add("*\"" + tag + "\"*");
+                    tagsList.add("*\\\"" + tag + "\\\"*");
                 }
             }
             if (CollectionUtils.isNotEmpty(tagsList)) tagsConditionMap.put(Titan_OP.like, tagsList);
@@ -1008,7 +1013,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             String tagsLike="*";
             for (String tag : tagSet) {
                 //加上双引号
-                tagsLike = tagsLike  +"\""+tag+"\"*";
+                tagsLike = tagsLike  +"\\\""+tag+"\\\"*";
             }
             if(!"*".equals(tagsLike)) edgePropertiesMap.put(ES_SearchField.tags.toString(), generateFieldCondtionWithLike(ES_SearchField.tags.toString(), tagsLike));
         }
@@ -1064,7 +1069,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             tagSet.addAll(Arrays.asList(tags.split(",")));
             String tagsLike="*";
             for (String tag : tagSet) {
-                tagsLike = tagsLike  +"\""+tag+"\"" + "*";
+                tagsLike = tagsLike  +"\\\""+tag+"\\\"" + "*";
             }
             if(!"*".equals(tagsLike)) edgePropertiesMap.put(ES_SearchField.tags.toString(), generateFieldCondtionWithLike(ES_SearchField.tags.toString(), tagsLike));
         }

@@ -74,51 +74,66 @@ public enum TitanOrderFields {
             //desc#downloads#TOTAL
             String[] tmp = fieldValue.split("#");
             orderBy = checkSortOrder(tmp[0]);
-            String keyTitle = TitanUtils.generateKey(scriptParamMap, "sta_key_title");
+            String keyTitle = TitanUtils.generateKey(scriptParamMap, TitanKeyWords.sta_key_title.toString());
             scriptParamMap.put(keyTitle, tmp[1]);
-            String dataFrom = TitanUtils.generateKey(scriptParamMap, "sta_data_from");
+            String dataFrom = TitanUtils.generateKey(scriptParamMap, TitanKeyWords.sta_data_from.toString());
             scriptParamMap.put(dataFrom, tmp[2]);
             edgeScript = "outE('"
                     + TitanKeyWords.has_resource_statistical.toString()
-                    + "').has('sta_key_title',"
+                    + "').has('"
+                    +TitanKeyWords.sta_key_title.toString()
+                    +"',"
                     + keyTitle
-                    + ").has('sta_data_from',"
-                    + dataFrom + ")";
+                    + ").has('"
+                    +TitanKeyWords.sta_data_from.toString()
+                    +"',"
+                    + dataFrom
+                    + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
-                    .append(".values('sta_key_value'),__.constant(''))");
+                    .append(".values('")
+                    .append(TitanOrderFields.sta_key_value.toString())
+                    .append("'),__.constant(''))");
             // 边上的统计数据需要取回
             titanExpression.setStatistics(true, "," + edgeScript);
         } else if (this.equals(top) || this.equals(scores) || this.equals(votes) || this.equals(views)) {
-            String keyTitle = TitanUtils.generateKey(scriptParamMap, "sta_key_title");
+            String keyTitle = TitanUtils.generateKey(scriptParamMap, TitanKeyWords.sta_key_title.toString());
             scriptParamMap.put(keyTitle, this.toString());
             edgeScript = "outE('"
                     + TitanKeyWords.has_resource_statistical.toString()
-                    + "').has('sta_key_title',"
+                    + "').has('"
+                    + TitanKeyWords.sta_key_title.toString()
+                    + "',"
                     + keyTitle
                     + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
-                    .append(".values('sta_key_value'),__.constant(''))");
+                    .append(".values('")
+                    .append(TitanOrderFields.sta_key_value.toString())
+                    .append("'),__.constant(''))");
             // 边上的统计数据需要取回
             titanExpression.setStatistics(true, "," + edgeScript);
         } else if (this.equals(ti_size)) {
-            String valueKey = TitanUtils.generateKey(scriptParamMap, "ti_title");
-            scriptParamMap.put(valueKey, "href");
+            String valueKey = TitanUtils.generateKey(scriptParamMap, TitanKeyWords.ti_title.toString());
+            scriptParamMap.put(valueKey, TitanKeyWords.href.toString());
             edgeScript = "outE('"
                     + TitanKeyWords.has_tech_info.toString()
-                    + "').has('ti_title',"
+                    + "').has('"
+                    +TitanKeyWords.ti_title.toString()
+                    +"',"
                     + valueKey
                     + ")";
             script.append("choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
-                    .append(".values('ti_size'),__.constant(0))");
+                    .append(".values('")
+                    .append(TitanKeyWords.ti_size.toString())
+                    .append("'),__.constant(0))");
         } /*else if (this.equals(sort_num)) {
         }*/ else if (this.equals(cg_taxoncode)) {
             String valueKey = TitanUtils.generateKey(scriptParamMap, ES_SearchField.cg_taxoncode.toString());
