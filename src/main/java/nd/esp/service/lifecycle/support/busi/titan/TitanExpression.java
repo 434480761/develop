@@ -31,6 +31,7 @@ public class TitanExpression implements TitanScriptGenerator {
     private String statisticsScript;
     private boolean needPrintable = false;
     private String printableScript;
+    private String orderBy4SortNum = "incr";
 
     public void setStatistics(boolean needStatistics, String statisticsScript) {
         this.needStatistics = needStatistics;
@@ -46,9 +47,11 @@ public class TitanExpression implements TitanScriptGenerator {
         this.relationQueryOrderBy = relationQueryOrderBy;
         this.orderByEdgeFieldName = orderByEdgeFieldName;
     }
-    public void setOrderBySortNum(boolean isOrderBySortNum, String orderByEdgeFieldName) {
+
+    public void setOrderBySortNum(boolean isOrderBySortNum, String orderByEdgeFieldName, String orderBy4SortNum) {
         this.isOrderBySortNum = isOrderBySortNum;
         this.orderByEdgeFieldName = orderByEdgeFieldName;
+        this.orderBy4SortNum = orderBy4SortNum;
     }
 
     public void setOrderList(List<TitanOrder> orderList) {
@@ -179,7 +182,7 @@ public class TitanExpression implements TitanScriptGenerator {
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
         if (this.relationQueryOrderBy || this.isOrderBySortNum) {
             //.select('e').order().by('order_num',decr).select('x')
-            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),incr).select('x')");
+            scriptBuffer.append(".order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),").append(this.orderBy4SortNum).append(").select('x')");
         } else {
             appendOrderBy(scriptBuffer);
             /*scriptBuffer.append(".order()");
