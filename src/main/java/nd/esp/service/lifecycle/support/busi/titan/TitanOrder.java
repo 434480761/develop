@@ -35,6 +35,7 @@ import java.util.Map;
 public class TitanOrder {
     private String field;
     private String script;
+    private String orderByField;
     private String sortOrder;
 
     public TitanOrder(String field, String script, String sortOrder) {
@@ -71,20 +72,23 @@ public class TitanOrder {
         return this;
     }
 
+    public String getOrderByField() {
+        return orderByField;
+    }
+
+    public TitanOrder setOrderByField(String orderByField) {
+        this.orderByField = orderByField;
+        return this;
+    }
+
     public static String checkSortOrder(String order) {
-        if (SORTORDER.ASC.toString().equals(order)) {
+        if ("asc".equals(order)) {
             return SORTORDER.ASC.toString();
         }
         return SORTORDER.DESC.toString();
     }
 
-    /*public enum OrderFields {
-        title, ti_size, lc_create_time, lc_last_update, sort_num, cg_taxoncode, key_value, sta_key_value, top, scores, votes, views;
-        public String generateScipt(String field, Map<String, Object> scriptParamMap) {
-            StringBuffer scriptBuffer = new StringBuffer();
-            return scriptBuffer.toString();
-        }
-    }*/
+
     public enum SORTORDER {
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
         DESC("decr"), ASC("incr");

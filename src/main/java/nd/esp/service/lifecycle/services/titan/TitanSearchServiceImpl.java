@@ -733,14 +733,19 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         List<String> eqPrint = print.get(PropOperationConstant.OP_EQ);
         if (CollectionUtils.isEmpty(eqPrint)) return;
         // 只处理第一个 .append(",out('").append(TitanKeyWords.has_tech_info.toString()).append("')")
-        String tiTitle = eqPrint.get(0);
-        String script = ".outE('has_tech_info').has('ti_printable',true)";
-        if (tiTitle.contains("#")) {
-            script = script + ".has('ti_title','" + tiTitle.split("#")[1] + "')";
+        String condition = eqPrint.get(0);
+        StringBuffer script = new StringBuffer(".select('x').outE('has_tech_info')");
+        //.has('ti_printable',true)
+        if (condition.contains("#")) {
+            String[] conditions = condition.split("#");
+            script.append(".has('ti_printable',").append("true".equals(conditions[0]) ? "true)" : "false)");
+            script.append(".has('ti_title','").append(conditions[1]).append("')");
+        } else {
+            script.append(".has('ti_printable',").append("true".equals(condition) ? "true)" : "false)");
         }
-        script = script + ".select('x').dedup()";
+        script.append(".select('x').dedup()");
         // TODO 1、参数和脚本分离 2、常量字符替换成枚举
-        titanExpression.setPrintable(true, script);
+        titanExpression.setPrintable(true, script.toString());
     }
 
     /**
@@ -835,7 +840,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         }
         // 默认排序
         if (CollectionUtils.isEmpty(orderList)) {
-            orderList.add(new TitanOrder(ES_SearchField.lc_create_time.toString(),"'" + ES_SearchField.lc_create_time.toString()+"'" , TitanOrder.SORTORDER.DESC.toString()));
+            TitanOrder order = new TitanOrder();
+            order.setField(ES_SearchField.lc_create_time.toString()).setOrderByField( ES_SearchField.lc_create_time.toString()).setSortOrder(TitanOrder.SORTORDER.DESC.toString());
+            orderList.add(order);
         }
         titanExpression.setOrderList(orderList);
     }
@@ -849,10 +856,18 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      */
     private void dealWithShowVersionOrder(Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
         if (showVersion) {
-            orderList.add(new TitanOrder(ES_SearchField.m_identifier.toString(), "choose(select('x').has('" + ES_SearchField.m_identifier.toString()+ "'),select('x').values('"+ES_SearchField.m_identifier.toString()+"'),__.constant(''))", TitanOrder.SORTORDER.ASC.toString()));
+            TitanOrder o1=new TitanOrder();
+            o1.setField(ES_SearchField.m_identifier.toString());
+            o1.setScript(".select('x').choose(select('x').has('" + ES_SearchField.m_identifier.toString()+ "'),select('x').values('"+ES_SearchField.m_identifier.toString()+"'),__.constant(''))");
+            o1.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
+            orderList.add(o1);
             if (CollectionUtils.isEmpty(orderMap)) {
                 // 当为true的时候且oderby为空的时候
-                orderList.add(new TitanOrder(ES_SearchField.lc_version.toString(), "choose(select('x').has('" +ES_SearchField.lc_version.toString()+ "'),select('x').values('"+ES_SearchField.lc_version.toString()+"'),__.constant(''))", TitanOrder.SORTORDER.ASC.toString()));
+                TitanOrder o2=new TitanOrder();
+                o2.setField(ES_SearchField.m_identifier.toString());
+                o2.setScript(".select('x').choose(select('x').has('" +ES_SearchField.lc_version.toString()+ "'),select('x').values('"+ES_SearchField.lc_version.toString()+"'),__.constant(''))");
+                o2.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
+                orderList.add(o2);
             }
         }
     }
