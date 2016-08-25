@@ -1,9 +1,16 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
+import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
+import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
+
 /**
  * Created by Administrator on 2016/8/24.
  */
 public class TitanScriptBuilder {
+    TitanScriptModel titanScriptModel;
+    public TitanScriptBuilder(TitanModel titanModel){
+        this.titanScriptModel = ParseAnnotation.createScriptModel(titanModel);
+    }
     /**
      * 添加节点，脚本可以单独执行，返回titan内部ID
      * */
@@ -55,4 +62,6 @@ public class TitanScriptBuilder {
     public TitanScriptBuilder scriptEnd(){
         return null;
     }
+
+
 }

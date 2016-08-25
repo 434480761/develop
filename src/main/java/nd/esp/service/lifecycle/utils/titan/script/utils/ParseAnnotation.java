@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.utils.titan.script.utils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanEducationQuestions;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
+import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageEdge;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModel;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
@@ -58,7 +59,7 @@ public class ParseAnnotation {
         return titanScriptModel;
     }
 
-    public static Map<Field, List<Annotation>> getAllFieldAnnotationMap(TitanModel titanModel) {
+    private static Map<Field, List<Annotation>> getAllFieldAnnotationMap(TitanModel titanModel) {
         Map<Field, List<Annotation>> map = new HashMap<>();
 
         List<Field> fields = new ArrayList<>();
@@ -83,7 +84,7 @@ public class ParseAnnotation {
     /**
      * 获取所有的属性名和属性值
      * */
-    public static Map<String, Object> getTitanFieldNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
+    private static Map<String, Object> getTitanFieldNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
@@ -96,7 +97,7 @@ public class ParseAnnotation {
     /**
      * 获取所有有@TitanCompositeKey注解标记的属性和属性值
      * */
-    public static Map<String, Object> getTitanCompositeKeyNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
+    private static Map<String, Object> getTitanCompositeKeyNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
@@ -110,13 +111,13 @@ public class ParseAnnotation {
         return fieldMap;
     }
 
-    public static Map<String, Object>  getTitanEdgeResourceNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
+    private static Map<String, Object>  getTitanEdgeResourceNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
             for (Annotation comAnnotation : annotations) {
-                if (comAnnotation instanceof TitanEdgeResource) {
-                    fieldMap.putAll(getOneTitanFieldNameAndValue(field, model, annotations));
+                if (comAnnotation instanceof TitanEdgeResourceKey) {
+                    fieldMap.putAll(getOneTitanRsourceNameAndValue(field, model, annotations));
                     break;
                 }
             }
@@ -124,13 +125,13 @@ public class ParseAnnotation {
         return fieldMap;
     }
 
-    public static Map<String, Object>  getTitanEdgeTargetNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
+    private static Map<String, Object>  getTitanEdgeTargetNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap){
         Map<String, Object> fieldMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
             for (Annotation comAnnotation : annotations) {
-                if (comAnnotation instanceof TitanEdgeTarget) {
-                    fieldMap.putAll(getOneTitanFieldNameAndValue(field, model, annotations));
+                if (comAnnotation instanceof TitanEdgeTargetKey) {
+                    fieldMap.putAll(getOneTitanTargetAndValue(field, model, annotations));
                     break;
                 }
             }
@@ -167,14 +168,14 @@ public class ParseAnnotation {
     private static Map<String, Object> getOneTitanRsourceNameAndValue(Field field, TitanModel model, List<Annotation> annotations){
         Map<String, Object> fieldMap = new HashMap<>();
         for (Annotation annotation : annotations) {
-            if (annotation instanceof TitanEdgeResource) {
+            if (annotation instanceof TitanEdgeResourceKey) {
                 field.setAccessible(true);
-                TitanEdgeResource titanField = (TitanEdgeResource) annotation;
+                TitanEdgeResourceKey titanResource = (TitanEdgeResourceKey) annotation;
                 try {
-                    if (titanField.name() == null || "".equals(titanField.name())) {
+                    if (titanResource.source() == null || "".equals(titanResource.source())) {
                         fieldMap.put(field.getName(), field.get(model));
                     }else{
-                        fieldMap.put(titanField.name(),field.get(model));
+                        fieldMap.put(titanResource.source(),field.get(model));
                     }
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -189,14 +190,14 @@ public class ParseAnnotation {
     private static Map<String, Object> getOneTitanTargetAndValue(Field field, TitanModel model, List<Annotation> annotations){
         Map<String, Object> fieldMap = new HashMap<>();
         for (Annotation annotation : annotations) {
-            if (annotation instanceof TitanEdgeTarget) {
+            if (annotation instanceof TitanEdgeTargetKey) {
                 field.setAccessible(true);
-                TitanEdgeTarget titanField = (TitanEdgeTarget) annotation;
+                TitanEdgeTargetKey titanField = (TitanEdgeTargetKey) annotation;
                 try {
-                    if (titanField.name() == null || "".equals(titanField.name())) {
+                    if (titanField.target() == null || "".equals(titanField.target())) {
                         fieldMap.put(field.getName(), field.get(model));
                     }else{
-                        fieldMap.put(titanField.name(),field.get(model));
+                        fieldMap.put(titanField.target(),field.get(model));
                     }
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -207,7 +208,6 @@ public class ParseAnnotation {
 
         return fieldMap;
     }
-
 
 
     public static void main(String[] args) {
@@ -221,6 +221,16 @@ public class ParseAnnotation {
         resCoverageVertex.setTarget("123");
         resCoverageVertex.setTargetType("999");
         createScriptModel(resCoverageVertex);
+
+        TitanResCoverageEdge edge = new TitanResCoverageEdge();
+        edge.setIdentifier(UUID.randomUUID().toString());
+        edge.setResource(UUID.randomUUID().toString());
+        edge.setResType("assets");
+        edge.setStrategy("1234");
+        edge.setTarget("7897978");
+        edge.setTargetType("User");
+
+        createScriptModel(edge);
 
     }
 }

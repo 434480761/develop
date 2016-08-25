@@ -8,6 +8,6 @@ import java.lang.annotation.*;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface TitanEdgeTarget {
-    String name() default "";
+public @interface TitanEdgeTargetKey {
+    String target() default "";
 }

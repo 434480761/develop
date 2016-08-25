@@ -2,23 +2,21 @@ package nd.esp.service.lifecycle.utils.titan.script.model;
 
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 
-import javax.persistence.Column;
-
 /**
  * Created by Administrator on 2016/8/24.
  */
 @TitanEdge(label = "has_coverage")
-public class TitanResCoverageEdge {
+public class TitanResCoverageEdge extends TitanModel{
 
-    @TitanEdgeTarget
+    @TitanEdgeTargetKey(target = "target_type")
     @TitanField(name = "target_type")
     private String targetType;
 
-    @TitanEdgeTarget
+    @TitanEdgeTargetKey(target = "strategy")
     @TitanField(name = "strategy")
     private String strategy;
 
-    @TitanEdgeTarget
+    @TitanEdgeTargetKey(target = "target")
     @TitanField(name = "target")
     private String target;
 
@@ -26,10 +24,10 @@ public class TitanResCoverageEdge {
     @TitanField(name = "identifier")
     private String identifier;
 
-    @TitanEdgeResource
+    @TitanEdgeResourceKey(source = "identifier")
     private String resource;
 
-    @TitanEdgeResource
+    @TitanEdgeResourceKey(source = "primary_category")
     private String resType;
 
     public String getResource() {
