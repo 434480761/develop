@@ -215,11 +215,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
     
     private void checkCoverageHandle(Education education,List<ResCoverage> resCoverage){
-        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
-        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
-        checkResCoverageEdges(education, resCoverage);
-        baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
-        checkResCoverageEdges(education, resCoverage);
+//        String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
+//        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
+//        checkResCoverageEdges(education, resCoverage);
+//        baseBuilder = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel).inV();
+//        checkResCoverageEdges(education, resCoverage);
     }
     /**
      * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
@@ -279,7 +279,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     
     String[] coverageEdgeField = new String[]{"identifier", "strategy", "target", "target_type"};
     String coverageEdgeLabel = "has_coverage";
-    private void checkResCoverageEdges(Education education,List<ResCoverage> resCoverages){
+    private void checkResCoverage(Education education,List<ResCoverage> resCoverages){
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         Builder baseBuilderEdge = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel, coverageEdgeLabel);
         Multimap<String, ResCoverage> coverageMultiMap = toCoverageMultimap(resCoverages);
@@ -446,12 +446,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
     
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelationList) {
-//        checkCategoryEdges(education, resourceCategoryList);
-//        checkCategoryNodes(education, resourceCategoryList);
-//        checkTechInfoHandle(education, techInfos);
-//        checkCoverageHandle(education, resCoverages);
-        checkResCoverageEdges(education, resCoverages);
-//        checkResCoverageNodes(education, resCoverages);
+        checkCategoryEdges(education, resourceCategories);
+        checkCategoryNodes(education, resourceCategories);
+        checkTechInfoHandle(education, techInfos);
+        checkResCoverage(education, resCoverages);
     }
     
     final String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name", "identifier"};
