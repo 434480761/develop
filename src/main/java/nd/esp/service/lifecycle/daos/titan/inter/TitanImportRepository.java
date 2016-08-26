@@ -33,12 +33,12 @@ public interface TitanImportRepository {
                                     List<ResourceCategory> resourceCategoryList,
                                     List<TechInfo> techInfos,
                                     List<ResourceRelation> resourceRelationList);
-//    public void checkCategoryEdges(Education education,List<ResourceCategory> resourceCategoryList);
-//    public void checkCategoryNodes(Education education,List<ResourceCategory> resourceCategoryList);
     
     void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages,
             List<ResourceCategory> resourceCategories, List<TechInfo> techInfos,
             List<ResourceRelation> resourceRelations, List<ResourceStatistical> statistic);
 
     public void checkResourceInTitan(CheckResourceModel checkResourceModel);
+
+    void checkResourceRelations(List<ResourceRelation> existRelation);
 }

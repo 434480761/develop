@@ -26,6 +26,7 @@ import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -205,8 +206,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
     }
     
-    String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title", "ti_printable"};
-    String techInfoEdgeLabel = "has_tech_info";
+    final String[] techInfoField = new String[]{"description", "identifier", "ti_entry", "ti_format", "ti_location", "ti_md5", "ti_requirements", "ti_secure_key", "ti_size","ti_title", "ti_printable"};
+    final String techInfoEdgeLabel = TitanKeyWords.has_tech_info.toString();
     
     private void checkTechInfoHandle(Education education,List<TechInfo> techInfos){
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
@@ -273,8 +274,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return count;
     }
     
-    String[] coverageEdgeField = new String[]{"identifier", "strategy", "target", "target_type"};
-    String coverageEdgeLabel = "has_coverage";
+    final String[] coverageEdgeField = new String[]{"identifier", "strategy", "target", "target_type"};
+    final String coverageEdgeLabel = TitanKeyWords.has_coverage.toString();
     private void checkResCoverage(Education education,List<ResCoverage> resCoverages){
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         Builder baseBuilderEdge = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel);
@@ -416,24 +417,60 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         
     }
     
+    final String[] resourceRelation = new String[]{"enable", "identifier", "order_num", "relation_type", "rr_label", "sort_num", "res_type", "source_uuid", "tags", "resource_target_type", "target_uuid"};
+    final String relationEdgeLabel = TitanKeyWords.has_relation.toString();
+    public void checkResourceRelations(List<ResourceRelation> relations){
+        String baseScript = new StringBuilder("g.V().has(").append("'identifier', ").append("source_uuid").append(")").toString();
+        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(relationEdgeLabel);
+        for (int index =0 ;index < relations.size() ;index++){
+            Map<String, Object> paramMap = new HashMap<String, Object>();
+//            paramMap.put(educationIdentifier,relations.get(index).getSourceUuid());
+//            paramMap.put("targetUuid",relations.get(index).getTarget());
+
+            List<Object> resourceRelationPartField = fillResourceRelationPartField(relations.get(index));
+            fillParamMap(paramMap, resourceRelationPartField, resourceRelation);
+            
+            Builder nodeBuilder = generateCheckResourceCategoryScript(baseBuilder, resourceRelationPartField, resourceRelation).inV().has("identifier", "target_uuid");
+//            Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceRelationPartField, resourceRelation);
+            Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
+            if (count == null) {
+                LOG.error("查询脚本执行异常, script:{}, param:{}", nodeBuilder.builder(), paramMap);
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                        "查询脚本发生异常" + nodeBuilder.builder());
+            }
+            if (count == 0) {
+                if (titanRepositoryUtils.checkRelationExistInMysql(relations.get(index))) {
+                    LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", nodeBuilder.builder(), paramMap);
+                    titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relations.get(index).getResType(), relations.get(index).getSourceUuid());
+                }
+            } else if(count > 1){
+                if (titanRepositoryUtils.checkRelationExistInMysql(relations.get(index))) {
+                    LOG.info("titan 中数据重复, script:{}, param:{}", nodeBuilder.builder(), paramMap);
+                    titanSync(TitanSyncType.CHECK_RR_REPEAT,relations.get(index).getResType(),relations.get(index).getSourceUuid());
+                }
+            }
+        }
+    }
+    
     @Override
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelations, List<ResourceStatistical> statistic) {
-        checkCategories(education, resourceCategories);
-        checkTechInfoHandle(education, techInfos);
-        checkResCoverage(education, resCoverages);
-        checkResourceStatistic(education, statistic);
+//        checkCategories(education, resourceCategories);
+//        checkTechInfoHandle(education, techInfos);
+//        checkResCoverage(education, resCoverages);
+//        checkResourceStatistic(education, statistic);
     }
     
     @Override
     public void checkResourceInTitan(CheckResourceModel checkResourceModel){
-        checkCategories(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories());
-        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
-        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
-        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
+//        checkCategories(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories());
+//        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
+//        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
+//        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
     }
     
     final String[] resourceStatistic = new String[]{"identifier", "sta_data_from", "sta_key_title", "sta_key_value", "sta_res_type", "sta_resource", "sta_title", "sta_update_time"};
-    final String statisticEdgeLabel = "has_resource_statistical";
+    final String statisticEdgeLabel = TitanKeyWords.has_resource_statistical.toString();
     private void checkResourceStatistic(Education education,List<ResourceStatistical> statistic){
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         Builder baseBuilder = new Builder(baseScript).outE().hasLabel(statisticEdgeLabel);
@@ -450,7 +487,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     }
     
     final String[] categoryEdgesField = new String[]{"cg_taxonpath", "cg_taxoncode", "cg_taxonname", "cg_category_code", "cg_short_name", "cg_category_name", "identifier"};
-    final String categoryEdgeLabel = "has_category_code";
+    final String categoryEdgeLabel = TitanKeyWords.has_category_code.toString();
     final String educationIdentifier = "educationIdentifier";
     final String primaryCategory = "primaryCategory";
     final String[] categoryNodeField = new String[]{"cg_taxoncode"};
@@ -566,6 +603,22 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return resourceCategoryPartField;
     }
 
+    private List<Object> fillResourceRelationPartField(ResourceRelation relations) {
+        List<Object> resourceRelationPartField = new ArrayList<Object>();
+        resourceRelationPartField.add(relations.getEnable());
+        resourceRelationPartField.add(relations.getIdentifier());
+        resourceRelationPartField.add(relations.getOrderNum());
+        resourceRelationPartField.add(relations.getRelationType());
+        resourceRelationPartField.add(relations.getLabel());
+        resourceRelationPartField.add(relations.getSortNum());
+        resourceRelationPartField.add(relations.getResType());
+        resourceRelationPartField.add(relations.getSourceUuid());
+        resourceRelationPartField.add(relations.getTags());
+        resourceRelationPartField.add(relations.getResourceTargetType());
+        resourceRelationPartField.add(relations.getTarget());
+        return resourceRelationPartField;
+    }
+    
     private List<Object> fillResourceStatisticPartField(ResourceStatistical statistic) {
         List<Object> resourceStatisticPartField = new ArrayList<Object>();
         resourceStatisticPartField.add(statistic.getIdentifier());
