@@ -340,8 +340,8 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 			// 查找教学目标关联的教学目标类型
 			String SQLQueryInstructionalObjectiveType = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description AS description,rr.target AS target from `ndresource` AS ndr" +
-					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"assets\" and rr.resource_target_type=\"instructionalobjectives\"" +
-					" WHERE ndr.identifier in ( select resource from `resource_categories` where taxOnCode='$RA0503') AND rr.target in(%s)", StringUtils.join(idString, ","));
+					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"assets\" and rr.enable = 1 and rr.resource_target_type=\"instructionalobjectives\"" +
+					" WHERE ndr.enable = 1 and ndr.identifier in ( select resource from `resource_categories` where taxOnCode='$RA0503') AND rr.target in(%s)", StringUtils.join(idString, ","));
 			List<Map<String, Object>> instructionalObjectiveTypeList = jt.queryForList(SQLQueryInstructionalObjectiveType);
 			// 以教学目标Id为key的查询结果
 			Map<String, Map<String, Object>> instructionalObjective2TypeMap = new HashMap<>();
@@ -355,7 +355,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			// 查找教学目标关联的知识点
 			String SQLQueryKnowledges = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description as description,rr.target AS target,rr.order_num as orderNum from `ndresource` AS ndr" +
 					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"knowledges\" and rr.resource_target_type=\"instructionalobjectives\"" +
-					" WHERE rr.target in (%s)", StringUtils.join(idString, ","));
+					" WHERE ndr.enable = 1 and rr.enable = 1 and rr.target in (%s)", StringUtils.join(idString, ","));
 			List<Map<String, Object>> knowledgesList = jt.queryForList(SQLQueryKnowledges);
 			// 以教学目标Id为key的查询结果
 			Map<String, List<Map<String, Object>>> knowledgesMap = new HashMap<>();
