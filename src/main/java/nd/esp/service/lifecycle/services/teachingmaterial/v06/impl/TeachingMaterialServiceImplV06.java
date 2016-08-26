@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.services.teachingmaterial.v06.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +10,9 @@ import java.util.Set;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.TeachingMaterialDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
@@ -150,5 +154,61 @@ public class TeachingMaterialServiceImplV06 implements
 //			}
 //		}
 		return oldData;
+	}
+
+	@Override
+	public List<Map<String, Object>> queryResourcesByTmId(String tmId,
+			Set<String> resTypes,List<String> includes,String coverage) {
+		//1、校验教材是否存在
+		try {
+			TeachingMaterial tm = teachingMaterialRepository.get(tmId);
+			if(tm == null || tm.getEnable() == false || !"teachingmaterials".equals(tm.getPrimaryCategory())){
+				throw new LifeCircleException(
+						HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.ResourceNotFound.getCode(),
+						LifeCircleErrorMessageMapper.ResourceNotFound.getMessage()+ " uuid:" + tmId);
+			}
+		} catch (EspStoreException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),e.getLocalizedMessage());
+		}
+		
+		//2、根据教材id，查找章节id
+		List<Map<String,Object>> chapterList = teachingMaterialDao.queryChaptersByTmId(tmId);
+		if(CollectionUtils.isNotEmpty(chapterList)){
+			List<String> cids = new ArrayList<String>();
+			for (Map<String,Object> map : chapterList) {
+				cids.add((String)map.get("cid"));
+			}
+			for (String resType : resTypes) {
+				List<Map<String, Object>> tmpList = null;
+				if(CommonServiceHelper.isQuestionDb(resType)){
+					tmpList = teachingMaterialDao.queryResourcesByChapterIds4Question(cids, resType,includes,coverage);
+				}else{
+					tmpList = teachingMaterialDao.queryResourcesByChapterIds(cids, resType,includes,coverage);
+				}
+				if(CollectionUtils.isNotEmpty(tmpList)){
+					for (Map<String, Object> map : tmpList) {
+						String cid = (String)map.get("source_uuid");
+						for (Map<String, Object> map2 : chapterList) {
+							if(cid.equals((String)map2.get("cid"))){
+								if(!map2.containsKey("resources")){
+									map2.put("resources", new HashMap<String, Object>());
+								}
+								List<Map<String,Object>> tl = new ArrayList<Map<String,Object>>();
+								if(!((Map)map2.get("resources")).containsKey(resType)){
+									((Map)map2.get("resources")).put(resType, tl);
+								}
+								tl = (List)((Map)map2.get("resources")).get(resType);
+								
+								//不需要返回
+								map.remove("source_uuid");
+								tl.add(map);
+							}
+						}
+					}
+				}
+			}
+		}
+		return chapterList;
 	}
 }

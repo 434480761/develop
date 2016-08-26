@@ -63,7 +63,7 @@
 		<fileType>swf</fileType>
 		<command name="mp4First">
 			<os name="Default">
-				mswf2avi /f #src# /o #tempMp4# /pi ini\mp4.ini /pn Mp4 video normal quality /de 1
+				mswf2avi /f #src# /o #tempMp4# /pi ini\mp4.ini /pn Mp4 video normal quality
 			</os>
 		</command>
 		<command name="1080p">

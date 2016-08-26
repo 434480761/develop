@@ -16,6 +16,7 @@ public interface TitanCommonRepository {
     public Long getVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
     public Long getEnableVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception;
+    public ResultSet executeScriptSearchResultSet(String script, Map<String, Object> params)throws Exception;
     public ResultSet executeScriptResultSet(String script) throws Exception;
     public List<Double> executeScriptListDouble(String script, Map<String, Object> params) throws Exception;
     public Double executeScriptUniqueDouble(String script, Map<String, Object> params) throws Exception;

@@ -60,7 +60,7 @@ public class ChapterConstant {
     }
     
     public enum ChapterSupportResourceTypes{
-        teachingmaterials,guidancebooks,userspace,;
+        teachingmaterials,guidancebooks,userspace,metacurriculums;
         public static boolean isChapterSupportResourceTypes(String resourceType) {
 
             if (StringUtils.hasText(resourceType)) {

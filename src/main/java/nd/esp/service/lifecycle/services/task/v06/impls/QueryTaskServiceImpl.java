@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.task.v06.impls;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,7 @@ public class QueryTaskServiceImpl implements QueryTaskService {
             int page=0;
             do {
                 String ids = "";
+                List<String> imageTranscodeTaskIds = new ArrayList<String>();
                 boolean bFirst = true;
                 int toIndex = (page+1)*TASK_ID_PAGE_SIZE;
                 if((page+1)*TASK_ID_PAGE_SIZE>taskInfos.size()) {
@@ -66,8 +68,10 @@ public class QueryTaskServiceImpl implements QueryTaskService {
                         } catch (Exception e) {
                             LOG.error("处理超时任务失败：",e);
                         }
-                    } else if(info.getTaskId() != null && !"NULL".equals(info.getTaskId()) &&
-                            !TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(info.getBussType())) {
+                    } else if(info.getTaskId() != null && !"NULL".equals(info.getTaskId())) {
+                        if(TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(info.getBussType())) {
+                            imageTranscodeTaskIds.add(info.getTaskId());
+                        }
                         if(!bFirst) {
                             ids += (","+info.getTaskId());
                         } else {
@@ -95,11 +99,19 @@ public class QueryTaskServiceImpl implements QueryTaskService {
                             try {
                                 BigDecimal bigDecimal=new BigDecimal(String.valueOf(excution.get("id")));
                                 String taskId=String.valueOf(bigDecimal.longValue());
+                                //全景图转码靠接口回调
+                                if(imageTranscodeTaskIds.contains(taskId)) {
+                                    if("COMPLETED".equals(excution.get("status"))) {
+                                        taskService.DealInvalidTask(taskId, "全景图图片转码完成", PackageUtil.PackStatus.READY.getStatus());
+                                    } else {
+                                        taskService.DealInvalidTask(taskId, "全景图图片转码错误");
+                                    }
+                                    continue;
+                                }
+
                                 //只处理完成和失败的记录(也可以先过滤集合中的数据)
                                 if("COMPLETED".equals(excution.get("status")) || "FAILED".equals(excution.get("status"))) {
-                                    if(null == excution.get("result")) {
-                                        taskService.DealInvalidTask(taskId, "未取得任务执行结果");
-                                    } else {
+                                    if(null != excution.get("result")) {
                                         //任务完成的，触发LC的回调
                                         String rtJson = String.valueOf(excution.get("result"));
                                         Map<String,String> rtMap = ObjectUtils.fromJson(rtJson, Map.class);
@@ -130,7 +142,9 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 														resType,
 														params.get("identifier")));
 
-									}
+									} else {
+                                        taskService.DealInvalidTask(taskId, "未取得任务执行结果");
+                                    }
                                 } else if("CANCELED".equals(excution.get("status"))) {
                                     taskService.DealInvalidTask(taskId, "任务已被取消");
                                 }

@@ -148,7 +148,13 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 			return ;
 		}
 		for (ResourceRelation resourceRelation : resourceRelations) {
-			addRelation(resourceRelation);
+			ResourceRelation result = addRelation(resourceRelation);
+			
+			if(result == null && titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
+//				LOG.info("resourceRelation出错");
+				titanRepositoryUtils.titanSync4MysqlAdd(
+						TitanSyncType.IMPORT_DATA_ERROR, "RELATION", resourceRelation.getIdentifier(), 999);
+			}
 		}
 	}
 

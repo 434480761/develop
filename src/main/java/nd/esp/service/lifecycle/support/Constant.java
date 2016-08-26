@@ -285,6 +285,10 @@ public class Constant {
 	//titan configure
 	public final static String TITAN_DOMAIN = LifeCircleApplicationInitializer.properties
 			.getProperty("titan.domain");
+	public final static String TITAN_SEARCH_POOL_SIZE = LifeCircleApplicationInitializer.properties
+			.getProperty("titan.search.pool.size");
+	public final static String TITAN_SINGLE_POOL_SIZE = LifeCircleApplicationInitializer.properties
+			.getProperty("titan.single.pool.size");
 	
     //课件编辑器域名
     public final static String SLIDES_URI=LifeCircleApplicationInitializer.properties.getProperty("slides.uri");

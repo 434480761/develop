@@ -56,9 +56,11 @@ import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
 import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
+import nd.esp.service.lifecycle.models.coveragesharing.v06.CoverageSharingModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.coveragesharing.v06.CoverageSharingService;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
@@ -78,6 +80,7 @@ import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -191,7 +194,9 @@ public class NDResourceController {
 
     @Autowired
     private OfflineService offlineService;
-
+    
+    @Autowired
+	private CoverageSharingService coverageSharingService;
 
     /**
      * 资源获取详细接口
@@ -453,14 +458,20 @@ public class NDResourceController {
             @RequestParam String words,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
-            @RequestParam String limit) {
-		QueryType queryType = QueryType.TITAN;
+            @RequestParam(required=false,value="statistics_type") String statisticsType,
+            @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
+            @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
+            @RequestParam(required=false,value="tags") List<String> tags,
+            @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
+            @RequestParam String limit){
+
+        QueryType queryType = QueryType.TITAN;
 		if (isRT) {
 			queryType = QueryType.TITAN_REALTIME;
 		}
         return requestQuering(resType,null, resCodes, includes, categories,
                 categoryExclude, relations, coverages, props, orderBy, words, limit, queryType, !isAll,
-                reverse,printable, printableKey,null,null,false,null,false);
+                reverse,printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
     }
 
     @RequestMapping(value = "/actions/retrieve", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
@@ -639,7 +650,7 @@ public class NDResourceController {
      * @return
      */
     @SuppressWarnings("unchecked")
-    private ListViewModel<ResourceViewModel> requestQuering(String resType,String retrieveFileds, String resCodes, String includes,
+    private ListViewModel<ResourceViewModel> requestQuering(String resType,String retrieveFields, String resCodes, String includes,
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
                                                             List<String> orderBy, String words, String limit, QueryType queryType, boolean isNotManagement, String reverse,
                                                             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,
@@ -672,7 +683,7 @@ public class NDResourceController {
 
         //参数校验和处理
         Map<String, Object> paramMap =
-                requestParamVerifyAndHandle(resType,retrieveFileds, resCodes, includes, categories, categoryExclude,
+                requestParamVerifyAndHandle(resType,retrieveFields, resCodes, includes, categories, categoryExclude,
                         relations, coverages, props, orderBy,words, limit, queryType, reverse);
 
         // include
@@ -689,6 +700,12 @@ public class NDResourceController {
 
         // coverages,格式:Org/uuid/SHAREING
         List<String> coveragesList = (List<String>)paramMap.get("coverage");
+        if(CollectionUtils.isNotEmpty(coveragesList)){
+        	List<String> sharingCoverageList = dealCoverageSharing(coveragesList);
+        	if(CollectionUtils.isNotEmpty(sharingCoverageList)){
+        		coveragesList.addAll(sharingCoverageList);
+        	}
+        }
 
         // props,语法 [属性] [操作] [值]
         Map<String,Set<String>> propsMap = (Map<String,Set<String>>)paramMap.get("prop");
@@ -776,10 +793,15 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
             case TITAN:
-                rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                /*rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean, printable, printableKey);
+                        isNotManagement, reverseBoolean, printable, printableKey);*/
+                //Set<String> resTypeSet = verificateAndDealResType(resType, resCodes);
+                rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resType,
+                        includesList, categories, categoryExclude, relationsMap,
+                        coveragesList, propsMap, orderMap, words, limit,
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_REALTIME:
                 rListViewModel = resourceQueryByTitanRealTime(resType,
@@ -812,6 +834,59 @@ public class NDResourceController {
         result.setItems(items);
 
         return result;
+    }
+    
+    /**
+     * 处理库分享
+     * @author xiezy
+     * @date 2016年8月24日
+     * @param coverageList
+     * @return
+     */
+    private List<String> dealCoverageSharing(List<String> coverageList){
+    	List<String> result = new ArrayList<String>();
+    	
+		if(CollectionUtils.isNotEmpty(coverageList)){
+			//用于存放前两段覆盖范围,用于查询库分享
+			Set<String> targetCoverageSet = new HashSet<String>();
+			for(String coverage : coverageList){
+				String subCoverage = coverage.substring(0, coverage.lastIndexOf("/"));
+				targetCoverageSet.add(subCoverage);
+			}
+			
+			if(CollectionUtils.isNotEmpty(targetCoverageSet)){
+				for(String target : targetCoverageSet){
+					List<CoverageSharingModel> sharingModels = coverageSharingService.getCoverageSharingByTarget(target);
+					if(CollectionUtils.isNotEmpty(sharingModels)){
+						//用于存放覆盖范围第三段
+						List<String> strategies = new ArrayList<String>();
+						for(String cv : coverageList){
+							if(cv.startsWith(target)){
+								strategies.add(cv.substring(cv.lastIndexOf("/") + 1));
+							}
+						}
+						
+						if(CollectionUtils.isNotEmpty(strategies)){
+							if(strategies.contains("*")){//表示所有资源操作类型都可以查
+								for(CoverageSharingModel csm : sharingModels){
+									String sharingCoverage = csm.getSourceCoverage() + "/*";
+									result.add(sharingCoverage);
+								}
+							}else{
+								for(CoverageSharingModel csm : sharingModels){
+									for(String strategy : strategies){
+										String sharingCoverage = csm.getSourceCoverage() + "/" + strategy;
+										result.add(sharingCoverage);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+    	
+    	return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -959,7 +1034,7 @@ public class NDResourceController {
         }
         
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
-        if (!titanQueryResultItems.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(titanQueryResultItems)) {
             mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, field, sort);
             
             interceptResultFromMergedResult(moreOffset, begin, size, titanQueryResult);
@@ -1205,7 +1280,7 @@ public class NDResourceController {
      * @return
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,
-                                  Map<String, String>orderMap, String words, List<String> coveragesList, boolean isNotManagement,
+                                  Map<String, String> orderMap, String words, List<String> coveragesList, boolean isNotManagement,
                                   boolean forceStatus,List<String> tags,boolean showVersion){
         boolean haveUserCoverage = false;
         if(CollectionUtils.isNotEmpty(coveragesList)){
@@ -1564,6 +1639,8 @@ public class NDResourceController {
                 break;
             case ES:
             case TITAN:
+                properties = LifeCircleApplicationInitializer.props_properties_es;
+                break;
             case TITAN_REALTIME:
                 properties = LifeCircleApplicationInitializer.props_properties_es;
                 break;
@@ -1836,6 +1913,49 @@ public class NDResourceController {
         } else {
             commonServiceHelper.getRepository(resType);
         }
+    }
+
+    /**
+     * 校验处理 resType
+     * @param resType
+     * @param resCodes
+     * @return
+     */
+    private Set<String> verificateAndDealResType(String resType, String resCodes){
+
+        Set<String> resTypeSet=new HashSet<>();
+        if (resType.equals(IndexSourceType.ChapterType.getName())) {
+
+            LOG.error("resType不能为chapters");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CommonSearchParamError
+                            .getCode(), "resType不能为chapters");
+        } else if (resType.equals(Constant.RESTYPE_EDURESOURCE)) {
+            if (StringUtils.isEmpty(resCodes)) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CommonSearchParamError
+                                .getCode(), "resType为"
+                        + Constant.RESTYPE_EDURESOURCE
+                        + "时,rescode不能为空");
+            }else{
+                Set<String> resTypeSetTmp = new HashSet<>();
+                resTypeSetTmp.addAll(Arrays.asList(resCodes.split(",")));
+                for(String code:resTypeSetTmp){
+                    if (ResourceNdCode.fromStringCode(code) == null) {
+                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                LifeCircleErrorMessageMapper.CommonSearchParamError
+                                        .getCode(), "resCode为"+ code+ ",不存在");
+                    }else{
+                        resTypeSet.add(ResourceNdCode.fromStringCode(code).toString());
+                    }
+                }
+            }
+        } else {
+            commonServiceHelper.getRepository(resType);
+            resTypeSet.add(resType);
+        }
+        return resTypeSet;
     }
 
     /**
