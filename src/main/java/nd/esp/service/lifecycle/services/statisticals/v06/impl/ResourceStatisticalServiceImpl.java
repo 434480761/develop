@@ -49,8 +49,6 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
     @Qualifier(value = "ResourceStatisticalsDaoImpl")
     private ResourceStatisticalsDao resourceStatisticalsDao;
     
-    
-
     /**
      * 增加资源评价统计指标数据
      * @param svms 评价数据
@@ -58,38 +56,14 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
      * @param id 资源ID
      * */
     public List<ResourceStatisticalModel> addStatistical(List<ResourceStatisticalModel> sms, String resType, String id) {
-
-        /**
-         * 检查资源resType和UUID
-         * */
-        EspRepository<?> espRepository = ServicesManager.get(resType);
-
-        try {
-            EspEntity entity = espRepository.get(id);
-
-            if (entity == null
-                    || ((entity instanceof Education) && ((Education) entity).getEnable() != null && !((Education) entity)
-                            .getEnable())) {
-                LOG.warn("资源统计指标操作--根据relation的sourceType和source获取数据失败");
-
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.ResourceStatisticalCheckReourceFail);
-            }
-
-        } catch (EspStoreException e1) {
-            LOG.error("资源统计指标操作--添加统计指标失败", e1);
-
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e1.getLocalizedMessage());
-        }
-
-        // 构造Entity数据并保存
+    	checkResourceExist(resType, id);
+    	
+    	// 构造Entity数据并保存
         List<ResourceStatistical> statisticalsList = new ArrayList<ResourceStatistical>();
 
         Timestamp time = new Timestamp(System.currentTimeMillis());
 
         for (ResourceStatisticalModel sm : sms) {
-            // Statistical statistical = BeanMapperUtils.beanMapper(sm, Statistical.class);
             ResourceStatistical statistical = ObjectUtils.fromJson(ObjectUtils.toJson(sm), ResourceStatistical.class);
 
             ResourceStatistical dbStatistical = null;
@@ -97,6 +71,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
                 ResourceStatistical example = new ResourceStatistical();
                 example.setKeyTitle(statistical.getKeyTitle());
                 example.setResource(id);
+                example.setResType(resType);
 
                 dbStatistical = statisticalRepository.getByExample(example);
             } catch (EspStoreException e) {
@@ -140,6 +115,92 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
         countValue(id, resType);
 
         return returnList;
+    }
+    
+    @Override
+	public List<ResourceStatisticalModel> addStatisticalByCumulative(List<ResourceStatisticalModel> sms, 
+			String resType, String id) {
+    	
+    	checkResourceExist(resType, id);
+    	
+    	// 构造Entity数据并保存
+        List<ResourceStatistical> statisticalsList = new ArrayList<ResourceStatistical>();
+
+        Timestamp time = new Timestamp(System.currentTimeMillis());
+        
+        for (ResourceStatisticalModel sm : sms) {
+        	ResourceStatistical statistical = ObjectUtils.fromJson(ObjectUtils.toJson(sm), ResourceStatistical.class);
+        	
+        	ResourceStatistical temp = resourceStatisticalsDao.getResourceStatistical(resType, id, sm.getKeyTitle());
+        	if(temp == null){
+        		statistical.setIdentifier(UUID.randomUUID().toString());
+        		if(sm.getKeyValue() < 0){
+        			statistical.setKeyValue(0D);
+        		}
+        	}else{
+        		statistical.setIdentifier(temp.getIdentifier());
+        		
+        		double sum = sm.getKeyValue() + temp.getKeyValue();
+        		if(sum < 0){
+        			statistical.setKeyValue(0D);
+        		}else{
+        			statistical.setKeyValue(sum);
+        		}
+        	}
+        	
+        	statistical.setResType(resType);
+            statistical.setUpdateTime(time);
+            statistical.setResource(id);
+
+            statisticalsList.add(statistical);
+        }
+    	
+        try {
+            statisticalsList = statisticalRepository.batchAdd(statisticalsList);
+        } catch (EspStoreException e) {
+            LOG.error("资源统计指标操作--保存资源失败");
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+        }
+
+        // 模型转出
+        List<ResourceStatisticalModel> returnList = new ArrayList<ResourceStatisticalModel>();
+        for (ResourceStatistical statistical : statisticalsList) {
+            ResourceStatisticalModel sm = BeanMapperUtils.beanMapper(statistical, ResourceStatisticalModel.class);
+            returnList.add(sm);
+        }
+        
+        //统计
+        countValue(id, resType);
+
+        return returnList;
+	}
+    
+    private void checkResourceExist(String resType, String id){
+    	/**
+         * 检查资源resType和UUID
+         * */
+        EspRepository<?> espRepository = ServicesManager.get(resType);
+
+        try {
+            EspEntity entity = espRepository.get(id);
+
+            if (entity == null
+                    || ((entity instanceof Education) && ((Education) entity).getEnable() != null && !((Education) entity)
+                            .getEnable())) {
+                LOG.warn("资源统计指标操作--根据relation的sourceType和source获取数据失败");
+
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.ResourceStatisticalCheckReourceFail);
+            }
+
+        } catch (EspStoreException e1) {
+            LOG.error("资源统计指标操作--添加统计指标失败", e1);
+
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e1.getLocalizedMessage());
+        }
     }
 
     @Override

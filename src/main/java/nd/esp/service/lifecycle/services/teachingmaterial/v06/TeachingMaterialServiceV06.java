@@ -1,5 +1,9 @@
 package nd.esp.service.lifecycle.services.teachingmaterial.v06;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 
 /**
@@ -25,4 +29,6 @@ public interface TeachingMaterialServiceV06{
 
 	TeachingMaterialModel patchTeachingMaterial(String resType,
 												TeachingMaterialModel tmm);
+	
+	public List<Map<String,Object>> queryResourcesByTmId(String tmId,Set<String> resTypes,List<String> includes,String coverage);
 }

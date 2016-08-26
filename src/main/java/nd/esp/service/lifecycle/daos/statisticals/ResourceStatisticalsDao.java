@@ -6,7 +6,9 @@ import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 
 public interface ResourceStatisticalsDao {
     
-    public List<ResourceStatistical> getAllRsByReousrceId(String resourceId) ;
+    public List<ResourceStatistical> getAllRsByReousrceId(String resourceId);
     
-    public double getMaxTopValue(String resType) ;
+    public ResourceStatistical getResourceStatistical(String resType,String id,String keyTitle);
+    
+    public double getMaxTopValue(String resType);
 }

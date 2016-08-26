@@ -1,12 +1,28 @@
 package nd.esp.service.lifecycle.services.titan;
 
-import com.google.gson.reflect.TypeToken;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import nd.esp.service.lifecycle.educommon.models.*;
+import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
+import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
+import nd.esp.service.lifecycle.educommon.models.ResRightModel;
+import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.*;
+import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
+import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -20,7 +36,7 @@ import org.apache.commons.collections4.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * ******************************************
@@ -62,7 +78,7 @@ public class TitanResultParse {
      */
     public static ListViewModel<ResourceModel> parseToListViewResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
-        List<ResourceModel> items = null;
+        List<ResourceModel> items = new ArrayList<ResourceModel>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             int resultSize = resultStr.size();
             // 处理count

@@ -577,7 +577,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
         QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         QueryThread queryThread = null;
-        if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages)){//如果是走Redis的,useIn=true
+        if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages, orderMap)){//如果是走Redis的,useIn=true
             queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         }else{
             queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
