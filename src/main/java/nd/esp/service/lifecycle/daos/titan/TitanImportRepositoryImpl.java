@@ -246,19 +246,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                 Long tmp = executeScriptUniqueLong(paramMap, builder.count());
                 count = techInfoEdgeScriptExecutionException(builder, paramMap, count, tmp);
             }
-            saveAbnormalData(education, builder, paramMap, count, TitanSyncType.CHECK_TI_NOT_EXIST,TitanSyncType.CHECK_TI_REPEAT);
+            saveAbnormalData(builder, paramMap, count, TitanSyncType.CHECK_TI_NOT_EXIST, TitanSyncType.CHECK_TI_REPEAT);
         }
     }
 
-    private void saveAbnormalData(Education education, Builder builder, Map<String, Object> paramMap, Long count,
-                                  TitanSyncType notExist,TitanSyncType repeat) {
+    private void saveAbnormalData(Builder builder, Map<String, Object> paramMap, Long count, TitanSyncType notExist,
+                                  TitanSyncType repeat) {
         // count = 1 为正常
         if (count == 0) {
             LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
-            titanSync(notExist,education.getPrimaryCategory(),education.getIdentifier());
+            titanSync(notExist, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         } else if(count >= 2){
             LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
-            titanSync(repeat,education.getPrimaryCategory(),education.getIdentifier());
+            titanSync(repeat, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         }
     }
 
@@ -302,10 +302,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 //                    fillParamMap(paramMap, techInfoPartFieldNodes, coverageNodeField);
                     Builder nodeBuilder = generateCheckResourceCategoryScript(baseBuilderNode, techInfoPartFieldNodes, coverageNodeField);
                     Long nodeCount = executeScriptUniqueLong(paramMap, nodeBuilder.count());
-                    saveAbnormalData(education, nodeBuilder, paramMap, nodeCount, TitanSyncType.CHECK_RC_NOT_EXIST, TitanSyncType.CHECK_RC_REPEAT);
+                    saveAbnormalData(nodeBuilder, paramMap, nodeCount, TitanSyncType.CHECK_RC_NOT_EXIST, TitanSyncType.CHECK_RC_REPEAT);
                 }
             }
-            saveAbnormalData(education, builder, paramMap, count,TitanSyncType.CHECK_RC_NOT_EXIST, TitanSyncType.CHECK_RC_REPEAT);
+            saveAbnormalData(builder, paramMap, count, TitanSyncType.CHECK_RC_NOT_EXIST,TitanSyncType.CHECK_RC_REPEAT);
         }
     }
     
@@ -424,49 +424,51 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         Builder baseBuilder = new Builder(baseScript).outE().hasLabel(relationEdgeLabel);
         for (int index =0 ;index < relations.size() ;index++){
             Map<String, Object> paramMap = new HashMap<String, Object>();
-//            paramMap.put(educationIdentifier,relations.get(index).getSourceUuid());
-//            paramMap.put("targetUuid",relations.get(index).getTarget());
-
-            List<Object> resourceRelationPartField = fillResourceRelationPartField(relations.get(index));
+            ResourceRelation relation = relations.get(index);
+            List<Object> resourceRelationPartField = fillResourceRelationPartField(relation);
             fillParamMap(paramMap, resourceRelationPartField, resourceRelation);
             
-            Builder nodeBuilder = generateCheckResourceCategoryScript(baseBuilder, resourceRelationPartField, resourceRelation).inV().has("identifier", "target_uuid");
-//            Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceRelationPartField, resourceRelation);
-            Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
-            if (count == null) {
-                LOG.error("查询脚本执行异常, script:{}, param:{}", nodeBuilder.builder(), paramMap);
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                        "查询脚本发生异常" + nodeBuilder.builder());
+            Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceRelationPartField, resourceRelation).inV().has("identifier", "target_uuid");
+            Long count = executeScriptUniqueLong(paramMap, builder.count());
+            saveAbnormalData(paramMap, relation, builder, count);
+        }
+    }
+
+    private void saveAbnormalData(Map<String, Object> paramMap, ResourceRelation relation, Builder builder, Long count) {
+        if (count == null) {
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                    "查询脚本发生异常" + builder.builder());
+        }
+        if (count == 0) {
+            if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
+                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+                titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResType(), relation.getSourceUuid());
             }
-            if (count == 0) {
-                if (titanRepositoryUtils.checkRelationExistInMysql(relations.get(index))) {
-                    LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", nodeBuilder.builder(), paramMap);
-                    titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relations.get(index).getResType(), relations.get(index).getSourceUuid());
-                }
-            } else if(count > 1){
-                if (titanRepositoryUtils.checkRelationExistInMysql(relations.get(index))) {
-                    LOG.info("titan 中数据重复, script:{}, param:{}", nodeBuilder.builder(), paramMap);
-                    titanSync(TitanSyncType.CHECK_RR_REPEAT,relations.get(index).getResType(),relations.get(index).getSourceUuid());
-                }
+        } else if(count > 1){
+            if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
+                LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+                titanSync(TitanSyncType.CHECK_RR_REPEAT,relation.getResType(), relation.getSourceUuid());
             }
         }
     }
     
+//    TODO 1.单条id 资源 resourceRelation 2.校验  ndresource 校验  3. 如果有时间，将代码拆分成多个类，现在的代码还不是很容易维护
     @Override
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelations, List<ResourceStatistical> statistic) {
-//        checkCategories(education, resourceCategories);
-//        checkTechInfoHandle(education, techInfos);
-//        checkResCoverage(education, resCoverages);
-//        checkResourceStatistic(education, statistic);
+        checkCategories(education, resourceCategories);
+        checkTechInfoHandle(education, techInfos);
+        checkResCoverage(education, resCoverages);
+        checkResourceStatistic(education, statistic);
     }
     
     @Override
     public void checkResourceInTitan(CheckResourceModel checkResourceModel){
-//        checkCategories(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories());
-//        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
-//        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
-//        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
+        checkCategories(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories());
+        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
+        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
+        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
     }
     
     final String[] resourceStatistic = new String[]{"identifier", "sta_data_from", "sta_key_title", "sta_key_value", "sta_res_type", "sta_resource", "sta_title", "sta_update_time"};
@@ -482,7 +484,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceStatisticPartField, resourceStatistic).inV();
             Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceStatisticPartField, resourceStatistic);
             Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
-            saveCheckCategoryExceptionData(education, paramMap, builder, count,TitanSyncType.CHECK_STA_NOT_EXIST, TitanSyncType.CHECK_STA_REPEAT);
+            saveAbnormalData(paramMap, builder, count, TitanSyncType.CHECK_STA_NOT_EXIST,TitanSyncType.CHECK_STA_REPEAT);
         }
     }
     
@@ -506,7 +508,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             resourceCategoryNodePartField.add(resourceCategoryList.get(index).getCategoryCode());
             Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceCategoryNodePartField, categoryNodeField);
             Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
-            saveCheckCategoryExceptionData(education, paramMap, builder, count, TitanSyncType.CHECK_CG_NOT_EXIST,TitanSyncType.CHECK_CG_REPEAT);
+            saveAbnormalData(paramMap, builder, count, TitanSyncType.CHECK_CG_NOT_EXIST, TitanSyncType.CHECK_CG_REPEAT);
         }
     }
 
@@ -526,12 +528,12 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceCategoryPartField, categoryNodeField);
             
             Long count = executeScriptUniqueLong(paramMap, builder.count());
-            saveCheckCategoryExceptionData(education, paramMap, builder, count, TitanSyncType.CHECK_CG_NOT_EXIST,TitanSyncType.CHECK_CG_REPEAT);
+            saveAbnormalData(paramMap, builder, count, TitanSyncType.CHECK_CG_NOT_EXIST, TitanSyncType.CHECK_CG_REPEAT);
         }
     }
     
-    private void saveCheckCategoryExceptionData(Education education, Map<String, Object> paramMap, Builder builder, Long count,
-                                                TitanSyncType notExist,TitanSyncType repeat) {
+    private void saveAbnormalData(Map<String, Object> paramMap, Builder builder, Long count, TitanSyncType notExist,
+                                                TitanSyncType repeat) {
         // count 等于 1 正常，其他情况都不正常
         if (count == null) {
             LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
@@ -541,10 +543,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
         if (count == 0) {
             LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
-            titanSync(notExist,education.getPrimaryCategory(),education.getIdentifier());
+            titanSync(notExist, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         } else if(count > 1){
             LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
-            titanSync(repeat,education.getPrimaryCategory(),education.getIdentifier());
+            titanSync(repeat, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         }
     }
 
@@ -613,7 +615,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         resourceRelationPartField.add(relations.getSortNum());
         resourceRelationPartField.add(relations.getResType());
         resourceRelationPartField.add(relations.getSourceUuid());
-        resourceRelationPartField.add(relations.getTags());
+        resourceRelationPartField.add(relations.getDbtags());
         resourceRelationPartField.add(relations.getResourceTargetType());
         resourceRelationPartField.add(relations.getTarget());
         return resourceRelationPartField;
