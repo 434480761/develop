@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.apache.tinkerpop.gremlin.driver.exception.ResponseException;
 
 
 @Service
@@ -412,20 +413,25 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param resType
      * @return
      */
-    private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, String resType,List<String> includes) {
+    private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, String resType, List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
             long getResultBegin = System.currentTimeMillis();
-            Iterator<Result> iterator = resultSet.iterator();
-            while (iterator.hasNext()) {
-                resultStr.add(iterator.next().getString());
+            try {
+                Iterator<Result> iterator = resultSet.iterator();
+                while (iterator.hasNext()) {
+                    resultStr.add(iterator.next().getString());
+                }
+            } catch (Exception e) {
+                LOG.error("script error" + e.getMessage());
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse.parseToListViewResourceModel(resType, resultStr,includes,false);
-        }else{
-        	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
+            return TitanResultParse.parseToListViewResourceModel(resType, resultStr, includes, false);
+        } else {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
         }
-        
+
     }
 
 
