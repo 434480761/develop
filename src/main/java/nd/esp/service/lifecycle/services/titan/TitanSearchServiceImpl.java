@@ -8,6 +8,7 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
 import nd.esp.service.lifecycle.support.busi.titan.*;
@@ -19,8 +20,8 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
-
 import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
+
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 
@@ -420,8 +422,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
             return TitanResultParse.parseToListViewResourceModel(resType, resultStr,includes,false);
+        }else{
+        	throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
         }
-        return null;
+        
     }
 
 
