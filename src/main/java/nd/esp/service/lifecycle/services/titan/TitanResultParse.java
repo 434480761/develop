@@ -78,6 +78,7 @@ public class TitanResultParse {
      */
     public static ListViewModel<ResourceModel> parseToListViewResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
+        viewModels.setTotal(0L);
         List<ResourceModel> items = new ArrayList<ResourceModel>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             int resultSize = resultStr.size();
