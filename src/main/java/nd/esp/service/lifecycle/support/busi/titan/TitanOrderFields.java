@@ -66,7 +66,9 @@ public enum TitanOrderFields {
      * @param scriptParamMap
      * @param orderList
      */
-    public void generateScript(TitanExpression titanExpression, String fieldValue, Map<String, Object> scriptParamMap, List<TitanOrder> orderList) {
+    public void generateScript(TitanExpression titanExpression, String fieldValue, Map<String, Object> scriptParamMap, List<TitanOrder> orderList,boolean isShowVersion) {
+        String asResult = "select('x')";
+        if (isShowVersion) asResult = TitanKeyWords.version_result.toString();
         String orderBy = checkSortOrder(fieldValue);
         String edgeScript = "";
         StringBuffer script = new StringBuffer();
@@ -92,12 +94,8 @@ public enum TitanOrderFields {
                     +"',"
                     + dataFrom
                     + ")";
-            script.append(".select('x').choose(select('x').")
-                    .append(edgeScript)
-                    .append(",select('x').")
-                    .append(edgeScript)
-                    .append(".values('")
-                    .append(TitanOrderFields.sta_key_value.toString())
+            script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
+                    .append(asResult).append(".").append(edgeScript).append(".values('").append(TitanOrderFields.sta_key_value.toString())
                     .append("'),__.constant(new Double(0.0)))");
             order.setScript(script.toString());
             // 边上的统计数据需要取回
@@ -112,12 +110,8 @@ public enum TitanOrderFields {
                     + "',"
                     + keyTitle
                     + ")";
-            script.append(".select('x').choose(select('x').")
-                    .append(edgeScript)
-                    .append(",select('x').")
-                    .append(edgeScript)
-                    .append(".values('")
-                    .append(TitanOrderFields.sta_key_value.toString())
+            script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
+                    .append(asResult).append(".").append(edgeScript).append(".values('").append(TitanOrderFields.sta_key_value.toString())
                     .append("'),__.constant(new Double(0.0)))");
             order.setScript(script.toString());
             // 边上的统计数据需要取回
@@ -132,12 +126,8 @@ public enum TitanOrderFields {
                     +"',"
                     + valueKey
                     + ")";
-            script.append(".select('x').choose(select('x').")
-                    .append(edgeScript)
-                    .append(",select('x').")
-                    .append(edgeScript)
-                    .append(".values('")
-                    .append(TitanKeyWords.ti_size.toString())
+            script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
+                    .append(asResult).append(".").append(edgeScript).append(".values('").append(TitanKeyWords.ti_size.toString())
                     .append("'),__.constant(new Long(0)))");
             order.setScript(script.toString());
         } /*else if (this.equals(sort_num)) {
@@ -150,13 +140,9 @@ public enum TitanOrderFields {
                     + "',textRegex("
                     + valueKey
                     + "))";
-            script.append(".select('x').choose(select('x').")
-                    .append(edgeScript)
-                    .append(",select('x').")
-                    .append(edgeScript)
-                    .append(".values('")
-                    .append(ES_SearchField.cg_taxoncode.toString())
-                    .append("'),__.constant(''))");
+            script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
+                    .append(asResult).append(".").append(edgeScript).append(".values('")
+                    .append(ES_SearchField.cg_taxoncode.toString()).append("'),__.constant(''))");
             order.setScript(script.toString());
         } else {
             return;

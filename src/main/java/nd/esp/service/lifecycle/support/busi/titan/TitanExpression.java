@@ -30,6 +30,16 @@ public class TitanExpression implements TitanScriptGenerator {
     private boolean needPrintable = false;
     private String printableScript;
     private String orderBy4SortNum = "incr";
+    private boolean needShowSubVersion = false;
+    private String showSubVersionScript;
+    // 默认下是select('x') 但子版本需要查询出来时 为select('version_result')
+    private String asResult4GetSubVersionResource = "select('x')";
+
+    public void setShowSubVersion(boolean needShowSubVersion, String showSubVersionScript, String asResult4GetSubVersionResource) {
+        this.needShowSubVersion = needShowSubVersion;
+        this.showSubVersionScript = showSubVersionScript;
+        this.asResult4GetSubVersionResource = asResult4GetSubVersionResource;
+    }
 
     public void setStatistics(boolean needStatistics, String statisticsScript) {
         this.needStatistics = needStatistics;
@@ -154,7 +164,9 @@ public class TitanExpression implements TitanScriptGenerator {
         //scriptBuffer.append(".select('x')");
         // 在这里去重和加上处理printable
         // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
-        if (this.needPrintable) scriptBuffer.append(printableScript);
+        if (this.needPrintable) scriptBuffer.append(this.printableScript);
+        // TODO 处理 showVersion
+        if (this.needShowSubVersion) scriptBuffer.append(this.showSubVersionScript);
         this.innerCondition = scriptBuffer.toString();
     }
 
@@ -169,7 +181,7 @@ public class TitanExpression implements TitanScriptGenerator {
         if (this.relationQueryOrderBy || this.isOrderBySortNum) {
             //.select('e').order().by('order_num',decr).select('x')
            // scriptBuffer.append(".select('x').order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),").append(this.orderBy4SortNum).append(").select('x')");
-            scriptBuffer.append(".select('x').order().by('lc_create_time',decr).select('e').choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(new Float(0)))").append(".order().by(").append(this.orderBy4SortNum).append(")");
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".order().by('lc_create_time',decr).select('e').choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(new Float(0)))").append(".order().by(").append(this.orderBy4SortNum).append(")");
 
         } else {
             appendOrderBy(scriptBuffer);
@@ -182,8 +194,7 @@ public class TitanExpression implements TitanScriptGenerator {
 
         if (this.end > 0) {
             // range 前select('x')
-            scriptBuffer.append(".select('x').range(").append(from).append(",").append(end)
-                    .append(")");
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".range(").append(from).append(",").append(end).append(")");
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
@@ -205,7 +216,7 @@ public class TitanExpression implements TitanScriptGenerator {
                 if (order.getScript() != null) {
                     scriptBuffer.append(order.getScript());
                 }else{
-                    scriptBuffer.append(".select('x')");
+                    scriptBuffer.append(".").append(this.asResult4GetSubVersionResource);
                 }
                 scriptBuffer.append(".order().by(");
                 if (order.getOrderByField() != null) {
