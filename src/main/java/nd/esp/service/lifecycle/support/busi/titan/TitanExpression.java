@@ -204,6 +204,8 @@ public class TitanExpression implements TitanScriptGenerator {
                 TitanOrder order = this.orderList.get(i);
                 if (order.getScript() != null) {
                     scriptBuffer.append(order.getScript());
+                }else{
+                    scriptBuffer.append(".select('x')");
                 }
                 scriptBuffer.append(".order().by(");
                 if (order.getOrderByField() != null) {
