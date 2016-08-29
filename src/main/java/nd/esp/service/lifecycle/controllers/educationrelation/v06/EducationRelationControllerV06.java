@@ -1,20 +1,21 @@
 package nd.esp.service.lifecycle.controllers.educationrelation.v06;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
+import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.models.v06.BatchAdjustRelationOrderModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
+import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -65,6 +66,9 @@ public class EducationRelationControllerV06 {
     @Autowired
     @Qualifier("educationRelationServiceForQuestionV06")
     private EducationRelationServiceForQuestionV06 educationRelationServiceForQuestion;
+
+    @Autowired
+    private InstructionalObjectiveService instructionalObjectiveService;
     
     /**
      * 创建资源关系
@@ -121,6 +125,66 @@ public class EducationRelationControllerV06 {
         }
         
         return educationRelationViewModel;
+    }
+    
+    
+    /**
+     * 批量创建资源关系
+     * 
+     * @param resType                              源资源类型
+     * @param sourceUuid                           源资源的id
+     * @param educationRelationModel               创建时的入参
+     * @param bindingResult                        入参校验的绑定结果
+     * @return
+     * @since
+     */
+    @RequestMapping(value = "/{source_uuid}/relations/batch", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<EducationRelationViewModel> batchCreateRelation(@PathVariable(value="res_type") String resType,@PathVariable(value="source_uuid") String sourceUuid,
+                                              @Validated(CreateEducationRelationDefault.class) @RequestBody List<EducationRelationViewModel> educationRelationViewModels,BindingResult bindingResult){
+        // 校验入参
+        ValidResultHelper.valid(bindingResult,
+                                "LC/CREATE_RELATION_PARAM_VALID_FAIL",
+                                "EducationRelationControllerV06",
+                                "batchCreateRelation");
+        List<EducationRelationModel> educationRelationModels = new ArrayList<EducationRelationModel>();
+        
+        //数据模型转换
+        if(CollectionUtils.isNotEmpty(educationRelationViewModels)){
+        	for (EducationRelationViewModel educationRelationViewModel : educationRelationViewModels) {
+        		if(StringUtils.isEmpty(educationRelationViewModel.getResourceTargetType())){
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    		"LC/CHECK_PARAM_VALID_FAIL",
+                            "resourceTargetType不能为空");
+        		}
+        		if(StringUtils.isEmpty(educationRelationViewModel.getTarget())){
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    		"LC/CHECK_PARAM_VALID_FAIL",
+                            "target不能为空");
+        		}
+        		EducationRelationModel educationRelationModel = BeanMapperUtils.beanMapper(educationRelationViewModel,
+                        EducationRelationModel.class);
+                educationRelationModel.setResType(resType);
+                educationRelationModel.setSource(sourceUuid);
+        		educationRelationModels.add(educationRelationModel);
+			}
+        }
+        // 创建资源关系
+        List<EducationRelationModel> resultList = null;
+        if (CommonServiceHelper.isQuestionDb(resType)) {
+            resultList = educationRelationServiceForQuestion.createRelation(educationRelationModels, false);
+        } else {
+            resultList = educationRelationService.createRelation(educationRelationModels, false);
+        }
+        
+        //返回处理,这里只会有一条记录
+        List<EducationRelationViewModel> returnList = new ArrayList<EducationRelationViewModel>();
+        if(CollectionUtils.isNotEmpty(resultList)){
+        	for (EducationRelationModel erm : resultList) {
+        		EducationRelationViewModel ervm = BeanMapperUtils.beanMapper(erm, EducationRelationViewModel.class);
+        		returnList.add(ervm);
+			}
+        }
+        return returnList;
     }
     
     /**
@@ -470,7 +534,30 @@ public class EducationRelationControllerV06 {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.GetEducationRelationListFail.getCode(),e.getMessage());
         }
-        
+        if (null == listViewModel.getItems()) {
+            return listViewModel;
+        }
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if ((!"true".equals(reverse) && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
+                || ("true".equals(reverse) && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
+
+            Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<RelationForQueryViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(RelationForQueryViewModel model) {
+                    return model.getIdentifier();
+                }
+            });
+
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (RelationForQueryViewModel model : listViewModel.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+
+        }
+
         return listViewModel;
     }
     
@@ -510,6 +597,59 @@ public class EducationRelationControllerV06 {
         limit = CommonHelper.checkLimitMaxSize(limit);
         
 //        return educationRelationService.batchQueryResources(resType, sids, targetType, relationType, limit);
-        return educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+        ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+
+        if (null == modelList.getItems()) {
+            return modelList;
+        }
+
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if ((reverse && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
+                || (!reverse && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
+
+            Collection<String> ids = Collections2.transform(modelList.getItems(), new Function<RelationForQueryViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(RelationForQueryViewModel model) {
+                    return model.getIdentifier();
+                }
+            });
+
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (RelationForQueryViewModel model : modelList.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+
+        }
+
+        return modelList;
+    }
+    
+    /**
+     * 根据知识点id获取上级节点（直到一级知识点为止）
+     * 根据知识点id获取同级节点
+     * @param knowledgeId
+     * @return
+     */
+    @RequestMapping(value = "/tree/{uuid}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<Map<String,Object>> queryKnowledgeTree(@PathVariable(value="res_type") String resType,@PathVariable(value="uuid") String knowledgeId){
+    	if(IndexSourceType.KnowledgeType.getName().equals(resType)){
+    		return educationRelationService.queryKnowledgeTree(knowledgeId);
+    	}
+    	return null;
+    }
+    
+    /**
+     * 查询套件目录树
+     * @return
+     */
+    @RequestMapping(value = "/tree/suiteDirectory", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public List<Map<String,Object>> querySuiteDirectoryTree(@PathVariable(value="res_type") String resType){
+    	if(IndexSourceType.AssetType.getName().equals(resType)){
+    		return educationRelationService.querySuiteDirectory();
+    	}
+    	return null;
     }
 }

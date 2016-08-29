@@ -15,6 +15,7 @@ import java.util.Map;
 
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+
 import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryPatternRepository;
@@ -78,6 +79,7 @@ public class ServicesManager implements ApplicationContextAware {
 		RESOURCE_REPOSITORIES.put(IndexSourceType.TeachingMaterialType.getName(), TeachingMaterialRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.LessonType.getName(), LessonRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.InstructionalObjectiveType.getName(), InstructionalobjectiveRepository.class);
+		RESOURCE_REPOSITORIES.put(IndexSourceType.SubInstructionType.getName(), SubInstructionRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ResourceRelationType.getName(), ResourceRelationRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.EbookType.getName(), EbookRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.CategoryType.getName(), CategoryRepository.class);

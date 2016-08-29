@@ -1,6 +1,8 @@
 package nd.esp.service.lifecycle.services.teachingmaterial.v06;
 
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 
 /**
  * 教材业务层接口
@@ -25,4 +27,12 @@ public interface TeachingMaterialServiceV06{
 
 	TeachingMaterialModel patchTeachingMaterial(String resType,
 												TeachingMaterialModel tmm);
+
+	/**
+	 * 根据id查找教材
+	 * @param id
+	 * @return
+	 * @throws EspStoreException
+     */
+	TeachingMaterial getById(String id) throws EspStoreException;
 }

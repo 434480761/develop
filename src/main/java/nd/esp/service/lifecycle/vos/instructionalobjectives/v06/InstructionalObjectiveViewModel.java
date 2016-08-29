@@ -20,7 +20,7 @@ public class InstructionalObjectiveViewModel extends ResourceViewModel{
 	 * 学习对象的标题名称
 	 */
     @NotBlank(message="{resourceViewModel.title.notBlank.validmsg}",groups={InstructionalObjectiveDefault.class})
-    @Length(message="{InstructionalObjectiveViewModel.title.maxlength.validmsg}",max=1000,groups={InstructionalObjectiveDefault.class})
+    //@Length(message="{InstructionalObjectiveViewModel.title.maxlength.validmsg}",max=1000,groups={InstructionalObjectiveDefault.class})
 	private String title;
     
     private String kbId;

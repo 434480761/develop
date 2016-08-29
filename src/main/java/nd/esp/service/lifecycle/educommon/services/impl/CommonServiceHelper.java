@@ -105,6 +105,7 @@ import nd.esp.service.lifecycle.vos.learningplans.v06.LearningPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessonplans.v06.LessonPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessons.v06.LessonViewModel;
 import nd.esp.service.lifecycle.vos.questions.v06.QuestionViewModel;
+import nd.esp.service.lifecycle.vos.subinstruction.v06.SubInstructionViewModel;
 import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewModel;
 
 import org.slf4j.Logger;
@@ -173,6 +174,9 @@ public class CommonServiceHelper {
     //教学目标
     @Autowired
     InstructionalobjectiveRepository instructionalObjectiveRepository;
+    //子教学目标
+    @Autowired
+    SubInstructionRepository subInstructionRepository;
     
 	@Autowired
 	CategoryRepository categoryRepository;
@@ -304,6 +308,15 @@ public class CommonServiceHelper {
                                                                 InstructionalObjective.class,
                                                                 false,
                                                                 false));
+
+        // 子教学目标
+        repositoryAndModelMap.put("subInstruction",
+                new RepositoryAndModelAndView(subInstructionRepository,
+                        SubInstructionModel.class,
+                        SubInstructionViewModel.class,
+                        SubInstruction.class,
+                        false,
+                        false));
         
         //课件
         repositoryAndModelMap.put("coursewares", new RepositoryAndModelAndView(coursewareRepository,
@@ -680,6 +693,22 @@ public class CommonServiceHelper {
                 + "' AND target='" + uuid + "') OR (res_type = '" + resourceType + "' AND source_uuid='" + uuid + "')";
         Query query = em.createNativeQuery(sql);
         query.executeUpdate();
+    }
+
+    @Transactional(value = "transactionManager")
+    public void deleteRelationById(Collection<String> ids) {
+        if (ids.size() > 0) {
+            String idStr = "";
+            for (String id : ids) {
+                idStr += "'" + id + "',";
+            }
+            idStr = idStr.substring(0, idStr.lastIndexOf(","));
+            String sql = "UPDATE resource_relations SET enable = 0 where identifier in(" + idStr + ")";
+            Query query = em.createNativeQuery(sql);
+            query.executeUpdate();
+        } else {
+            return;
+        }
     }
     
     /**

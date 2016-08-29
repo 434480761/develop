@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -31,12 +32,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.resourcesecuritykey.v06.ResourceSecurityKeyDao;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
@@ -59,6 +63,7 @@ import nd.esp.service.lifecycle.models.ResourceSecurityKeyModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.model.report.ReportResourceUsing;
 import nd.esp.service.lifecycle.services.ContentService;
+import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
@@ -89,6 +94,7 @@ import nd.esp.service.lifecycle.vos.statics.ResourceType;
 import nd.esp.service.lifecycle.vos.valid.LifecycleDefault;
 
 import org.apache.commons.codec.binary.Base64;
+import org.elasticsearch.indices.cluster.IndicesClusterStateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,6 +183,9 @@ public class NDResourceController {
     NotifyReportService nrs;
 
     @Autowired
+    private InstructionalObjectiveService instructionalObjectiveService;
+
+    @Autowired
     @Qualifier(value = "StatisticalServiceImpl")
     private ResourceStatisticalService statisticalService;
 
@@ -218,6 +227,10 @@ public class NDResourceController {
         List<String> includeList = IncludesConstant.getValidIncludes(includeString);
         //调用servicere
         ResourceModel modelResult = ndResourceService.getDetail(resourceType, uuid,includeList,isAll);
+        // 如果是教学目标，它的title实时计算
+        if (null != modelResult && resourceType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+            modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(modelResult.getIdentifier()));
+        }
         // model出参转换
         return changeToView(modelResult, resourceType,includeList);
     }
@@ -325,6 +338,71 @@ public class NDResourceController {
      * @param res_type    明确的资源类型
      * @param resCodes          支持多种资源查询,resType=eduresource时生效
      * @param includes    默认情况下，只返回资源的通用属性，不返回资源的其他扩展属性。
+    /**
+     * 教学目标删除接口
+     *
+     * @param resourceType 资源类型，这里必须是：instructionalobjectives（教学目标）
+     * @param objectiveId  教学目标uuid
+     * @param parentNode   父节点uuid（可能是章节也可能是课时，由node_type指定），必填
+     * @param nodeType     节点类型（chapters or lessions）,可选，默认为chapters
+     * @return
+     */
+    @MarkAspect4OfflineJsonToCS
+    @RequestMapping(value = "/business/{objective_id}", method = RequestMethod.DELETE, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public @ResponseBody Map<String, String> deleteInstructionalObjective(
+            @PathVariable("res_type") String resourceType,
+            @PathVariable("objective_id") String objectiveId,
+            @RequestParam(value = "parent_node", required = true) List<String> parentNodes,
+            @RequestParam(value = "node_type", defaultValue = "chapters") String nodeType) {
+        // 该方法只删除教学目标
+        if (!IndexSourceType.InstructionalObjectiveType.getName().equals(resourceType)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getMessage());
+        }
+
+        if (!IndexSourceType.ChapterType.getName().equals(nodeType) &&
+                !IndexSourceType.LessonType.getName().equals(nodeType)) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getCode(),
+                    LifeCircleErrorMessageMapper.CheckDeleteInstructionalObjectiveParamFail.getMessage());
+        }
+
+        for (String parentNode : parentNodes) {
+            // 教学目标，章节/课时 UUID校验
+            if (!CommonHelper.checkUuidPattern(objectiveId) ||
+                    !CommonHelper.checkUuidPattern(parentNode)) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
+                        LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
+            }
+        }
+
+        //add by xiezy - 2016.04.15
+        List<NotifyInstructionalobjectivesRelationModel> relateRelations = new ArrayList<NotifyInstructionalobjectivesRelationModel>();
+        String nowStatus = "";
+        nowStatus = notifyService.getResourceStatus(objectiveId);
+        if (nowStatus.equals(LifecycleStatus.ONLINE.getCode())) {
+            relateRelations = notifyService.resourceBelongToRelations(objectiveId);
+        }
+
+        ndResourceService.deleteInstructionalObjectives(objectiveId, parentNodes, nodeType);
+
+        //add by xiezy - 2016.04.15
+        //异步通知智能出题，这里都是教学目标
+        if (nowStatus.equals(nowStatus.equals(LifecycleStatus.ONLINE.getCode()))) {
+            notifyService.asynNotify4Resource(objectiveId, nowStatus, null, relateRelations, OperationType.DELETE);
+        }
+
+        return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.DeleteResourceSuccess);
+    }
+
+	/**
+	 * 资源检索 -- 通过solr检索,数据存在延时性
+	 * 
+	 * @param res_type    明确的资源类型
+	 * @param resCodes          支持多种资源查询,resType=eduresource时生效
+	 * @param includes    默认情况下，只返回资源的通用属性，不返回资源的其他扩展属性。
      *                    TI：技术属性, LC：生命周期属性, EDU：教育属性, CG：分类维度数据属性, CR:版权信息
      *         该检索接口只支持:TI,EDU,LC,CG,CR
      * @param category    通用查询的分类维度数据的入参信息
@@ -353,6 +431,7 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
@@ -410,6 +489,7 @@ public class NDResourceController {
             @RequestParam(required = false, value = "isAll",defaultValue="false") Boolean isAll,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
 			/* @RequestParam(required=false,value="reverse") String reverse, */
 			/* @RequestParam String words, */@RequestParam String limit) {
         return requestQuering(resType,null, resCodes, includes, categories,
@@ -519,21 +599,56 @@ public class NDResourceController {
             @RequestParam(required=false,value="category") Set<String> categories,
             @RequestParam(required=false,value="category_exclude") Set<String> categoryExclude,
             @RequestParam(required=false,value="relation") Set<String> relations,
+            @RequestParam(required=false,value="relation_exclude") Set<String> relationsExclude,
             @RequestParam(required=false,value="coverage") Set<String> coverages,
             @RequestParam(required=false,value="prop") List<String> props,
             @RequestParam(required=false,value="orderby") List<String> orderBy,
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="tags") List<String> tags,
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
 
+        ListViewModel<ResourceViewModel> resourceViewModelListViewModel = null;
 
-        return requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags,showVersion);
+    	if(CollectionUtils.isNotEmpty(props)){
+    		List<String> newProps = new ArrayList<String>();
+            for (String p : props) {
+    			String s = URLDecoder.decode(p);
+    			newProps.add(s);
+    		}
+            resourceViewModelListViewModel = requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, newProps, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	}else{
+            resourceViewModelListViewModel = requestQuering(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, props, orderBy, words, limit, true, false, reverse, printable, printableKey,firstKnLevel);
+    	}
+        if (null == resourceViewModelListViewModel.getItems()) {
+            return resourceViewModelListViewModel;
+        }
+        // 如果是教学目标，则根据教学目标类型与知识点设置title
+        if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
+            
+            Collection<String> ids = Collections2.transform(resourceViewModelListViewModel.getItems(), new Function<ResourceViewModel, String>() {
+                @Nullable
+                @Override
+                public String apply(ResourceViewModel resourceViewModel) {
+                    return resourceViewModel.getIdentifier();
+                }
+            });
 
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+
+            for (ResourceViewModel model : resourceViewModelListViewModel.getItems()) {
+                String title = result.get(model.getIdentifier());
+                model.setTitle(null == title ? model.getTitle():title);
+            }
+            
+        }
+
+        return resourceViewModelListViewModel;
     }
 
     /**
@@ -576,16 +691,15 @@ public class NDResourceController {
             @RequestParam(required=false,value="reverse") String reverse,
             @RequestParam(required=false,value="printable") Boolean printable,
             @RequestParam(required=false,value="printable_key") String printableKey,
+            @RequestParam(required=false,value="first_kn_level") boolean firstKnLevel,
             @RequestParam(required=false,value="statistics_type") String statisticsType,
             @RequestParam(required=false,value="statistics_platform",defaultValue="all") String statisticsPlatform,
             @RequestParam(required=false,value="force_status",defaultValue="false") boolean forceStatus,
             @RequestParam(required=false,value="tags") List<String> tags,
             @RequestParam(required=false,value="show_version",defaultValue="false") boolean showVersion,
             @RequestParam String words,@RequestParam String limit){
-
-
-        return requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations, coverages, props, orderBy, words, limit, QueryType.DB, true, reverse, printable, printableKey, statisticsType, statisticsPlatform, forceStatus,tags, showVersion);
-
+        
+        return requestQuering(resType, resCodes, includes, categories, categoryExclude, relations, null, coverages, props, orderBy, words, limit, true, true, reverse, printable, printableKey, firstKnLevel);
     }
 
     /**
@@ -643,7 +757,7 @@ public class NDResourceController {
                                                             Set<String> categories, Set<String> categoryExclude, Set<String> relations, Set<String> coverages, List<String> props,
                                                             List<String> orderBy, String words, String limit, QueryType queryType, boolean isNotManagement, String reverse,
                                                             Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,
-                                                            boolean showVersion) {
+                                                            boolean showVersion,boolean firstKnLevel) {
 
         //智能出题对接外部接口--入口
         if(CollectionUtils.isNotEmpty(coverages) && coverages.size()==1
@@ -685,6 +799,10 @@ public class NDResourceController {
         categoryExclude = (Set<String>)paramMap.get("categoryExclude");
 
         // relations,格式:stype/suuid/r_type
+		List<Map<String,String>> relationsMap = (List<Map<String,String>>)paramMap.get("relation"); 
+		
+		List<Map<String,String>> relationsExcludeMap = (List<Map<String,String>>)paramMap.get("relationExclude"); 
+        
         List<Map<String,String>> relationsMap = (List<Map<String,String>>)paramMap.get("relation");
 
         // coverages,格式:Org/uuid/SHAREING
@@ -1423,8 +1541,8 @@ public class NDResourceController {
                     LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
                     "groupby不能为空");
         }
-
-        return ndResourceService.resourceStatistics(resType, categories, coveragesList, propsMap, groupBy, isNotManagement);
+        
+    	return ndResourceService.resourceStatistics(resType, categories, coveragesList, propsMap, groupBy, isNotManagement,false);
     }
 
     /**
@@ -1542,6 +1660,41 @@ public class NDResourceController {
             }
         }
 
+        List<Map<String,String>> relationsExcludeMap = new ArrayList<Map<String,String>>(); 
+        if(CollectionUtils.isEmpty(relationsExclude)){
+        	relationsExcludeMap = null;
+        }else{
+            for(String relation : relationsExclude){
+                Map<String,String> map = new HashMap<String, String>();
+                //对于入参的coverage每个在最后追加一个空格，以保证elemnt的size为3
+                relation = relation + " ";
+                List<String> elements = Arrays.asList(relation.split("/"));
+                //格式错误判断
+                if(elements.size() != 3){
+                   
+                    LOG.error(relation + "--relation格式错误");
+                    
+                    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
+                            relation + "--relation格式错误");
+                }
+                //判断源资源是否存在,stype + suuid
+                if(!elements.get(1).trim().endsWith("$")){//不为递归查询时才校验
+                    CommonHelper.resourceExist(elements.get(0).trim(), elements.get(1).trim(), ResourceType.RESOURCE_SOURCE);
+                }
+                //r_type的特殊处理
+                if(StringUtils.isEmpty(elements.get(2).trim())){
+                    elements.set(2, null);
+                }
+                map.put("stype", elements.get(0).trim());
+                map.put("suuid", elements.get(1).trim());
+                map.put("rtype", elements.get(2));
+                
+                relationsExcludeMap.add(map);
+            }
+        }
+        
+        
         // 4.coverages,格式:Org/uuid/SHAREING
         List<String> coveragesList = new ArrayList<String>();
         if(CollectionUtils.isEmpty(coverages)){
@@ -1799,6 +1952,7 @@ public class NDResourceController {
         paramMap.put("category", categories);
         paramMap.put("categoryExclude", categoryExclude);
         paramMap.put("relation", relationsMap);
+        paramMap.put("relationExclude", relationsExcludeMap);
         paramMap.put("coverage", coveragesList);
         paramMap.put("prop", propsMap);
         paramMap.put("orderby", orderMap);

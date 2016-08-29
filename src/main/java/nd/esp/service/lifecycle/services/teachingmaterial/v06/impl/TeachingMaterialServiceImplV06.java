@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.daos.teachingmaterial.v06.TeachingMaterialDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
@@ -150,4 +151,10 @@ public class TeachingMaterialServiceImplV06 implements
 //		}
 		return oldData;
 	}
+
+	@Override
+	public TeachingMaterial getById(String id) throws EspStoreException {
+		return teachingMaterialRepository.get(id);
+	}
+
 }

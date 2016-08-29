@@ -1,20 +1,13 @@
 package nd.esp.service.lifecycle.services.knowledges.v06.impls;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.models.v06.ChapterKnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
 import nd.esp.service.lifecycle.models.v06.KnowledgeRelationsModel;
+import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.common.KnowledgeRelationType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
@@ -36,11 +29,11 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,8 +64,18 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     @Autowired
     private NDResourceService ndResourceService;
 
+    @Autowired
+    private JdbcTemplate jt;
+    @Autowired
+    private CommonServiceHelper commonServiceHelper;
+
     @Override
     public KnowledgeModel createKnowledge(KnowledgeModel model) {
+        // 检查title是否重复
+        if (isExistKnowledgeTitle(model.getTitle())) {
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.checkResKnowledgeTitleUniqueFail);
+        }
         // knowledge_relations属性处理
         dealKnowledgeRelations(model, CREATE_TYPE);
         
@@ -81,7 +84,32 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     
     @Override
     public KnowledgeModel updateKnowledge(KnowledgeModel model) {
+        Education oldBean;
+        try {
+            oldBean = (Education) commonServiceHelper.getRepository(ResourceNdCode.knowledges.toString()).get(model.getIdentifier());
+        } catch (EspStoreException e) {
+            LOG.error("调用存储SDK出错了", e);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getLocalizedMessage());
+        }
+        String newTitle = model.getTitle();
+        if (oldBean != null &&
+                !org.apache.commons.lang3.StringUtils.equals(newTitle, oldBean.getTitle())) {
+            // 检查title是否重复
+            if (isExistKnowledgeTitle(newTitle)) {
+                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        LifeCircleErrorMessageMapper.checkResKnowledgeTitleUniqueFail);
+            }
+        }
         return (KnowledgeModel) ndResourceService.update(ResourceNdCode.knowledges.toString(), model);
+    }
+
+    @Override
+    public boolean isExistKnowledgeTitle(String title) {
+        String sql = "SELECT identifier FROM `ndresource` WHERE enable = 1 AND primary_category=? AND title= binary ?";
+        List<String> idList = jt.queryForList(sql, new Object[]{IndexSourceType.KnowledgeType.getName(), title}, String.class);
+        return idList.size() > 0;
     }
 
     @Override

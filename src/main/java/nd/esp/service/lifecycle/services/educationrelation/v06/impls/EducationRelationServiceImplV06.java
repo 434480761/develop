@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,6 +110,9 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     
     @Autowired
     private NotifyReportService nrs;
+    
+    @Autowired
+    private JdbcTemplate jt;
     
     @Override
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
@@ -1429,4 +1433,141 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
         return flag;
     }
 
+    /**
+     * DEMO先演示，逻辑暂时写在service里
+     * add by xuzy 20160629
+     */
+	@Override
+	public List<Map<String, Object>> queryKnowledgeTree(String uuid) {
+		List<Map<String, Object>> returnList = new ArrayList<Map<String,Object>>();
+		List<Map<String, Object>> parentList = new ArrayList<Map<String,Object>>();
+		List<Map<String, Object>> childList = new ArrayList<Map<String,Object>>();
+		int upNum = 0;
+		int downNum = 0;
+		//查找上级节点
+		recursiveKnowledge(parentList, uuid,"up",upNum);
+		
+		if(CollectionUtils.isNotEmpty(parentList)){
+			returnList.addAll(parentList);
+			for (Map<String, Object> map : parentList) {
+				if(uuid.equals((String)map.get("identifier"))){
+					//找出parent
+					String parentId = (String)map.get("parent");
+					if(!"ROOT".equals(parentId)){
+						String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.source_uuid='"+parentId+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier and rr.target != '"+uuid+"'";
+						List<Map<String,Object>> tl = jt.queryForList(sql);
+						if(CollectionUtils.isNotEmpty(tl)){
+							returnList.addAll(tl);
+						}
+					}
+				}
+			}
+		}
+		
+		//查找下级节点
+		recursiveKnowledge(childList, uuid,"down",downNum);
+		if(CollectionUtils.isNotEmpty(childList)){
+			returnList.addAll(childList);
+		}
+		return returnList;
+	}
+	
+	/**
+	 * 递归查找知识点
+	 * @param list
+	 * @param cid
+	 * @param type 用来区分是向上递归还是向下递归
+	 * @param num  递归的层数，主要是避免死循环
+	 */
+	private void recursiveKnowledge(List<Map<String, Object>> list,String cid,String type,int num){
+		if(num > 10){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                     "LC/RECURSE_OUT",
+                     "递归层数过多，已超过10层");
+		}
+		num++;
+		if("up".equals(type)){
+			List<Map<String,Object>> tmpList = queryParentKnByChildId(cid);
+			if(CollectionUtils.isNotEmpty(tmpList)){
+				for (Map<String, Object> map : tmpList) {
+					String parent = (String)map.get("parent");
+					if(parent != null && parent.equals(cid)){
+						break;
+					}
+					list.add(map);
+					recursiveKnowledge(list,parent,type,num);
+				}
+			}else{
+				String sql = "SELECT 'ROOT' as parent,nd.title,nd.estatus as status,nd.identifier from ndresource nd where nd.primary_category='knowledges' and nd.identifier = '"+cid+"' and nd.enable = 1";
+				List<Map<String,Object>> tl = jt.queryForList(sql);
+				if(CollectionUtils.isNotEmpty(tl)){
+					list.addAll(tl);
+				}
+			}
+		}else if("down".equals(type)){
+			List<Map<String,Object>> tmpList = queryChildKnByParentId(cid);
+			if(CollectionUtils.isNotEmpty(tmpList)){
+				for (Map<String, Object> map : tmpList) {
+					String childId = (String)map.get("identifier");
+					list.add(map);
+					recursiveKnowledge(list,childId,type,num);
+				}
+			}
+		}
+	}
+
+	private List<Map<String,Object>> queryParentKnByChildId(String cid){
+		String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.target='"+cid+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier";
+		return jt.queryForList(sql);
+	}
+	
+	private List<Map<String,Object>> queryChildKnByParentId(String pid){
+		String sql = "SELECT rr.source_uuid as parent,nd.title,nd.estatus as status,nd.identifier from resource_relations rr,ndresource nd where rr.res_type='knowledges' and rr.resource_target_type = 'knowledges' and rr.enable = 1 and rr.source_uuid='"+pid+"' and nd.primary_category='knowledges' and nd.enable=1 and rr.target = nd.identifier";
+		return jt.queryForList(sql);
+	}
+	
+	public List<Map<String,Object>> querySuiteDirectory(){
+		List<Map<String,Object>> returnList = new ArrayList<Map<String,Object>>();
+		//1、查询一级的套件目录
+		String sql = "SELECT nd.identifier,nd.title,nd.description,'root' as parent from ndresource nd,resource_categories rc where nd.primary_category = 'assets' and rc.primary_category='assets' and rc.taxOnCode = '$RA0502' and rc.resource=nd.identifier and nd.enable = 1 and not exists (SELECT identifier from resource_relations where res_type='assets' and resource_target_type = 'assets' and target = nd.identifier) order by nd.create_time";
+		List<Map<String,Object>> list = jt.queryForList(sql);
+		returnList.addAll(list);
+		
+		//2、分别向下遍历
+		List<Map<String,Object>> subList = new ArrayList<Map<String,Object>>();
+		int num = 1;
+		if(CollectionUtils.isNotEmpty(list)){
+			for (Map<String, Object> map : list) {
+				String identifier = (String)map.get("identifier");
+				recursiveSuiteDirectory(subList,identifier,num);
+			}
+		}
+		if(CollectionUtils.isNotEmpty(subList)){
+			returnList.addAll(subList);
+		}
+		return returnList;
+	}
+	
+	private void recursiveSuiteDirectory(List<Map<String, Object>> list,String assetId,int num){
+		if(num > 10){
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                     "LC/RECURSE_OUT",
+                     "递归层数过多，已超过10层");
+		}
+		num++;
+		List<Map<String,Object>> tmpList = querySuiteChildKnByParentId(assetId);
+		if(CollectionUtils.isNotEmpty(tmpList)){
+			list.addAll(tmpList);
+			for (Map<String, Object> map : tmpList) {
+				String identifier = (String)map.get("identifier");
+				recursiveSuiteDirectory(list, identifier, num);
+			}
+		}
+	}
+	
+	private List<Map<String,Object>> querySuiteChildKnByParentId(String pid){
+		String sql = "SELECT nd.identifier,nd.title,nd.description,rr.source_uuid as parent from resource_relations rr,ndresource nd,resource_categories rc where rr.res_type='assets' and rr.resource_target_type='assets' and rr.enable = 1 and nd.primary_category='assets' and nd.enable = 1 and rr.source_uuid = '"+pid+"' and rr.target = nd.identifier and  nd.identifier = rc.resource and rc.primary_category='assets' and rc.taxOnCode = '$RA0502' order by nd.create_time";
+		return jt.queryForList(sql);
+	}
+	
 }
