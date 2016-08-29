@@ -54,7 +54,7 @@ public class TitanResourceController {
 	@MarkAspect4ImportData
 	@RequestMapping(value = "/all/script", method = RequestMethod.GET)
 	public void indexAllScript() {
-//		titanResourceService.importData4Script(ResourceNdCode.chapters.toString());
+		titanResourceService.importData4Script(ResourceNdCode.chapters.toString());
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
 			titanResourceService.importData4Script(resourceType);
 		}
