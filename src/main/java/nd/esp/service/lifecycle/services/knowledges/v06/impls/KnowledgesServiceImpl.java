@@ -1,5 +1,14 @@
 package nd.esp.service.lifecycle.services.knowledges.v06.impls;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
@@ -29,6 +38,7 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

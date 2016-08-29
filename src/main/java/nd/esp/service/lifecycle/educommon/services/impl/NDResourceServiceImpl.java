@@ -4,7 +4,16 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -39,7 +48,6 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.AccessModel;
-import nd.esp.service.lifecycle.models.chapter.v06.ChapterModel;
 import nd.esp.service.lifecycle.models.coverage.v06.CoverageModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationLifeCycleModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
@@ -49,7 +57,12 @@ import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.repository.model.CategoryData;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.ResRepoInfo;
+import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
 import nd.esp.service.lifecycle.repository.v02.ResourceRelationApiService;
@@ -60,8 +73,8 @@ import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
-import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
+import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.titan.TitanSearchService;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
@@ -647,7 +660,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             if(isCount){
                 this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel,forceStatus,tags,showVersion);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
             }
             
             return this;

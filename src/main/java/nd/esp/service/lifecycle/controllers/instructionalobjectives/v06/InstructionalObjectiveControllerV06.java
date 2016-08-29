@@ -1,9 +1,16 @@
 package nd.esp.service.lifecycle.controllers.instructionalobjectives.v06;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
+import javax.annotation.Nullable;
+
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.support.ParameterVerificationHelper;
@@ -11,10 +18,13 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.InstructionalObjectiveModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
 import nd.esp.service.lifecycle.services.notify.NotifyInstructionalobjectivesService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
+import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
+import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4Format2Category;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineToES;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -23,7 +33,6 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.instructionalobjectives.v06.InstructionalObjectiveViewModel;
@@ -39,9 +48,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Nullable;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 
 /**
  * 教学目标V0.6API

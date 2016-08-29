@@ -15,7 +15,6 @@ import java.util.Map;
 
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-
 import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.CategoryPatternRepository;
@@ -27,7 +26,6 @@ import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectTemplateRepositor
 import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
 import nd.esp.service.lifecycle.repository.sdk.ExaminationPaperRepository;
-import nd.esp.service.lifecycle.repository.sdk.GuidanceBooksRepository;
 import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
 import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeBaseRepository;
@@ -38,6 +36,7 @@ import nd.esp.service.lifecycle.repository.sdk.LessonRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.SubInstructionRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingActivitiesRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.repository.sdk.ToolsRepository;
