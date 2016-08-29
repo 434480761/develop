@@ -19,7 +19,6 @@ public class TestCoverageSharingController extends SimpleJunitTest4ResourceImpl 
     private static final Logger logger = LoggerFactory.getLogger(TestCoverageSharingController.class);
     
     private static final String DEFAULT_COVERAGE_SHARING_TARGET = "lcms-special-sharing-dev-test";
-    private static final String DEFAULT_COVERAGE_SHARING_SOURCE = "lcms-special-sharing-dev-test";
     
    @Test
     public void testAll(){
@@ -40,7 +39,7 @@ public class TestCoverageSharingController extends SimpleJunitTest4ResourceImpl 
 		
 		//测试覆盖范围类型是否在可选范围内
 		 CoverageSharingViewModel illegalCsvm=getDefaultCoverageSharingViewModel();
-		illegalCsvm.setSourceCoverage("Yzc/"+DEFAULT_COVERAGE_SHARING_SOURCE+System.currentTimeMillis());
+		illegalCsvm.setSourceCoverage("Yzc/"+DEFAULT_COVERAGE_SHARING_TARGET+System.currentTimeMillis());
 		illegalCsvm.setTargetCoverage("Yzc/"+DEFAULT_COVERAGE_SHARING_TARGET+System.currentTimeMillis());
 		String illegalStr=postCreate(illegalCsvm);
 		@SuppressWarnings("unchecked")
@@ -54,10 +53,20 @@ public class TestCoverageSharingController extends SimpleJunitTest4ResourceImpl 
 		Assert.assertEquals("测试是否已经分享过不通过", LifeCircleErrorMessageMapper.CoverageSharingExistFail.getCode(),againMap.get("code"));
 		
 		//测试查询资源库分享时source和target都为空
-		/*String getErrorStr=getList(null, null, "(0,20)");
+		String getErrorStr=getList(null, null, "(0,20)");
 		@SuppressWarnings("unchecked")
 		Map<String,Object> errorMap = ObjectUtils.fromJson(getErrorStr, Map.class);
-		Assert.assertEquals("测试查询资源库分享时source和target都为空不通过", LifeCircleErrorMessageMapper.CoverageSharingParamFail.getCode(),errorMap.get("code"));*/
+		Assert.assertEquals("测试查询资源库分享时source和target都为空不通过", LifeCircleErrorMessageMapper.CoverageSharingParamFail.getCode(),errorMap.get("code"));
+		
+		//测试查询资源库分享时source为空且target不为空
+		ListViewModel<CoverageSharingViewModel> nullsourceList=testGetList(null,returnCsvm.getTargetCoverage(),"(0,20)");
+		Assert.assertNotNull(nullsourceList);
+		Assert.assertEquals("测试查询资源分享不通过", "(0,20)", nullsourceList.getLimit());
+		
+		//测试查询资源库分享时source为空且target不为空
+		ListViewModel<CoverageSharingViewModel> nulltargetList=testGetList(returnCsvm.getSourceCoverage(),null,"(0,20)");
+		Assert.assertNotNull(nulltargetList);
+		Assert.assertEquals("测试查询资源分享不通过", "(0,20)", nulltargetList.getLimit());
 		
 		//测试查询资源分享
 		String limit="(0,20)";
@@ -83,7 +92,7 @@ public class TestCoverageSharingController extends SimpleJunitTest4ResourceImpl 
    public CoverageSharingViewModel getDefaultCoverageSharingViewModel(){
 	   CoverageSharingViewModel csvm=new CoverageSharingViewModel();
 	   csvm.setSourceCoverage("Org/"+DEFAULT_COVERAGE_SHARING_TARGET+System.currentTimeMillis());
-	   csvm.setTargetCoverage("Org/"+DEFAULT_COVERAGE_SHARING_SOURCE+System.currentTimeMillis());
+	   csvm.setTargetCoverage("Org/"+DEFAULT_COVERAGE_SHARING_TARGET+System.currentTimeMillis());
 	   return csvm;
    }
    public CoverageSharingViewModel testCreate(CoverageSharingViewModel csvm){
@@ -130,15 +139,15 @@ public class TestCoverageSharingController extends SimpleJunitTest4ResourceImpl 
 	protected String getList(String source,String target,String limit){
 		StringBuffer uri=new StringBuffer();
 		if(source==null&&target==null){
-			uri=new StringBuffer("v0.6/resources/coverages/sharing?limit="+limit);
+			uri=new StringBuffer("/v0.6/resources/coverages/sharing?limit="+limit);
 		}
-		if(source==null&&target!=null){
-			uri=new StringBuffer("v0.6/resources/coverages/sharing?source_coverage&target_coverage="+target+"&limit="+limit);
+		else if(source==null&&target!=null){
+			uri=new StringBuffer("/v0.6/resources/coverages/sharing?source_coverage&target_coverage="+target+"&limit="+limit);
 		}
-		if(source!=null&&target==null){
-			uri=new StringBuffer("v0.6/resources/coverages/sharing?source_coverage="+source+"&target_coverage&limit="+limit);
+		else if(source!=null&&target==null){
+			uri=new StringBuffer("/v0.6/resources/coverages/sharing?source_coverage="+source+"&target_coverage&limit="+limit);
 		}
-		if(source!=null&&target!=null){
+		else{
 		    uri = new StringBuffer("/v0.6/resources/coverages/sharing?source_coverage="+source+"&target_coverage="+target+"&limit="+limit);
 		}
 		String resStr = null;
