@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.controller.v06.covergae;
+package nd.esp.service.lifecycle.controller.v06.coverage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
