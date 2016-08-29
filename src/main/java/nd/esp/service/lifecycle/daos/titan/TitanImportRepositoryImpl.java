@@ -368,12 +368,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return multimap;
     }
     
-    public void checkNdResource(Education education){
-//        g.V().has('identifier', 'xxx')
-        String[] ndResourceField = new String[]{"cr_author", "cr_description", "cr_has_right", "cr_right", "cr_right_end_date", "cr_right_start_date", "custom_properties", "description"
-                , "edu_age_range", "edu_description", "edu_difficulty", "edu_end_user_type", "edu_interactivity", "edu_interactivity_level", "edu_language", "edu_learning_time", 
-                "edu_semantic_density", "keywords", "language", "lc_create_time", "lc_creator", "lc_enalbe", "lc_last_update", "lc_provider", "lc_provider_mode"
-                , "lc_provider_source", "lc_publisher", "lc_status", "lc_version", "preview", "tags", "title", "search_code", "search_coverage", "search_path"};
+    String[] ndResourceField = new String[]{"cr_author", "cr_description", "cr_has_right", "cr_right", "cr_right_end_date", "cr_right_start_date", "custom_properties", "description"
+            , "edu_age_range", "edu_description", "edu_difficulty", "edu_end_user_type", "edu_interactivity", "edu_interactivity_level", "edu_language", "edu_learning_time", 
+            "edu_semantic_density", "keywords", "language", "lc_create_time", "lc_creator", "lc_enalbe", "lc_last_update", "lc_provider", "lc_provider_mode"
+            , "lc_provider_source", "lc_publisher", "lc_status", "lc_version", "preview", "tags", "title", "search_code", "search_coverage", "search_path"};
+    private void checkNdResource(Education education, List<ResourceCategory> categories, List<ResCoverage> list2){
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("primaryCategory", education.getPrimaryCategory());
         paramMap.put("identifier",education.getIdentifier());
@@ -469,6 +468,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
         checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
         checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
+        checkNdResource(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories(), checkResourceModel.getResCoverages());
     }
     
     final String[] resourceStatistic = new String[]{"identifier", "sta_data_from", "sta_key_title", "sta_key_value", "sta_res_type", "sta_resource", "sta_title", "sta_update_time"};
@@ -493,19 +493,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     final String educationIdentifier = "educationIdentifier";
     final String primaryCategory = "primaryCategory";
     final String[] categoryNodeField = new String[]{"cg_taxoncode"};
-    private void checkCategories(Education education,List<ResourceCategory> resourceCategoryList){
+    private void checkCategories(Education education,List<ResourceCategory> categories){
         
         String baseScript = new StringBuilder("g.V().has(").append(primaryCategory).append(",'identifier', ").append(educationIdentifier).append(")").toString();
         Builder baseBuilder = new Builder(baseScript).outE().hasLabel(categoryEdgeLabel);
-        for (int index =0 ;index <resourceCategoryList.size() ;index++){
+        for (int index =0 ;index <categories.size() ;index++){
             Map<String, Object> paramMap = initParamMap(education, categoryEdgeLabel);
-            List<Object> resourceCategoryEdgePartField = fillResourceCategoryPartField(resourceCategoryList.get(index));
+            List<Object> resourceCategoryEdgePartField = fillResourceCategoryPartField(categories.get(index));
             fillParamMap(paramMap, resourceCategoryEdgePartField, categoryEdgesField);
             
             Builder builder = generateCheckResourceCategoryScript(baseBuilder, resourceCategoryEdgePartField, categoryEdgesField).inV();
     
             List<Object> resourceCategoryNodePartField = new ArrayList<Object>();
-            resourceCategoryNodePartField.add(resourceCategoryList.get(index).getCategoryCode());
+            resourceCategoryNodePartField.add(categories.get(index).getCategoryCode());
             Builder nodeBuilder = generateCheckResourceCategoryScript(builder, resourceCategoryNodePartField, categoryNodeField);
             Long count = executeScriptUniqueLong(paramMap, nodeBuilder.count());
             saveAbnormalData(paramMap, builder, count, TitanSyncType.CHECK_CG_NOT_EXIST, TitanSyncType.CHECK_CG_REPEAT);
