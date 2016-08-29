@@ -111,7 +111,9 @@ public class GremlinClientFactory implements ApplicationContextAware {
 				Builder singleBuilder = defaulBuilder();
 				List<String> addressList = checkAndGetAddress(address);
 				// only add one address;
-				singleBuilder.addContactPoint(addressList.get(RandomUtils.nextInt(addressList.size())));
+				int index = 0;
+				// index=RandomUtils.nextInt(addressList.size());
+				singleBuilder.addContactPoint(addressList.get(index));
 				checkAndSetPoolSizePoolSize(singleBuilder);
 				return singleBuilder;
 			}

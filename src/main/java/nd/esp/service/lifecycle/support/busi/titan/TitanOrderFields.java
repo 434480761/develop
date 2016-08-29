@@ -38,7 +38,7 @@ import java.util.Map;
 public enum TitanOrderFields {
     title, lc_create_time, lc_last_update, ti_size, sort_num, cg_taxoncode, sta_key_value, top, scores, votes, views;
 
-    private final static String VIP_LEVEL_LIKE = "\\$RL.*";
+    private final static String VIP_LEVEL_LIKE = "RL.*";
     /**
      * 放置字符串值与枚举值的对应关系
      */
@@ -58,6 +58,9 @@ public enum TitanOrderFields {
 
     /**
      *
+     * .choose(select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL')
+     * ,select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value')
+     * ,__.constant(new Double(0.0)))
      * @param titanExpression
      * @param fieldValue
      * @param scriptParamMap
@@ -69,7 +72,7 @@ public enum TitanOrderFields {
         StringBuffer script = new StringBuffer();
         TitanOrder order = new TitanOrder();
         if (this.equals(title) || this.equals(lc_create_time) || this.equals(lc_last_update)) {
-            script.append("'").append(this.toString()).append("'");
+            order.setOrderByField(this.toString());
         } else if (this.equals(sta_key_value)) {
             //desc#downloads#TOTAL
             String[] tmp = fieldValue.split("#");
@@ -89,13 +92,14 @@ public enum TitanOrderFields {
                     +"',"
                     + dataFrom
                     + ")";
-            script.append("choose(select('x').")
+            script.append(".select('x').choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
                     .append(".values('")
                     .append(TitanOrderFields.sta_key_value.toString())
-                    .append("'),__.constant(''))");
+                    .append("'),__.constant(new Double(0.0)))");
+            order.setScript(script.toString());
             // 边上的统计数据需要取回
             titanExpression.setStatistics(true, "," + edgeScript);
         } else if (this.equals(top) || this.equals(scores) || this.equals(votes) || this.equals(views)) {
@@ -108,13 +112,14 @@ public enum TitanOrderFields {
                     + "',"
                     + keyTitle
                     + ")";
-            script.append("choose(select('x').")
+            script.append(".select('x').choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
                     .append(".values('")
                     .append(TitanOrderFields.sta_key_value.toString())
-                    .append("'),__.constant(''))");
+                    .append("'),__.constant(new Double(0.0)))");
+            order.setScript(script.toString());
             // 边上的统计数据需要取回
             titanExpression.setStatistics(true, "," + edgeScript);
         } else if (this.equals(ti_size)) {
@@ -127,13 +132,14 @@ public enum TitanOrderFields {
                     +"',"
                     + valueKey
                     + ")";
-            script.append("choose(select('x').")
+            script.append(".select('x').choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
                     .append(".values('")
                     .append(TitanKeyWords.ti_size.toString())
-                    .append("'),__.constant(0))");
+                    .append("'),__.constant(new Long(0)))");
+            order.setScript(script.toString());
         } /*else if (this.equals(sort_num)) {
         }*/ else if (this.equals(cg_taxoncode)) {
             String valueKey = TitanUtils.generateKey(scriptParamMap, ES_SearchField.cg_taxoncode.toString());
@@ -144,19 +150,19 @@ public enum TitanOrderFields {
                     + "',textRegex("
                     + valueKey
                     + "))";
-            script.append("choose(select('x').")
+            script.append(".select('x').choose(select('x').")
                     .append(edgeScript)
                     .append(",select('x').")
                     .append(edgeScript)
                     .append(".values('")
                     .append(ES_SearchField.cg_taxoncode.toString())
                     .append("'),__.constant(''))");
+            order.setScript(script.toString());
         } else {
-            //script.append("'").append(this.toString()).append("'");
             return;
         }
 
-        order.setField(this.toString()).setScript(script.toString()).setSortOrder(orderBy);
+        order.setField(this.toString()).setSortOrder(orderBy);
         orderList.add(order);
     }
 
@@ -165,7 +171,7 @@ public enum TitanOrderFields {
      * @return
      */
     private String checkSortOrder(String order) {
-        if (TitanOrder.SORTORDER.ASC.toString().equals(order)) {
+        if ("asc".equals(order)) {
             return TitanOrder.SORTORDER.ASC.toString();
         }
         return TitanOrder.SORTORDER.DESC.toString();
