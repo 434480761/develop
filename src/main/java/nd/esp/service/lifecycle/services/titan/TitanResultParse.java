@@ -575,14 +575,20 @@ public class TitanResultParse {
         String description = tmpMap.get(ES_SearchField.edu_description.toString());
         if (description != null) {
             if (!"".equals(description.trim()) && !"null".equals(description.trim())) {
-
                 if (description.startsWith("{\"") && description.endsWith("\"}")) {
                     @SuppressWarnings("unchecked")
                     Map<String, String> map = ObjectUtils.fromJson(description, Map.class);
                     edu.setDescription(map);
+                }else{
+                    LOG.error("EDU description parse error:"+description);
+                    Map<String, String> map = new HashMap<>();
+                    edu.setDescription(map);
                 }
 
             }
+        } else {
+            Map<String, String> map = new HashMap<>();
+            edu.setDescription(map);
         }
 
         return edu;
@@ -634,6 +640,9 @@ public class TitanResultParse {
                 });
                 techInfo.setRequirements(requirementsList);
             }
+        } else {
+            List<TechnologyRequirementModel> requirementsList = new ArrayList<>();
+            techInfo.setRequirements(requirementsList);
         }
         techInfo.setSecureKey(tmpMap.get(ES_SearchField.ti_secure_key.toString()));
 
