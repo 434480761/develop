@@ -5,7 +5,6 @@ import java.util.List;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 
@@ -15,7 +14,6 @@ public class CheckResourceModel {
     private List<ResCoverage> resCoverages;
     private List<ResourceCategory> resourceCategories;
     private List<ResourceStatistical> resourceStatistic;
-    private List<ResourceRelation> resourceRelations;
     
     private CheckResourceModel(Builder builder) {
         this.education = builder.education;
@@ -23,7 +21,6 @@ public class CheckResourceModel {
         this.resCoverages = builder.resCoverages;
         this.resourceCategories = builder.resourceCategories;
         this.resourceStatistic = builder.resourceStatistic;
-        this.resourceRelations = builder.resourceRelations;
     }
 
     public static class Builder {
@@ -32,7 +29,6 @@ public class CheckResourceModel {
         private List<ResCoverage> resCoverages;
         private List<ResourceCategory> resourceCategories;
         private List<ResourceStatistical> resourceStatistic;
-        private List<ResourceRelation> resourceRelations;
         
         public Builder(Education education){
             this.education = education;
@@ -103,20 +99,11 @@ public class CheckResourceModel {
         this.resourceStatistic = resourceStatistic;
     }
 
-    public List<ResourceRelation> getResourceRelations() {
-        return resourceRelations;
-    }
-
-    public void setResourceRelations(List<ResourceRelation> resourceRelations) {
-        this.resourceRelations = resourceRelations;
-    }
-
     @Override
     public String toString() {
         return "CheckResourceModel [education=" + education + ", techInfos=" + techInfos + ", resCoverages="
                 + resCoverages + ", resourceCategories=" + resourceCategories + ", resourceStatistic="
-                + resourceStatistic + ", resourceRelations=" + resourceRelations + "]";
+                + resourceStatistic + "]";
     }
-    
 }
 
