@@ -1082,7 +1082,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		long importDataOperate(List<Education> educations, String primaryCategory) {
-			return 0;
+			return importData(educations, primaryCategory);
 		}
 	}
 

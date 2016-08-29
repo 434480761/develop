@@ -9,14 +9,12 @@ import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.ResCoverage;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -62,6 +60,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Autowired
     private TitanCategoryRepository titanCategoryRepository;
+
+    @Autowired
+    private TitanStatisticalRepository titanStatisticalRepository;
 
 
     @Override
@@ -174,6 +175,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
         List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+        List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(resourceTypes,uuids);
 
         List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
         List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
@@ -195,6 +197,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
         List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
         if(techInfos.size()!=resultTechInfos.size()){
+            return false;
+        }
+
+        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
+        if (statisticalList.size() != resultStatisticals.size()){
             return false;
         }
 
