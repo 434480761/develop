@@ -555,7 +555,7 @@ public class TitanResultParse {
 
         String interactivityLevel = tmpMap.get(ES_SearchField.edu_interactivity_level.toString());
         if (interactivityLevel != null) {
-            edu.setInteractivity(Integer.parseInt(interactivityLevel.trim()));
+            edu.setInteractivityLevel(Integer.parseInt(interactivityLevel.trim()));
         }
 
 
