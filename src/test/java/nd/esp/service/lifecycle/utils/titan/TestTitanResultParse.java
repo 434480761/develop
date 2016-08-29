@@ -37,6 +37,15 @@ public class TestTitanResultParse {
         System.out.println("###########################################################################################################################################");
         System.out.println("测试解析：无异常信息，即为通过");
         testParse();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试只有一个字段的key-value转换");
+        testToMapForRelationQuery4Onefield();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试只有一个字段的key-value转换2");
+        testToMapForRelationQuery4Onefield2();
+        System.out.println("###########################################################################################################################################");
+        System.out.println("测试异常数据的key-value转换");
+        testToMapForRelationQuery4Null();
     }
     /**
      * 测试方法：toMapForRelationQuery
@@ -214,6 +223,34 @@ public class TestTitanResultParse {
 
         checkMapEqual(resultResourceMap, expectResourceMap);
     }
+
+    /**
+     * 只有一个字段
+     */
+    private static void testToMapForRelationQuery4Onefield() {
+        String resource = "{identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d]}";
+        Map<String, String> resultResourceMap = TitanResultParse.toMapForRelationQuery(resource);
+
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "3eaabed0-92a2-4c3c-bced-3a44e8a5f51d");
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+    /**
+     * 只有一个字段
+     */
+    private static void testToMapForRelationQuery4Onefield2() {
+        String resource = "{identifier=3eaabed0-92a2-4c3c-bced-3a44e8a5f51d}";
+        Map<String, String> resultResourceMap = TitanResultParse.toMapForRelationQuery(resource);
+
+        Map<String, String> expectResourceMap = new HashedMap<>();
+        expectResourceMap.put("identifier", "3eaabed0-92a2-4c3c-bced-3a44e8a5f51d");
+        checkMapEqual(resultResourceMap, expectResourceMap);
+    }
+    private static void testToMapForRelationQuery4Null() {
+        String resource = "==>null";
+        Map<String, String> resultResourceMap = TitanResultParse.toMapForRelationQuery(resource);
+    }
+
     /**
      * {identifier=7d4a95eb-c2da-4e28-9f14-300085396680, target_uuid=92505a6f-bef1-4641-abb7-b1454437e682, source_uuid=35ee3c2e-ce28-4959-8322-c637cf94a6f7, resource_target_type=coursewares, relation_type=ASSOCIATE, tags=["好玩","好喝"], res_type=chapters, label=has_relation, enable=true, sort_num=5000.0, order_num=0.0, rr_label=weo, id=x4se1h-6e5odk-2qs5-72ptl4}
      * 测试方法：toMapForRelationQuery
