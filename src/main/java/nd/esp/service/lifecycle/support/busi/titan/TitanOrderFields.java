@@ -1,8 +1,6 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import nd.esp.service.lifecycle.support.enums.ES_Field;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +66,7 @@ public enum TitanOrderFields {
      */
     public void generateScript(TitanExpression titanExpression, String fieldValue, Map<String, Object> scriptParamMap, List<TitanOrder> orderList,boolean isShowVersion) {
         String asResult = "select('x')";
-        if (isShowVersion) asResult = TitanKeyWords.version_result.toString();
+        if (isShowVersion) asResult = TitanKeyWords.select_version_result.toString();
         String orderBy = checkSortOrder(fieldValue);
         String edgeScript = "";
         StringBuffer script = new StringBuffer();

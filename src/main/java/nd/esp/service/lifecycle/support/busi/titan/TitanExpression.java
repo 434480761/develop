@@ -32,7 +32,7 @@ public class TitanExpression implements TitanScriptGenerator {
     private String orderBy4SortNum = "incr";
     private boolean needShowSubVersion = false;
     private String showSubVersionScript;
-    // 默认下是select('x') 但子版本需要查询出来时 为select('version_result')
+    // 默认下是select('x') 但子版本需要查询出来时 为select('select_version_result')
     private String asResult4GetSubVersionResource = "select('x')";
 
     public void setShowSubVersion(boolean needShowSubVersion, String showSubVersionScript, String asResult4GetSubVersionResource) {
@@ -162,11 +162,15 @@ public class TitanExpression implements TitanScriptGenerator {
 
         }
         //scriptBuffer.append(".select('x')");
-        // 在这里去重和加上处理printable
-        // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
-        if (this.needPrintable) scriptBuffer.append(this.printableScript);
+
         // TODO 处理 showVersion
         if (this.needShowSubVersion) scriptBuffer.append(this.showSubVersionScript);
+        // 在这里去重和加上处理printable
+        // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
+        if (this.needPrintable)
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource)
+                    .append(this.printableScript)
+                    .append(".").append(this.asResult4GetSubVersionResource).append(".dedup()");
         this.innerCondition = scriptBuffer.toString();
     }
 

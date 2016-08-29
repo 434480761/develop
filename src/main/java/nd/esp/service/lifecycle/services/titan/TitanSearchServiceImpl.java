@@ -4,13 +4,10 @@ import java.util.*;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.educommon.models.*;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.repository.Education;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryBuilder;
-import nd.esp.service.lifecycle.support.busi.elasticsearch.EsIndexQueryForTitanSearch;
 import nd.esp.service.lifecycle.support.busi.titan.*;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
 import nd.esp.service.lifecycle.support.enums.ES_OP;
@@ -25,13 +22,11 @@ import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewMo
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.apache.tinkerpop.gremlin.driver.exception.ResponseException;
 
 
 @Service
@@ -175,7 +170,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
-        dealWithShowVersionOrder(titanExpression,orderMap, showVersion, orderList);
+        dealWithShowVersionOrder(titanExpression,resType,orderMap, showVersion, orderList);
         //dealWithOrder(titanExpression, orderMap, orderList);
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
         if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
@@ -480,15 +475,23 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             tagSet.addAll(tags);
             for (String tag : tagSet) {
                 if (tag.contains(" and ")) {
+                    // FIXME 临时方案
                     String[] andTags = tag.split(" and ");
+                    List<List<String>> permTags = new ArrayList<>();
                     int length = andTags.length;
-                    String tmp="";
-                    for (int i = 0; i < length; i++) {
-                        tmp = tmp + "\\\"" + andTags[i] + "\\\"";
-                        if (i != length - 1) tmp = tmp + "*";
+                    perm(andTags, 0, length - 1, permTags);
+                    if (CollectionUtils.isNotEmpty(permTags)) {
+                        for (List<String> likeTags : permTags) {
+                            int size = likeTags.size();
+                            String tmp = "";
+                            for (int i = 0; i < size; i++) {
+                                tmp = tmp + "\\\"" + likeTags.get(i) + "\\\"";
+                                if (i != size - 1) tmp = tmp + "*";
+                            }
+                            tmp = "*" + tmp + "*";
+                            tagsList.add(tmp);
+                        }
                     }
-                    tmp = "*" + tmp + "*";
-                    tagsList.add(tmp);
                 } else {
                     tagsList.add("*\\\"" + tag + "\\\"*");
                 }
@@ -496,6 +499,35 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             if (CollectionUtils.isNotEmpty(tagsList)) tagsConditionMap.put(Titan_OP.like, tagsList);
             if (CollectionUtils.isNotEmpty(tagsConditionMap))
                 vertexPropertiesMap.put(ES_Field.tags.toString(), tagsConditionMap);
+        }
+    }
+
+    /**
+     *
+     * @param buf
+     * @param start
+     * @param end
+     * @param permTags
+     */
+    private void perm(String[] buf, int start, int end, List<List<String>> permTags) {
+        if (start == end) {// 当只要求对数组中一个字母进行全排列时，只要就按该数组输出即可
+            List<String>  tags=new ArrayList<>();
+            for (int i = 0; i <= end; i++) {
+                tags.add(buf[i]);
+              //  System.out.println(buf[i]);
+            }
+            permTags.add(tags);
+            //System.out.println("\n---------------");
+        } else {// 多个字母全排列
+            for (int i = start; i <= end; i++) {
+                String temp = buf[start];// 交换数组第一个元素与后续的元素
+                buf[start] = buf[i];
+                buf[i] = temp;
+                perm(buf, start + 1, end, permTags);// 后续元素递归全排列
+                temp = buf[start];// 将交换后的数组还原
+                buf[start] = buf[i];
+                buf[i] = temp;
+            }
         }
     }
 
@@ -739,7 +771,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (CollectionUtils.isEmpty(eqPrint)) return;
         // 只处理第一个 .append(",out('").append(TitanKeyWords.has_tech_info.toString()).append("')")
         String condition = eqPrint.get(0);
-        StringBuffer script = new StringBuffer(".select('x').outE('has_tech_info')");
+        StringBuffer script = new StringBuffer(".outE('has_tech_info')");
         //.has('ti_printable',true)
         if (condition.contains("#")) {
             String[] conditions = condition.split("#");
@@ -748,7 +780,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         } else {
             script.append(".has('ti_printable',").append("true".equals(condition) ? "true)" : "false)");
         }
-        script.append(".select('x').dedup()");
+        //script.append(".select('x').dedup()");
         // TODO 1、参数和脚本分离 2、常量字符替换成枚举
         titanExpression.setPrintable(true, script.toString());
     }
@@ -805,27 +837,27 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     /**
      *
-     * .select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','assets').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')
+     * .select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','assets').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('select_version_result')
      * choose(select('x').has('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL'),select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value'),__.constant('0.0'))
      * @param orderMap
      * @param showVersion
      * @param orderList
      */
-    private void dealWithShowVersionOrder(TitanExpression titanExpression,Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
+    private void dealWithShowVersionOrder(TitanExpression titanExpression, String resType, Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
         if (showVersion) {
             // TODO 拼接 subversion 脚本
-            String script = ".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','assets').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')";
-            titanExpression.setShowSubVersion(true, script, TitanKeyWords.version_result.toString());
-            TitanOrder o1=new TitanOrder();
+            String script = ".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','" + resType + "').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')";
+            titanExpression.setShowSubVersion(true, script, TitanKeyWords.select_version_result.toString());
+            TitanOrder o1 = new TitanOrder();
             o1.setField(ES_SearchField.m_identifier.toString());
-            o1.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.m_identifier.toString()+ "'),select('version_result').values('"+ES_SearchField.m_identifier.toString()+"'),__.constant(''))");
+            o1.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.m_identifier.toString() + "'),select('version_result').values('" + ES_SearchField.m_identifier.toString() + "'),__.constant(''))");
             o1.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
             orderList.add(o1);
             if (CollectionUtils.isEmpty(orderMap)) {
                 // 当为true的时候且oderby为空的时候
-                TitanOrder o2=new TitanOrder();
+                TitanOrder o2 = new TitanOrder();
                 o2.setField(ES_SearchField.m_identifier.toString());
-                o2.setScript(".select('version_result').choose(select('version_result').has('" +ES_SearchField.lc_version.toString()+ "'),select('version_result').values('"+ES_SearchField.lc_version.toString()+"'),__.constant(''))");
+                o2.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.lc_version.toString() + "'),select('version_result').values('" + ES_SearchField.lc_version.toString() + "'),__.constant(''))");
                 o2.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
                 orderList.add(o2);
             }
