@@ -523,6 +523,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			int index = originTitle.indexOf(xs[i], pos);
 
 			if (-1 == index) {
+				sb.append(originTitle.substring(pos));
 				break;
 			}
 
