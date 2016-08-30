@@ -1,6 +1,8 @@
 package nd.esp.service.lifecycle.support.busi;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,10 +25,8 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.TitanCommonRepositoryImpl;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
-import nd.esp.service.lifecycle.daos.titan.TitanRepositoryUtilsImpl;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -1854,6 +1854,41 @@ public class CommonHelper {
 		if(ResourceNdCode.instructionalobjectives.toString().equals(primaryCategory)||
 				ResourceNdCode.knowledges.toString().equals(primaryCategory)){
 			includes.remove(IncludesConstant.INCLUDE_EDU);
+		}
+	}
+	
+	/**
+	 * MD5加密
+	 * @author xiezy
+	 * @date 2016年8月29日
+	 * @param plainText
+	 * @return
+	 */
+	public static String encryptToMD5(String plainText) {
+		try {
+			// 生成实现指定摘要算法的 MessageDigest 对象。
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			// 使用指定的字节数组更新摘要。
+			md.update(plainText.getBytes());
+			// 通过执行诸如填充之类的最终操作完成哈希计算。
+			byte b[] = md.digest();
+			// 生成具体的md5密码到buf数组
+			int i;
+			StringBuffer buf = new StringBuffer("");
+			for (int offset = 0; offset < b.length; offset++) {
+				i = b[offset];
+				if (i < 0)
+					i += 256;
+				if (i < 16)
+					buf.append("0");
+				buf.append(Integer.toHexString(i));
+			}
+
+			return buf.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.EncryptDataFail.getCode(),
+					"加密MD5异常!");
 		}
 	}
 }
