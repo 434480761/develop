@@ -65,6 +65,15 @@ public class TitanResourceController {
 		titanResourceService.importKnowledgeRelation();
 	}
 
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/relation/ckr", method = RequestMethod.GET)
+	public void importAllRealtion(){
+		titanResourceService.createChapterRelation();
+		titanResourceService.createKnowledgeRealtion();
+		titanResourceService.importAllRelation();
+		titanResourceService.importKnowledgeRelation();
+	}
+
 	/**
 	 * 修复数据
 	 * */

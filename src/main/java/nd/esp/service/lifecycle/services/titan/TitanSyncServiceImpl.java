@@ -186,7 +186,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
 
         List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
-        if(resCoverageList.size() != resultCoverage.size()){
+        if(coverageList.size() != resultCoverage.size()){
             return false;
         }
 
@@ -196,7 +196,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
 
         List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
-        if(techInfos.size()!=resultTechInfos.size()){
+        if(techInfoList.size()!=resultTechInfos.size()){
             return false;
         }
 
