@@ -746,7 +746,7 @@ public class NDResourceController {
                                 forceStatus, tags, showVersion, includesList, relationsMap, coveragesList, propsMap,
                                 orderMap, reverseBoolean);
                     }
-            } else if (StaticDatas.TITAN_SWITCH&&StaticDatas.QUERY_BY_TITAN_FIRST
+            } else if (StaticDatas.QUERY_BY_TITAN_FIRST
                     && canQueryByTitan(resType, relationsMap, orderMap, forceStatus, tags, showVersion,printable)) {
                 Map<String, Object> changeMap = changeKey(propsMap,
                         orderMap, false);

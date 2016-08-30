@@ -11,6 +11,7 @@ import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.QueryTaskService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -39,6 +40,9 @@ public class QueryTaskServiceImpl implements QueryTaskService {
     
     @Autowired
     private AsynEsResourceService esResourceOperation;
+
+    @Autowired
+    private TitanSyncService titanSyncService;
     
     @Override
     public void QueryTaskStatus(List<TaskStatusInfo> taskInfos) {
@@ -141,7 +145,7 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 												.asynAdd(new Resource(
 														resType,
 														params.get("identifier")));
-
+                                        titanSyncService.syncEducation(resType,params.get("identifier"));
 									} else {
                                         taskService.DealInvalidTask(taskId, "未取得任务执行结果");
                                     }

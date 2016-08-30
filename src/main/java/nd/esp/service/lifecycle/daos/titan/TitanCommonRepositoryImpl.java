@@ -262,9 +262,6 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     }
 
     private ResultSet submitScriptSearchResultRet(String script, Map<String, Object> params) throws Exception{
-        if(!StaticDatas.TITAN_SWITCH){
-            return null;
-        }
         ResultSet resultSet = null;
         try {
             resultSet = searchClient().submit(script, params);
