@@ -797,8 +797,8 @@ public class NDResourceController {
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean, printable, printableKey);*/
-                //Set<String> resTypeSet = verificateAndDealResType(resType, resCodes);
-                rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resType,
+                Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
+                rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
@@ -1917,17 +1917,17 @@ public class NDResourceController {
 
     /**
      * 校验处理 resType
+     * 资源类型的ndCode,用逗号分隔（当res_type=eduresource时生效）
+     * 目前只支持习题($RE0200)和课件颗粒($RT0204)
      * @param resType
      * @param resCodes
      * @return
      */
-    private Set<String> verificateAndDealResType(String resType, String resCodes){
+    private Set<String> checkAndDealResType(String resType, String resCodes){
 
         Set<String> resTypeSet=new HashSet<>();
         if (resType.equals(IndexSourceType.ChapterType.getName())) {
-
             LOG.error("resType不能为chapters");
-
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CommonSearchParamError
                             .getCode(), "resType不能为chapters");
@@ -1941,12 +1941,12 @@ public class NDResourceController {
             }else{
                 Set<String> resTypeSetTmp = new HashSet<>();
                 resTypeSetTmp.addAll(Arrays.asList(resCodes.split(",")));
-                for(String code:resTypeSetTmp){
+                for (String code : resTypeSetTmp) {
                     if (ResourceNdCode.fromStringCode(code) == null) {
                         throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                 LifeCircleErrorMessageMapper.CommonSearchParamError
-                                        .getCode(), "resCode为"+ code+ ",不存在");
-                    }else{
+                                        .getCode(), "resCode为" + code + ",不存在");
+                    } else {
                         resTypeSet.add(ResourceNdCode.fromStringCode(code).toString());
                     }
                 }
