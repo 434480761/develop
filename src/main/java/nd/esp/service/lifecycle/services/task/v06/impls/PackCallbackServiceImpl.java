@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class PackCallbackServiceImpl implements PackCallbackService {
     
     @Autowired
     private TechInfoRepository techInfoRepository;
+
+    @Autowired
+    private TechInfo4QuestionDBRepository techInfo4QtiRepository;
     
     @Autowired
     private NDResourceService ndResourceService;
@@ -123,7 +128,12 @@ public class PackCallbackServiceImpl implements PackCallbackService {
                         ti.setResource(id);
                         ti.setResType(res_type);
                         ti.setRequirements(ObjectUtils.toJson(newTechInfo.getRequirements()));
-                        techInfoRepository.add(ti);
+                        if(!res_type.equals(IndexSourceType.QuestionType.getName())
+                                && !res_type.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {
+                            techInfoRepository.add(ti);
+                        } else {
+                            techInfo4QtiRepository.add(ti);
+                        }
                     } catch (Exception e1) {
                         LOG.error("更新tech_info数据失败:"+e1.getMessage());
                     }
