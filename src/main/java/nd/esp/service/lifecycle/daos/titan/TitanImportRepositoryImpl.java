@@ -4,6 +4,7 @@ package nd.esp.service.lifecycle.daos.titan;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,8 @@ import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,7 @@ import org.springframework.stereotype.Repository;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 /**
  * Created by liuran on 2016/7/26.
@@ -170,6 +174,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             return this;
         }
         
+        public Builder has(String primaryCategory, String key, String value){
+            sb.append(".has(").append("'").append(primaryCategory).append("', '").append(key).append("'").append(",").append(value).append(")");
+            return this;
+        }
+        
         public Builder hasLabel(String value){
             sb.append(".hasLabel('").append(value).append("')");
             return this;
@@ -185,7 +194,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             return this;
         }
         
-        public String builder(){
+        public String build(){
             return sb.toString();
         }
 
@@ -199,6 +208,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             return this;
         }
         
+        public Builder valueMap(){
+            sb.append(".valueMap()");
+            return this;
+        }
         @Override
         public String toString() {
             return "Builder [sb=" + sb + "]";
@@ -254,10 +267,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                                   TitanSyncType repeat) {
         // count = 1 为正常
         if (count == 0) {
-            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
             titanSync(notExist, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         } else if(count >= 2){
-            LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
             titanSync(repeat, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         }
     }
@@ -266,10 +279,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         if (tmp != null) {
             count += tmp;
         }else {
-            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "查询脚本发生异常" + builder.builder());
+                    "查询脚本发生异常" + builder.build());
         }
         return count;
     }
@@ -372,7 +385,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             , "edu_age_range", "edu_description", "edu_difficulty", "edu_end_user_type", "edu_interactivity", "edu_interactivity_level", "edu_language", "edu_learning_time", 
             "edu_semantic_density", "keywords", "language", "lc_create_time", "lc_creator", "lc_enalbe", "lc_last_update", "lc_provider", "lc_provider_mode"
             , "lc_provider_source", "lc_publisher", "lc_status", "lc_version", "preview", "tags", "title", "search_code", "search_coverage", "search_path"};
-    private void checkNdResource(Education education, List<ResourceCategory> categories, List<ResCoverage> list2){
+    private void checkNdResource(Education education, List<ResourceCategory> categories, List<ResCoverage> coverages){
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("primaryCategory", education.getPrimaryCategory());
         paramMap.put("identifier",education.getIdentifier());
@@ -414,6 +427,68 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 //        educationField.add(education.getTags());
 //        educationField.add(education.getTags());
         
+        Set<String> codes = Sets.newHashSet();
+        Set<String> paths = Sets.newHashSet();
+        for (ResourceCategory category : categories) {
+            codes.add(category.getCategoryCode());
+            paths.add(category.getTaxonpath());
+        }
+        
+        Set<String> coverageSet = Sets.newHashSet();
+        for (ResCoverage coverage : coverages) {
+            coverageSet.add(coverage.getStrategy());
+            coverageSet.add(coverage.getTarget());
+            coverageSet.add(coverage.getTargetType());
+        }
+        
+        Builder builder = new Builder("g.V()").has(primaryCategory, "identifier", educationIdentifier).valueMap();
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put(educationIdentifier, education.getIdentifier());
+        params.put(primaryCategory, education.getPrimaryCategory());
+        
+        ResultSet resultSet = null;
+        try {
+            resultSet = titanCommonRepository.executeScriptResultSet(
+                    builder.build(), params);
+        } catch (Exception e) {
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                    "查询脚本发生异常" + builder.build());
+        }
+        Iterator<Result> iterator = resultSet.iterator();
+        while (iterator.hasNext()) {
+            String result = iterator.next().getString();
+            
+        }
+//        String result = null;
+//        if (iterator.hasNext()) {
+//            result = iterator.next().getString();
+//        }
+//
+//        if(StringUtils.isEmpty(result)){
+//            LOG.info("coverage delete error");
+//            return false;
+//        }
+//
+//        Map<String, String> valueMap = TitanResultParse.toMap(result);
+//        String resourceIdentifier = valueMap.get("identifier");
+//        String primaryCategory = valueMap.get("primary_category");
+//        updateResourceCoverage(primaryCategory, resourceIdentifier);
+//
+//        String script = "g.E().has('identifier',identifier).drop()";
+//        Map<String, Object> paramMap = new HashMap<>();
+//        paramMap.put("identifier", id);
+//
+//        try {
+//            titanCommonRepository.executeScript(script, paramMap);
+//        } catch (Exception e) {
+//            // TODO Auto-generated catch block
+//            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),id);
+//            return false;
+//        }
+//        return true;
+        
     }
     
     final String[] resourceRelation = new String[]{"enable", "identifier", "order_num", "relation_type", "rr_label", "sort_num", "res_type", "source_uuid", "tags", "resource_target_type", "target_uuid"};
@@ -435,19 +510,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
     private void saveAbnormalData(Map<String, Object> paramMap, ResourceRelation relation, Builder builder, Long count) {
         if (count == null) {
-            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "查询脚本发生异常" + builder.builder());
+                    "查询脚本发生异常" + builder.build());
         }
         if (count == 0) {
             if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
-                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
                 titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResType(), relation.getSourceUuid());
             }
         } else if(count > 1){
             if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
-                LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+                LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
                 titanSync(TitanSyncType.CHECK_RR_REPEAT,relation.getResType(), relation.getSourceUuid());
             }
         }
@@ -536,16 +611,16 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                                                 TitanSyncType repeat) {
         // count 等于 1 正常，其他情况都不正常
         if (count == null) {
-            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "查询脚本发生异常" + builder.builder());
+                    "查询脚本发生异常" + builder.build());
         }
         if (count == 0) {
-            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
             titanSync(notExist, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         } else if(count > 1){
-            LOG.info("titan 中数据重复, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
             titanSync(repeat, paramMap.get(primaryCategory).toString(), paramMap.get(educationIdentifier).toString());
         }
     }
@@ -553,12 +628,12 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
     private Long executeScriptUniqueLong(Map<String, Object> paramMap, Builder builder) {
         Long count = 0L;
         try {
-            count = titanCommonRepository.executeScriptUniqueLong(builder.builder(), paramMap);
+            count = titanCommonRepository.executeScriptUniqueLong(builder.build(), paramMap);
         } catch (Exception e) {
-            LOG.error("与 titan 的连接断开或查询脚本执行异常, script:{}, param:{}", builder.builder(), paramMap);
+            LOG.error("与 titan 的连接断开或查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "与 titan 的连接断开或查询脚本发生异常" + builder.builder());
+                    "与 titan 的连接断开或查询脚本发生异常" + builder.build());
         }
         return count;
     }
