@@ -236,7 +236,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean isNeedPreview = isNeedPreview(resType);
         commonSelect = "ndr.identifier AS identifier,ndr.m_identifier AS mIdentifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
-                + "ndr.code as code,"+ (haveSortNum ? "rer.identifier AS relationId" : "null AS relationId") + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
+                + "ndr.code as code,"+ (haveSortNum ? "rer.identifier AS relationId," : "null AS relationId,") + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
         //LC
         String lifeCycleSelect = "ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.provider_mode AS lifeCycle_providerMode,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate";
         String lifeCycleSelect4Null = "null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_providerMode,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate";

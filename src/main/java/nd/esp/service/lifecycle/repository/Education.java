@@ -57,6 +57,9 @@ public class Education extends EspEntity implements Serializable,
 	@DataConverter(target="preview", type=Map.class)
 	@Column(name = "preview")
 	private String dbpreview;
+	
+	@Column(name="record_status")
+	protected int recordStatus;
 
 //	@DataConverter(target = "relations", type = List.class)
 //	@Column(name = "relations")
@@ -565,5 +568,13 @@ public class Education extends EspEntity implements Serializable,
 
 	public void setHasRight(Boolean hasRight) {
 		this.hasRight = hasRight;
+	}
+
+	public int getRecordStatus() {
+		return recordStatus;
+	}
+
+	public void setRecordStatus(int recordStatus) {
+		this.recordStatus = recordStatus;
 	}
 }
