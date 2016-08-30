@@ -291,10 +291,10 @@ public class NDResourceServiceImpl implements NDResourceService{
 
 	/**
 	 * 资源检索(titan)
-	 * @author linsm
+	 * @author gsw
 	 */
 	@Override
-	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(String resType,
+	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(Set<String> resTypeSet,
 															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
 															 List<Map<String, String>> relations, List<String> coverages,
 															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
@@ -315,7 +315,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 			includes = new ArrayList<String>();
 		}
 		listViewModel =
-				titanSearchService.searchWithStatistics(resType, includes, params, orderMap,
+				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orderMap,
 						result[0], result[1],reverse,words, forceStatus, tags, showVersion);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
