@@ -541,11 +541,11 @@ public class EducationRelationControllerV06 {
         if ((!"true".equals(reverse) && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
                 || ("true".equals(reverse) && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
 
-            Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<RelationForQueryViewModel, String>() {
+            Collection<Map.Entry<String, String>> ids = Collections2.transform(listViewModel.getItems(), new Function<RelationForQueryViewModel, Map.Entry<String, String>>() {
                 @Nullable
                 @Override
-                public String apply(RelationForQueryViewModel model) {
-                    return model.getIdentifier();
+                public Map.Entry<String, String> apply(RelationForQueryViewModel model) {
+                    return new HashMap.SimpleEntry<>(model.getIdentifier(), model.getTitle());
                 }
             });
 
@@ -607,15 +607,15 @@ public class EducationRelationControllerV06 {
         if ((reverse && resType.equals(IndexSourceType.InstructionalObjectiveType.getName()))
                 || (!reverse && targetType.equals(IndexSourceType.InstructionalObjectiveType.getName()))) {
 
-            Collection<String> ids = Collections2.transform(modelList.getItems(), new Function<RelationForQueryViewModel, String>() {
+            Collection<Map.Entry<String, String>> idWithTitles = Collections2.transform(modelList.getItems(), new Function<RelationForQueryViewModel, Map.Entry<String, String>>() {
                 @Nullable
                 @Override
-                public String apply(RelationForQueryViewModel model) {
-                    return model.getIdentifier();
+                public Map.Entry<String, String> apply(RelationForQueryViewModel model) {
+                    return new HashMap.SimpleEntry<>(model.getIdentifier(), model.getTitle());
                 }
             });
 
-            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(idWithTitles);
 
             for (RelationForQueryViewModel model : modelList.getItems()) {
                 String title = result.get(model.getIdentifier());

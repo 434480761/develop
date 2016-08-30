@@ -317,32 +317,32 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	}
 
 	@Override
-	public String getInstructionalObjectiveTitle(String id) {
-		List<String> ids = new ArrayList<>();
-		ids.add(id);
-		return getInstructionalObjectiveTitle(ids).get(id);
+	public String getInstructionalObjectiveTitle(Map.Entry<String, String> idWithTitle) {
+		List<Map.Entry<String, String>> idWithTitles = new ArrayList<>();
+		idWithTitles.add(idWithTitle);
+		return getInstructionalObjectiveTitle(idWithTitles).get(idWithTitle.getKey());
 	}
 
 	@Override
-	public Map<String, String> getInstructionalObjectiveTitle(Collection<String> ids) {
+	public Map<String, String> getInstructionalObjectiveTitle(Collection<Map.Entry<String, String>> idWithTitles) {
 
-		if (0 == ids.size()) {
+		if (0 == idWithTitles.size()) {
 			return Collections.emptyMap();
 		}
 
 		try {
-			Collection<String> idString = Collections2.transform(ids, new Function<String, String>() {
+			Collection<String> idString = Collections2.transform(idWithTitles, new Function<Map.Entry<String, String>, String>() {
 				@Nullable
 				@Override
-				public String apply(@Nullable String s) {
-					return String.format("\"%s\"", s);
+				public String apply(@Nullable Map.Entry<String, String> idWithTitle) {
+					return String.format("\"%s\"", idWithTitle.getKey());
 				}
 			});
 
 			// 查找教学目标关联的教学目标类型
 			String SQLQueryInstructionalObjectiveType = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description AS description,rr.target AS target from `ndresource` AS ndr" +
-					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"assets\" and rr.resource_target_type=\"instructionalobjectives\"" +
-					" WHERE ndr.identifier in ( select resource from `resource_categories` where taxOnCode='$RA0503') AND rr.target in(%s)", StringUtils.join(idString, ","));
+					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"assets\" and rr.enable = 1 and rr.resource_target_type=\"instructionalobjectives\"" +
+					" WHERE ndr.enable = 1 and ndr.identifier in ( select resource from `resource_categories` where taxOnCode='$RA0503') AND rr.target in(%s)", StringUtils.join(idString, ","));
 			List<Map<String, Object>> instructionalObjectiveTypeList = jt.queryForList(SQLQueryInstructionalObjectiveType);
 			// 以教学目标Id为key的查询结果
 			Map<String, Map<String, Object>> instructionalObjective2TypeMap = new HashMap<>();
@@ -356,7 +356,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			// 查找教学目标关联的知识点
 			String SQLQueryKnowledges = String.format("SELECT ndr.identifier AS id,ndr.title AS title,ndr.description as description,rr.target AS target,rr.order_num as orderNum from `ndresource` AS ndr" +
 					" inner join `resource_relations` AS rr on ndr.identifier=rr.source_uuid and rr.res_type=\"knowledges\" and rr.resource_target_type=\"instructionalobjectives\"" +
-					" WHERE rr.target in (%s)", StringUtils.join(idString, ","));
+					" WHERE ndr.enable = 1 and rr.enable = 1 and rr.target in (%s)", StringUtils.join(idString, ","));
 			List<Map<String, Object>> knowledgesList = jt.queryForList(SQLQueryKnowledges);
 			// 以教学目标Id为key的查询结果
 			Map<String, List<Map<String, Object>>> knowledgesMap = new HashMap<>();
@@ -383,7 +383,9 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 			Map<String, String> results = new HashMap<>();
 
-			for (String id : ids) {
+			for (Map.Entry<String, String> idWithTitle : idWithTitles) {
+				String id = idWithTitle.getKey();
+
 				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
 				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
 				if (CollectionUtils.isEmpty(knowledges) || CollectionUtils.isEmpty(instructionalObjective2Type)) {
@@ -399,7 +401,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 				});
 
 				String typeString = (String) instructionalObjective2Type.get("description");
-				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle));
+				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle, idWithTitle.getValue()));
 			}
 
 			return results;
@@ -500,7 +502,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 	 * @param knowledgeTitle 知识点title
 	 * @return 拼接后的字符串
 	 */
-	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle) {
+	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle, String originTitle) {
 		Pattern pattern = Pattern.compile("<span.*?>.*?</span>");
 		String[] split = pattern.split(typeString);
 		String[] knowledges = knowledgeTitle.toArray(new String[knowledgeTitle.size()]);
@@ -509,6 +511,27 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		for (int i = 0;i < split.length;i++) {
 			sb.append(split[i]);
 			sb.append(knowledges.length > i ? knowledges[i]:"");
+		}
+		// 替换（X）
+		String xn = sb.toString();
+		String[] xs = xn.split("（X）");
+		int pos = xs[0].length();
+
+		sb = new StringBuilder();
+		sb.append(xs[0]);
+
+		for (int i = 1;i < xs.length;i++) {
+			int index = originTitle.indexOf(xs[i], pos);
+
+			if (-1 == index) {
+				sb.append(originTitle.substring(pos));
+				break;
+			}
+
+			sb.append(originTitle.substring(pos, index));
+			sb.append(xs[i]);
+
+			pos = index + xs[i].length();
 		}
 
 		return sb.toString();

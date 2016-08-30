@@ -252,15 +252,15 @@ public class InstructionalObjectiveControllerV06 {
 
         ListViewModel<InstructionalObjectiveModel> listViewModel = instructionalObjectiveService.getUnRelationInstructionalObjective(knowledgeTypeCode, instructionalObjectiveTypeId, unrelationCategory, limit);
 
-        Collection<String> ids = Collections2.transform(listViewModel.getItems(), new Function<InstructionalObjectiveModel, String>() {
+        Collection<Map.Entry<String, String>> idWithTitles = Collections2.transform(listViewModel.getItems(), new Function<InstructionalObjectiveModel, Map.Entry<String, String>>() {
             @Nullable
             @Override
-            public String apply(InstructionalObjectiveModel instructionalObjectiveModel) {
-                return instructionalObjectiveModel.getIdentifier();
+            public Map.Entry<String, String> apply(InstructionalObjectiveModel model) {
+                return new HashMap.SimpleEntry<>(model.getIdentifier(), model.getTitle());
             }
         });
 
-        Map<String, String> titles = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+        Map<String, String> titles = instructionalObjectiveService.getInstructionalObjectiveTitle(idWithTitles);
 
         for (InstructionalObjectiveModel model : listViewModel.getItems()) {
             String title = titles.get(model.getIdentifier());

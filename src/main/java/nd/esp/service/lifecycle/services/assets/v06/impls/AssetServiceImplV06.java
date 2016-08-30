@@ -142,6 +142,9 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 				}
 				String title = parentAsset.getTitle().substring(2);
 				try {
+					if(title.contains(".")){
+						title = title.substring(0,title.indexOf("."));
+					}
 					int likeName = Integer.valueOf(title);
 					List<Asset> list2 = assetDao.queryInsTypesByCategory(String.valueOf(likeName), category);
 					if(CollectionUtils.isNotEmpty(list2)){

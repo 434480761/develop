@@ -229,7 +229,8 @@ public class NDResourceController {
         ResourceModel modelResult = ndResourceService.getDetail(resourceType, uuid,includeList,isAll);
         // 如果是教学目标，它的title实时计算
         if (null != modelResult && resourceType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
-            modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(modelResult.getIdentifier()));
+            Map.Entry<String, String> idWithTitle = new HashMap.SimpleEntry<>(modelResult.getIdentifier(), modelResult.getTitle());
+            modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(idWithTitle));
         }
         // model出参转换
         return changeToView(modelResult, resourceType,includeList);
@@ -631,15 +632,15 @@ public class NDResourceController {
         // 如果是教学目标，则根据教学目标类型与知识点设置title
         if (resType.equals(IndexSourceType.InstructionalObjectiveType.getName())) {
             
-            Collection<String> ids = Collections2.transform(resourceViewModelListViewModel.getItems(), new Function<ResourceViewModel, String>() {
+            Collection<Map.Entry<String, String>> idWithTitles = Collections2.transform(resourceViewModelListViewModel.getItems(), new Function<ResourceViewModel, Map.Entry<String, String>>() {
                 @Nullable
                 @Override
-                public String apply(ResourceViewModel resourceViewModel) {
-                    return resourceViewModel.getIdentifier();
+                public Map.Entry<String, String> apply(ResourceViewModel resourceViewModel) {
+                    return new HashMap.SimpleEntry<>(resourceViewModel.getIdentifier(), resourceViewModel.getTitle());
                 }
             });
 
-            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(ids);
+            Map<String, String> result = instructionalObjectiveService.getInstructionalObjectiveTitle(idWithTitles);
 
             for (ResourceViewModel model : resourceViewModelListViewModel.getItems()) {
                 String title = result.get(model.getIdentifier());
