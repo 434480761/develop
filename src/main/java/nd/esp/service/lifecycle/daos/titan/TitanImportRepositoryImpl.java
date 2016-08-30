@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.daos.titan;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.services.titan.TitanResultParse;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
@@ -31,8 +33,10 @@ import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
+import org.apache.commons.collections.SetUtils;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -427,19 +431,8 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 //        educationField.add(education.getTags());
 //        educationField.add(education.getTags());
         
-        Set<String> codes = Sets.newHashSet();
-        Set<String> paths = Sets.newHashSet();
-        for (ResourceCategory category : categories) {
-            codes.add(category.getCategoryCode());
-            paths.add(category.getTaxonpath());
-        }
         
-        Set<String> coverageSet = Sets.newHashSet();
-        for (ResCoverage coverage : coverages) {
-            coverageSet.add(coverage.getStrategy());
-            coverageSet.add(coverage.getTarget());
-            coverageSet.add(coverage.getTargetType());
-        }
+        
         
         Builder builder = new Builder("g.V()").has(primaryCategory, "identifier", educationIdentifier).valueMap();
         Map<String, Object> params = new HashMap<String, Object>();
@@ -457,38 +450,62 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                     "查询脚本发生异常" + builder.build());
         }
         Iterator<Result> iterator = resultSet.iterator();
-        while (iterator.hasNext()) {
-            String result = iterator.next().getString();
-            
-        }
-//        String result = null;
-//        if (iterator.hasNext()) {
-//            result = iterator.next().getString();
-//        }
-//
-//        if(StringUtils.isEmpty(result)){
-//            LOG.info("coverage delete error");
-//            return false;
-//        }
-//
-//        Map<String, String> valueMap = TitanResultParse.toMap(result);
-//        String resourceIdentifier = valueMap.get("identifier");
-//        String primaryCategory = valueMap.get("primary_category");
-//        updateResourceCoverage(primaryCategory, resourceIdentifier);
-//
-//        String script = "g.E().has('identifier',identifier).drop()";
-//        Map<String, Object> paramMap = new HashMap<>();
-//        paramMap.put("identifier", id);
-//
-//        try {
-//            titanCommonRepository.executeScript(script, paramMap);
-//        } catch (Exception e) {
-//            // TODO Auto-generated catch block
-//            LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),id);
-//            return false;
-//        }
-//        return true;
         
+        int count = 0;
+        String result = null;
+        while (iterator.hasNext()) {
+            result = iterator.next().getString();
+            ++count;
+        }
+
+        if(StringUtils.isEmpty(result)){
+            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
+//            titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResType(), relation.getSourceUuid());
+        }
+        if (count > 1) {
+            LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
+//            titanSync(TitanSyncType.CHECK_RR_REPEAT,relation.getResType(), relation.getSourceUuid());
+        }
+        
+        
+        Map<String, String> valueMap = TitanResultParse.toMap(result);
+        
+        Set<String> codes = Sets.newHashSet();
+        Set<String> paths = Sets.newHashSet();
+        for (ResourceCategory category : categories) {
+            codes.add(category.getCategoryCode());
+            paths.add(category.getTaxonpath());
+        }
+        
+        Set<String> coverageSet = Sets.newHashSet();
+        for (ResCoverage coverage : coverages) {
+            coverageSet.add(coverage.getStrategy());
+            coverageSet.add(coverage.getTarget());
+            coverageSet.add(coverage.getTargetType());
+        }
+
+//        String[] redundantField1 = new String[]{"search_code", "search_coverage", "search_path"};
+//        String[] redundantField2 = new String[]{"search_code_string", "search_coverage_string", "search_path_string"};
+
+        boolean isCodeEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue1(valueMap, "search_code"));
+        boolean isPathEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue1(valueMap, "search_path"));
+        boolean isCoverageEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue1(valueMap, "search_coverage"));
+        
+        boolean isCodeStringEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue2(valueMap, "search_code_string"));
+        boolean isPathStringEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue2(valueMap, "search_path_string"));
+        boolean isCoverageStringEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue2(valueMap, "search_coverage_string"));
+        
+        
+        
+        
+    }
+
+    private List<String> getReduandantFieldValue2(Map<String, String> valueMap, String field) {
+        return Arrays.asList(valueMap.get(field).replaceAll("\\s+", "").toUpperCase().split(","));
+    }
+
+    private List<String> getReduandantFieldValue1(Map<String, String> valueMap, String field) {
+        return Arrays.asList(valueMap.get(field).replaceAll("\\s+", "").split(","));
     }
     
     final String[] resourceRelation = new String[]{"enable", "identifier", "order_num", "relation_type", "rr_label", "sort_num", "res_type", "source_uuid", "tags", "resource_target_type", "target_uuid"};

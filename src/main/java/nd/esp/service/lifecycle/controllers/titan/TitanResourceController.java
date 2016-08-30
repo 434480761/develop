@@ -215,6 +215,15 @@ public class TitanResourceController {
 		return 0;
 	}
 	
+	/**
+	 * 校验一类资源在titan 中是否存在
+	 * @param resourceType
+	 * @param beginDate
+	 * @param endDate
+	 * @return
+	 * @since 1.2.6
+	 * @see
+	 */
     @RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
             produces = { MediaType.APPLICATION_JSON_VALUE })
     public String checkAllData(@PathVariable String resourceType, @RequestParam(required = true,value="beginDate") String beginDate, @RequestParam(required = true,value="endDate")String endDate) {
@@ -229,7 +238,7 @@ public class TitanResourceController {
         } catch (ParseException e) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
+                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss");
         }
         return "执行成功";
     }
@@ -245,6 +254,12 @@ public class TitanResourceController {
 //        return 0;
 //    }
     
+    /**
+     * 检验所有资源在titan 中是否存在
+     * @return
+     * @since 1.2.6
+     * @see
+     */
 	@RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkAllData() {
@@ -254,6 +269,13 @@ public class TitanResourceController {
 		}
 		return 0;
 	}
+	
+    @RequestMapping(value = "/all/check/relations/exist", method = RequestMethod.GET,
+            produces = { MediaType.APPLICATION_JSON_VALUE })
+    public long checkAllRelations() {
+        titanResourceService.checkAllResourceRelations();
+        return 0;
+    }
 
 	@RequestMapping(value = "importStatus", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
