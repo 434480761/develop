@@ -755,7 +755,7 @@ public class TransCodeUtil {
      *
      * @param resourceModel
      * @param resType
-     * @author linsm
+     * @author ql
      * @return
      * @since
      */
@@ -771,6 +771,27 @@ public class TransCodeUtil {
                     if (StringUtils.isNotEmpty(ndCode)) {
                         // 媒体类型:视频
                         if ("$RT0402".equals(ndCode)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isNdpxTransCode(ResourceModel resourceModel, String resType) {
+        if (!IndexSourceType.AssetType.getName().equals(resType)) {
+            return false;
+        }
+        List<ResClassificationModel> categories = resourceModel.getCategoryList();
+        if (CollectionUtils.isNotEmpty(categories)) {
+            for (ResClassificationModel category : categories) {
+                if (category != null) {
+                    String ndCode = category.getTaxoncode();
+                    if (StringUtils.isNotEmpty(ndCode)) {
+                        // 媒体类型:视频
+                        if ("$F060005".equals(ndCode)) {
                             return true;
                         }
                     }

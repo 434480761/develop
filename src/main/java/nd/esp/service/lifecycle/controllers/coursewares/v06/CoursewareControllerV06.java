@@ -97,7 +97,7 @@ public class CoursewareControllerV06 {
 		CoursewareModel cm = CommonHelper.convertViewModelIn(viewModel, CoursewareModel.class,ResourceNdCode.coursewares);
 		
 		boolean bTranscode = TransCodeManager.canTransCode(viewModel, IndexSourceType.SourceCourseWareType.getName());
-        if(bTranscode) {
+        if(bTranscode || transCodeUtil.isNdpxTransCode(cm, IndexSourceType.AssetType.getName())) {
             cm.getLifeCycle().setStatus(TransCodeUtil.getTransIngStatus(true));
         }
 		

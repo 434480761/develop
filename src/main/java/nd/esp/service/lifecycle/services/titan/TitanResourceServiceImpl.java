@@ -1,11 +1,25 @@
 package nd.esp.service.lifecycle.services.titan;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
-import nd.esp.service.lifecycle.daos.titan.inter.*;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanUpdateDataRepository;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
+import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
@@ -14,28 +28,40 @@ import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
 import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.*;
-import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
-import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.model.Chapter;
+import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
+import nd.esp.service.lifecycle.repository.model.ResCoverage;
+import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
+import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
+import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.sdk.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
+import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
-
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
+
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.ibm.icu.math.BigDecimal;
 
 @Service
 public class TitanResourceServiceImpl implements TitanResourceService {
@@ -81,9 +107,24 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	@Autowired
 	private TitanUpdateDataRepository titanUpdateDataRepository;
 
+
+	@Qualifier(value="defaultJdbcTemplate")
+	@Autowired
+	private JdbcTemplate defaultJdbcTemplate;
+	@Qualifier(value="questionJdbcTemplate")
+	@Autowired
+	private JdbcTemplate questionJdbcTemplate;
+
 	@Autowired
 	@Qualifier(value = "defaultJdbcTemplate")
 	private JdbcTemplate jdbcTemplate;
+
+
+	@Autowired
+	private ResourceStatisticalRepository resourceStatisticalRepository;
+
+	@Autowired
+	private ResourceStatistical4QuestionDBRepository resourceStatistical4QuestionDBRepository;
 
 	@Override
 	public long importData4Script(String primaryCategory) {
@@ -260,11 +301,32 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
+	public void importStatistical() {
+		AbstractPageQueryStatistical abstractPageQuery = new ImportPageQueryStatistical(ResourceNdCode.assets.toString());
+		abstractPageQuery.pageQueryStatistical();
+
+		abstractPageQuery = new ImportPageQueryStatistical(ResourceNdCode.questions.toString());
+		abstractPageQuery.pageQueryStatistical();
+	}
+
+	@Override
 	public void checkAllData(String primaryCategory){
 		AbstractPageQuery abstractPageQuery = new CheckResourceAllPageQuery();
 		abstractPageQuery.doing(primaryCategory);
 	}
 
+    /**
+     * 对某种资源数据做校验，例如：assets，questions
+     * @param primaryCategory 资源类型  例如：assets，questions
+     * @since 1.2.6
+     * @see
+     */
+    @Override
+    public void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate) {
+        AbstractPageQuery abstractPageQuery = new CheckResource(BigDecimal.valueOf(beginDate.getTime()), BigDecimal.valueOf(endDate.getTime()));
+        abstractPageQuery.doing(primaryCategory);
+    }
+    
 	@Override
 	public void checkResource(String primaryCategory) {
 		AbstractPageQuery abstractPageQuery = new CheckResourcePageQuery();
@@ -373,7 +435,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		public void method(List<ResourceRelation> resourceRelations) {
-			titanImportRepository.batchImportRelation(resourceRelations);
+			List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+			titanImportRepository.batchImportRelation(existRelation);
 		}
 	}
 
@@ -381,14 +444,22 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		public void method(List<ResourceRelation> resourceRelations) {
-			titanUpdateDataRepository.batchUpdateRelation(resourceRelations);
+			List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+			titanUpdateDataRepository.batchUpdateRelation(existRelation);
 		}
 	}
 
-
-
-
 	abstract class  AbstractPageQuery{
+	    BigDecimal beginDate;
+	    BigDecimal endDate;
+	    public AbstractPageQuery(){
+	        
+	    }
+	    public AbstractPageQuery(BigDecimal beginDate, BigDecimal endDate){
+	        this.beginDate = beginDate;
+	        this.endDate = endDate;
+	    }
+	    
 		public long doing(String primaryCategory) {
 			String fieldName = "dblastUpdate";
 
@@ -409,6 +480,22 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
 			resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
 			resourceTypeItem.setValue(ValueUtils.newValue(primaryCategory));
+			if (beginDate != null && endDate != null) {
+			    Item<BigDecimal> resourceTypeItemBegin = new Item<BigDecimal>();
+			    resourceTypeItemBegin.setKey(fieldName);    
+			    resourceTypeItemBegin.setComparsionOperator(ComparsionOperator.GE);
+			    resourceTypeItemBegin.setLogicalOperator(LogicalOperator.AND);
+			    resourceTypeItemBegin.setValue(ValueUtils.newValue(beginDate));
+			    
+			    Item<BigDecimal> resourceTypeItemEnd = new Item<BigDecimal>();
+			    resourceTypeItemEnd.setKey(fieldName);    
+			    resourceTypeItemEnd.setComparsionOperator(ComparsionOperator.LT);
+			    resourceTypeItemEnd.setLogicalOperator(LogicalOperator.AND);
+			    resourceTypeItemEnd.setValue(ValueUtils.newValue(endDate));
+			    
+			    items.add(resourceTypeItemBegin);
+			    items.add(resourceTypeItemEnd);
+            }
 			items.add(resourceTypeItem);
 
 			Sort sort = new Sort(Direction.ASC, fieldName);
@@ -448,6 +535,84 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		abstract long operate(List<Education> educations ,String primaryCategory);
 	}
 
+	class CheckResource extends AbstractPageQuery{
+	    public CheckResource(BigDecimal beginDate, BigDecimal endDate){
+            super(beginDate, endDate);
+        }
+        @Override
+        long operate(List<Education> educations, String primaryCategory) {
+            if(CollectionUtils.isEmpty(educations)){
+                return 0L;
+            }
+            
+            Set<String> uuids = getEducationIdentifierSet(educations);
+
+            List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+            Multimap<String, ResCoverage> resCoverageMultimap = toResCoverageMultimap(resCoverageList);
+
+            Multimap<String, TechInfo> techInfoMultimap = queryTechInfoUseHql(primaryCategory, uuids);
+            
+            Multimap<String, ResourceCategory> resourceCategoryMultimap = queryCategoroiesUseHql(primaryCategory, uuids);
+            
+            for (Education education : educations){
+                List<TechInfo> sourceTechInfo = new ArrayList<TechInfo>(techInfoMultimap.get(education.getIdentifier()));
+                List<ResCoverage> sourceResCoverage = new ArrayList<ResCoverage>(resCoverageMultimap.get(education.getIdentifier()));
+                List<ResourceCategory> resourceCategory = new ArrayList<ResourceCategory>(resourceCategoryMultimap.get(education.getIdentifier()));
+                titanImportRepository.checkResourceAllInTitan2(education,sourceResCoverage,resourceCategory,sourceTechInfo ,null);
+            }
+            return 0;
+        }
+        
+        private Multimap<String, ResourceCategory> queryCategoroiesUseHql(String primaryCategory, Set<String> uuids) {
+            List<String> resourceTypes = new ArrayList<String>();
+            resourceTypes.add(primaryCategory);
+            List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+            Multimap<String, ResourceCategory> resourceCategoryMultimap = toResourceCategoryMultimap(resourceCategoryList);
+            return resourceCategoryMultimap;
+        }
+        
+        private Multimap<String, TechInfo> queryTechInfoUseHql(String primaryCategory, Set<String> uuids) {
+            List<String> primaryCategorys = new ArrayList<String>();
+            primaryCategorys.add(primaryCategory);
+            List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
+            Multimap<String, TechInfo> techInfoMultimap = toTechInfoMultimap(techInfos);
+            return techInfoMultimap;
+        }
+        
+        private Set<String> getEducationIdentifierSet(List<Education> educations) {
+            Set<String> uuids = new HashSet<String>();
+            for (Education education : educations) {
+                uuids.add(education.getIdentifier());
+            }
+            return uuids;
+        }
+        
+        private Multimap<String, ResCoverage> toResCoverageMultimap(List<ResCoverage> coverages ){
+            Multimap<String, ResCoverage> multimap = ArrayListMultimap.create();
+            
+            for (ResCoverage resCoverage : coverages){
+                multimap.put(resCoverage.getResource(), resCoverage);
+            }
+            return multimap;
+        }
+        
+        private Multimap<String, TechInfo> toTechInfoMultimap(List<TechInfo> techInfos) {
+            Multimap<String, TechInfo> multimap = ArrayListMultimap.create();
+            for (TechInfo techInfo : techInfos) {
+                multimap.put(techInfo.getResource(), techInfo);
+            }
+            return multimap;
+        }
+        
+        private Multimap<String, ResourceCategory> toResourceCategoryMultimap(List<ResourceCategory> categories){
+            Multimap<String, ResourceCategory> multimap = ArrayListMultimap.create();
+            for (ResourceCategory resourceCategory : categories) {
+                multimap.put(resourceCategory.getResource(), resourceCategory);
+            }
+            return multimap;
+        }
+	}
+	
 	class CheckResourcePageQuery extends  AbstractPageQuery{
 
 		@Override
@@ -473,19 +638,19 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			}
 
 			List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-			Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
+			Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.groupCoverage(resCoverageList);
 
 
 			List<String> resourceTypes = new ArrayList<String>();
 			resourceTypes.add(primaryCategory);
 			List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-			Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
+			Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.groupCategory(resourceCategoryList);
 
 
 			List<String> primaryCategorys = new ArrayList<>();
 			primaryCategorys.add(primaryCategory);
 			List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-			Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
+			Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.groupTechInfo(techInfos);
 
 			for (Education education : educations){
 				List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
@@ -582,19 +747,19 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 
 		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
+		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.groupCoverage(resCoverageList);
 
 
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
+		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.groupCategory(resourceCategoryList);
 
 
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
+		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.groupTechInfo(techInfos);
 
 		for (Education education : educations){
 			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
@@ -626,17 +791,17 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		}
 
 		List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
-		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
+		Map<String, List<ResCoverage>> resCoverageMap = TitanResourceUtils.groupCoverage(resCoverageList);
 
 		List<String> resourceTypes = new ArrayList<String>();
 		resourceTypes.add(primaryCategory);
 		List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
-		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.distinctCategory(resourceCategoryList);
+		Map<String, List<ResourceCategory>> resourceCategoryMap = TitanResourceUtils.groupCategory(resourceCategoryList);
 
 		List<String> primaryCategorys = new ArrayList<>();
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
-		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.distinctTechInfo(techInfos);
+		Map<String, List<TechInfo>> techInfoMap = TitanResourceUtils.groupTechInfo(techInfos);
 
 		for (Education education : educations){
 			List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
@@ -644,8 +809,140 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
 			titanImportRepository.importOneData(education,sourceResCoverage,resourceCategory,sourceTechInfo);
 		}
-
+		
 		return educations.size();
+	}
+
+	public abstract class AbstractPageQueryStatistical{
+		private ResourceRepository resourceRepository;
+		private String dbType;
+
+		public String getDbType() {
+			return dbType;
+		}
+
+		public AbstractPageQueryStatistical(String dbType){
+			this.dbType = dbType;
+			if(CommonServiceHelper.isQuestionDb(dbType)){
+				resourceRepository = resourceStatistical4QuestionDBRepository;
+			} else {
+				resourceRepository = resourceStatisticalRepository;
+			}
+		}
+		public long pageQueryStatistical() {
+			String fieldName = "identifier";
+
+			long indexNum = 0;
+			// 分页
+			int page = 0;
+			int row = 500;
+			@SuppressWarnings("rawtypes")
+			Page resourcePage = new PageImpl(new ArrayList());;
+			@SuppressWarnings("rawtypes")
+			List entitylist = null;
+
+			List<Item<? extends Object>> items = new ArrayList<>();
+
+			Sort sort = new Sort(Direction.ASC, fieldName);
+			do {
+				Pageable pageable = new PageRequest(page, row, sort);
+
+				try {
+					resourcePage = resourceRepository.findByItems(items, pageable);
+					if (resourcePage == null) {
+						break;
+					}
+					entitylist = resourcePage.getContent();
+					if (entitylist == null) {
+						continue;
+					}
+					List<ResourceStatistical> resourceStatisticals = new ArrayList<ResourceStatistical>();
+					for (Object object : entitylist) {
+						ResourceStatistical statistical = (ResourceStatistical) object;
+						resourceStatisticals.add(statistical);
+					}
+					if(entitylist.size()==0){
+						continue;
+					}
+					method(resourceStatisticals);
+					LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
+				} catch (Exception e) {
+					LOG.error(e.getLocalizedMessage());
+				}
+				setStatisticParam("relations", resourcePage.getTotalPages(), page);
+			} while (++page < resourcePage.getTotalPages());
+
+			return indexNum;
+		}
+
+		public abstract void method(List<ResourceStatistical> resourceStatisticals);
+	}
+
+	private class ImportPageQueryStatistical extends AbstractPageQueryStatistical{
+
+		public ImportPageQueryStatistical(String dbType) {
+			super(dbType);
+		}
+
+		@Override
+		public void method(List<ResourceStatistical> resourceStatisticals) {
+			titanImportRepository.importStatistical(getAllExistStaistical(resourceStatisticals));
+		}
+
+		private List<ResourceStatistical> getAllExistStaistical(List<ResourceStatistical> resourceStatisticalList){
+
+			StringBuffer inSql = new StringBuffer();
+			Set<String> ids = new HashSet<>();
+			for (ResourceStatistical statistical : resourceStatisticalList){
+				ids.add(statistical.getResource());
+			}
+
+			if (CollectionUtils.isEmpty(ids)){
+				return new ArrayList<>();
+			}
+
+			appendSqlInScript(inSql,ids);
+
+			String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
+
+			List<String> resultId = new ArrayList<String>();
+
+			if(CommonServiceHelper.isQuestionDb(getDbType())){
+				resultId = questionJdbcTemplate.queryForList(sql, String.class);
+			} else {
+				resultId = defaultJdbcTemplate.queryForList(sql, String.class);
+			}
+
+			List<ResourceStatistical> result = new ArrayList<>();
+			for (ResourceStatistical statistical : resourceStatisticalList){
+				if (resultId.contains(statistical.getResource())){
+					result.add(statistical);
+				}
+			}
+
+			return result;
+		}
+	}
+
+	class ImportStatisticalPageQuery extends AbstractPageQuery{
+
+		@Override
+		long operate(List<Education> educations, String primaryCategory) {
+			Set<String> uuids = new HashSet<String>();
+			for (Education education : educations) {
+				uuids.add(education.getIdentifier());
+			}
+			List<String> types = new ArrayList<>();
+			types.add(primaryCategory);
+
+			List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(types, uuids);
+
+			Map<String, List<ResourceStatistical>> stringListMap = TitanResourceUtils.groupStatistical(statisticalList);
+			for (List<ResourceStatistical> statisticals : stringListMap.values()){
+				titanImportRepository.importStatistical(statisticals);
+			}
+			return 0;
+		}
 	}
 
 
@@ -785,7 +1082,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		long importDataOperate(List<Education> educations, String primaryCategory) {
-			return 0;
+			return importData(educations, primaryCategory);
 		}
 	}
 
@@ -937,8 +1234,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         resourceTypes.add(primaryCategory);
         List<ResourceCategory> resourceRepositoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
 
-        Map<String, List<ResCoverage>> coverageMap = TitanResourceUtils.distinctCoverage(resCoverageList);
-        Map<String, List<ResourceCategory>> categoryMap = TitanResourceUtils.distinctCategory(resourceRepositoryList);
+        Map<String, List<ResCoverage>> coverageMap = TitanResourceUtils.groupCoverage(resCoverageList);
+        Map<String, List<ResourceCategory>> categoryMap = TitanResourceUtils.groupCategory(resourceRepositoryList);
 
         //保存数据
         for(Education education : educations){
@@ -1018,6 +1315,75 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		s_primaryCategory = primaryCategory;
 		s_totalPage = totalPage;
 		s_page = page;
+	}
+
+	public List<ResourceRelation> getAllExistRelation(List<ResourceRelation> resourceRelationList){
+		StringBuffer inSql = new StringBuffer();
+		StringBuffer inSqlChpater = new StringBuffer();
+		Set<String> ids = new HashSet<>();
+		Set<String> chaptersIds = new HashSet<String>();
+		for (ResourceRelation relation : resourceRelationList){
+			if(ResourceNdCode.chapters.toString().equals(relation.getResType())
+					||ResourceNdCode.knowledges.toString().equals(relation.getResType())){
+				chaptersIds.add(relation.getSourceUuid());
+			}else{				
+				ids.add(relation.getSourceUuid());
+			}
+			
+			if(ResourceNdCode.chapters.toString().equals(relation.getResourceTargetType())
+					||ResourceNdCode.knowledges.toString().equals(relation.getResourceTargetType())){
+				chaptersIds.add(relation.getTarget());
+			} else {
+				ids.add(relation.getTarget());
+			}
+		}
+
+		appendSqlInScript(inSql,ids);
+		appendSqlInScript(inSqlChpater, chaptersIds);
+
+		String sql = "select identifier from ndresource where identifier IN (" + inSql + ")";
+		String sqlChapter = "select identifier from chapters where identifier IN (" + inSqlChpater + ")";
+		
+		List<String> questionsResult = new ArrayList<String>();
+		List<String> resultDefault = new ArrayList<String>();
+		List<String> resultDefaultChapter = new ArrayList<String>();
+		
+		if(CollectionUtils.isNotEmpty(ids)){
+			questionsResult = questionJdbcTemplate.queryForList(sql, String.class);
+			resultDefault = defaultJdbcTemplate.queryForList(sql, String.class);
+		}
+		if(CollectionUtils.isNotEmpty(chaptersIds)){
+			resultDefaultChapter = defaultJdbcTemplate.queryForList(sqlChapter, String.class);
+		}
+
+		List<String> existIds = new ArrayList<>();
+		existIds.addAll(questionsResult);
+		existIds.addAll(resultDefault);
+		existIds.addAll(resultDefaultChapter);
+		List<ResourceRelation> resultRelation = new ArrayList<>();
+		for (ResourceRelation relation : resourceRelationList){
+			if(existIds.contains(relation.getSourceUuid()) && existIds.contains(relation.getTarget())){
+				resultRelation.add(relation);
+			}
+		}
+
+		return resultRelation;
+	}
+
+	private void appendSqlInScript(StringBuffer sql, Set<String> values){
+		if (CollectionUtils.isEmpty(values)){
+			return;
+		}
+
+		int index = 0;
+		for (String id : values){
+			if (index == 0){
+				sql.append("'").append(id).append("'");
+			} else {
+				sql.append(",").append("'").append(id).append("'");
+			}
+			index ++;
+		}
 	}
 
 }

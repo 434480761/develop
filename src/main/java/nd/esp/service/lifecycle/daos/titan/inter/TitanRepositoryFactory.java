@@ -5,4 +5,5 @@ package nd.esp.service.lifecycle.daos.titan.inter;
  */
 public interface TitanRepositoryFactory {
     public TitanEspRepository getEspRepository(Object model);
+    public TitanEspRepository getEspRepositoryByLabel(String label);
 }

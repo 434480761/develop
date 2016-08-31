@@ -66,6 +66,8 @@ public enum IndexSourceType {
 	HomeWorkType("homeworks",200,215),
 	/**教辅*/
 	GuidanceBooksType("guidancebooks",200,217) ,
+	/**元课程*/
+	MetaCurriculumType("metacurriculums",200,219) ,
 	
 	/**教学活动*/
 	SourceTeachingActivitiesType("teachingactivities",200, 218),

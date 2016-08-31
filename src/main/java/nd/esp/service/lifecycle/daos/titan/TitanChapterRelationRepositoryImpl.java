@@ -30,6 +30,9 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
         String nodeId ;
         String parentPrimaryCategory;
         Integer leftValue = chapter.getLeft();
+        if(leftValue == null){
+            leftValue = 0;
+        }
         if(chapter.getParent()!=null && chapter.getParent().equals(chapter.getTeachingMaterial())){
             nodeId = chapter.getTeachingMaterial();
             parentPrimaryCategory ="teachingmaterials";
@@ -46,16 +49,24 @@ public class TitanChapterRelationRepositoryImpl implements TitanChapterRelationR
             return false;
         }
 
+        String checkScript = "g.V().has('chapters','identifier',identifier).inE().hasLabel('"
+                +TitanKeyWords.tree_has_chapter.toString()+"').drop()";
+        Map<String, Object> checkParam = new HashMap<>();
+        checkParam.put("identifier", chapter.getIdentifier());
+        try {
+            titanCommonRepository.executeScriptUniqueString(checkScript,checkParam);
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage());
+        }
+
         String createScript = "g.V(parentId).next().addEdge('"+TitanKeyWords.tree_has_chapter.toString()
-        		+"',g.V(chapterId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
+                +"',g.V(chapterId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
 
         Map<String,Object> scriptParams = new HashMap<>();
         scriptParams.put("parentId",parentId);
         scriptParams.put("chapterId",chapterId);
 
         scriptParams.put("treeOrder",new Float(leftValue));
-
-//        client.submit(createScript,scriptParams);
         try {
             titanCommonRepository.executeScript(createScript , scriptParams);
         } catch (Exception e) {

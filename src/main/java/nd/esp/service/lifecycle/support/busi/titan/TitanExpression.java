@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.http.HttpStatus;
 
@@ -20,10 +21,49 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
     private List<String> includes;
-    private boolean needRelationValues = false;
+    private boolean relationQueryOrderBy = false;
+    private boolean isOrderBySortNum = false;
+    private String orderByEdgeFieldName;
+    private List<TitanOrder> orderList;
+    private boolean needStatistics = false;
+    private String statisticsScript;
+    private boolean needPrintable = false;
+    private String printableScript;
+    private String orderBy4SortNum = "incr";
+    private boolean needShowSubVersion = false;
+    private String showSubVersionScript;
+    // 默认下是select('x') 但子版本需要查询出来时 为select('select_version_result')
+    private String asResult4GetSubVersionResource = "select('x')";
 
-    public void setNeedRelationValues(boolean needRelationValues) {
-        this.needRelationValues = needRelationValues;
+    public void setShowSubVersion(boolean needShowSubVersion, String showSubVersionScript, String asResult4GetSubVersionResource) {
+        this.needShowSubVersion = needShowSubVersion;
+        this.showSubVersionScript = showSubVersionScript;
+        this.asResult4GetSubVersionResource = asResult4GetSubVersionResource;
+    }
+
+    public void setStatistics(boolean needStatistics, String statisticsScript) {
+        this.needStatistics = needStatistics;
+        this.statisticsScript = statisticsScript;
+    }
+
+    public void setPrintable(boolean needPrintable, String printableScript) {
+        this.needPrintable = needPrintable;
+        this.printableScript = printableScript;
+    }
+
+    public void setRelationQueryOrderBy(boolean relationQueryOrderBy, String orderByEdgeFieldName) {
+        this.relationQueryOrderBy = relationQueryOrderBy;
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+    }
+
+    public void setOrderBySortNum(boolean isOrderBySortNum, String orderByEdgeFieldName, String orderBy4SortNum) {
+        this.isOrderBySortNum = isOrderBySortNum;
+        this.orderByEdgeFieldName = orderByEdgeFieldName;
+        this.orderBy4SortNum = orderBy4SortNum;
+    }
+
+    public void setOrderList(List<TitanOrder> orderList) {
+        this.orderList = orderList;
     }
 
     public void setIncludes(List<String> includes) {
@@ -121,7 +161,16 @@ public class TitanExpression implements TitanScriptGenerator {
                     .generateScript(scriptParamMap));
 
         }
-        scriptBuffer.append(".select('x')");
+        //scriptBuffer.append(".select('x')");
+
+        // TODO 处理 showVersion
+        if (this.needShowSubVersion) scriptBuffer.append(this.showSubVersionScript);
+        // 在这里去重和加上处理printable
+        // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
+        if (this.needPrintable)
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource)
+                    .append(this.printableScript)
+                    .append(".").append(this.asResult4GetSubVersionResource).append(".dedup()");
         this.innerCondition = scriptBuffer.toString();
     }
 
@@ -133,24 +182,13 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        scriptBuffer.append(".order()");
-        for (String field : this.orderMap.keySet()) {
-            if (field == null)
-                continue;
-            final String value = orderMap.get(field);
-            String sortBy = null;
-            if (value != null) {
-                if (value.trim().toUpperCase()
-                        .equals(PropOperationConstant.OP_ASC)) {
-                    sortBy = TitanKeyWords.incr.toString();
-                } else {
-                    sortBy = TitanKeyWords.decr.toString();
-                }
-            } else {
-                sortBy = TitanKeyWords.decr.toString();
-            }
-            scriptBuffer.append(".by('").append(field).append("',")
-                    .append(sortBy).append(")");
+        if (this.relationQueryOrderBy || this.isOrderBySortNum) {
+            //.select('e').order().by('order_num',decr).select('x')
+           // scriptBuffer.append(".select('x').order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),").append(this.orderBy4SortNum).append(").select('x')");
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".order().by('lc_create_time',decr).select('e').choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(new Float(0)))").append(".order().by(").append(this.orderBy4SortNum).append(")");
+
+        } else {
+            appendOrderBy(scriptBuffer);
         }
 
         // FIXME for now only get the identifier
@@ -159,15 +197,38 @@ public class TitanExpression implements TitanScriptGenerator {
         //scriptBuffer.append(".valueMap()");
 
         if (this.end > 0) {
-            scriptBuffer.append(".range(").append(from).append(",").append(end)
-                    .append(")");
+            // range 前select('x')
+            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".range(").append(from).append(",").append(end).append(")");
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.needRelationValues));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
+    }
+
+    /**
+     * 拼接order by
+     * @param scriptBuffer
+     */
+    private void appendOrderBy(StringBuffer scriptBuffer) {
+        if (CollectionUtils.isNotEmpty(this.orderList)) {
+            int size = this.orderList.size();
+            for (int i = size - 1; i >= 0; i--) {
+                TitanOrder order = this.orderList.get(i);
+                if (order.getScript() != null) {
+                    scriptBuffer.append(order.getScript());
+                }else{
+                    scriptBuffer.append(".").append(this.asResult4GetSubVersionResource);
+                }
+                scriptBuffer.append(".order().by(");
+                if (order.getOrderByField() != null) {
+                    scriptBuffer.append("'").append(order.getOrderByField()).append("',");
+                }
+                scriptBuffer.append(order.getSortOrder()).append(")");
+            }
+        }
     }
 
     public String generateScriptForResultAndCount(Map<String, Object> scriptParamMap) {

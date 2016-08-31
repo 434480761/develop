@@ -43,6 +43,9 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
         Long parentId = null;
         Long childId = null;
         Integer leftValue = knowledge.getLeft();
+        if (leftValue == null){
+            leftValue =0;
+        }
         if (isSubjectCode(knowledge.getParent())) {
             queryParent = "g.V().has('cg_taxoncode',taxoncode).next().id()";
             queryParentParam = new HashMap<>();
@@ -54,7 +57,7 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
                 //TODO titan 异常处理
             }
         } else if (isUuid(knowledge.getParent())) {
-            queryParent = "g.V().has('knowledges','identifier',identifier).next().id()";
+            queryParent = "g.V().has('identifier',identifier).next().id()";
             queryParentParam = new HashMap<>();
             queryParentParam.put("identifier", knowledge.getParent());
             try {
@@ -82,8 +85,18 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
             return false;
         }
 
+        String checkScript = "g.V().has('knowledges','identifier',identifier).inE().hasLabel('"
+                +TitanKeyWords.tree_has_knowledge.toString()+"').drop()";
+        Map<String, Object> checkParam = new HashMap<>();
+        checkParam.put("identifier", knowledge.getIdentifier());
+        try {
+            titanCommonRepository.executeScriptUniqueString(checkScript,checkParam);
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage());
+        }
+
         String createScript = "g.V(parentId).next().addEdge('"+TitanKeyWords.tree_has_knowledge.toString()
-        		+"',g.V(childId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
+                +"',g.V(childId).next(),'"+TitanKeyWords.tree_order.toString()+"',treeOrder)";
 
         Map<String, Object> createScriptParams = new HashMap<>();
         createScriptParams.put("parentId", parentId);

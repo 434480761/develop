@@ -18,33 +18,48 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	public static String generateScriptForInclude(List<String> includes, String resType,boolean needRelationValues) {
-		//if (CollectionUtils.isEmpty(includes) && !ResourceNdCode.knowledges.toString().equals(resType)) return "";
+	/**
+	 *
+	 * @param includes
+	 * @param resType
+	 * @param relationQuery （queryListByResType、batchQueryResources）
+	 * @param needStatistics 需要统计数据
+	 * @param statisticsScript 统计数据脚本
+     * @return
+     */
+	public static String generateScriptForInclude(List<String> includes, String resType,boolean relationQuery,boolean needStatistics,String statisticsScript) {
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
-		String end = ")";// 取回label
-		String defaultStr=".valueMap(true);";
+		String end = ")";
+		String defaultStr=".valueMap(true);";// 取回label
 
 		if(CollectionUtils.isNotEmpty(includes)) {
 			for (String include : includes) {
 				if (include.equals(IncludesConstant.INCLUDE_TI)) {
-					scriptBuffer.append(",out('has_tech_info')");
+					scriptBuffer.append(",out('").append(TitanKeyWords.has_tech_info.toString()).append("')");
+					// 拼接过滤打印
+					//if(needPrintable) scriptBuffer.append(printableScript);
 				} else if (include.equals(IncludesConstant.INCLUDE_CG)) {
 					// scriptBuffer.append(",out('has_category_code')");
 					// code、id和path都从边上取(cg_taxoncode identifier cg_taxonpath)
-					scriptBuffer.append(",outE('has_category_code')");
+					scriptBuffer.append(",outE('").append(TitanKeyWords.has_category_code.toString()).append("')");
 					// scriptBuffer.append(",out('has_categories_path')");
 				}
 			}
 		}
-		if (ResourceNdCode.knowledges.toString().equals(resType) && !needRelationValues) {
+		// queryListByResType、batchQueryResources（relationQuery=true）这两个查询需要关系边上的数据（但不需要取回tree_has_knowledge）
+		if (ResourceNdCode.knowledges.toString().equals(resType) && !relationQuery) {
 			// order
-			scriptBuffer.append(",inE('has_knowledge')");
+			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("')");
 			// parent
-			scriptBuffer.append(",inE('has_knowledge').outV()");
+			scriptBuffer.append(",inE('").append(TitanKeyWords.tree_has_knowledge.toString()).append("').outV()");
 		}
-		if (needRelationValues) {
+		if (relationQuery) {
 			scriptBuffer.append(",select('e')");
+		}
+
+		if (needStatistics) {
+			scriptBuffer.append(statisticsScript);
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;
@@ -80,6 +95,24 @@ public class TitanUtils {
 		}
 
 		return new ArrayList<Object>(valueList);
+	}
+
+	/**
+	 *
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		System.out.println("测试非knowledges");
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.assets.toString(), true,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.assets.toString(), true,false,null));
+
+		System.out.println("测试knowledges");
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), ResourceNdCode.knowledges.toString(), true,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), false,false,null));
+		System.out.println(generateScriptForInclude(null, ResourceNdCode.knowledges.toString(), true,false,null));
 	}
 
 }
