@@ -46,6 +46,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
@@ -179,7 +180,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
         
         public Builder has(String primaryCategory, String key, String value){
-            sb.append(".has(").append("'").append(primaryCategory).append("', '").append(key).append("'").append(",").append(value).append(")");
+            sb.append(".has(").append(primaryCategory).append(",'").append(key).append("'").append(",").append(value).append(")");
             return this;
         }
         
@@ -385,70 +386,24 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         return multimap;
     }
     
-    String[] ndResourceField = new String[]{"cr_author", "cr_description", "cr_has_right", "cr_right", "cr_right_end_date", "cr_right_start_date", "custom_properties", "description"
+    String[] ndResource = new String[]{"cr_author", "cr_description", "cr_has_right", "cr_right", "cr_right_end_date", "cr_right_start_date", "custom_properties", "description"
             , "edu_age_range", "edu_description", "edu_difficulty", "edu_end_user_type", "edu_interactivity", "edu_interactivity_level", "edu_language", "edu_learning_time", 
-            "edu_semantic_density", "keywords", "language", "lc_create_time", "lc_creator", "lc_enalbe", "lc_last_update", "lc_provider", "lc_provider_mode"
-            , "lc_provider_source", "lc_publisher", "lc_status", "lc_version", "preview", "tags", "title", "search_code", "search_coverage", "search_path"};
+            "edu_semantic_density", "keywords", "language", "lc_create_time", "lc_creator", "lc_enable", "lc_last_update", "lc_provider", "lc_provider_mode"
+            , "lc_provider_source", "lc_publisher", "lc_status", "lc_version", "preview", "tags", "title"};
     private void checkNdResource(Education education, List<ResourceCategory> categories, List<ResCoverage> coverages){
-        Map<String, Object> paramMap = new HashMap<String, Object>();
-        paramMap.put("primaryCategory", education.getPrimaryCategory());
-        paramMap.put("identifier",education.getIdentifier());
-        
-        List<Object> educationField = new ArrayList<Object>();
-        educationField.add(education.getAuthor());
-        educationField.add(education.getCrDescription());
-        educationField.add(education.getHasRight());
-        educationField.add(education.getCrRight());
-        educationField.add(education.getRightEndDate());
-        educationField.add(education.getRightStartDate());
-        educationField.add(education.getCustomProperties());
-        educationField.add(education.getDescription());
-        educationField.add(education.getAgeRange());
-        educationField.add(education.getEduDescription());
-        educationField.add(education.getDifficulty());
-        educationField.add(education.getEndUserType());
-        educationField.add(education.getInteractivity());
-        educationField.add(education.getInteractivityLevel());
-        educationField.add(education.getEduLanguage());
-        educationField.add(education.getLearningTime());
-        educationField.add(education.getSemanticDensity());
-        educationField.add(education.getKeywords());
-        educationField.add(education.getLanguage());
-        educationField.add(education.getCreateTime());
-        educationField.add(education.getCreator());
-        educationField.add(education.getEnable());
-        educationField.add(education.getLastUpdate());
-        educationField.add(education.getProvider());
-        educationField.add(education.getProviderMode());
-        educationField.add(education.getProviderSource());
-        educationField.add(education.getPublisher());
-        educationField.add(education.getStatus());
-        educationField.add(education.getVersion());
-        educationField.add(education.getPreview());
-        educationField.add(education.getTags());
-        educationField.add(education.getTitle());
-//        educationField.add(education.getcod);
-//        educationField.add(education.getTags());
-//        educationField.add(education.getTags());
-        
-        
-        
-        
-        Builder builder = new Builder("g.V()").has(primaryCategory, "identifier", educationIdentifier).valueMap();
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(educationIdentifier, education.getIdentifier());
         params.put(primaryCategory, education.getPrimaryCategory());
         
-        ResultSet resultSet = null;
-        try {
-            resultSet = titanCommonRepository.executeScriptResultSet(
-                    builder.build(), params);
-        } catch (Exception e) {
-            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "查询脚本发生异常" + builder.build());
-        }
+        Builder baseBuilder = new Builder("g.V()").has(primaryCategory,"identifier", educationIdentifier);
+        
+        List<Object> ndResourcePartField = getNdResourcePartField(education);
+        
+        fillParamMap(params, ndResourcePartField, ndResource);
+        
+        Builder builder = generateCheckResourceCategoryScript(baseBuilder, ndResourcePartField, ndResource);
+        
+        ResultSet resultSet = executeScript(params, builder);
         Iterator<Result> iterator = resultSet.iterator();
         
         int count = 0;
@@ -458,54 +413,129 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             ++count;
         }
 
-        if(StringUtils.isEmpty(result)){
-            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
-//            titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResType(), relation.getSourceUuid());
+        if(!StringUtils.isEmpty(result)){
+            Map<String, String> valueMap = TitanResultParse.toMap(result);
+            
+            Set<String> codes = Sets.newHashSet();
+            Set<String> paths = Sets.newHashSet();
+            for (ResourceCategory category : categories) {
+                codes.add(category.getTaxoncode());
+                if (category.getTaxonpath() != null && !category.getTaxonpath().equals("")) {
+                    paths.add(category.getTaxonpath());
+                }
+            }
+            
+            Set<String> coverageSet = Sets.newHashSet();
+            for (ResCoverage coverage : coverages) {
+                coverageSet.add(coverage.getStrategy());
+                coverageSet.add(coverage.getTarget());
+                coverageSet.add(coverage.getTargetType());
+            }
+            
+            boolean isCodeEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue1(valueMap, "search_code"));
+            boolean isPathEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue1(valueMap, "search_path"));
+            boolean isCoverageEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue1(valueMap, "search_coverage"));
+            
+            boolean isCodeStringEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue2(valueMap, "search_code_string"));
+            boolean isPathStringEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue2(valueMap, "search_path_string"));
+            boolean isCoverageStringEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue2(valueMap, "search_coverage_string"));
+            
+            if (!isCodeEqual && !isPathEqual && isCoverageEqual && isCodeStringEqual && isPathStringEqual && isPathStringEqual && isCoverageStringEqual) {
+                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
+                titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
+            }
+        } else {
+            LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
+            titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
         }
+            
         if (count > 1) {
-            LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
-//            titanSync(TitanSyncType.CHECK_RR_REPEAT,relation.getResType(), relation.getSourceUuid());
+            LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), params);
+            titanSync(TitanSyncType.CHECK_NR_REPEAT, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
         }
-        
-        
-        Map<String, String> valueMap = TitanResultParse.toMap(result);
-        
-        Set<String> codes = Sets.newHashSet();
-        Set<String> paths = Sets.newHashSet();
-        for (ResourceCategory category : categories) {
-            codes.add(category.getCategoryCode());
-            paths.add(category.getTaxonpath());
-        }
-        
-        Set<String> coverageSet = Sets.newHashSet();
-        for (ResCoverage coverage : coverages) {
-            coverageSet.add(coverage.getStrategy());
-            coverageSet.add(coverage.getTarget());
-            coverageSet.add(coverage.getTargetType());
-        }
+    }
 
-//        String[] redundantField1 = new String[]{"search_code", "search_coverage", "search_path"};
-//        String[] redundantField2 = new String[]{"search_code_string", "search_coverage_string", "search_path_string"};
+    private ResultSet executeScript(Map<String, Object> params, Builder builder) {
+        ResultSet resultSet = null;
+        try {
+            resultSet = titanCommonRepository.executeScriptResultSet(
+                    builder.valueMap().build(), params);
+        } catch (Exception e) {
+            LOG.error("查询脚本执行异常, script:{}, param:{}", builder.build(), params);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
+                    "查询脚本发生异常:" + builder.build() + e.getMessage());
+        }
+        return resultSet;
+    }
 
-        boolean isCodeEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue1(valueMap, "search_code"));
-        boolean isPathEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue1(valueMap, "search_path"));
-        boolean isCoverageEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue1(valueMap, "search_coverage"));
-        
-        boolean isCodeStringEqual = SetUtils.isEqualSet(codes, getReduandantFieldValue2(valueMap, "search_code_string"));
-        boolean isPathStringEqual = SetUtils.isEqualSet(paths, getReduandantFieldValue2(valueMap, "search_path_string"));
-        boolean isCoverageStringEqual = SetUtils.isEqualSet(coverageSet, getReduandantFieldValue2(valueMap, "search_coverage_string"));
-        
-        
-        
-        
+    private List<Object> getNdResourcePartField(Education education) {
+        List<Object> ndResourcePartField = new ArrayList<Object>(35);
+        ndResourcePartField.add(education.getAuthor());
+        ndResourcePartField.add(education.getCrDescription());
+        ndResourcePartField.add(education.getHasRight());
+        ndResourcePartField.add(education.getCrRight());
+        if (education.getRightEndDate() != null) {
+            ndResourcePartField.add(String.valueOf(education.getRightEndDate().longValue()));
+        } else {
+            ndResourcePartField.add(null);
+        }
+        if (education.getRightStartDate() != null) {
+            ndResourcePartField.add(String.valueOf(education.getRightStartDate().longValue()));
+        } else {
+            ndResourcePartField.add(null);
+        }
+        ndResourcePartField.add(education.getCustomProperties());
+        ndResourcePartField.add(education.getDescription());
+        ndResourcePartField.add(education.getAgeRange());
+        ndResourcePartField.add(education.getDbEduDescription());
+        ndResourcePartField.add(education.getDifficulty());
+        ndResourcePartField.add(education.getEndUserType());
+        ndResourcePartField.add(education.getInteractivity());
+        ndResourcePartField.add(education.getInteractivityLevel());
+        ndResourcePartField.add(education.getEduLanguage());
+        ndResourcePartField.add(education.getLearningTime());
+        ndResourcePartField.add(education.getSemanticDensity());
+        ndResourcePartField.add(education.getDbkeywords());
+        ndResourcePartField.add(education.getLanguage());
+        if (education.getCreateTime() != null) {
+            ndResourcePartField.add(String.valueOf(education.getCreateTime().getTime()));
+        } else {
+            ndResourcePartField.add(null);
+        }
+        ndResourcePartField.add(education.getCreator());
+        ndResourcePartField.add(education.getEnable());
+        if (education.getLastUpdate() !=null ) {
+            ndResourcePartField.add(String.valueOf(education.getLastUpdate().getTime()));
+        } else {
+            ndResourcePartField.add(null);
+        }
+        ndResourcePartField.add(education.getProvider());
+        ndResourcePartField.add(education.getProviderMode());
+        ndResourcePartField.add(education.getProviderSource());
+        ndResourcePartField.add(education.getPublisher());
+        ndResourcePartField.add(education.getStatus());
+        ndResourcePartField.add(education.getVersion());
+        ndResourcePartField.add(education.getDbpreview());
+        ndResourcePartField.add(education.getDbtags());
+        ndResourcePartField.add(education.getTitle());
+        return ndResourcePartField;
     }
 
     private List<String> getReduandantFieldValue2(Map<String, String> valueMap, String field) {
-        return Arrays.asList(valueMap.get(field).replaceAll("\\s+", "").toUpperCase().split(","));
+        String value = valueMap.get(field);
+        if (value != null) {
+            return Arrays.asList(value.replaceAll("\\s+", "").toUpperCase().split(","));
+        }
+        return Lists.newArrayList();
     }
 
     private List<String> getReduandantFieldValue1(Map<String, String> valueMap, String field) {
-        return Arrays.asList(valueMap.get(field).replaceAll("\\s+", "").split(","));
+        String value = valueMap.get(field);
+        if (value != null) {
+            return Arrays.asList(value.replaceAll("\\s+", "").split(","));
+        }
+        return Lists.newArrayList();
     }
     
     final String[] resourceRelation = new String[]{"enable", "identifier", "order_num", "relation_type", "rr_label", "sort_num", "res_type", "source_uuid", "tags", "resource_target_type", "target_uuid"};
@@ -548,18 +578,19 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 //    TODO 1.单条id 资源 resourceRelation 2.校验  ndresource 校验  3. 如果有时间，将代码拆分成多个类，现在的代码还不是很容易维护
     @Override
     public void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages, List<ResourceCategory> resourceCategories, List<TechInfo> techInfos, List<ResourceRelation> resourceRelations, List<ResourceStatistical> statistic) {
-        checkCategories(education, resourceCategories);
-        checkTechInfoHandle(education, techInfos);
-        checkResCoverage(education, resCoverages);
-        checkResourceStatistic(education, statistic);
+//        checkCategories(education, resourceCategories);
+//        checkTechInfoHandle(education, techInfos);
+//        checkResCoverage(education, resCoverages);
+//        checkResourceStatistic(education, statistic);
+        checkNdResource(education, resourceCategories, resCoverages);
     }
     
     @Override
     public void checkResourceInTitan(CheckResourceModel checkResourceModel){
         checkCategories(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories());
-        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
-        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
-        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
+//        checkTechInfoHandle(checkResourceModel.getEducation(), checkResourceModel.getTechInfos());
+//        checkResCoverage(checkResourceModel.getEducation(), checkResourceModel.getResCoverages());
+//        checkResourceStatistic(checkResourceModel.getEducation(), checkResourceModel.getResourceStatistic());
         checkNdResource(checkResourceModel.getEducation(), checkResourceModel.getResourceCategories(), checkResourceModel.getResCoverages());
     }
     
@@ -650,7 +681,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
             LOG.error("与 titan 的连接断开或查询脚本执行异常, script:{}, param:{}", builder.build(), paramMap);
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckDuplicateIdFail.getCode(),
-                    "与 titan 的连接断开或查询脚本发生异常" + builder.build());
+                    "与 titan 的连接断开或查询脚本发生异常" + builder.build() + e.getMessage());
         }
         return count;
     }
@@ -722,7 +753,11 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         resourceStatisticPartField.add(statistic.getResType());
         resourceStatisticPartField.add(statistic.getResource());
         resourceStatisticPartField.add(statistic.getTitle());
-        resourceStatisticPartField.add(String.valueOf(statistic.getUpdateTime().getTime()));
+        if (statistic.getUpdateTime() != null) {
+            resourceStatisticPartField.add(String.valueOf(statistic.getUpdateTime().getTime()));
+        } else {
+            resourceStatisticPartField.add(null);
+        }
         return resourceStatisticPartField;
     }
     /**
