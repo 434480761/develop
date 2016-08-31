@@ -38,4 +38,6 @@ public interface TitanResourceService {
 
     void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate);
 
+    void checkAllResourceRelations();
+
 }

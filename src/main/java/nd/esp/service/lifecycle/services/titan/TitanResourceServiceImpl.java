@@ -38,6 +38,7 @@ import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -260,9 +261,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
 
+		
 		List<ResourceRelation> resourceRelations = educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
-
-		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
+		
+		List<ResourceStatistical> resourceStatistic = ndResourceDao.queryStatisticalUseHql(resourceTypes, uuids);
+		titanImportRepository.checkResourceAllInTitan2(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
 
 	}
 
@@ -325,6 +328,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     public void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate) {
         AbstractPageQuery abstractPageQuery = new CheckResource(BigDecimal.valueOf(beginDate.getTime()), BigDecimal.valueOf(endDate.getTime()));
         abstractPageQuery.doing(primaryCategory);
+    }
+    
+    @Override
+    public void checkAllResourceRelations(){
+        AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCheck();
+        abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
     }
     
 	@Override
@@ -431,6 +441,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		public abstract void method(List<ResourceRelation> resourceRelations);
 	}
 
+	public class AbstractPageQueryRelationCheck extends AbstractPageQueryRelation{
+
+        @Override
+        public void method(List<ResourceRelation> resourceRelations) {
+            List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+            titanImportRepository.checkResourceRelations(existRelation);
+        }
+    }
+	
  	public class AbstractPageQueryRelationCreate extends AbstractPageQueryRelation{
 
 		@Override
@@ -554,13 +573,27 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             
             Multimap<String, ResourceCategory> resourceCategoryMultimap = queryCategoroiesUseHql(primaryCategory, uuids);
             
+            Multimap<String, ResourceStatistical> resourceStatisticalMultimap = queryStatisticalUseHql(primaryCategory, uuids);
+            
             for (Education education : educations){
-                List<TechInfo> sourceTechInfo = new ArrayList<TechInfo>(techInfoMultimap.get(education.getIdentifier()));
-                List<ResCoverage> sourceResCoverage = new ArrayList<ResCoverage>(resCoverageMultimap.get(education.getIdentifier()));
-                List<ResourceCategory> resourceCategory = new ArrayList<ResourceCategory>(resourceCategoryMultimap.get(education.getIdentifier()));
-                titanImportRepository.checkResourceAllInTitan2(education,sourceResCoverage,resourceCategory,sourceTechInfo ,null);
+                List<TechInfo> techInfos = new ArrayList<TechInfo>(techInfoMultimap.get(education.getIdentifier()));
+                List<ResCoverage> resCoverages = new ArrayList<ResCoverage>(resCoverageMultimap.get(education.getIdentifier()));
+                List<ResourceCategory> resourceCategories = new ArrayList<ResourceCategory>(resourceCategoryMultimap.get(education.getIdentifier()));
+                List<ResourceStatistical> statistic = new ArrayList<ResourceStatistical>(resourceStatisticalMultimap.get(education.getIdentifier()));
+                CheckResourceModel checkResourceModel = new CheckResourceModel.Builder(education).techInfos(techInfos).
+                        resCoverages(resCoverages).resourceCategories(resourceCategories).statistic(statistic).builder();
+//                titanImportRepository.checkResourceAllInTitan2(education,resCoverages,resourceCategories,techInfos ,null, statistic);
+                titanImportRepository.checkResourceInTitan(checkResourceModel);
             }
             return 0;
+        }
+        
+        private Multimap<String, ResourceStatistical> queryStatisticalUseHql(String primaryCategory, Set<String> uuids) {
+            List<String> resourceTypes = new ArrayList<String>();
+            resourceTypes.add(primaryCategory);
+            List<ResourceStatistical> resourceStatistic = ndResourceDao.queryStatisticalUseHql(resourceTypes, uuids);
+            Multimap<String, ResourceStatistical> resourceCategoryMultimap = toResourceStatisticalMultimap(resourceStatistic);
+            return resourceCategoryMultimap;
         }
         
         private Multimap<String, ResourceCategory> queryCategoroiesUseHql(String primaryCategory, Set<String> uuids) {
@@ -608,6 +641,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             Multimap<String, ResourceCategory> multimap = ArrayListMultimap.create();
             for (ResourceCategory resourceCategory : categories) {
                 multimap.put(resourceCategory.getResource(), resourceCategory);
+            }
+            return multimap;
+        }
+        
+        private Multimap<String, ResourceStatistical> toResourceStatisticalMultimap(List<ResourceStatistical> statistic){
+            Multimap<String, ResourceStatistical> multimap = ArrayListMultimap.create();
+            for (ResourceStatistical stat : statistic) {
+                multimap.put(stat.getResource(), stat);
             }
             return multimap;
         }
