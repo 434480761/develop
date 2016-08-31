@@ -13,11 +13,7 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanUpdateDataRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.Education;
@@ -28,13 +24,7 @@ import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
 import nd.esp.service.lifecycle.repository.ds.ValueUtils;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.KnowledgeRelation;
-import nd.esp.service.lifecycle.repository.model.ResCoverage;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
-import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
@@ -126,6 +116,15 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 	@Autowired
 	private ResourceStatistical4QuestionDBRepository resourceStatistical4QuestionDBRepository;
+
+	@Autowired
+	private TitanSyncRepository titanSyncRepository;
+
+	@Autowired
+	private TitanRelationRepository titanRelationRepository;
+
+	@Autowired
+	private TitanRepositoryUtils titanRepositoryUtils;
 
 	@Override
 	public long importData4Script(String primaryCategory) {
@@ -354,11 +353,76 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	}
 
 	@Override
+	public void detailErrorRelation() {
+		pageQueryTitanSync4Questions();
+	}
+
+	@Override
 	public void checkResource(String primaryCategory) {
 		AbstractPageQuery abstractPageQuery = new CheckResourcePageQuery();
 		abstractPageQuery.doing(primaryCategory);
 	}
 
+	private void pageQueryTitanSync4Questions(){
+		String fieldName = "createTime";
+
+		long total = 0;
+		// 分页
+		int page = 0;
+		int row = 500;
+		@SuppressWarnings("rawtypes")
+		Page resourcePage = new PageImpl(new ArrayList());
+		@SuppressWarnings("rawtypes")
+		List entitylist = null;
+
+		List<Item<? extends Object>> items = new ArrayList<>();
+
+		Item<String> resourceTypeItem = new Item<String>();
+		resourceTypeItem.setKey("primaryCategory");
+		resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
+		resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+		resourceTypeItem.setValue(ValueUtils.newValue("RELATION"));
+
+		Sort sort = new Sort(Direction.ASC, fieldName);
+		do {
+			Pageable pageable = new PageRequest(page, row, sort);
+
+			try {
+				resourcePage = titanSyncRepository.findByItems(items, pageable);
+				if (resourcePage == null) {
+					break;
+				}
+				entitylist = resourcePage.getContent();
+				if (entitylist == null) {
+					continue;
+				}
+				List<String>  relationIds = new ArrayList<>();
+				for (Object object : entitylist) {
+					TitanSync st = (TitanSync) object;
+					relationIds.add(st.getResource());
+				}
+				if(entitylist.size()==0){
+					continue;
+				}
+				//TODO check
+				List<ResourceRelation> rr1 = resourceRelationRepository.getAll(relationIds);
+				List<ResourceRelation> rr2 = resourceRelation4QuestionDBRepository.getAll(relationIds);
+				List<ResourceRelation> resourceRelationList = new ArrayList<>();
+				resourceRelationList.addAll(rr1);
+				resourceRelationList.addAll(rr2);
+				for (ResourceRelation resourceRelation : resourceRelationList){
+					ResourceRelation result = titanRelationRepository.add(resourceRelation);
+					if (result != null){
+						titanRepositoryUtils.titanSync4MysqlDeleteAll("RELATION",resourceRelation.getIdentifier());
+					}
+				}
+
+				LOG.info("import relation:totalPage:{}  page:{}",resourcePage.getTotalPages(),page);
+			} catch (Exception e) {
+				LOG.error(e.getMessage());
+			}
+		} while (++page < resourcePage.getTotalPages());
+	}
 
 	public long pageQueryKnowledgeRelation(ResourceRepository resourceRepository) {
 		String fieldName = "identifier";

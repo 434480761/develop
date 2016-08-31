@@ -43,4 +43,6 @@ public interface TitanResourceService {
 	public boolean changeSyncType(String newType,String oldType, Integer executeTimes);
 	public boolean deleteSyncType(String type);
 
+	public void detailErrorRelation();
+
 }

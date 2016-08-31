@@ -339,6 +339,10 @@ public class TitanResourceController {
 		return "删除失败";
 
 	}
+	@RequestMapping(value = "/sync/errorRelation", method = RequestMethod.GET)
+	public void detailErrorRelation(){
+		titanResourceService.detailErrorRelation();
+	}
 
 
 	/**
