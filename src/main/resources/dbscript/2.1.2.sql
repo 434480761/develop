@@ -1,7 +1,15 @@
-<<<<<<< HEAD
 UPDATE ndresource set record_status = 0;
 
 --资源库
+--
+-- 表的结构 `sub_instruction`
+--
+
+CREATE TABLE IF NOT EXISTS `sub_instruction` (
+  `identifier` char(36) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='子教学目标';
+
+
 ALTER TABLE ndresource ADD PARTITION (PARTITION p_subInstruction VALUES in ('subInstruction') ENGINE = InnoDB);
 ALTER TABLE resource_categories ADD PARTITION (PARTITION p_subInstruction VALUES in ('subInstruction') ENGINE = InnoDB);
 
@@ -52,7 +60,7 @@ ALTER TABLE resource_relations ADD PARTITION (PARTITION p_questions_22 VALUES IN
 
 --除生产环境外，删除所有的教材、章节数据
 
-=======
+
 ---------新增表
 CREATE TABLE `resources_sharing` (`identifier` CHAR(36) CHARACTER
                                                  SET utf8 COLLATE utf8_general_ci NOT NULL , `title` VARCHAR(1024) CHARACTER
@@ -69,4 +77,4 @@ ALTER TABLE `resources_sharing` ADD PRIMARY KEY(`identifier`);
 ALTER TABLE `resources_sharing` ADD INDEX `index_res_type_and_resource` (`res_type`, `resource`) COMMENT '';
 ALTER TABLE `resources_sharing` ADD INDEX `index_protect_passwd` (`protect_passwd`) COMMENT '';
 ALTER TABLE `resources_sharing` ADD INDEX `index_sharing_id` (`sharer_id`) COMMENT '';
->>>>>>> remotes/origin/develop
+
