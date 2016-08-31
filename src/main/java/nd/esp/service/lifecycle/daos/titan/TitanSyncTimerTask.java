@@ -62,7 +62,7 @@ public class TitanSyncTimerTask {
     }
 
 
-    @Scheduled(fixedDelay=300000)
+    @Scheduled(fixedDelay=360000)
     public void syncTask4VersionRepair(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_version_repair_closed");
