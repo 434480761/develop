@@ -127,9 +127,6 @@ public class ResourceSharingServiceImpl implements ResourceSharingService {
 				if(CollectionUtils.isNotEmpty(deleteIds)){
 					resourceSharingRepository.batchDel(deleteIds);
 				}
-			}else{
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-	                    LifeCircleErrorMessageMapper.DeleteResourceSharingFail);
 			}
 		} catch (EspStoreException e) {
 			
