@@ -1091,7 +1091,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			if(resourcePage == null){
 				return null;
 			}
-
+			setStatisticParam(primaryCategory,resourcePage.getTotalPages(),page);
 			return resourcePage.getTotalPages();
 		}
 
