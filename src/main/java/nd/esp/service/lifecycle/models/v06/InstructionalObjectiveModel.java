@@ -7,25 +7,4 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
  *
  */
 public class InstructionalObjectiveModel extends ResourceModel{
-    private String kbId;
-    
-    private String ocId;
-
-	public String getKbId() {
-		return kbId;
-	}
-
-	public void setKbId(String kbId) {
-		this.kbId = kbId;
-	}
-
-	public String getOcId() {
-		return ocId;
-	}
-
-	public void setOcId(String ocId) {
-		this.ocId = ocId;
-	}
-    
-    
 }
