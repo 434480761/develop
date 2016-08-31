@@ -158,7 +158,8 @@ public interface EducationRelationServiceV06 {
                                                                     String relationType,
                                                                     String limit,
                                                                     boolean reverse,
-                                                                    String coverage);
+                                                                    String coverage,
+                                                                    boolean isPortal);
 
     /**
      * 获取教材章节下包含子节点的所有知识点列表 
@@ -184,7 +185,8 @@ public interface EducationRelationServiceV06 {
                                                                          String tags,
                                                                          String relationType,
                                                                          String limit,
-                                                                         String coverage) throws EspStoreException;
+                                                                         String coverage,
+                                                                         boolean isPortal) throws EspStoreException;
     
     /**
      * 在有些情景下，单个的获取源资源的目标资源列表的接口，业务系统使用起来过于频繁。此时业务方提出需要能够进行设置批量的源资源ID，
@@ -229,7 +231,8 @@ public interface EducationRelationServiceV06 {
                                                                      String tags,
                                                                      String relationType,
                                                                      String limit,
-                                                                     boolean reverse);
+                                                                     boolean reverse,
+                                                                     boolean isPortal);
 
     /**
      * 判断关系是否存在

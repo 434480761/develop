@@ -1,14 +1,18 @@
 package nd.esp.service.lifecycle.controllers.educationrelation.v06;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
-import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.models.v06.BatchAdjustRelationOrderModel;
 import nd.esp.service.lifecycle.models.v06.EducationRelationModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
@@ -16,6 +20,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
 import nd.esp.service.lifecycle.services.instructionalobjectives.v06.InstructionalObjectiveService;
+import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -47,6 +52,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 
 /**
  * 教育资源关系Controller(V0.6--增加生命周期)
@@ -458,13 +466,21 @@ public class EducationRelationControllerV06 {
                                                                                   @RequestParam(required = false) String recursion,
                                                                                   @RequestParam(required = false, value = "ct_type") String ctType,
                                                                                   @RequestParam(required = false) String ct,
-                                                                                  @RequestParam(required = false, value = "ct_target") String cTarget) {
+                                                                                  @RequestParam(required = false, value = "ct_target") String cTarget,
+                                                                                  HttpServletRequest request) {
         if (StringUtils.isEmpty(targetType)) {
 
             LOG.error("目标资源类型必须要传值，不能为空");
 
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CheckTargetTypeIsNull);
+        }
+        
+        //FIXME 临时方案,后期需要考虑去掉,可能会影响查询效率
+        boolean isPortal = false;
+        String bsyskey = request.getHeader(Constant.BSYSKEY);
+        if(StringUtils.isNotEmpty(bsyskey) && bsyskey.equals(Constant.BSYSKEY_PORTAL)){
+        	isPortal = true;
         }
         
         //覆盖范围参数处理
@@ -517,10 +533,10 @@ public class EducationRelationControllerV06 {
         try {
             if(!recursionBoolean){
                 listViewModel = educationRelationService.queryListByResTypeByDB(
-                                   resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean, coverage);
+                                   resType, sourceUuid, categories, targetType, label, tags, relationType, limit, reverseBoolean, coverage, isPortal);
             }else if(IndexSourceType.ChapterType.getName().equals(resType)){
                 listViewModel = educationRelationService.recursionQueryResourcesByDB(
-                        resType, sourceUuid, categories, targetType, label, tags, relationType, limit,coverage);
+                        resType, sourceUuid, categories, targetType, label, tags, relationType, limit, coverage, isPortal);
             }else{
                 
                 LOG.error("递归查询res_type目前仅支持chapters");
@@ -585,7 +601,9 @@ public class EducationRelationControllerV06 {
             @RequestParam(required = false, value="relation_tags") String tags,
             @RequestParam(required=false,value="relation_type") String relationType,
             @RequestParam String limit,
-            @RequestParam(required=false) boolean reverse){
+            @RequestParam(required=false) boolean reverse,
+            HttpServletRequest request){
+    	
         if (StringUtils.isEmpty(targetType)) {
 
             LOG.error("目标资源类型必须要传值，不能为空");
@@ -596,8 +614,15 @@ public class EducationRelationControllerV06 {
         
         limit = CommonHelper.checkLimitMaxSize(limit);
         
+        //FIXME 临时方案,后期需要考虑去掉,可能会影响查询效率
+        boolean isPortal = false;
+        String bsyskey = request.getHeader(Constant.BSYSKEY);
+        if(StringUtils.isNotEmpty(bsyskey) && bsyskey.equals(Constant.BSYSKEY_PORTAL)){
+        	isPortal = true;
+        }
+        
 //        return educationRelationService.batchQueryResources(resType, sids, targetType, relationType, limit);
-        ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit,reverse);
+        ListViewModel<RelationForQueryViewModel> modelList = educationRelationService.batchQueryResourcesByDB(resType, sids, targetType, label, tags, relationType, limit, reverse, isPortal);
 
         if (null == modelList.getItems()) {
             return modelList;

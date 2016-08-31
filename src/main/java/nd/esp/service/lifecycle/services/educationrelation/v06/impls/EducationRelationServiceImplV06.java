@@ -1219,13 +1219,13 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     public ListViewModel<RelationForQueryViewModel> queryListByResTypeByDB(String resType,String sourceUuid, String categories,
             String targetType,String relationType,String limit,boolean reverse,
             String coverage){
-        return queryListByResTypeByDB(resType, sourceUuid, categories, targetType, null, null, relationType, limit, reverse, coverage);
+        return queryListByResTypeByDB(resType, sourceUuid, categories, targetType, null, null, relationType, limit, reverse, coverage, false);
     }
     
     @Override
     public ListViewModel<RelationForQueryViewModel> queryListByResTypeByDB(String resType,String sourceUuid, String categories,
             String targetType,String label, String tags, String relationType,String limit,boolean reverse,
-            String coverage){
+            String coverage,boolean isPortal){
         // 判断源资源是否存在,不存在将抛出not found的异常
         CommonHelper.resourceExist(resType, sourceUuid, ResourceType.RESOURCE_SOURCE);
         
@@ -1242,7 +1242,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                                                                                          relationType,
                                                                                                          limit,
                                                                                                          reverse,
-                                                                                                         coverage);
+                                                                                                         coverage,
+                                                                                                         isPortal);
         
         return listViewModel;
     }
@@ -1256,7 +1257,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                                                                 String tags,
                                                                                 String relationType,
                                                                                 String limit,
-                                                                                String coverage) throws EspStoreException {
+                                                                                String coverage,
+                                                                                boolean isPortal) throws EspStoreException {
         // 判断源资源是否存在,不存在将抛出not found的异常
         CommonHelper.resourceExist(resType, sourceUuid, ResourceType.RESOURCE_SOURCE);
 
@@ -1293,7 +1295,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                                                                                          relationType,
                                                                                                          limit,
                                                                                                          false,
-                                                                                                         coverage);
+                                                                                                         coverage,
+                                                                                                         isPortal);
         
         return listViewModel;
     }
@@ -1323,9 +1326,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
      public  ListViewModel<RelationForQueryViewModel> batchQueryResourcesByDB(String resType, Set<String> sids, String targetType, String relationType,
           String limit) {
         // 返回的结果集
-
         
-        return this.batchQueryResourcesByDB(resType, sids, targetType, null, null, relationType, limit, false);
+        return this.batchQueryResourcesByDB(resType, sids, targetType, null, null, relationType, limit, false, false);
     }
 
     @Override
@@ -1336,7 +1338,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                                                             String tags,
                                                                             String relationType,
                                                                             String limit,
-                                                                            boolean reverse) {
+                                                                            boolean reverse,
+                                                                            boolean isPortal) {
         // 返回的结果集
         ListViewModel<RelationForQueryViewModel> listViewModel = educationRelationDao.queryResByRelation(resType,
                                                                                                          new ArrayList<String>(sids),
@@ -1347,7 +1350,8 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
                                                                                                          relationType,
                                                                                                          limit,
                                                                                                          reverse,
-                                                                                                         null);
+                                                                                                         null,
+                                                                                                         isPortal);
         return listViewModel;
 
     }
