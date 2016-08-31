@@ -236,6 +236,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
         builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
+        List<TitanOrder> orders = dealWithOrder4EsIndexQuery(orderMap);
+        builder.setOrders(orders);
         String script = builder.generateScriptAfterEsUpdate();
         LOG.info("script:" + script);
         // 2、查询
@@ -844,6 +846,27 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             orderList.add(order);
         }
         titanExpression.setOrderList(orderList);
+    }
+
+    /**
+     * 处理分词检索的排序
+     * 为分词检索接口设置order by字段的数据类型
+     * @param orderMap
+     * @return
+     */
+    public List<TitanOrder> dealWithOrder4EsIndexQuery(Map<String, String> orderMap) {
+        List<TitanOrder> orderList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(orderMap)) {
+            Set<String> orderFields = orderMap.keySet();
+            for (String field : orderFields) {
+                if (ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
+                    TitanOrder order = new TitanOrder();
+                    order.setOrderByField(field).setField(field).setSortOrder(orderMap.get(field).toUpperCase()).setDataType(TitanUtils.convertToEsDataType(field));
+                    orderList.add(order);
+                }
+            }
+        }
+        return orderList;
     }
 
     /**
