@@ -336,7 +336,23 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
         abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
     }
-    
+
+	@Override
+	public boolean changeSyncType(String newType, String oldType ,Integer executTimes) {
+
+		String sql = "update titan_sync set execute_times="+executTimes+", type='" +newType+ "' where type='"+oldType +"'";
+		jdbcTemplate.execute(sql);
+
+		return true;
+	}
+
+	@Override
+	public boolean deleteSyncType(String type) {
+		String sql = "DELETE FROM titan_sync  where type='"+type +"'";
+		jdbcTemplate.execute(sql);
+		return true;
+	}
+
 	@Override
 	public void checkResource(String primaryCategory) {
 		AbstractPageQuery abstractPageQuery = new CheckResourcePageQuery();

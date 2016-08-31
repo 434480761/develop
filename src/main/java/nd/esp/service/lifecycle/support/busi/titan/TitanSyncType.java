@@ -52,4 +52,7 @@ public enum  TitanSyncType {
         return map.get(key);
     }
 
+    public static boolean contain(String type){
+        return map.containsKey(type);
+    }
 }

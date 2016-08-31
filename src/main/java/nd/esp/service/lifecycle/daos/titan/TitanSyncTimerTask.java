@@ -128,7 +128,7 @@ public class TitanSyncTimerTask {
     }
 
     private boolean checkHaveData(TitanSyncType titanSyncType){
-        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES +" AND type = "+ titanSyncType.toString();
+        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES +" AND type = '"+ titanSyncType.toString()+"'";
 
         Long total = jdbcTemplate.queryForLong(script);
 
