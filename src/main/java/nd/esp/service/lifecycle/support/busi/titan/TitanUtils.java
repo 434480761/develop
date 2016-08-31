@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
@@ -15,6 +16,48 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  *
  */
 public class TitanUtils {
+
+
+	public static String convertToEsDataType(String field) {
+		if (ES_SearchField.lc_last_update.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field)) {
+			return convertToEsDataType(Long.class);
+		} else if (ES_SearchField.title.toString().equals(field)) {
+			return convertToEsDataType(String.class);
+		}
+		return null;
+	}
+
+	public static String convertToEsDataType(Class<?> dataType) {
+		if(String.class.isAssignableFrom(dataType)) {
+			return "string";
+		}
+		else if (Integer.class.isAssignableFrom(dataType)) {
+			return "integer";
+		}
+		else if (Long.class.isAssignableFrom(dataType)) {
+			return "long";
+		}
+		else if (Float.class.isAssignableFrom(dataType)) {
+			return "float";
+		}
+		else if (Double.class.isAssignableFrom(dataType)) {
+			return "double";
+		}
+		else if (Boolean.class.isAssignableFrom(dataType)) {
+			return "boolean";
+		}
+		else if (Date.class.isAssignableFrom(dataType)) {
+			return "date";
+		}
+		else if (Instant.class.isAssignableFrom(dataType)) {
+			return "date";
+		}
+		/*else if (Geoshape.class.isAssignableFrom(datatype)) {
+			return "geo_point";
+		}*/
+
+		return null;
+	}
 
 	/**
 	 *
