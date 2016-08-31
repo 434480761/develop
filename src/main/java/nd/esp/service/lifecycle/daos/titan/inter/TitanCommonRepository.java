@@ -14,7 +14,9 @@ public interface TitanCommonRepository {
     public void executeScript(String script, Map<String, Object> params) throws Exception;
     public void executeScript(String script) throws Exception;
     public Long getVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
+    public Long getEnableVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception;
     public ResultSet executeScriptResultSet(String script, Map<String, Object> params) throws Exception;
+    public ResultSet executeScriptSearchResultSet(String script, Map<String, Object> params)throws Exception;
     public ResultSet executeScriptResultSet(String script) throws Exception;
     public List<Double> executeScriptListDouble(String script, Map<String, Object> params) throws Exception;
     public Double executeScriptUniqueDouble(String script, Map<String, Object> params) throws Exception;
@@ -32,7 +34,7 @@ public interface TitanCommonRepository {
     public void batchDeleteEdgeByIds(List<String> ids) throws Exception;
     public void butchDeleteVertexById(List<String> ids) throws Exception;
     public void butchDeleteEdgeById(List<String> ids) throws Exception;
-
+    public String getEdgeLabelById(String identifier) throws Exception;
 
 
 }

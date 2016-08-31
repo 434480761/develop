@@ -1,11 +1,28 @@
 package nd.esp.service.lifecycle.services.titan;
 
-import com.google.gson.reflect.TypeToken;
-import nd.esp.service.lifecycle.educommon.models.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
+import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
+import nd.esp.service.lifecycle.educommon.models.ResRightModel;
+import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
+import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+import nd.esp.service.lifecycle.educommon.models.TechnologyRequirementModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TmExtPropertiesModel;
-import nd.esp.service.lifecycle.models.v06.*;
+import nd.esp.service.lifecycle.models.v06.EbookExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.EbookModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeExtPropertiesModel;
+import nd.esp.service.lifecycle.models.v06.KnowledgeModel;
+import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
+import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -14,10 +31,12 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
+
+import org.apache.commons.collections4.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * ******************************************
@@ -59,7 +78,8 @@ public class TitanResultParse {
      */
     public static ListViewModel<ResourceModel> parseToListViewResourceModel(String resType, List<String> resultStr, List<String> includes, Boolean isCommonQuery) {
         ListViewModel<ResourceModel> viewModels = new ListViewModel<>();
-        List<ResourceModel> items = null;
+        viewModels.setTotal(0L);
+        List<ResourceModel> items = new ArrayList<ResourceModel>();
         if (CollectionUtils.isNotEmpty(resultStr)) {
             int resultSize = resultStr.size();
             // 处理count
@@ -154,7 +174,7 @@ public class TitanResultParse {
             String label = resultStrMap.get(i).get("label");
             if (isKnowledge) {
                 // 发现存在order跳过下一行数据 order-->has_knowledge
-                if ("has_knowledge".equals(label)) i++;
+                if (TitanKeyWords.tree_has_knowledge.toString().equals(label)) i++;
             }
             // 检查切割点
             boolean isEnd = (i == endSize) || ((i < endSize) && resType.equals(resultStrMap.get(i + 1).get("label")));
@@ -205,28 +225,29 @@ public class TitanResultParse {
             Map<String, String> resource = new HashMap<>();
             List<Map<String, String>> category = new ArrayList<>();
             List<Map<String, String>> techInfo = new ArrayList<>();
+            Map<String, String> statistics = new HashMap<>();
             int size = singleItemMaps.size();
             for (int i = 0; i < size; i++) {
                 Map<String, String> map = singleItemMaps.get(i);
                 String label = map.get("label");
                 if (resType.equals(label)) {
                     resource.putAll(map);
-                } else if ("has_category_code".equals(label)) {
+                } else if (TitanKeyWords.has_category_code.toString().equals(label)) {
                     category.add(map);
-                } else if ("tech_info".equals(label)) {
+                } else if (TitanKeyWords.tech_info.toString().equals(label)) {
                     techInfo.add(map);
-                } else if ("has_knowledge".equals(label)) {
-                    resource.put("order", map.get("order"));
+                } else if (TitanKeyWords.tree_has_knowledge.toString().equals(label)) {
+                    resource.put(TitanKeyWords.tree_order.toString(), map.get(TitanKeyWords.tree_order.toString()));
                     // 处理parent
                     if (i < size - 1) {
                         i++;
                         Map<String, String> parent = singleItemMaps.get(i);
                         String label2 = parent.get("label");
-                        if ("category_code".equals(label2)) {
+                        if (TitanKeyWords.category_code.toString().equals(label2)) {
                             resource.put("parent", parent.get("cg_taxoncode"));
-                        } else if ("knowledges".equals(label2)) {
+                        } else if (ResourceNdCode.knowledges.toString().equals(label2)) {
                             resource.put("parent", parent.get(ES_SearchField.identifier.toString()));
-                        }else if("chapters".equals(label2)){
+                        }else if(ResourceNdCode.chapters.toString().equals(label2)){
                             if (!isCommonQuery) {
                                 resource.put("parent", "ROOT");
                             } else {
@@ -236,6 +257,8 @@ public class TitanResultParse {
                             LOG.warn("parent--未能识别");
                         }
                     }
+                } else if (TitanKeyWords.has_resource_statistical.toString().equals(label)) {
+                    statistics.putAll(map);
                 } else {
                     LOG.warn("未能识别");
                 }
@@ -243,6 +266,7 @@ public class TitanResultParse {
             item.setResource(resource);
             item.setCategory(category);
             item.setTechInfo(techInfo);
+            item.setStatisticsValues(statistics);
         }
 
         return item;
@@ -263,7 +287,7 @@ public class TitanResultParse {
             KnowledgeExtPropertiesModel extProperties = new KnowledgeExtPropertiesModel();
 
             extProperties.setParent(mainResult.get("parent"));
-            String order = mainResult.get("order");
+            String order = mainResult.get(TitanKeyWords.tree_order.toString());
             if (order != null && !"".equals(order.trim())&& !"null".equals(order.trim())) {
                 extProperties.setOrder_num((int) Float.parseFloat(order));
             }
@@ -442,6 +466,13 @@ public class TitanResultParse {
 
         item.setTechInfoList(techInfoList);
         item.setCategoryList(categoryList);
+        // 处理统计数据
+        Map<String, String> statistics = titanItem.getStatisticsValues();
+        if (CollectionUtils.isNotEmpty(statistics)) {
+            String value = statistics.get("sta_key_value");
+            if (StringUtils.isNotEmpty(value)) item.setStatisticsNum(Double.parseDouble(value));
+        }
+
     }
 
 
@@ -524,7 +555,7 @@ public class TitanResultParse {
 
         String interactivityLevel = tmpMap.get(ES_SearchField.edu_interactivity_level.toString());
         if (interactivityLevel != null) {
-            edu.setInteractivity(Integer.parseInt(interactivityLevel.trim()));
+            edu.setInteractivityLevel(Integer.parseInt(interactivityLevel.trim()));
         }
 
 
@@ -544,14 +575,20 @@ public class TitanResultParse {
         String description = tmpMap.get(ES_SearchField.edu_description.toString());
         if (description != null) {
             if (!"".equals(description.trim()) && !"null".equals(description.trim())) {
-
                 if (description.startsWith("{\"") && description.endsWith("\"}")) {
                     @SuppressWarnings("unchecked")
                     Map<String, String> map = ObjectUtils.fromJson(description, Map.class);
                     edu.setDescription(map);
+                }else{
+                    LOG.error("EDU description parse error:"+description);
+                    Map<String, String> map = new HashMap<>();
+                    edu.setDescription(map);
                 }
 
             }
+        } else {
+            Map<String, String> map = new HashMap<>();
+            edu.setDescription(map);
         }
 
         return edu;
@@ -564,7 +601,9 @@ public class TitanResultParse {
     public static ResClassificationModel dealCG(Map<String, String> tmpMap) {
         ResClassificationModel rcm = new ResClassificationModel();
         rcm.setIdentifier(tmpMap.get(ES_SearchField.identifier.toString()));
-        rcm.setTaxoncode(tmpMap.get(ES_SearchField.cg_taxoncode.toString()));
+        String code = tmpMap.get(ES_SearchField.cg_taxoncode.toString());
+        if (code == null) code = "";
+        rcm.setTaxoncode(code);
         rcm.setTaxonname(tmpMap.get(ES_SearchField.cg_taxonname.toString()));
         rcm.setCategoryCode(tmpMap.get(ES_SearchField.cg_category_code.toString()));
         rcm.setShortName(tmpMap.get(ES_SearchField.cg_short_name.toString()));
@@ -601,6 +640,9 @@ public class TitanResultParse {
                 });
                 techInfo.setRequirements(requirementsList);
             }
+        } else {
+            List<TechnologyRequirementModel> requirementsList = new ArrayList<>();
+            techInfo.setRequirements(requirementsList);
         }
         techInfo.setSecureKey(tmpMap.get(ES_SearchField.ti_secure_key.toString()));
 
@@ -652,112 +694,102 @@ public class TitanResultParse {
 
 
     /**
-     * @param str
-     * @return
-     */
-    public static Map<String, String> toMapWithLabel(String str) {
-        Map<String, String> tmpMap = new HashMap<>();
-        if(StringUtils.isNotEmpty(str)) {
-            str = str.replaceAll("==>", "");
-            str = str.substring(1, str.length() - 1);
-            if (str.endsWith("]")) str = str.substring(0, str.length() - 1);
-            String[] fields = null;
-            if (str.contains("], ")) {
-                str = str.replaceAll("=\\[", "=").replaceAll("=\\[", "=").replaceAll("]],", "],");
-                fields = str.split("], ");
-                for (String s : fields) {
-                    if (s.startsWith("label=") || s.startsWith("id=")) {
-                        //点上的label特殊处理
-                        int end = s.indexOf(", ");
-                        if (end > 0) {
-                            String label = s.substring(0, end);
-                            String[] kv1 = label.split("=");
-                            if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
-                            String other = s.substring(end+1, s.length());
-                            String[] kv2 = other.split("=");
-                            if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
-
-                        }else{
-                            String[] kv = s.split("=");
-                            if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
-                        }
-                        //tmpMap.put(kv.substring(0, begin), kv.substring(begin + 1, kv.length()));
-                    } else {
-                        String[] kv = s.split("=");
-                        if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
-                    }
-                }
-            }else if(str.contains(", ")){//edge
-                fields = str.split(", ");
-                for (String s : fields) {
-                    String[] kv=s.split("=");
-                    if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
-                }
-            } else {
-                String[] kv=str.split("=");
-                if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
-            }
-        }
-        return tmpMap;
-    }
-
-    /**
+     * 资源数据示例(点)：特殊字段（label,id）
+     * {preview=[{"png":"${ref-path}/prepub_content_edu_product/esp/assets/abc.png"}], cr_author=[880508], search_path_string=[k12/$on030000/$on030200/$sb0501012/$e004000/$e004001], keywords=[["title","qatest"]], edu_description=[{"zh_CN":"如何使用学习对象进行描述"}], search_path=[K12/$ON030000/$ON030200/$SB0501012/$E004000/$E004001], description=[lcms_special_description_qa_test], search_coverage_string=[debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/], language=[zh_CN], lc_status=[CREATING], custom_properties=[{"key":"test"}], cr_has_right=[true], title=[lcms_qa_test_yqjtest_res_getinfo_with_include_of_all_attribute_ok_test_1471416223.61], cr_right_end_date=[7258089000000], lc_provider=[lcms_special_provider_qa_test], label=assets, cr_description=[版权描述信息], lc_create_time=[1471416133155], primary_category=[assets], search_code_string=[$f050005,$on030000,pt01001,$ra0100], search_coverage=[Debug/qa//CREATING, Debug/qa/TEST/CREATING, Debug/qa/TEST/, Debug/qa//], lc_publisher=[lcms_special_publisher_qa_test], id=356896776, edu_context=[基础教育], lc_provider_mode=[qatest_provider_mode], cr_right_start_date=[946656000000], identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], cr_right=[版权信息], lc_last_update=[1471416133155], edu_interactivity=[2], lc_version=[qav0.1], edu_semantic_density=[1], edu_difficulty=[easy], edu_end_user_type=[教师，管理者], tags=[["nd","sdp.esp"]], search_code=[$F050005, $ON030000, $RA0100, PT01001], m_identifier=[1e80454b-ae80-4dbd-994a-b3d8e55ee6b5], edu_interactivity_level=[2], lc_enable=[true], lc_provider_source=[八年级地理第一学期期末考试试卷_201407282056.doc], lc_creator=[lcms_special_creator_qa_test], edu_language=[zh_CN], edu_learning_time=[45], edu_age_range=[7岁以上]}
+     * {identifier=[3eaabed0-92a2-4c3c-bced-3a44e8a5f51d], ti_md5=[md5Value], label=tech_info, ti_title=[href], ti_location=[${ref-path}/prepub_content_edu/esp/test/abc.png], ti_size=[1024], ti_format=[image/png], id=356900872, ti_entry=[入口地址], ti_requirements=[[{"identifier":null,"type":"HARDWARE","name":"resolution","minVersion":null,"maxVersion":null,"installation":null,"installationFile":null,"value":"435*237","ResourceModel":null}]]}
+     * 关系上的数据示例（边）：特殊字段（tags）
+     * {res_type=chapters, identifier=094ee58e-b446-4093-853a-118e046f77fe, enable=true, sort_num=5000.0, target_uuid=b453a4fa-f82d-4a90-9693-36ff1b8341bb, source_uuid=5001185b-07b5-43af-90c1-9872cddbe1ce, relation_type=ASSOCIATE, order_num=3.0, resource_target_type=lessons, id=fu7nde-20s5s-2nmd-1kv4i8, tags=[], label=has_relation}
      * @param str
      * @return
      */
     public static Map<String, String> toMapForRelationQuery(String str) {
         Map<String, String> tmpMap = new HashMap<>();
         if(StringUtils.isNotEmpty(str)) {
-            str = str.replaceAll("==>", "");
-            str = str.substring(1, str.length() - 1);
-            if (str.endsWith("]")) str = str.substring(0, str.length() - 1);
-            // 边上的字段特殊处理
-            if (str.contains("label=has_relation")) {
-                if (str.contains("tags=")) {
-                    str = dealSpecialField("tags=", str);
-                }
-                if (str.contains("keywords=")) {
-                    str = dealSpecialField("keywords=", str);
-                }
-            }
-            String[] fields = null;
+            // 分割前，预处理
+            str = preProcessData(str);
+            // 上面预处理已经把边上的"[]"都去掉了，所以简单的以：
+            // 1、包含"], "，说明是点，按点方式分割；
+            // 2、不包含"], "，而包含", "，按边方式分割；
+            // 3、都不包含，说明只有一个字段，直接分割
             if (str.contains("], ")) {
                 str = str.replaceAll("=\\[", "=").replaceAll("=\\[", "=").replaceAll("]],", "],");
-                fields = str.split("], ");
+                String[] fields = str.split("], ");
                 for (String s : fields) {
                     if (s.startsWith("label=") || s.startsWith("id=")) {
-                        //点上的label特殊处理
-                        int end = s.indexOf(", ");
-                        if (end > 0) {
-                            String label = s.substring(0, end);
-                            String[] kv1 = label.split("=");
-                            if (kv1.length == 2) tmpMap.put(kv1[0].trim(), kv1[1].trim());
-                            String other = s.substring(end+1, s.length());
-                            String[] kv2 = other.split("=");
-                            if (kv2.length == 2) tmpMap.put(kv2[0].trim(), kv2[1].trim());
-
-                        }else{
-                            String[] kv = s.split("=");
-                            if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
-                        }
-                        //tmpMap.put(kv.substring(0, begin), kv.substring(begin + 1, kv.length()));
+                        //点上的label和id特殊处理
+                        dealSpecialField(s, tmpMap);
                     } else {
-                        String[] kv = s.split("=");
-                        if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                        splitKeyValue(tmpMap, s);
                     }
                 }
-            }else if(str.contains(", ")){//edge
-                fields = str.split(", ");
+            } else if (str.contains(", ")) {
+                // edge
+                String[] fields = str.split(", ");
                 for (String s : fields) {
-                    String[] kv=s.split("=");
-                    if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+                    splitKeyValue(tmpMap, s);
                 }
-            } else {
-                String[] kv=str.split("=");
-                if (kv.length == 2) tmpMap.put(kv[0].trim(), kv[1].trim());
+            } else if(str.contains("=")){
+                // 只有一个字段
+                int begin = str.indexOf("=");
+                tmpMap.put(str.substring(0, begin), str.substring(begin + 1, str.length()).replace("[",""));
+            }else{
+                LOG.error("can not parse to key-value:" + str);
             }
         }
         return tmpMap;
+    }
+
+    /**
+     * 从第一个等号开始分割
+     * @param tmpMap
+     * @param keyValue
+     */
+    private static void splitKeyValue(Map<String, String> tmpMap, String keyValue) {
+        int begin = keyValue.indexOf("=");
+        tmpMap.put(keyValue.substring(0, begin), keyValue.substring(begin + 1, keyValue.length()));
+    }
+
+    /**
+     * 预处理
+     * @param str
+     * @return
+     */
+    public static String preProcessData(String str) {
+        // 去掉数据头部的特殊字符
+        if (str.startsWith("==>")) str = str.substring(3, str.length());
+        // 去掉最外层的{}
+        str = str.substring(1, str.length() - 1);
+        // 去掉最后一个字段的右中括号"]"
+        if (str.endsWith("]")) str = str.substring(0, str.length() - 1);
+        // 边上的字段特殊处理，把边上数据的"[]"都去掉，就可以用", "分割：如上面的边上数据示例
+        if (str.contains("label=has_relation")) {
+            if (str.contains("tags=")) str = dealSpecialField("tags=", str);
+            // keywords好像不会出现在边上，不用处理也没关系
+            if (str.contains("keywords=")) str = dealSpecialField("keywords=", str);
+        }
+        return str;
+    }
+
+    /**
+     * 处理点上的特殊字段
+     * @param field
+     * @param tmpMap
+     */
+    public static void dealSpecialField(String field, Map<String, String> tmpMap) {
+        //点上的label和id特殊处理
+        int end = field.indexOf(", ");
+        if (end > 0) {
+            String label = field.substring(0, end);
+            splitKeyValue(tmpMap,label);
+            String other = field.substring(end + 1, field.length()).trim();
+            if (other.startsWith("label=") || other.startsWith("id=")) {
+                dealSpecialField(other, tmpMap);
+            } else {
+                splitKeyValue(tmpMap,other);
+            }
+        } else {
+            splitKeyValue(tmpMap,field);
+        }
     }
 
     /**
@@ -795,6 +827,5 @@ public class TitanResultParse {
         }
         return tmpMap;
     }
-
 
 }

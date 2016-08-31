@@ -122,10 +122,10 @@ public class EsIndexQueryBuilder {
         baseQuery.append(dealWithResType());
 
         baseQuery.append("\")");
-        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
+        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
         baseQuery.append(getRangeIds());
         baseQuery.append("results = g.V(rangeids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
         baseQuery.append(".valueMap();");
 
         query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
@@ -163,9 +163,9 @@ public class EsIndexQueryBuilder {
         baseQuery.append("\")");
         baseQuery.append(".offset(").append(this.from).append(")");
         baseQuery.append(".limit(").append(this.size).append(");");
-        baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return};");
+        baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
         baseQuery.append("results = g.V(ids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
         //baseQuery.append(".valueMap();");
         query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 

@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.titan.TitanResultParse;
+import nd.esp.service.lifecycle.support.busi.titan.TitanCacheData;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ES_Field;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -29,7 +30,6 @@ import java.util.*;
 public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	private final static Logger LOG = LoggerFactory
 			.getLogger(TitanCoverageRepositoryImpl.class);
-	private static Map<String, Long> coverageCacheMap = new HashMap<>();
 	private static List<String> coverageCacheTargetList = new ArrayList<>();
 
 	@Autowired
@@ -203,10 +203,10 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		String key = resCoverage.getTarget() + "_"
 				+ resCoverage.getTargetType() + "_" + resCoverage.getStrategy();
 		if (coverageCacheTargetList.contains(key.toLowerCase())) {
-			coverageId = coverageCacheMap.get(key);
+			coverageId = TitanCacheData.coverage.getCacheMap().get(key);
 			if (coverageId == null) {
 				coverageId = getCoverageIdFormTitan(resCoverage);
-				coverageCacheMap.put(key, coverageId);
+				TitanCacheData.coverage.getCacheMap().put(key, coverageId);
 			}
 		} else {
 			coverageId = getCoverageIdFormTitan(resCoverage);
@@ -236,12 +236,12 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	}
 
 	private ResCoverage updateCoverage(ResCoverage resCoverage) {
-		delete(resCoverage.getIdentifier());
 		add(resCoverage);
 		return resCoverage;
 	}
 
 	private ResCoverage addCoverage(ResCoverage resCoverage) {
+		delete(resCoverage.getIdentifier());
 		Long coverageNodeId = getCoverageNodeId(resCoverage);
 		String coveragePathId;
 		if (coverageNodeId == null) {

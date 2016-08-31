@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.controllers.educationrelation.v07;
 
+import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.titan.TitanSearchService;
@@ -9,6 +10,7 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
+import nd.esp.service.lifecycle.vos.statics.ResourceType;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,9 +71,7 @@ public class EducationRelationControllerV07 {
                                                                                   @RequestParam(required = false) String ct,
                                                                                   @RequestParam(required = false, value = "ct_target") String cTarget) {
         if (StringUtils.isEmpty(targetType)) {
-
             LOG.error("目标资源类型必须要传值，不能为空");
-
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CheckTargetTypeIsNull);
         }
@@ -115,11 +115,22 @@ public class EducationRelationControllerV07 {
         }
         //递归查询boolean,默认为false
         boolean recursionBoolean = false;
-        if("true".equals(recursion)){
+        if ("true".equals(recursion)) {
             recursionBoolean = true;
+            // 递归时反转失效
+            reverseBoolean = false;
         }
         
         limit = CommonHelper.checkLimitMaxSize(limit);
+        // 解决 FIX 5.源资源或目标资源类型错误，原来会报错，现在返回空
+        String t = LifeCircleApplicationInitializer.tablenames_properties.getProperty(targetType);
+        String s = LifeCircleApplicationInitializer.tablenames_properties.getProperty(resType);
+        if (StringUtils.isEmpty(t)|| StringUtils.isEmpty(s)) {
+            LOG.error("源资源类型或者目标资源类型错误");
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, LifeCircleErrorMessageMapper.CheckTargetTypeError);
+        }
+        // 判断源资源是否存在,不存在将抛出not found的异常
+        CommonHelper.resourceExistByTitan(resType, sourceUuid, ResourceType.RESOURCE_SOURCE);
         ListViewModel<RelationForQueryViewModel> listViewModel = null;
         if (recursionBoolean) {
             if (!IndexSourceType.ChapterType.getName().equals(resType)) {
@@ -168,14 +179,18 @@ public class EducationRelationControllerV07 {
             @RequestParam String limit,
             @RequestParam(required=false) boolean reverse){
         if (StringUtils.isEmpty(targetType)) {
-
             LOG.error("目标资源类型必须要传值，不能为空");
-
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                                           LifeCircleErrorMessageMapper.CheckTargetTypeIsNull);
         }
         
         limit = CommonHelper.checkLimitMaxSize(limit);
+        String t = LifeCircleApplicationInitializer.tablenames_properties.getProperty(targetType);
+        String s = LifeCircleApplicationInitializer.tablenames_properties.getProperty(resType);
+        if (StringUtils.isEmpty(t)|| StringUtils.isEmpty(s)) {
+            LOG.error("源资源类型或者目标资源类型错误");
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, LifeCircleErrorMessageMapper.CheckTargetTypeError);
+        }
         ListViewModel<RelationForQueryViewModel> viewModel=titanSearchService.batchQueryResources(resType, sids, targetType, label, tags, relationType, limit,reverse);
         viewModel.setLimit(limit);
         return viewModel;

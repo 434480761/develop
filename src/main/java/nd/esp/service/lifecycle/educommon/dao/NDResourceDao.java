@@ -7,6 +7,7 @@ import java.util.Set;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.vos.ChapterStatisticsViewModel;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.support.DbName;
 
@@ -98,7 +99,7 @@ public interface NDResourceDao {
      * @param coverages
      * @return
      */
-    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages);
+    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages, Map<String, String> orderMap);
 
     /**
      * 获取通用查询的count值
@@ -204,6 +205,8 @@ public interface NDResourceDao {
     public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
     		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
     		Set<String> categories,boolean isAll);
+
+    public List<ResourceStatistical> queryStatisticalUseHql(List<String> resTypes, Set<String> keySet);
     
 //    /**
 //     * 删除章节相关的资源关系

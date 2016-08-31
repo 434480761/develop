@@ -2,15 +2,11 @@ package nd.esp.service.lifecycle.services.task.v06.impls;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import org.apache.log4j.MDC;
+import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +48,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     
     private static final String TECH_INFO_SOURCE_KEY="source";
     private static final String TECH_INFO_HREF_KEY="href";
-    private static final String [] TECH_INFO_HREF_KEYS_ARR={"href","href-360p","href-480p","href-720p","href-360p-ogv","href-480p-ogv","href-720p-ogv","href-1080p-ogv"};
+    private static final String [] TECH_INFO_HREF_KEYS_ARR={"href","href-360p","href-480p","href-720p","href-360p-ogv","href-480p-ogv","href-720p-ogv","href-ogv"};
     private static final List<String> TECH_INFO_HREF_KEYS = Arrays.asList(TECH_INFO_HREF_KEYS_ARR);
     private static final String VIDEO_FORMAT_TARGET="mp4";
     private static final String VIDEO_THEORA_FORMAT="ogv";
@@ -224,13 +220,23 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             if(requirementModels == null){
                 requirementModels = new ArrayList<TechnologyRequirementModel>();
                 techInfo.setRequirements(requirementModels);
+            } else {
+                for (Iterator<TechnologyRequirementModel> iterator = requirementModels.iterator();iterator.hasNext();) {
+                    if(metadataMap.keySet().contains(iterator.next().getName())) {
+                        iterator.remove();
+                    }
+                }
             }
             for (Entry<String, Object> techData : metadataMap.entrySet()) {
                 TechnologyRequirementModel technologyRequirementModel = new TechnologyRequirementModel();
                 technologyRequirementModel.setIdentifier(UUID.randomUUID().toString());
                 technologyRequirementModel.setType(RequirementType.QUOTA.toString());
                 technologyRequirementModel.setName(techData.getKey());
-                technologyRequirementModel.setValue(String.valueOf(techData.getValue()));
+                if(technologyRequirementModel.getName().equals("Video") || technologyRequirementModel.getName().equals("Audio")) {
+                    technologyRequirementModel.setValue(ObjectUtils.toJson(techData.getValue()));
+                } else {
+                    technologyRequirementModel.setValue(String.valueOf(techData.getValue()));
+                }
                 requirementModels.add(technologyRequirementModel);
             }
             // techInfo.setRequirements(requirementModels);

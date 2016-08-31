@@ -1,6 +1,8 @@
 package nd.esp.service.lifecycle.support.busi;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,8 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nd.esp.service.lifecycle.daos.titan.TitanCommonRepositoryImpl;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResEducationalModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -1233,7 +1237,74 @@ public class CommonHelper {
 		}
 
 	}
-	
+
+	/**
+	 * 当且仅当ID>0的时候返回true
+	 * */
+	private static boolean checkEducationExistInTitan(String primaryCategory, String identifier){
+		Long id;
+		try {
+			TitanCommonRepository titanCommonRepository = new TitanCommonRepositoryImpl();
+			id = titanCommonRepository.getEnableVertexIdByLabelAndId(primaryCategory, identifier);
+		} catch (Exception e) {
+
+			LOG.error("titan_repository error:{}" ,e.getMessage());
+
+			return false;
+		}
+
+		if(id != null && id > 0){
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * 判断源资源是否存在
+	 *
+	 * @param resType 资源种类
+	 * @param resId 源资源id
+	 * @param type  源资源类型
+	 * @since
+	 */
+	public static void resourceExistByTitan(String resType, String resId, String type) {
+		boolean flag = false;
+		try {
+			flag = checkEducationExistInTitan(resType, resId);
+		} catch (Exception e) {
+			if (ResourceType.RESOURCE_SOURCE.equals(type)) {
+				LOG.error("源资源:" + resType + "--" + resId + "未找到", e);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+			if (ResourceType.RESOURCE_TARGET.equals(type)) {
+				LOG.error("目标资源:" + resType + "--" + resId + "未找到", e);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
+
+		// 资源不存在,抛出异常
+		if (!flag) {
+			if (ResourceType.RESOURCE_SOURCE.equals(type)) {
+				LOG.error("源资源:" + resType + "--" + resId + "未找到");
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.SourceResourceNotFond.getCode(),
+						"源资源:" + resType + "--" + resId + "未找到");
+			}
+			if (ResourceType.RESOURCE_TARGET.equals(type)) {
+
+				LOG.error("目标资源:" + resType + "--" + resId + "未找到");
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.TargetResourceNotFond.getCode(),
+						"目标资源:" + resType + "--" + resId + "未找到");
+			}
+		}
+	}
 	/**
 	 * 判断源资源是否存在
 	 * 
@@ -1783,6 +1854,41 @@ public class CommonHelper {
 		if(ResourceNdCode.instructionalobjectives.toString().equals(primaryCategory)||
 				ResourceNdCode.knowledges.toString().equals(primaryCategory)){
 			includes.remove(IncludesConstant.INCLUDE_EDU);
+		}
+	}
+	
+	/**
+	 * MD5加密
+	 * @author xiezy
+	 * @date 2016年8月29日
+	 * @param plainText
+	 * @return
+	 */
+	public static String encryptToMD5(String plainText) {
+		try {
+			// 生成实现指定摘要算法的 MessageDigest 对象。
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			// 使用指定的字节数组更新摘要。
+			md.update(plainText.getBytes());
+			// 通过执行诸如填充之类的最终操作完成哈希计算。
+			byte b[] = md.digest();
+			// 生成具体的md5密码到buf数组
+			int i;
+			StringBuffer buf = new StringBuffer("");
+			for (int offset = 0; offset < b.length; offset++) {
+				i = b[offset];
+				if (i < 0)
+					i += 256;
+				if (i < 16)
+					buf.append("0");
+				buf.append(Integer.toHexString(i));
+			}
+
+			return buf.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.EncryptDataFail.getCode(),
+					"加密MD5异常!");
 		}
 	}
 }

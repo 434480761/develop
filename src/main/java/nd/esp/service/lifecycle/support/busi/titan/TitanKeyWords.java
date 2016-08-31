@@ -12,13 +12,24 @@ public enum TitanKeyWords {
     RESULT,TOTALCOUNT,
     //暂时放在这里
     has_relation, has_category_code, category_code, has_coverage, coverage, categories_path, has_categories_path
-    , has_chapter,has_knowledge,tech_info,has_tech_info,has_knowledge_relation,
+    ,tech_info,has_tech_info,has_knowledge_relation,// has_chapter,has_knowledge,
     
     //资源冗余字段
     search_code,search_path,search_coverage,search_code_string,search_path_string,search_coverage_string,
 
+    primary_category,
+    // 边上的几个属性
+    relation_type,rr_label,order_num,sort_num,
+
     //树形结构
-    tree_has_chapter("has_chapter"),tree_has_knowledge("has_knowledge"),tree_order("order");
+    tree_has_chapter("tree_has_chapters"),tree_has_knowledge("tree_has_knowledges"),tree_order("tree_order_num"),
+    //统计
+    statistical,has_resource_statistical,
+    // order by的几个条件字段和值
+    sta_key_title,sta_data_from,ti_title,href,ti_size,
+    // select_version_result
+    select_version_result("select('version_result')")
+    ;
 
     private String name;
 

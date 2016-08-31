@@ -51,13 +51,7 @@ import nd.esp.service.lifecycle.models.v06.QuestionExtPropertyModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Chapter;
-import nd.esp.service.lifecycle.repository.model.Ebook;
-import nd.esp.service.lifecycle.repository.model.FullModel;
-import nd.esp.service.lifecycle.repository.model.Question;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.ChapterRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
@@ -350,7 +344,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
         List<FullModel> queryResult = null;
         //判断是走Redis还是走数据库查询
-        if(!judgeUseRedisOrNot(limit, isNotManagement, coverages)){//走数据库
+        if(!judgeUseRedisOrNot(limit, isNotManagement, coverages, orderMap)){//走数据库
             //带上分页
             sql = sql + sqlLimit;
             
@@ -559,6 +553,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
      * 	b.管理端接口,即带management的
      *  c.coverage参数不传时
      *  d.coverage参数中有非Org/nd/，即非nd库的
+     *  e.oderby中带有top,scores,views,votes时
      *  
      * <p>Create Time: 2016年1月12日   </p>
      * <p>Create author: xiezy   </p>
@@ -567,7 +562,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
      * @param coverages
      * @return
      */
-    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages) {
+    public boolean judgeUseRedisOrNot(String limit, boolean isNotManagement, List<String> coverages, Map<String, String> orderMap) {
         Integer result[] = ParamCheckUtil.checkLimit(limit);
         //场景a,b,c
         if((result[0] + result[1] > 500) || !isNotManagement || CollectionUtils.isEmpty(coverages)){
@@ -586,6 +581,14 @@ public class NDResourceDaoImpl implements NDResourceDao{
                 return false;
             }
         }
+		// 场景e
+		if (CollectionUtils.isNotEmpty(orderMap)
+				&& (orderMap.containsKey("top")
+						|| orderMap.containsKey("scores")
+						|| orderMap.containsKey("votes") 
+						|| orderMap.containsKey("views"))) {
+			return false;
+		}
         
         return true;
     }
@@ -2943,8 +2946,27 @@ public class NDResourceDaoImpl implements NDResourceDao{
         
 		return resultMap;
 	}
-	
-	/**
+
+    @Override
+    public List<ResourceStatistical> queryStatisticalUseHql(List<String> resTypes, Set<String> keySet) {
+        if(CollectionUtils.isEmpty(resTypes)){
+            return null;
+        }
+
+        Query query = null;
+        if(getDBName4CommonQuery(resTypes.size()>1 ? false : true , resTypes).equals(DbName.QUESTION)){
+            query = questionEm.createNamedQuery("commonQueryGetStatistical");
+        }else{
+            query = defaultEm.createNamedQuery("commonQueryGetStatistical");
+        }
+
+        query.setParameter("rts", resTypes);
+        query.setParameter("sids", keySet);
+
+        return query.getResultList();
+    }
+
+    /**
 	 * 关系相关参数处理
 	 * @author xiezy
 	 * @date 2016年7月13日

@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class TitanQueryVertexForTree extends TitanQueryVertex {
 
-	private String treeEdgeLabel = TitanKeyWords.has_chapter.toString();
+	private String treeEdgeLabel = TitanKeyWords.tree_has_chapter.toString();
 
 	// private Integer maxDepth = 2;
 	//

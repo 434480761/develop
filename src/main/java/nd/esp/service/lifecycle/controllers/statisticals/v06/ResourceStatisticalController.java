@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nd.gaea.WafException;
 
 /**
- * 课件颗粒模板接口V0.6API
+ * 资源评注接口
  * @author liur
  * */
 @RestController
@@ -64,7 +64,7 @@ public class ResourceStatisticalController {
     public void add(@RequestBody List<ResourceStatisticalViewModel> svms, @PathVariable("res_type") String resType,
             @PathVariable String id) {
 
-        checkParams(svms, resType, id);
+        checkParams(svms, resType, id, false);
 
         List<ResourceStatisticalModel> sms = new LinkedList<ResourceStatisticalModel>();
 
@@ -83,6 +83,43 @@ public class ResourceStatisticalController {
             }
 //        }
         
+
+        List<ResourceStatisticalViewModel> returnList = new ArrayList<ResourceStatisticalViewModel>();
+        for (ResourceStatisticalModel sm : sms) {
+            ResourceStatisticalViewModel svm = BeanMapperUtils.beanMapper(sm, ResourceStatisticalViewModel.class);
+            returnList.add(svm);
+        }
+        return;
+    }
+    
+    /**
+     * 增加资源评价统计指标数据 -- 累加方式
+     * @author xiezy
+     * @date 2016年8月22日
+     * @param svms
+     * @param resType
+     * @param id
+     */
+    @RequestMapping(value = "/{id}/statisticals/cumulative", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public void addByCumulative(@RequestBody List<ResourceStatisticalViewModel> svms, @PathVariable("res_type") String resType,
+            @PathVariable String id) {
+
+        checkParams(svms, resType, id, true);
+
+        List<ResourceStatisticalModel> sms = new LinkedList<ResourceStatisticalModel>();
+
+        for (ResourceStatisticalViewModel svm : svms) {
+            ResourceStatisticalModel sm = BeanMapperUtils.beanMapper(svm, ResourceStatisticalModel.class);
+            sms.add(sm);
+        }
+
+        // 保存资源
+        if (CommonServiceHelper.isQuestionDb(resType)) {
+            sms = statisticalService4QuestionDB.addStatisticalByCumulative(sms, resType, id);
+        }
+        else {
+            sms = statisticalService.addStatisticalByCumulative(sms, resType, id);
+        }
 
         List<ResourceStatisticalViewModel> returnList = new ArrayList<ResourceStatisticalViewModel>();
         for (ResourceStatisticalModel sm : sms) {
@@ -223,7 +260,7 @@ public class ResourceStatisticalController {
     /**
      * 验证
      * */
-    private void checkParams(List<ResourceStatisticalViewModel> svms, String resType, String id) {
+    private void checkParams(List<ResourceStatisticalViewModel> svms, String resType, String id, boolean isCumulative) {
         // 验证UUID格式
         if (!CommonHelper.checkUuidPattern(id)) {
             throw new WafException(LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
@@ -256,7 +293,7 @@ public class ResourceStatisticalController {
 
             }
 
-            if (svm.getKeyValue() == null || (svm.getKeyValue() != null && svm.getKeyValue() < 0)) {
+            if (svm.getKeyValue() == null || (!isCumulative && svm.getKeyValue() != null && svm.getKeyValue() < 0)) {
                 throw new WafException(LifeCircleErrorMessageMapper.CheckResourceStatisticalKeyValueFail.getCode(),
                         LifeCircleErrorMessageMapper.CheckResourceStatisticalKeyValueFail.getMessage());
 
@@ -269,7 +306,9 @@ public class ResourceStatisticalController {
      * */
     class StatisticsThread extends RecursiveTask<Map<String, List<ResourceStatisticalModel>>> {
 
-        private List<String> key;
+		private static final long serialVersionUID = 1517320577873452169L;
+
+		private List<String> key;
 
         private List<String> rid;
 
@@ -303,7 +342,10 @@ public class ResourceStatisticalController {
      * 查询习题课统计资源线程
      * */
     class StatisticsThread4Questions extends StatisticsThread {
-        public StatisticsThread4Questions(List<String> key, List<String> rid) {
+    	
+		private static final long serialVersionUID = 3997781697110849569L;
+
+		public StatisticsThread4Questions(List<String> key, List<String> rid) {
             super(key, rid);
         }
 

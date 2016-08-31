@@ -350,6 +350,14 @@ public class CommonServiceHelper {
                 false,
                 false));
         
+        //元课程
+        repositoryAndModelMap.put("metacurriculums", new RepositoryAndModelAndView(teachingMaterialRepository, 
+                TeachingMaterialModel.class,
+                TeachingMaterialViewModel.class, 
+                TeachingMaterial.class,
+                true,
+                true));
+        
         //教学活动
         repositoryAndModelMap.put("teachingactivities", new RepositoryAndModelAndView(teachingActivitiesRepository,
                                                                              CoursewareModel.class,
@@ -618,7 +626,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getTechInfoRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getTechInfoRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return techInfoRepository;
     	}else{
@@ -631,7 +640,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getResourceCategoryRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getResourceCategoryRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return resourceCategoryRepository;
     	}else{
@@ -644,7 +654,8 @@ public class CommonServiceHelper {
      * @param resType
      * @return
      */
-    public ResourceRepository getResCoverageRepositoryByResType(String resType){
+    @SuppressWarnings("rawtypes")
+	public ResourceRepository getResCoverageRepositoryByResType(String resType){
     	if(!isQuestionDb(resType)){
     		return resCoverageRepository;
     	}else{
@@ -662,16 +673,29 @@ public class CommonServiceHelper {
     
     /**
      * 查询并更新同步表变量
+     * 
+     * update by lsm (add the first query:querySql )
      * @param var
      * @return
      */
     @Transactional
     public int queryAndUpdateSynVariable(int pid){
-    	String sql = "select value from synchronized_table where pid = " + pid +" for update";
-    	Query query = em.createNativeQuery(sql);
-    	Object o = query.getSingleResult();
-    	if(o != null){
-    		int v = (Integer)o;
+    	//pre check (add by lsm)
+    	String querySql = "select value from synchronized_table where pid = " + pid;
+    	Query query = em.createNativeQuery(querySql);
+    	Object queryResult = query.getSingleResult();
+    	if(queryResult !=null){
+    		int v = (Integer) queryResult;
+    		if(v==1){
+    			return 0; 
+    		}
+    	}
+    	
+    	String queryForUpdateSql = "select value from synchronized_table where pid = " + pid +" for update";
+    	Query queryForUpdate = em.createNativeQuery(queryForUpdateSql);
+    	Object queryForUpdateResult = queryForUpdate.getSingleResult();
+    	if(queryForUpdateResult != null){
+    		int v = (Integer)queryForUpdateResult;
     		if(v == 0){
     			String updateSql = "update synchronized_table set value = 1 where pid = " + pid;
     			Query query2 = em.createNativeQuery(updateSql);
@@ -793,4 +817,9 @@ public class CommonServiceHelper {
 					"PT维度在该环境未录入");
 		}
 	}
+	
+    public Map<String, Object> getRepositoryAndModelMap() {
+		return new HashMap<String, Object>(repositoryAndModelMap);
+	}
+
 }
