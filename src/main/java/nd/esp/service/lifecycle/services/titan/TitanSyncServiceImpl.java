@@ -76,7 +76,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     }
 
     @Override
-    public boolean reportResource(String primaryCategory, String identifier) {
+    public boolean reportResource(String primaryCategory, String identifier ,TitanSyncType titanSyncType) {
         if(ResourceNdCode.fromString(primaryCategory)==null){
             return true;
         }
@@ -96,13 +96,13 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
 
         if(education == null){
-            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
+            titanRepositoryUtils.titanSync4MysqlDelete(titanSyncType,primaryCategory,identifier);
         } else {
             boolean reportSuccess = report(education);
             if(reportSuccess){
-                titanRepositoryUtils.titanSync4MysqlDelete(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
+                titanRepositoryUtils.titanSync4MysqlDelete(titanSyncType,primaryCategory,identifier);
             } else {
-                titanRepositoryUtils.titanSync4MysqlImportAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,primaryCategory,identifier);
+                titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
             }
         }
 

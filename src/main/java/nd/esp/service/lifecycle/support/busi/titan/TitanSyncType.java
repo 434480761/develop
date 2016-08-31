@@ -37,7 +37,9 @@ public enum  TitanSyncType {
     UPDATE_DATA_OTHER,
     DELETE_CATEGORY_ERROR,
     DELETE_COVERAGE_ERROR,
-    DELETE_TECH_INFO_ERROR;
+    DELETE_TECH_INFO_ERROR,
+    //不同版本数据库差量修复数据
+    VERSION_REPAIR;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {

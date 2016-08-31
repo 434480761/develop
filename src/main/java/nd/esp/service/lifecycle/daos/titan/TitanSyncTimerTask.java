@@ -38,30 +38,51 @@ public class TitanSyncTimerTask {
 
     @Autowired
     @Qualifier(value = "defaultJdbcTemplate")
-    private JdbcTemplate jdbcTemplate;;
+    private JdbcTemplate jdbcTemplate;
 
 
     @Scheduled(fixedDelay=30000)
-    public void syncTask(){
+    public void syncTask4SaveOrUpdate(){
         if(!TITAN_SYNC_SWITCH){
-            LOG.info("titan_sync_closed");
+            LOG.info("titan_sync_save_or_update_closed");
             return;
         }
         if (!StaticDatas.TITAN_SWITCH){
             LOG.info("titan_client_closed");
             return;
         }
-        if (checkHaveData()){
+        if (checkHaveData(TitanSyncType.SAVE_OR_UPDATE_ERROR)){
             LOG.info("titan_sync_start");
             try{
-                syncData();
+                syncData(TitanSyncType.SAVE_OR_UPDATE_ERROR);
             } catch (Exception e){
                 LOG.info("titan_sync_error {}",e.getLocalizedMessage());
             }
         }
     }
 
-    private void syncData() {
+
+    @Scheduled(fixedDelay=300000)
+    public void syncTask4VersionRepair(){
+        if(!TITAN_SYNC_SWITCH){
+            LOG.info("titan_sync_version_repair_closed");
+            return;
+        }
+        if (!StaticDatas.TITAN_SWITCH){
+            LOG.info("titan_client_closed");
+            return;
+        }
+        if (checkHaveData(TitanSyncType.VERSION_REPAIR)){
+            LOG.info("titan_version_repair_start");
+            try{
+                syncData(TitanSyncType.VERSION_REPAIR);
+            } catch (Exception e){
+                LOG.info("titan_version_repair_error {}",e.getLocalizedMessage());
+            }
+        }
+    }
+
+    private void syncData(TitanSyncType titanSyncType) {
         int page = 0;
         Page<TitanSync> resourcePage;
         do {
@@ -95,18 +116,19 @@ public class TitanSyncTimerTask {
                 continue;
             }
             for (TitanSync titanSync : entitylist) {
-                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
+                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))
+                        && TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(titanSyncType)) {
                     titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
+                } else if (titanSyncType.equals(TitanSyncType.value(titanSync.getType()))) {
+                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource(), titanSyncType);
                 }
             }
 
         } while (++page < resourcePage.getTotalPages());
     }
 
-    private boolean checkHaveData(){
-        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES;
+    private boolean checkHaveData(TitanSyncType titanSyncType){
+        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES +" AND type = "+ titanSyncType.toString();
 
         Long total = jdbcTemplate.queryForLong(script);
 
