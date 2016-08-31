@@ -11,9 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCheckResourceExistRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
@@ -35,7 +38,12 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
-import nd.esp.service.lifecycle.repository.sdk.*;
+import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceStatistical4QuestionDBRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
@@ -101,6 +109,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	@Autowired
 	private TitanImportRepository titanImportRepository;
 
+    @Resource(name = "titanCheckResourceExistRepository")
+    private TitanCheckResourceExistRepository titanCheckResourceExistRepository;
+	
 	@Autowired
 	private CategoryDataRepository categoryDataRepository;
 
@@ -265,7 +276,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		List<ResourceRelation> resourceRelations = educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
 		
 		List<ResourceStatistical> resourceStatistic = ndResourceDao.queryStatisticalUseHql(resourceTypes, uuids);
-		titanImportRepository.checkResourceAllInTitan2(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
+//		titanImportRepository.checkResourceAllInTitan2(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
+		titanCheckResourceExistRepository.checkOneResourceInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
 
 	}
 
@@ -446,7 +458,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         @Override
         public void method(List<ResourceRelation> resourceRelations) {
             List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
-            titanImportRepository.checkResourceRelations(existRelation);
+//            titanImportRepository.checkResourceRelations(existRelation);
+            titanCheckResourceExistRepository.checkResourceRelations(existRelation);
         }
     }
 	
@@ -582,8 +595,8 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 List<ResourceStatistical> statistic = new ArrayList<ResourceStatistical>(resourceStatisticalMultimap.get(education.getIdentifier()));
                 CheckResourceModel checkResourceModel = new CheckResourceModel.Builder(education).techInfos(techInfos).
                         resCoverages(resCoverages).resourceCategories(resourceCategories).statistic(statistic).builder();
-//                titanImportRepository.checkResourceAllInTitan2(education,resCoverages,resourceCategories,techInfos ,null, statistic);
-                titanImportRepository.checkResourceInTitan(checkResourceModel);
+//                titanImportRepository.checkResourceInTitan(checkResourceModel);
+                titanCheckResourceExistRepository.checkResourcesInTitan(checkResourceModel);
             }
             return 0;
         }

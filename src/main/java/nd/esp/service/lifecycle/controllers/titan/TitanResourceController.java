@@ -275,7 +275,7 @@ public class TitanResourceController {
 	public long checkAllData() {
 //		titanResourceService.checkResource(ResourceNdCode.chapters.toString());
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
-			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1262275200000L), new Date(1483200000000L));
+			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1162275200000L), new Date());
 		}
 		return 0;
 	}
