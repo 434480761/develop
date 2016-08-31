@@ -39,7 +39,7 @@ public enum  TitanSyncType {
     DELETE_COVERAGE_ERROR,
     DELETE_TECH_INFO_ERROR,
     //不同版本数据库差量修复数据
-    VERSION_REPAIR;
+    VERSION_SYNC;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {

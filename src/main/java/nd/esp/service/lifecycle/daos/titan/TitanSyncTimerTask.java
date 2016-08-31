@@ -72,10 +72,10 @@ public class TitanSyncTimerTask {
             LOG.info("titan_client_closed");
             return;
         }
-        if (checkHaveData(TitanSyncType.VERSION_REPAIR)){
+        if (checkHaveData(TitanSyncType.VERSION_SYNC)){
             LOG.info("titan_version_repair_start");
             try{
-                syncData(TitanSyncType.VERSION_REPAIR);
+                syncData(TitanSyncType.VERSION_SYNC);
             } catch (Exception e){
                 LOG.info("titan_version_repair_error {}",e.getLocalizedMessage());
             }
