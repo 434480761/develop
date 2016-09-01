@@ -11,9 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanChapterRelationRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanCheckResourceExistRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanImportRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanKnowledgeRelationRepository;
@@ -35,9 +38,15 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
-import nd.esp.service.lifecycle.repository.sdk.*;
+import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
+import nd.esp.service.lifecycle.repository.sdk.KnowledgeRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelation4QuestionDBRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceStatistical4QuestionDBRepository;
+import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -100,6 +109,9 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 	@Autowired
 	private TitanImportRepository titanImportRepository;
 
+    @Resource(name = "titanCheckResourceExistRepository")
+    private TitanCheckResourceExistRepository titanCheckResourceExistRepository;
+	
 	@Autowired
 	private CategoryDataRepository categoryDataRepository;
 
@@ -260,9 +272,12 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		primaryCategorys.add(primaryCategory);
 		List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(primaryCategorys,uuids);
 
+		
 		List<ResourceRelation> resourceRelations = educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
-
-		titanImportRepository.checkResourceAllInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations);
+		
+		List<ResourceStatistical> resourceStatistic = ndResourceDao.queryStatisticalUseHql(resourceTypes, uuids);
+//		titanImportRepository.checkResourceAllInTitan2(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
+		titanCheckResourceExistRepository.checkOneResourceInTitan(education,resCoverageList,resourceCategoryList,techInfos, resourceRelations, resourceStatistic);
 
 	}
 
@@ -325,6 +340,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     public void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate) {
         AbstractPageQuery abstractPageQuery = new CheckResource(BigDecimal.valueOf(beginDate.getTime()), BigDecimal.valueOf(endDate.getTime()));
         abstractPageQuery.doing(primaryCategory);
+    }
+    
+    @Override
+    public void checkAllResourceRelations(){
+        AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCheck();
+        abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
     }
     
 	@Override
@@ -431,6 +453,16 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 		public abstract void method(List<ResourceRelation> resourceRelations);
 	}
 
+	public class AbstractPageQueryRelationCheck extends AbstractPageQueryRelation{
+
+        @Override
+        public void method(List<ResourceRelation> resourceRelations) {
+            List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
+//            titanImportRepository.checkResourceRelations(existRelation);
+            titanCheckResourceExistRepository.checkResourceRelations(existRelation);
+        }
+    }
+	
  	public class AbstractPageQueryRelationCreate extends AbstractPageQueryRelation{
 
 		@Override
@@ -554,13 +586,27 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             
             Multimap<String, ResourceCategory> resourceCategoryMultimap = queryCategoroiesUseHql(primaryCategory, uuids);
             
+            Multimap<String, ResourceStatistical> resourceStatisticalMultimap = queryStatisticalUseHql(primaryCategory, uuids);
+            
             for (Education education : educations){
-                List<TechInfo> sourceTechInfo = new ArrayList<TechInfo>(techInfoMultimap.get(education.getIdentifier()));
-                List<ResCoverage> sourceResCoverage = new ArrayList<ResCoverage>(resCoverageMultimap.get(education.getIdentifier()));
-                List<ResourceCategory> resourceCategory = new ArrayList<ResourceCategory>(resourceCategoryMultimap.get(education.getIdentifier()));
-                titanImportRepository.checkResourceAllInTitan2(education,sourceResCoverage,resourceCategory,sourceTechInfo ,null);
+                List<TechInfo> techInfos = new ArrayList<TechInfo>(techInfoMultimap.get(education.getIdentifier()));
+                List<ResCoverage> resCoverages = new ArrayList<ResCoverage>(resCoverageMultimap.get(education.getIdentifier()));
+                List<ResourceCategory> resourceCategories = new ArrayList<ResourceCategory>(resourceCategoryMultimap.get(education.getIdentifier()));
+                List<ResourceStatistical> statistic = new ArrayList<ResourceStatistical>(resourceStatisticalMultimap.get(education.getIdentifier()));
+                CheckResourceModel checkResourceModel = new CheckResourceModel.Builder(education).techInfos(techInfos).
+                        resCoverages(resCoverages).resourceCategories(resourceCategories).statistic(statistic).builder();
+//                titanImportRepository.checkResourceInTitan(checkResourceModel);
+                titanCheckResourceExistRepository.checkResourcesInTitan(checkResourceModel);
             }
             return 0;
+        }
+        
+        private Multimap<String, ResourceStatistical> queryStatisticalUseHql(String primaryCategory, Set<String> uuids) {
+            List<String> resourceTypes = new ArrayList<String>();
+            resourceTypes.add(primaryCategory);
+            List<ResourceStatistical> resourceStatistic = ndResourceDao.queryStatisticalUseHql(resourceTypes, uuids);
+            Multimap<String, ResourceStatistical> resourceCategoryMultimap = toResourceStatisticalMultimap(resourceStatistic);
+            return resourceCategoryMultimap;
         }
         
         private Multimap<String, ResourceCategory> queryCategoroiesUseHql(String primaryCategory, Set<String> uuids) {
@@ -608,6 +654,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             Multimap<String, ResourceCategory> multimap = ArrayListMultimap.create();
             for (ResourceCategory resourceCategory : categories) {
                 multimap.put(resourceCategory.getResource(), resourceCategory);
+            }
+            return multimap;
+        }
+        
+        private Multimap<String, ResourceStatistical> toResourceStatisticalMultimap(List<ResourceStatistical> statistic){
+            Multimap<String, ResourceStatistical> multimap = ArrayListMultimap.create();
+            for (ResourceStatistical stat : statistic) {
+                multimap.put(stat.getResource(), stat);
             }
             return multimap;
         }
@@ -1050,7 +1104,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 			if(resourcePage == null){
 				return null;
 			}
-
+			setStatisticParam(primaryCategory,resourcePage.getTotalPages(),page);
 			return resourcePage.getTotalPages();
 		}
 
@@ -1082,7 +1136,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
 
 		@Override
 		long importDataOperate(List<Education> educations, String primaryCategory) {
-			return 0;
+			return importData(educations, primaryCategory);
 		}
 	}
 

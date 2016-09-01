@@ -236,12 +236,12 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	}
 
 	private ResCoverage updateCoverage(ResCoverage resCoverage) {
-		delete(resCoverage.getIdentifier());
 		add(resCoverage);
 		return resCoverage;
 	}
 
 	private ResCoverage addCoverage(ResCoverage resCoverage) {
+		delete(resCoverage.getIdentifier());
 		Long coverageNodeId = getCoverageNodeId(resCoverage);
 		String coveragePathId;
 		if (coverageNodeId == null) {
