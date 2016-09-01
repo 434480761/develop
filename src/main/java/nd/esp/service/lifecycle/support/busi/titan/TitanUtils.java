@@ -18,6 +18,11 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 public class TitanUtils {
 
 
+	/**
+	 * 获取字段所对应的es数据类型
+	 * @param field
+	 * @return
+     */
 	public static String convertToEsDataType(String field) {
 		if (ES_SearchField.lc_last_update.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field)) {
 			return convertToEsDataType(Long.class);
