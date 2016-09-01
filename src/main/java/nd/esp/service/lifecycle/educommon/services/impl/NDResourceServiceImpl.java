@@ -1352,7 +1352,6 @@ public class NDResourceServiceImpl implements NDResourceService{
             }else{
                 rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
             }
-           
         } else {
             // 非续约，要判断是否存在对应的元数据
             if (!renew) {
@@ -1361,8 +1360,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
                 if (resourceModel == null) {
                     // 不存在对应的资源
-                    
-                   
                     LOG.error(LifeCircleErrorMessageMapper.CSResourceNotFound.getMessage());
                    
                     throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1378,7 +1375,6 @@ public class NDResourceServiceImpl implements NDResourceService{
                     rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
                 }
             }
-
         }
         
         LOG.debug("各个组织cs根目录："+rootPath);
