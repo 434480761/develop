@@ -8,7 +8,6 @@ import nd.esp.service.lifecycle.repository.model.ResourceCategory;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.ResourceStatistical;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
-import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
 
 /**
  * Created by liuran on 2016/7/26.
@@ -33,12 +32,4 @@ public interface TitanImportRepository {
                                     List<ResourceCategory> resourceCategoryList,
                                     List<TechInfo> techInfos,
                                     List<ResourceRelation> resourceRelationList);
-    
-    void checkResourceAllInTitan2(Education education, List<ResCoverage> resCoverages,
-            List<ResourceCategory> resourceCategories, List<TechInfo> techInfos,
-            List<ResourceRelation> resourceRelations, List<ResourceStatistical> statistic);
-
-    public void checkResourceInTitan(CheckResourceModel checkResourceModel);
-
-    void checkResourceRelations(List<ResourceRelation> existRelation);
 }
