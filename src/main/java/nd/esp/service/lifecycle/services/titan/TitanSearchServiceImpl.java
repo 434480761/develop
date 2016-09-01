@@ -861,11 +861,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             for (String field : orderFields) {
                 if (ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
                     TitanOrder order = new TitanOrder();
+                    // field,field,ASC/DESC,dataType
                     order.setOrderByField(field).setField(field).setSortOrder(orderMap.get(field).toUpperCase()).setDataType(TitanUtils.convertToEsDataType(field));
                     orderList.add(order);
                 }
             }
         }
+        // TODO 是否要加上默认排序
         return orderList;
     }
 
