@@ -60,6 +60,7 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         checkResCoverage(education, resCoverages);
         checkResourceStatistic(education, statistic);
         checkNdResource(education, resourceCategories, resCoverages);
+        checkResourceRelations(resourceRelations);
     }
     
     @Override
@@ -374,7 +375,8 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
      * @see
      */
     private List<String> split(String value) {
-        if (value != null) {
+        // titan 中 value = "" 对应mysql 中 null         
+        if (StringUtils.isNotEmpty(value)) {
             // \\s+ 去除空格，回车等字符
             return Arrays.asList(value.replaceAll("\\s+", "").toUpperCase().split(","));
         }
