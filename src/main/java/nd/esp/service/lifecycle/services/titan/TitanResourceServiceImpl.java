@@ -30,6 +30,7 @@ import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -934,7 +935,11 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             List<TechInfo> sourceTechInfo = techInfoMap.get(education.getIdentifier());
             List<ResCoverage> sourceResCoverage = resCoverageMap.get(education.getIdentifier());
             List<ResourceCategory> resourceCategory = resourceCategoryMap.get(education.getIdentifier());
-            titanImportRepository.importOneData(education, sourceResCoverage, resourceCategory, sourceTechInfo);
+            boolean success = titanImportRepository.importOneData(education, sourceResCoverage, resourceCategory, sourceTechInfo);
+            if (!success){
+                titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.IMPORT_DATA_ERROR,
+                        education.getPrimaryCategory(), education.getIdentifier(),999);
+            }
         }
 
         return educations.size();
