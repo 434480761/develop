@@ -4,16 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -81,6 +72,9 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanOrderFields;
+import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeService;
@@ -305,21 +299,19 @@ public class NDResourceServiceImpl implements NDResourceService{
 		// 参数整理
 		Map<String, Map<String, List<String>>> params = this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey,forceStatus);
 		// FIXME 处理orderMap 暂时放在这里
-		if (CollectionUtils.isNotEmpty(orderMap)) {
-			if (orderMap.containsKey("sta_key_value")) {
-				orderMap.put("sta_key_value", orderMap.get("sta_key_value") + "#" + statisticsType + "#" + statisticsPlatform);
-			}
-		}
+		Map<String, String> orders = TitanUtils.dealOrderMap(orderMap,showVersion,reverse,relations,statisticsType,statisticsPlatform);
+
 		Integer result[] = ParamCheckUtil.checkLimit(limit);
 		if(includes == null){
 			includes = new ArrayList<String>();
 		}
 		listViewModel =
-				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orderMap,
+				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orders,
 						result[0], result[1],reverse,words, forceStatus, tags, showVersion);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
+
 
 	/**
      * 资源检索(titan)
