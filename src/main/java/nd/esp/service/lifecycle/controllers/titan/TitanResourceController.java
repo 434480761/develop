@@ -149,6 +149,13 @@ public class TitanResourceController {
 		titanResourceService.importAllRelation();
 	}
 
+
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/relation/{page}", method = RequestMethod.GET)
+	public void indexAllRelationPage(@PathVariable Integer page) {
+		titanResourceService.importAllRelationPage(page);
+	}
+
 	/**
 	 * 创建章节和知识点关系
 	 * */

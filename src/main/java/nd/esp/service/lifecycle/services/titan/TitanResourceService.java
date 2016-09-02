@@ -14,6 +14,7 @@ public interface TitanResourceService {
 
 	void timeTaskImport(Integer page , String type);
 	long importAllRelation();
+	void importAllRelationPage(Integer page);
 	void repairAllRelation();
 	void repairOne(String resourceType, String id);
 	void timeTaskRepair(Integer page , String type);

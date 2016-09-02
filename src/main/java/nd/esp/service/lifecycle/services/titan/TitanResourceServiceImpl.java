@@ -178,6 +178,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     @Override
+    public void importAllRelationPage(Integer page) {
+        AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCreate(page);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+        abstractPageQueryRelation = new AbstractPageQueryRelationCreate(0);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
+    }
+
+    @Override
     public void repairAllRelation() {
         AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationRepair();
         abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
@@ -382,6 +390,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 }
                 for (Object obj : entitylist){
                     TitanSync titanSync = (TitanSync) obj;
+                    titanSyncRepository.delete(titanSync);
                     titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.value(newType),titanSync.getPrimaryCategory(),titanSync.getResource(),executTimes);
                 }
 
@@ -521,12 +530,20 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     public abstract class AbstractPageQueryRelation {
+        private Integer startPage = 0;
+        public AbstractPageQueryRelation(Integer page){
+            this.startPage = page;
+        }
+
+        public AbstractPageQueryRelation(){
+            this.startPage = 0;
+        }
         public long pageQueryRelation(ResourceRepository resourceRepository) {
             String fieldName = "identifier";
 
             long indexNum = 0;
             // 分页
-            int page = 0;
+            int page = startPage;
             int row = 500;
             @SuppressWarnings("rawtypes")
             Page resourcePage = new PageImpl(new ArrayList());
@@ -565,6 +582,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 setStatisticParam("relations", resourcePage.getTotalPages(), page);
             } while (++page < resourcePage.getTotalPages());
 
+            startPage = 0;
             return indexNum;
         }
 
@@ -572,6 +590,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     public class AbstractPageQueryRelationCheck extends AbstractPageQueryRelation {
+
+        public AbstractPageQueryRelationCheck(Integer startPage) {
+            super(startPage);
+        }
+
+        public AbstractPageQueryRelationCheck() {
+            super();
+        }
 
         @Override
         public void method(List<ResourceRelation> resourceRelations) {
@@ -581,7 +607,13 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     public class AbstractPageQueryRelationCreate extends AbstractPageQueryRelation {
+        public AbstractPageQueryRelationCreate(Integer startPage) {
+            super(startPage);
+        }
 
+        public AbstractPageQueryRelationCreate() {
+            super();
+        }
         @Override
         public void method(List<ResourceRelation> resourceRelations) {
             List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
@@ -590,6 +622,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     public class AbstractPageQueryRelationRepair extends AbstractPageQueryRelation {
+
+        public AbstractPageQueryRelationRepair() {
+            super();
+        }
+
+        public AbstractPageQueryRelationRepair(Integer startPage) {
+            super(startPage);
+        }
 
         @Override
         public void method(List<ResourceRelation> resourceRelations) {
