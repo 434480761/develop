@@ -68,7 +68,7 @@
 		</command>
 		<command name="mp4First">
 			<os name="Default">
-				move "#srcDir#\#fileNameNoEx#.jpg" "#previewTarget#\frame1.jpg"
+				move "#srcDir#\#fileNameNoEx#.jpg" "#targetPreview#\frame1.jpg"
 			</os>
 		</command>
 	</rule>
