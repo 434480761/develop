@@ -168,15 +168,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // FIXME
         titanExpression.setResTypeSet(resTypeSet);
         titanExpression.setRange(from, size);
+        if(showVersion) titanExpression.setShowSubVersion(true);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
-        dealWithShowVersionOrder(titanExpression,resTypeSet,orderMap, showVersion, orderList);// FIXME
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
-        if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
-            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
-        }
+
         titanExpression.setOrderList(orderList);
         dealWithPrintable(titanExpression, params.get("ti_printable"));
         params.remove("ti_printable");
@@ -839,12 +837,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList,isShowVersion);
             }
         }
-        // 默认排序
-        if (CollectionUtils.isEmpty(orderList)) {
+        // 默认排序 已经处理
+        /*if (CollectionUtils.isEmpty(orderList)) {
             TitanOrder order = new TitanOrder();
             order.setField(ES_SearchField.lc_create_time.toString()).setOrderByField( ES_SearchField.lc_create_time.toString()).setSortOrder(TitanOrder.SORTORDER.DESC.toString());
             orderList.add(order);
-        }
+        }*/
         titanExpression.setOrderList(orderList);
     }
 
@@ -882,15 +880,15 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     private void dealWithShowVersionOrder(TitanExpression titanExpression, Set<String> resTypeSet, Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
         if (showVersion) {
             // TODO 拼接 subversion 脚本
-            StringBuffer script = new StringBuffer(".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within(");
+           /* StringBuffer script = new StringBuffer(".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within(");
             for (String resType : resTypeSet) {
                 script.append("'").append(resType).append("'").append(",");
             }
             // remove the last ","
             script.deleteCharAt(script.length() - 1);
             script.append(")).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')");
-
-            titanExpression.setShowSubVersion(true, script.toString(), TitanKeyWords.select_version_result.toString());
+*/
+            titanExpression.setShowSubVersion(true);
             TitanOrder o1 = new TitanOrder();
             o1.setField(ES_SearchField.m_identifier.toString());
             o1.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.m_identifier.toString() + "'),select('version_result').values('" + ES_SearchField.m_identifier.toString() + "'),__.constant(''))");
