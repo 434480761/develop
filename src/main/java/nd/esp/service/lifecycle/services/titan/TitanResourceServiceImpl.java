@@ -344,9 +344,52 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     @Override
     public boolean changeSyncType(String newType, String oldType, Integer executTimes) {
 
-        String sql = "update titan_sync set execute_times=" + executTimes + ", type='" + newType + "' where type='" + oldType + "'";
-        jdbcTemplate.execute(sql);
+        String fieldName = "createTime";
 
+        long total = 0;
+        // 分页
+        int page = 0;
+        int row = 500;
+        @SuppressWarnings("rawtypes")
+        Page resourcePage = new PageImpl(new ArrayList());
+        @SuppressWarnings("rawtypes")
+        List entitylist = null;
+
+        List<Item<? extends Object>> items = new ArrayList<>();
+
+        Item<String> resourceTypeItem = new Item<String>();
+        resourceTypeItem.setKey("type");
+        resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
+        resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+        resourceTypeItem.setValue(ValueUtils.newValue(oldType));
+        items.add(resourceTypeItem);
+
+        Sort sort = new Sort(Direction.ASC, fieldName);
+        do {
+            Pageable pageable = new PageRequest(page, row, sort);
+
+            try {
+                resourcePage = titanSyncRepository.findByItems(items, pageable);
+                if (resourcePage == null) {
+                    break;
+                }
+                entitylist = resourcePage.getContent();
+                if (entitylist == null) {
+                    continue;
+                }
+                if (entitylist.size() == 0) {
+                    continue;
+                }
+                for (Object obj : entitylist){
+                    TitanSync titanSync = (TitanSync) obj;
+                    titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.value(newType),titanSync.getPrimaryCategory(),titanSync.getResource(),executTimes);
+                }
+
+                LOG.info("import relation:totalPage:{}  page:{}", resourcePage.getTotalPages(), page);
+            } catch (Exception e) {
+                LOG.error(e.getMessage());
+            }
+        } while (++page < resourcePage.getTotalPages());
         return true;
     }
 
