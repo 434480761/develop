@@ -1,5 +1,3 @@
-UPDATE ndresource set record_status = 0;
-
 --资源库
 --
 -- 表的结构 `sub_instruction`
