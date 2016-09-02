@@ -14,6 +14,7 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.vrlife.VrLifeConstant;
 import nd.esp.service.lifecycle.support.vrlife.VrLifeType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
 import org.slf4j.Logger;
@@ -204,5 +205,23 @@ public class VrLifeDaoImpl implements VrLifeDao{
 		}
 		
 		return result;
+	}
+
+	@Override
+	public void addRecommendedResource(List<String> resources) {
+		if(CollectionUtils.isNotEmpty(resources)){
+			for(String resource : resources){
+				String sql = "INSERT INTO recommended_resources VALUES ('" + resource + "')";
+				defaultJdbcTemplate.execute(sql);
+			}
+		}
+	}
+
+	@Override
+	public void deleteRecommendedResource(String id) {
+		if(StringUtils.hasText(id)){
+			String sql = "DELETE FROM recommended_resources WHERE recommended_id='" + id + "'";
+			defaultJdbcTemplate.execute(sql);
+		}
 	}
 }

@@ -35,4 +35,21 @@ public interface VrLifeDao {
 	 * @return
 	 */
 	public List<String> dynamicComposition(String skeletonId);
+	
+	/**
+	 * 添加推荐列表
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param resources
+	 * @return
+	 */
+	public void addRecommendedResource(List<String> resources);
+	
+	/**
+	 * 删除推荐资源
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param id
+	 */
+	public void deleteRecommendedResource(String id);
 }
