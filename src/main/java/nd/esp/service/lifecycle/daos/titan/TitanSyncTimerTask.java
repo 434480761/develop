@@ -41,7 +41,7 @@ public class TitanSyncTimerTask {
     private JdbcTemplate jdbcTemplate;
 
 
-    @Scheduled(fixedDelay=30000)
+    @Scheduled(fixedDelay=1000)
     public void syncTask4SaveOrUpdate(){
         if(!TITAN_SYNC_SWITCH){
             LOG.info("titan_sync_save_or_update_closed");
@@ -85,54 +85,51 @@ public class TitanSyncTimerTask {
     private void syncData(TitanSyncType titanSyncType) {
         int page = 0;
         Page<TitanSync> resourcePage;
-        do {
-            if(!TITAN_SYNC_SWITCH){
-                return;
-            }
-            String fieldName = "createTime";
-            int row = 10;
-            List<TitanSync> entitylist;
-            List<Item<? extends Object>> items = new ArrayList<>();
-            Item<Integer> resourceTypeItem = new Item<>();
-            resourceTypeItem.setKey("executeTimes");
-            resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
-            resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
-            resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
+        if(!TITAN_SYNC_SWITCH){
+            return;
+        }
+        String fieldName = "createTime";
+        int row = 10;
+        List<TitanSync> entitylist;
+        List<Item<? extends Object>> items = new ArrayList<>();
+        Item<Integer> resourceTypeItem = new Item<>();
+        resourceTypeItem.setKey("executeTimes");
+        resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
+        resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+        resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
 
-            Item<String> resourceTypeItemType = new Item<>();
-            resourceTypeItemType.setKey("type");
-            resourceTypeItemType.setComparsionOperator(ComparsionOperator.EQ);
-            resourceTypeItemType.setLogicalOperator(LogicalOperator.AND);
-            resourceTypeItemType.setValue(ValueUtils.newValue(titanSyncType.toString()));
+        Item<String> resourceTypeItemType = new Item<>();
+        resourceTypeItemType.setKey("type");
+        resourceTypeItemType.setComparsionOperator(ComparsionOperator.EQ);
+        resourceTypeItemType.setLogicalOperator(LogicalOperator.AND);
+        resourceTypeItemType.setValue(ValueUtils.newValue(titanSyncType.toString()));
 
-            items.add(resourceTypeItem);
-            items.add(resourceTypeItemType);
+        items.add(resourceTypeItem);
+        items.add(resourceTypeItemType);
 
-            Sort sort = new Sort(Sort.Direction.ASC, fieldName);
-            Pageable pageable = new PageRequest(page, row, sort);
-            try {
-                resourcePage = titanSyncRepository.findByItems(items, pageable);
-            } catch (EspStoreException e) {
-                e.printStackTrace();
-                return;
+        Sort sort = new Sort(Sort.Direction.ASC, fieldName);
+        Pageable pageable = new PageRequest(page, row, sort);
+        try {
+            resourcePage = titanSyncRepository.findByItems(items, pageable);
+        } catch (EspStoreException e) {
+            e.printStackTrace();
+            return;
+        }
+        if (resourcePage == null) {
+            return;
+        }
+        entitylist = resourcePage.getContent();
+        if (entitylist == null) {
+            return;
+        }
+        for (TitanSync titanSync : entitylist) {
+            if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))
+                    && TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(titanSyncType)) {
+                titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
+            } else if (titanSyncType.equals(TitanSyncType.value(titanSync.getType()))) {
+                titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource(), titanSyncType);
             }
-            if (resourcePage == null) {
-                return;
-            }
-            entitylist = resourcePage.getContent();
-            if (entitylist == null) {
-                continue;
-            }
-            for (TitanSync titanSync : entitylist) {
-                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))
-                        && TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(titanSyncType)) {
-                    titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                } else if (titanSyncType.equals(TitanSyncType.value(titanSync.getType()))) {
-                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource(), titanSyncType);
-                }
-            }
-
-        } while (++page < resourcePage.getTotalPages());
+        }
     }
 
     private boolean checkHaveData(TitanSyncType titanSyncType){
