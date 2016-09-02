@@ -150,17 +150,12 @@ public class VrLifeDaoImpl implements VrLifeDao{
 		List<String> result = new ArrayList<String>();
 		
 		if(type.equals(VrLifeType.ACTION.getName())){//动作
-			result.add("RS001001001001001000000");
-			result.add("RS001001001002001000000");
-			result.add("RS001001002001001000000");
-			result.add("RS001001002002001000000");
-			result.add("RS001002001001000000000");
-			result.add("RS001002002001000000000");
-			result.add("RS001002003001000000000");
+			result.add("$V001001004001002000000000000000");
+			result.add("$V001001005001002000000000000000");
 		}else if(type.equals(VrLifeType.ROLECONFIG.getName())){//角色配置文件
-			result.add("RS001002001005000000000");
-			result.add("RS001002002005000000000");
-			result.add("RS001002003005000000000");
+			result.add("$V001001010000000000000000000000");
+		}else if(type.equals(VrLifeType.SKELETONCONFIG.getName())){//骨骼配置文件
+			result.add("$V001001009000000000000000000000");
 		}else{
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					"LC/VRLIFE_TYPE_IS_ILLEGAL","根据type获取对应的维度数据时,type只能为roleconfig(角色配置)、action(动作)");
@@ -180,25 +175,20 @@ public class VrLifeDaoImpl implements VrLifeDao{
 		List<String> result = new ArrayList<String>();
 		
 		if(type.equals(VrLifeConstant.TYPE_HAIRS_TYLE)){//发型
-			result.add("RS001002001002001000000");
-			result.add("RS001002002002001000000");
-			result.add("RS001002003002001000000");
+			result.add("$V001001004001001002000000000000");
+			result.add("$V001001005001001002000000000000");
 		}else if(type.equals(VrLifeConstant.TYPE_UPPER_BODY)){//上身
-			result.add("RS001002001002002000000");
-			result.add("RS001002002002002000000");
-			result.add("RS001002003002002000000");
+			result.add("$V001001004001001003000000000000");
+			result.add("$V001001005001001003000000000000");
 		}else if(type.equals(VrLifeConstant.TYPE_HEAD_STYLE)){//头型
-			result.add("RS001002001002003000000");
-			result.add("RS001002002002003000000");
-			result.add("RS001002003002003000000");
+			result.add("$V001001004001001001000000000000");
+			result.add("$V001001005001001001000000000000");
 		}else if(type.equals(VrLifeConstant.TYPE_LOWER_BODY)){//下身
-			result.add("RS001002001002004000000");
-			result.add("RS001002002002004000000");
-			result.add("RS001002003002004000000");
+			result.add("$V001001004001001004000000000000");
+			result.add("$V001001005001001004000000000000");
 		}else if(type.equals(VrLifeConstant.TYPE_FOOT)){//足
-			result.add("RS001002001002005000000");
-			result.add("RS001002002002005000000");
-			result.add("RS001002003002005000000");
+			result.add("$V001001004001001005000000000000");
+			result.add("$V001001005001001005000000000000");
 		}else{
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					"LC/VRLIFE_TYPE_IS_ILLEGAL","type不属于部件类型");
