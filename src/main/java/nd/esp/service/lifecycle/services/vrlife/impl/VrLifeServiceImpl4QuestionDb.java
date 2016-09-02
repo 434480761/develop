@@ -136,4 +136,14 @@ public class VrLifeServiceImpl4QuestionDb implements VrLifeService{
 	public ListViewModel<ResourceModel> dynamicComposition(String skeletonId, List<String> includeList) {
 		return null;
 	}
+
+	@Override
+	public void addRecommendedResource(List<String> resources) {
+		
+	}
+
+	@Override
+	public void deleteRecommendedResource(String id) {
+		
+	}
 }
