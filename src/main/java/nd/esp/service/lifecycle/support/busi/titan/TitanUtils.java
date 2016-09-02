@@ -111,9 +111,9 @@ public class TitanUtils {
 		else if (Date.class.isAssignableFrom(dataType)) {
 			return "date";
 		}
-		else if (Instant.class.isAssignableFrom(dataType)) {
+		/*else if (Instant.class.isAssignableFrom(dataType)) {
 			return "date";
-		}
+		}*/
 		/*else if (Geoshape.class.isAssignableFrom(datatype)) {
 			return "geo_point";
 		}*/
