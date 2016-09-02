@@ -82,6 +82,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             }
         } else {
             titanSync.setExecuteTimes(titanSync.getExecuteTimes() + 1);
+            titanSync.setCreateTime(System.currentTimeMillis());
             try {
                 titanSyncRepository.update(titanSync);
             } catch (EspStoreException e) {
