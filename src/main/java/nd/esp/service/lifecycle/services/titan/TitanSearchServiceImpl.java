@@ -155,7 +155,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
     @Override
-    public ListViewModel<ResourceModel> searchWithStatistics(String resType,
+    public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
                                                              List<String> includes,
                                                              Map<String, Map<String, List<String>>> params,
                                                              Map<String, String> orderMap, int from, int size,
@@ -164,20 +164,20 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
-        titanExpression.setResType(resType);
+        //titanExpression.setResType("resType");
+        // FIXME
+        titanExpression.setResTypeSet(resTypeSet);
         titanExpression.setRange(from, size);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
-        dealWithShowVersionOrder(titanExpression,resType,orderMap, showVersion, orderList);
-        //dealWithOrder(titanExpression, orderMap, orderList);
+        dealWithShowVersionOrder(titanExpression,resTypeSet,orderMap, showVersion, orderList);// FIXME
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
         if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
             titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
         }
         titanExpression.setOrderList(orderList);
-        // FIXME "ti_printable" -> " size = 1"
         dealWithPrintable(titanExpression, params.get("ti_printable"));
         params.remove("ti_printable");
         dealWithRelation(titanExpression, params.get("relation"), reverse);
@@ -185,7 +185,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
         // 判断words是否要过滤edu_description
-        resourceQueryVertex.setIsFilter(resType);
+        resourceQueryVertex.setIsFilter(resTypeSet);// FIXME
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
@@ -206,7 +206,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         resourceQueryVertex.setWords(words);
 
-        resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldCondtion(TitanKeyWords.primary_category.toString(), resType));
+        resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldsCondtion(TitanKeyWords.primary_category.toString(), resTypeSet));// FIXME
         resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
                 generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
         dealWithResource(resourceQueryVertex, params);
@@ -222,7 +222,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModelResourceModel(resultSet,resType,includes);
+        return getListViewModelResourceModel(resultSet,resTypeSet,includes);// FIXME
 
     }
 
@@ -236,6 +236,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
         builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
+        List<TitanOrder> orders = dealWithOrder4EsIndexQuery(orderMap);
+        builder.setOrders(orders);
         String script = builder.generateScriptAfterEsUpdate();
         LOG.info("script:" + script);
         // 2、查询
@@ -409,6 +411,17 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @return
      */
     private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, String resType, List<String> includes) {
+        Set<String> resTypeSet = new HashSet<>();
+        resTypeSet.add(resType);
+        return getListViewModelResourceModel(resultSet, resTypeSet, includes);
+    }
+    /**
+     * 解析查询结果
+     * @param resultSet
+     * @param resTypeSet
+     * @return
+     */
+    private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, Set<String> resTypeSet, List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
             long getResultBegin = System.currentTimeMillis();
@@ -422,7 +435,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse.parseToListViewResourceModel(resType, resultStr, includes, false);
+            return TitanResultParse.parseToListViewResourceModel(resTypeSet, resultStr, includes, false);
         } else {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
         }
@@ -836,6 +849,29 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
     /**
+     * 处理分词检索的排序
+     * 为分词检索接口设置order by字段的数据类型
+     * @param orderMap
+     * @return
+     */
+    public List<TitanOrder> dealWithOrder4EsIndexQuery(Map<String, String> orderMap) {
+        List<TitanOrder> orderList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(orderMap)) {
+            Set<String> orderFields = orderMap.keySet();
+            for (String field : orderFields) {
+                if (ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
+                    TitanOrder order = new TitanOrder();
+                    // field,field,ASC/DESC,dataType
+                    order.setOrderByField(field).setField(field).setSortOrder(orderMap.get(field).toUpperCase()).setDataType(TitanUtils.convertToEsDataType(field));
+                    orderList.add(order);
+                }
+            }
+        }
+        // TODO 是否要加上默认排序
+        return orderList;
+    }
+
+    /**
      *
      * .select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','assets').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('select_version_result')
      * choose(select('x').has('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL'),select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value'),__.constant('0.0'))
@@ -843,11 +879,18 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @param showVersion
      * @param orderList
      */
-    private void dealWithShowVersionOrder(TitanExpression titanExpression, String resType, Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
+    private void dealWithShowVersionOrder(TitanExpression titanExpression, Set<String> resTypeSet, Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
         if (showVersion) {
             // TODO 拼接 subversion 脚本
-            String script = ".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','" + resType + "').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')";
-            titanExpression.setShowSubVersion(true, script, TitanKeyWords.select_version_result.toString());
+            StringBuffer script = new StringBuffer(".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within(");
+            for (String resType : resTypeSet) {
+                script.append("'").append(resType).append("'").append(",");
+            }
+            // remove the last ","
+            script.deleteCharAt(script.length() - 1);
+            script.append(")).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')");
+
+            titanExpression.setShowSubVersion(true, script.toString(), TitanKeyWords.select_version_result.toString());
             TitanOrder o1 = new TitanOrder();
             o1.setField(ES_SearchField.m_identifier.toString());
             o1.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.m_identifier.toString() + "'),select('version_result').values('" + ES_SearchField.m_identifier.toString() + "'),__.constant(''))");

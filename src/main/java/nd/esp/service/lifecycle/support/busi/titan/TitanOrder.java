@@ -37,6 +37,7 @@ public class TitanOrder {
     private String script;
     private String orderByField;
     private String sortOrder;
+    private String dataType;
 
     public TitanOrder(String field, String script, String sortOrder) {
         this.field = field;
@@ -78,6 +79,15 @@ public class TitanOrder {
 
     public TitanOrder setOrderByField(String orderByField) {
         this.orderByField = orderByField;
+        return this;
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public TitanOrder setDataType(String dataType) {
+        this.dataType = dataType;
         return this;
     }
 

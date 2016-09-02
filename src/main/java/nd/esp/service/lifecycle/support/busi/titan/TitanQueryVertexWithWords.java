@@ -22,6 +22,14 @@ public class TitanQueryVertexWithWords extends TitanQueryVertex {
         }
     }
 
+    public void setIsFilter(Set<String> resTypeSet) {
+        if (CollectionUtils.isNotEmpty(resTypeSet)) {
+            for (String resType : resTypeSet) {
+                this.isFilter = ResourceNdCode.lessons.toString().equals(resType) || ResourceNdCode.instructionalobjectives.toString().equals(resType);
+            }
+        }
+    }
+
 
 
     public void setSearchPathsConditions(Map<String, Object> searchPathsConditions) {

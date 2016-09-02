@@ -1,9 +1,6 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -20,6 +17,7 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
+    private Set<String> resTypeSet;
     private List<String> includes;
     private boolean relationQueryOrderBy = false;
     private boolean isOrderBySortNum = false;
@@ -78,6 +76,10 @@ public class TitanExpression implements TitanScriptGenerator {
 
     public void setResType(String resType) {
         this.resType = resType;
+    }
+
+    public void setResTypeSet(Set<String> resTypeSet) {
+        this.resTypeSet = resTypeSet;
     }
 
     public void setOrderMap(Map<String, String> orderMap) {
@@ -202,7 +204,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resTypeSet,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
