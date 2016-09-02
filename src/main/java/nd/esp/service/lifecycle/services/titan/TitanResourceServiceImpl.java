@@ -387,6 +387,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
         resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
         resourceTypeItem.setValue(ValueUtils.newValue("RELATION"));
+        items.add(resourceTypeItem);
 
         Sort sort = new Sort(Direction.ASC, fieldName);
         do {
