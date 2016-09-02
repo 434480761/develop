@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
+import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -18,6 +19,62 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 public class TitanUtils {
 
 
+	/**
+	 * 处理orderMap 返回一个有序的 order排序
+	 * @param orderMap
+	 * @param showVersion
+	 * @param reverse
+	 * @param relations
+	 * @param statisticsType
+	 * @param statisticsPlatform
+     * @return
+     */
+	public static Map<String, String> dealOrderMap(Map<String, String> orderMap, boolean showVersion, boolean reverse, List<Map<String, String>> relations, String statisticsType, String statisticsPlatform) {
+		Map<String, String> orders = new LinkedHashMap<>();
+		// show_version
+		if (showVersion) {
+			orders.put(ES_SearchField.m_identifier.toString(), "asc");
+			if (CollectionUtils.isEmpty(orderMap)) orders.put(ES_SearchField.lc_version.toString(), "asc");
+		}
+		// add orderMap
+		if (CollectionUtils.isNotEmpty(orderMap)) {
+			Set<String> orderFields = orderMap.keySet();
+			for (String field : orderFields) {
+				String value = orderMap.get(field);
+				if (TitanOrderFields.sta_key_value.toString().equals(field))
+					value = value + "#" + statisticsType + "#" + statisticsPlatform;
+				orders.put(field, value);
+			}
+		}
+		// sort_num
+		if (!isOrderBySortNum(reverse, orderMap, relations)) orders.remove(TitanOrderFields.sort_num.toString());
+
+		// 默认排序
+		if (CollectionUtils.isEmpty(orders)) orders.put(ES_SearchField.lc_create_time.toString(),"desc");
+
+		return orders;
+	}
+
+	/**
+	 * 新增支持sort_num的排序，目的是提供根据资源关系创建顺序自定义排序的能力     new-2016.04.07
+	 * 1）当reverse=false，relation参数有且只有一个的时候该排序参数生效
+	 * 2）目前资源仅支持 assets
+	 * <p/>
+	 * 资源未做限制
+	 *
+	 * @param reverse
+	 * @param orderMap
+	 * @param relations
+	 * @return
+	 */
+	public static boolean isOrderBySortNum(boolean reverse, Map<String, String> orderMap, List<Map<String, String>> relations) {
+		if (reverse) return false;
+		if (CollectionUtils.isEmpty(orderMap)) return false;
+		if (!orderMap.containsKey(TitanKeyWords.sort_num.toString())) return false;
+		if (CollectionUtils.isEmpty(relations)) return false;
+		if (relations.size() != 1) return false;
+		return true;
+	}
 	/**
 	 * 获取字段所对应的es数据类型
 	 * @param field
