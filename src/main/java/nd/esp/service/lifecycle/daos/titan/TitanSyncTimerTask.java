@@ -98,7 +98,15 @@ public class TitanSyncTimerTask {
             resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
             resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
             resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
+
+            Item<String> resourceTypeItemType = new Item<>();
+            resourceTypeItemType.setKey("type");
+            resourceTypeItemType.setComparsionOperator(ComparsionOperator.EQ);
+            resourceTypeItemType.setLogicalOperator(LogicalOperator.AND);
+            resourceTypeItemType.setValue(ValueUtils.newValue(titanSyncType.toString()));
+
             items.add(resourceTypeItem);
+            items.add(resourceTypeItemType);
 
             Sort sort = new Sort(Sort.Direction.ASC, fieldName);
             Pageable pageable = new PageRequest(page, row, sort);
