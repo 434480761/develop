@@ -183,4 +183,14 @@ public class VrLifeServiceImpl implements VrLifeService{
 		result.setLimit(null);
 		return result;
 	}
+
+	@Override
+	public void addRecommendedResource(List<String> resources) {
+		vrLifeDao.addRecommendedResource(resources);
+	}
+
+	@Override
+	public void deleteRecommendedResource(String id) {
+		vrLifeDao.deleteRecommendedResource(id);
+	}
 }

@@ -42,4 +42,21 @@ public interface VrLifeService {
 	 * @return
 	 */
 	public ListViewModel<ResourceModel> dynamicComposition(String skeletonId, List<String> includeList);
+	
+	/**
+	 * 添加推荐列表
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param resources
+	 * @return
+	 */
+	public void addRecommendedResource(List<String> resources);
+	
+	/**
+	 * 删除推荐资源
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param id
+	 */
+	public void deleteRecommendedResource(String id);
 }
