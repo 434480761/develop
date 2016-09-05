@@ -30,7 +30,7 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		ResourceViewModel rvm = testCreate(resType,UUID.randomUUID().toString(),null);
 		// 测试资源审核
 		StatusReviewViewModel4In srvmi=getDefaultStatusReviewViewModel4In();
-	   String uuid=rvm.getIdentifier();	
+		String uuid=rvm.getIdentifier();	
 		srvmi.setIdentifier(uuid);
 		srvmi.setResType(resType);
 		StatusReviewViewModel4Out srvmo=testCheck(resType, uuid, toJson(srvmi));
@@ -73,7 +73,7 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		nullModel.setResType(resType);
 		nullModel.setPublishType(null);
 		nullModel.setTags(null);
-		String nullreturn=putCheck(resType, uuid, toJson(nullModel));
+		putCheck(resType, uuid, toJson(nullModel));
 		
 		
 		//测试资源类型是questions的情况
@@ -114,7 +114,7 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		return srvm;
 	}
 	
-	public StatusReviewViewModel4In getIllegalStatusReviewViewModel4In(){
+	private StatusReviewViewModel4In getIllegalStatusReviewViewModel4In(){
 
 		StatusReviewViewModel4In srvm=new StatusReviewViewModel4In();	
 		srvm.setStatus("ONLINE");
@@ -124,7 +124,7 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		return srvm;
 	}
 	
-	public List<StatusReviewTags> getDefaultStatusReviewTags(){
+	private List<StatusReviewTags> getDefaultStatusReviewTags(){
 		List<StatusReviewTags> resultList=new ArrayList<StatusReviewTags>();
 		List<String> list=new ArrayList<String>();
 		list.add("1");
@@ -140,7 +140,7 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		return resultList;
 	}
 	
-	public List<StatusReviewTags> getIllegalStatusReviewTags(){
+	private List<StatusReviewTags> getIllegalStatusReviewTags(){
 		List<StatusReviewTags> resultList=new ArrayList<StatusReviewTags>();
 		List<String> list=new ArrayList<String>();
 		list.add("1");
@@ -156,13 +156,13 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		return resultList;
 	}
 	
-	public StatusReviewViewModel4Out testCheck(String resType,String uuid,String param){
+	private StatusReviewViewModel4Out testCheck(String resType,String uuid,String param){
 		String resStr = putCheck(resType,uuid,param);
 		StatusReviewViewModel4Out m = fromJson(resStr, StatusReviewViewModel4Out.class);
 		return m;
 	}
 	
-	protected String putCheck(String resType,String uuid,String param){
+	private String putCheck(String resType,String uuid,String param){
 		
 		String uri = "/v0.6/vrlife/"+resType+"/status/review/"+uuid;
 		String resStr = null;
@@ -173,5 +173,4 @@ public class TestVrLifeController extends  SimpleJunitTest4ResourceImpl{
 		}
 		return resStr;
 	}
-	
 }

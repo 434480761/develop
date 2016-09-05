@@ -11,11 +11,11 @@ import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewMo
 
 public interface TitanSearchService {
 
-	public ListViewModel<ResourceModel> search(String resType,
+/*	public ListViewModel<ResourceModel> search(String resType,
 			List<String> includes,
 			Map<String, Map<String, List<String>>> params,
 			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
-	
+	*/
 	
 	public ListViewModel<ResourceModel> searchWithAdditionProperties(String resType,
 			List<String> includes,
