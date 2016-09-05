@@ -31,6 +31,7 @@ public enum ResourceNdCode {
     knowledges("$RA0205"), // 知识点
     
     guidancebooks("$RA0207"),//教辅
+    subInstruction("$RA0212"),//子教学目标
 
     // 教学资源
     coursewares("$RT0100"), // 课件

@@ -45,7 +45,8 @@ public interface EducationRelationDao {
                                                                 String relationType,
                                                                 String limit,
                                                                 boolean reverse,
-                                                                String coverage);
+                                                                String coverage,
+                                                                boolean isPortal);
 
     /**
      * 获取资源关系

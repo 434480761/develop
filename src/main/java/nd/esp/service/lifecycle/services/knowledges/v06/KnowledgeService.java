@@ -102,4 +102,11 @@ public interface KnowledgeService {
      */
     public void isHaveChildrens(String parent);
 
+    /**
+     * 判断知识点title是否已经存在
+     * @param title 知识点title
+     * @return 存在：true，不存在：false
+     */
+    boolean isExistKnowledgeTitle(String title);
+
 }
