@@ -44,7 +44,7 @@ public class TitanSyncTimerTask {
     @Scheduled(fixedDelay=1000)
     public void syncTask4SaveOrUpdate(){
         if(!TITAN_SYNC_SWITCH){
-            LOG.info("titan_sync_save_or_update_closed");
+//            LOG.info("titan_sync_save_or_update_closed");
             return;
         }
         if (!StaticDatas.TITAN_SWITCH){
