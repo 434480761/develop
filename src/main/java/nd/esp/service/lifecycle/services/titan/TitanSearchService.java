@@ -22,7 +22,7 @@ public interface TitanSearchService {
 			Map<String, Map<String, List<String>>> params,
 			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
 
-	public ListViewModel<ResourceModel> searchWithStatistics(String resType,
+	public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
 																	 List<String> includes,
 																	 Map<String, Map<String, List<String>>> params,
 																	 Map<String, String> orderMap, int from, int size, boolean reverse,String words, boolean forceStatus, List<String> tags, boolean showVersion);

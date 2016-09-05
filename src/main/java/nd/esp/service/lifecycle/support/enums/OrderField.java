@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpStatus;
-
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+
+import org.springframework.http.HttpStatus;
 
 /**
  * 用于实时查询排序
@@ -52,7 +52,7 @@ public enum OrderField {
 	 *            与fields一一对应，使用方保证（ASC，DESC）
 	 * @return
 	 */
-	public Comparator<ResourceModel> comparator(List<String> fields,
+	public static Comparator<ResourceModel> comparator(List<String> fields,
 			List<String> orders) {
 
 		final List<OrderField> orderFieldEnumList = OrderField
