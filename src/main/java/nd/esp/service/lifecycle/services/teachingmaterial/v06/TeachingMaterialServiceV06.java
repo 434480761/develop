@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import nd.esp.service.lifecycle.models.teachingmaterial.v06.TeachingMaterialModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 
 /**
  * 教材业务层接口
@@ -31,4 +33,12 @@ public interface TeachingMaterialServiceV06{
 												TeachingMaterialModel tmm);
 	
 	public List<Map<String,Object>> queryResourcesByTmId(String tmId,Set<String> resTypes,List<String> includes,String coverage);
+
+	/**
+	 * 根据id查找教材
+	 * @param id
+	 * @return
+	 * @throws EspStoreException
+     */
+	TeachingMaterial getById(String id) throws EspStoreException;
 }

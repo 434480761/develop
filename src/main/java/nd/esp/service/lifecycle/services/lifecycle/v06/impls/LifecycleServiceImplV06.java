@@ -10,15 +10,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
-import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
-import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.index.OffsetPageRequest;
 import nd.esp.service.lifecycle.repository.model.Contribute;
-import nd.esp.service.lifecycle.repository.sdk.Contribute4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ContributeRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
@@ -113,8 +110,8 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
                     LifeCircleErrorMessageMapper.CreateLifecycleFail);
         }
         
-        //更新状态及更新时间
-        UpdatePropertyInResource(resType, entry, rtContribute.getLifeStatus(), bUpdateTime);
+        //更新状态及更新时间 -- 经商讨去掉修改资源状态的回调
+//        UpdatePropertyInResource(resType, entry, rtContribute.getLifeStatus(), bUpdateTime);
         
         
         //处理返回结果
@@ -185,8 +182,8 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                         LifeCircleErrorMessageMapper.CreateBatchLifecycleFail);
             }
-            //更新状态及更新时间
-            UpdatePropertyInResource(resType, entries.get(i), rtContributes.get(i).getLifeStatus(), true);
+            //更新状态及更新时间 -- 经商讨去掉修改资源状态的回调
+//            UpdatePropertyInResource(resType, entries.get(i), rtContributes.get(i).getLifeStatus(), true);
             
             //处理返回结果
             ResContributeViewModel contributeViewModel = BeanMapperUtils.beanMapper(rtContributes.get(i), ResContributeViewModel.class);
@@ -445,7 +442,8 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
      * @param resType   资源类型
      * @param resIds    资源id集合
      */
-    private void UpdatePropertyInResource(String resType, EspEntity entry, String status, boolean bUpdateTime){
+    @SuppressWarnings("unused")
+	private void UpdatePropertyInResource(String resType, EspEntity entry, String status, boolean bUpdateTime){
         try {
             //获取通用SDK仓库
             EspRepository espRepository = ServicesManager.get(resType);

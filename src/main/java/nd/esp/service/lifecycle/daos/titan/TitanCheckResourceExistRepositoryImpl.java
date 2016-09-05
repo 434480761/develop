@@ -60,6 +60,7 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         checkResCoverage(education, resCoverages);
         checkResourceStatistic(education, statistic);
         checkNdResource(education, resourceCategories, resCoverages);
+        checkResourceRelations(resourceRelations);
     }
     
     @Override
@@ -326,9 +327,9 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         
         if(!StringUtils.isEmpty(result)){
             Map<String, String> valueMap = TitanResultParse.toMap(result);
-            
+
             boolean isDataNotExist = isDataExist(valueMap, getTaxonPath(categories), getTaxOnCode(categories), getResCoverage(coverages, education.getStatus()));
-            
+
             if (isDataNotExist) {
                 LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
                 titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
@@ -374,7 +375,8 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
      * @see
      */
     private List<String> split(String value) {
-        if (value != null) {
+        // titan 中 value = "" 对应mysql 中 null         
+        if (StringUtils.isNotEmpty(value)) {
             // \\s+ 去除空格，回车等字符
             return Arrays.asList(value.replaceAll("\\s+", "").toUpperCase().split(","));
         }

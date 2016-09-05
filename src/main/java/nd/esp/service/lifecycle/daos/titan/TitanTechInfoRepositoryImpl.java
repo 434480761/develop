@@ -131,9 +131,10 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
     }
 
     private TechInfo addOrUpdateTechInfo(TechInfo techInfo){
-        String checkTechInfoExist = "g.E().hasLabel('has_tech_info').has('identifier',edgeIdentifier).id()";
+        String checkTechInfoExist = "g.V().has('identifier',sourceId).outE().hasLabel('has_tech_info').has('identifier',edgeIdentifier).id()";
         Map<String, Object> checkTechInfoParam = new HashMap<>();
         checkTechInfoParam.put("edgeIdentifier",techInfo.getIdentifier());
+        checkTechInfoParam.put("sourceId",techInfo.getResource());
         String oldTechInfoId = null;
         try {
             oldTechInfoId = titanCommonRepository.executeScriptUniqueString(checkTechInfoExist, checkTechInfoParam);

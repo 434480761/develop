@@ -1,11 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.titan;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.http.HttpStatus;
@@ -20,25 +16,32 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 public class TitanExpression implements TitanScriptGenerator {
 
     private String resType;
+    private Set<String> resTypeSet;
     private List<String> includes;
     private boolean relationQueryOrderBy = false;
-    private boolean isOrderBySortNum = false;
     private String orderByEdgeFieldName;
     private List<TitanOrder> orderList;
     private boolean needStatistics = false;
     private String statisticsScript;
     private boolean needPrintable = false;
     private String printableScript;
-    private String orderBy4SortNum = "incr";
     private boolean needShowSubVersion = false;
     private String showSubVersionScript;
     // 默认下是select('x') 但子版本需要查询出来时 为select('select_version_result')
-    private String asResult4GetSubVersionResource = "select('x')";
+    private String asResult = "select('x')";
 
-    public void setShowSubVersion(boolean needShowSubVersion, String showSubVersionScript, String asResult4GetSubVersionResource) {
+    public void setShowSubVersion(boolean needShowSubVersion) {
+        StringBuffer script = new StringBuffer(".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within(");
+        for (String resType : this.resTypeSet) {
+            script.append("'").append(resType).append("'").append(",");
+        }
+        // remove the last ","
+        script.deleteCharAt(script.length() - 1);
+        script.append(")).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')");
+
         this.needShowSubVersion = needShowSubVersion;
-        this.showSubVersionScript = showSubVersionScript;
-        this.asResult4GetSubVersionResource = asResult4GetSubVersionResource;
+        this.showSubVersionScript = script.toString();
+        this.asResult = TitanKeyWords.select_version_result.toString();
     }
 
     public void setStatistics(boolean needStatistics, String statisticsScript) {
@@ -56,12 +59,6 @@ public class TitanExpression implements TitanScriptGenerator {
         this.orderByEdgeFieldName = orderByEdgeFieldName;
     }
 
-    public void setOrderBySortNum(boolean isOrderBySortNum, String orderByEdgeFieldName, String orderBy4SortNum) {
-        this.isOrderBySortNum = isOrderBySortNum;
-        this.orderByEdgeFieldName = orderByEdgeFieldName;
-        this.orderBy4SortNum = orderBy4SortNum;
-    }
-
     public void setOrderList(List<TitanOrder> orderList) {
         this.orderList = orderList;
     }
@@ -72,7 +69,6 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String innerCondition;// 用于保存中间产生的条件；主要避免重复产生脚本：总数，分页
 
-    private Map<String, String> orderMap;
     private int from;
     private int end;
 
@@ -80,8 +76,8 @@ public class TitanExpression implements TitanScriptGenerator {
         this.resType = resType;
     }
 
-    public void setOrderMap(Map<String, String> orderMap) {
-        this.orderMap = orderMap;
+    public void setResTypeSet(Set<String> resTypeSet) {
+        this.resTypeSet = resTypeSet;
     }
 
     public void setRange(int from, int size) {
@@ -168,9 +164,9 @@ public class TitanExpression implements TitanScriptGenerator {
         // 在这里去重和加上处理printable
         // .outE('has_tech_info').has('ti_printable',true).select('x').dedup()
         if (this.needPrintable)
-            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource)
+            scriptBuffer.append(".").append(this.asResult)
                     .append(this.printableScript)
-                    .append(".").append(this.asResult4GetSubVersionResource).append(".dedup()");
+                    .append(".").append(this.asResult).append(".dedup()");
         this.innerCondition = scriptBuffer.toString();
     }
 
@@ -182,11 +178,8 @@ public class TitanExpression implements TitanScriptGenerator {
         StringBuffer scriptBuffer = new StringBuffer(this.innerCondition);
         // (k,v)=>(order_field,desc)
         // 1、DESC=decr 从大到小排序 2、ACS=incr 从小到大排序
-        if (this.relationQueryOrderBy || this.isOrderBySortNum) {
-            //.select('e').order().by('order_num',decr).select('x')
-           // scriptBuffer.append(".select('x').order().by('lc_create_time',decr).select('e').order().by(choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(0)),").append(this.orderBy4SortNum).append(").select('x')");
-            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".order().by('lc_create_time',decr).select('e').choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(new Float(0)))").append(".order().by(").append(this.orderBy4SortNum).append(")");
-
+        if (this.relationQueryOrderBy) {
+            scriptBuffer.append(".").append(this.asResult).append(".order().by('lc_create_time',decr).select('e').choose(select('e').has('").append(this.orderByEdgeFieldName).append("'),select('e').values('").append(this.orderByEdgeFieldName).append("'),__.constant(new Float(0)))").append(".order().by(incr)");
         } else {
             appendOrderBy(scriptBuffer);
         }
@@ -198,11 +191,11 @@ public class TitanExpression implements TitanScriptGenerator {
 
         if (this.end > 0) {
             // range 前select('x')
-            scriptBuffer.append(".").append(this.asResult4GetSubVersionResource).append(".range(").append(from).append(",").append(end).append(")");
+            scriptBuffer.append(".").append(this.asResult).append(".range(").append(from).append(",").append(end).append(")");
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resTypeSet,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 
@@ -220,7 +213,7 @@ public class TitanExpression implements TitanScriptGenerator {
                 if (order.getScript() != null) {
                     scriptBuffer.append(order.getScript());
                 }else{
-                    scriptBuffer.append(".").append(this.asResult4GetSubVersionResource);
+                    scriptBuffer.append(".").append(this.asResult);
                 }
                 scriptBuffer.append(".order().by(");
                 if (order.getOrderByField() != null) {
@@ -263,7 +256,6 @@ public class TitanExpression implements TitanScriptGenerator {
         Map<String, String> or = new HashedMap<String, String>();
         or.put("field1", "desc");
         or.put("field21", "asc");
-        titanExpression.setOrderMap(or);
         titanExpression.setRange(1, 10);
         return titanExpression;
     }

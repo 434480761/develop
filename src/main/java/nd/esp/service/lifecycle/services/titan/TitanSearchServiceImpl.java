@@ -37,57 +37,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     private final Logger LOG = LoggerFactory.getLogger(TitanSearchServiceImpl.class);
 
-    @Override
-    public ListViewModel<ResourceModel> search(String resType,
-                                               List<String> includes,
-                                               Map<String, Map<String, List<String>>> params,
-                                               Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
-
-        long generateScriptBegin = System.currentTimeMillis();
-        TitanExpression titanExpression = new TitanExpression();
-
-        Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-
-        dealWithOrderAndRange(titanExpression, orderMap, from, size);
-        dealWithRelation(titanExpression, params.get("relation"), reverse);
-        params.remove("relation");
-        // for now only deal with code
-        dealWithTaxoncode(titanExpression,
-                params.get(ES_SearchField.cg_taxoncode.toString()));
-        params.remove(ES_SearchField.cg_taxoncode.toString());
-
-        dealWithTaxonpath(titanExpression,
-                params.get(ES_SearchField.cg_taxonpath.toString()));
-        params.remove(ES_SearchField.cg_taxonpath.toString());
-
-        dealWithCoverage(titanExpression,
-                params.get(ES_SearchField.coverages.toString()));
-        params.remove(ES_SearchField.coverages.toString());
-
-        TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
-        resourceQueryVertex.setWords(words);
-        resourceQueryVertex.setVertexLabel(resType);
-        Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-        resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
-        resourceVertexPropertyMap
-                .put(ES_SearchField.lc_enable.toString(),
-                        generateFieldCondtion(
-                                ES_SearchField.lc_enable.toString(), true));
-        dealWithResource(resourceQueryVertex, params);
-        titanExpression.addCondition(resourceQueryVertex);
-
-        //for count and result
-        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
-        LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
-
-        System.out.println(scriptForResultAndCount);
-        System.out.println(scriptParamMap);
-        long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
-        LOG.info("titan search consume times:" + (System.currentTimeMillis() - searchBegin));
-
-        return getListViewModelResourceModel(resultSet,resType,includes);
-    }
 
 
     @Override
@@ -102,7 +51,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setIncludes(includes);
         titanExpression.setResType(resType);
         titanExpression.setRange(from, size);
-        //dealWithInclude(titanExpression,includes);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
 
@@ -155,7 +103,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
     @Override
-    public ListViewModel<ResourceModel> searchWithStatistics(String resType,
+    public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
                                                              List<String> includes,
                                                              Map<String, Map<String, List<String>>> params,
                                                              Map<String, String> orderMap, int from, int size,
@@ -164,20 +112,18 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
-        titanExpression.setResType(resType);
+        //titanExpression.setResType("resType");
+        // FIXME
+        titanExpression.setResTypeSet(resTypeSet);
         titanExpression.setRange(from, size);
+        if(showVersion) titanExpression.setShowSubVersion(true);
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
-        dealWithShowVersionOrder(titanExpression,resType,orderMap, showVersion, orderList);
-        //dealWithOrder(titanExpression, orderMap, orderList);
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
-        if (isOrderBySortNum(reverse, orderMap, params.get("relation"))) {
-            titanExpression.setOrderBySortNum(true, TitanKeyWords.sort_num.toString(),TitanOrder.checkSortOrder(orderMap.get(TitanKeyWords.sort_num.toString())));
-        }
+
         titanExpression.setOrderList(orderList);
-        // FIXME "ti_printable" -> " size = 1"
         dealWithPrintable(titanExpression, params.get("ti_printable"));
         params.remove("ti_printable");
         dealWithRelation(titanExpression, params.get("relation"), reverse);
@@ -185,7 +131,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
         // 判断words是否要过滤edu_description
-        resourceQueryVertex.setIsFilter(resType);
+        resourceQueryVertex.setIsFilter(resTypeSet);// FIXME
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
@@ -206,7 +152,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         resourceQueryVertex.setWords(words);
 
-        resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldCondtion(TitanKeyWords.primary_category.toString(), resType));
+        resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldsCondtion(TitanKeyWords.primary_category.toString(), resTypeSet));// FIXME
         resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
                 generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
         dealWithResource(resourceQueryVertex, params);
@@ -222,7 +168,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModelResourceModel(resultSet,resType,includes);
+        return getListViewModelResourceModel(resultSet,resTypeSet,includes);// FIXME
 
     }
 
@@ -236,7 +182,9 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
         builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
-        String script = builder.generateScriptAfterEsUpdate();
+        List<TitanOrder> orders = dealWithOrder4EsIndexQuery(orderMap,StringUtils.isNotEmpty(words));
+        builder.setOrders(orders);
+        String script = builder.generateScriptAfterEsUpdateOrderBy();
         LOG.info("script:" + script);
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
@@ -254,12 +202,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setIncludes(null);
         titanExpression.setResType(resType);
         titanExpression.setRelationQueryOrderBy(true, isOrderByON ? TitanKeyWords.order_num.toString() : TitanKeyWords.sort_num.toString());
-       /* titanExpression.setOrderByEdgeField(true);
-        if (isOrderByON) {
-            titanExpression.setOrderByEdgeFieldName(TitanKeyWords.order_num.toString());
-        } else {
-            titanExpression.setOrderByEdgeFieldName(TitanKeyWords.sort_num.toString());
-        }*/
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         Integer result[] = ParamCheckUtil.checkLimit(limit);
@@ -273,7 +215,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
 
         // 处理维度
-        // if(StringUtils.isNotEmpty(categories)) dealWithSearchCode4queryListByResType(resourceQueryVertex,Arrays.asList(categories.split(",")));
         if(StringUtils.isNotEmpty(categories)) dealWithSearchCode4queryListByResType(resourceQueryVertex,categories);
         //覆盖范围 Map<String, List<String>> coverageConditions
         if(StringUtils.isNotEmpty(coverage)) dealWithSearchCoverage4queryListByResType(resourceVertexPropertyMap,coverage);
@@ -304,12 +245,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setIncludes(null);
         titanExpression.setResType(resType);
         titanExpression.setRelationQueryOrderBy(true, isOrderByON ? TitanKeyWords.order_num.toString() : TitanKeyWords.sort_num.toString());
-        /*titanExpression.setOrderByEdgeField(true);
-        if (isOrderByON) {
-            titanExpression.setOrderByEdgeFieldName(TitanKeyWords.order_num.toString());
-        } else {
-            titanExpression.setOrderByEdgeFieldName(TitanKeyWords.sort_num.toString());
-        }*/
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         Integer result[] = ParamCheckUtil.checkLimit(limit);
@@ -337,28 +272,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return getListViewModelRelationForQueryViewModel(resultSet,targetType,reverse);
     }
 
-    /**
-     * 新增支持sort_num的排序，目的是提供根据资源关系创建顺序自定义排序的能力     new-2016.04.07
-     * 1）当reverse=false，relation参数有且只有一个的时候该排序参数生效
-     * 2）目前资源仅支持 assets
-     *
-     * 资源未做限制
-     * @param reverse
-     * @param orderMap
-     * @param relation
-     * @return
-     */
-    private boolean isOrderBySortNum(boolean reverse, Map<String, String> orderMap, Map<String, List<String>> relation) {
-        if (reverse) return false;
-        if (CollectionUtils.isEmpty(orderMap)) return false;
-        if (!orderMap.containsKey(TitanKeyWords.sort_num.toString())) return false;
-        if (CollectionUtils.isEmpty(relation)) return false;
-        // 只处理eq
-        List<String> eq = relation.get(PropOperationConstant.OP_EQ);
-        if (CollectionUtils.isEmpty(eq)) return false;
-        if (eq.size() != 1) return false;
-        return true;
-    }
 
     /**
      * 章节跟课时建关系以及课时和教学目标建关系会按order_num升序显示，其余的都是sortnum
@@ -409,6 +322,17 @@ public class TitanSearchServiceImpl implements TitanSearchService {
      * @return
      */
     private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, String resType, List<String> includes) {
+        Set<String> resTypeSet = new HashSet<>();
+        resTypeSet.add(resType);
+        return getListViewModelResourceModel(resultSet, resTypeSet, includes);
+    }
+    /**
+     * 解析查询结果
+     * @param resultSet
+     * @param resTypeSet
+     * @return
+     */
+    private ListViewModel<ResourceModel> getListViewModelResourceModel(ResultSet resultSet, Set<String> resTypeSet, List<String> includes) {
         List<String> resultStr = new ArrayList<>();
         if (resultSet != null) {
             long getResultBegin = System.currentTimeMillis();
@@ -422,7 +346,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
             }
             LOG.info("get result set consume times:" + (System.currentTimeMillis() - getResultBegin));
-            return TitanResultParse.parseToListViewResourceModel(resType, resultStr, includes, false);
+            return TitanResultParse.parseToListViewResourceModel(resTypeSet, resultStr, includes, false);
         } else {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR, "LC/titan/query", "out of time or script has error");
         }
@@ -649,28 +573,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     }
 
     /**
-     *
-     * @param resourceQueryVertex
-     * @param eqConditions
-     */
-    private void dealWithSearchCode4queryListByResType(TitanQueryVertex resourceQueryVertex,
-                                    List<String> eqConditions) {
-        if (CollectionUtils.isEmpty(eqConditions)) return;
-
-        // in
-        if (CollectionUtils.isNotEmpty(eqConditions)) {
-            Map<Titan_OP, List<Object>> conditionMap = new HashedMap<Titan_OP, List<Object>>();
-            List<Object> codes = new ArrayList<Object>();
-            for (String neCondition : eqConditions) {
-                if (neCondition == null) continue;
-                codes.add(neCondition);
-            }
-            if (CollectionUtils.isNotEmpty(codes)) conditionMap.put(Titan_OP.eq, codes);
-            if (CollectionUtils.isNotEmpty(conditionMap)) resourceQueryVertex.getPropertiesMap().put(TitanKeyWords.search_code.toString(), conditionMap);
-        }
-
-    }
-    /**
      * 处理category code
      * @param resourceQueryVertex
      * @param codeConditions
@@ -738,27 +640,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     }
 
-
-    /**
-     * 处理 order by/limit
-     * @param titanExpression
-     * @param orderMap
-     * @param from
-     * @param size
-     */
-    private void dealWithOrderAndRange(TitanExpression titanExpression,
-                                       Map<String, String> orderMap, int from, int size) {
-        // 默认使用创建时间排序，desc
-        if (CollectionUtils.isEmpty(orderMap)) {
-            orderMap = new HashMap<String, String>();
-            orderMap.put(ES_SearchField.lc_create_time.toString(),
-                    PropOperationConstant.OP_DESC);
-        }
-        titanExpression.setOrderMap(orderMap);
-        titanExpression.setRange(from, size);
-
-    }
-
     /**
      * .outE('has_tech_info').has('ti_printable',false).select('x').dedup()
      * @param titanExpression
@@ -823,119 +704,54 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (CollectionUtils.isNotEmpty(orderMap)) {
             Set<String> orderFields = orderMap.keySet();
             for (String field : orderFields) {
-                TitanOrderFields.fromString(field).generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList,isShowVersion);
+                TitanOrderFields orderField = TitanOrderFields.fromString(field);
+                if (orderField != null) {
+                    orderField.generateScript(titanExpression, orderMap.get(field), scriptParamMap, orderList, isShowVersion);
+                }
             }
         }
-        // 默认排序
-        if (CollectionUtils.isEmpty(orderList)) {
+        // 默认排序 已经处理
+        /*if (CollectionUtils.isEmpty(orderList)) {
             TitanOrder order = new TitanOrder();
             order.setField(ES_SearchField.lc_create_time.toString()).setOrderByField( ES_SearchField.lc_create_time.toString()).setSortOrder(TitanOrder.SORTORDER.DESC.toString());
             orderList.add(order);
-        }
+        }*/
         titanExpression.setOrderList(orderList);
     }
 
     /**
      *
-     * .select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','assets').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('select_version_result')
-     * choose(select('x').has('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL'),select('x').outE('has_resource_statistical').has('sta_key_title','downloads').has('sta_data_from','TOTAL').values('sta_key_value'),__.constant('0.0'))
+     * 处理分词检索的排序
+     * 为分词检索接口设置order by字段的数据类型
      * @param orderMap
-     * @param showVersion
-     * @param orderList
+     * @param hasWords
+     * @return
      */
-    private void dealWithShowVersionOrder(TitanExpression titanExpression, String resType, Map<String, String> orderMap, boolean showVersion, List<TitanOrder> orderList) {
-        if (showVersion) {
-            // TODO 拼接 subversion 脚本
-            String script = ".select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type','" + resType + "').has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result')";
-            titanExpression.setShowSubVersion(true, script, TitanKeyWords.select_version_result.toString());
-            TitanOrder o1 = new TitanOrder();
-            o1.setField(ES_SearchField.m_identifier.toString());
-            o1.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.m_identifier.toString() + "'),select('version_result').values('" + ES_SearchField.m_identifier.toString() + "'),__.constant(''))");
-            o1.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
-            orderList.add(o1);
-            if (CollectionUtils.isEmpty(orderMap)) {
-                // 当为true的时候且oderby为空的时候
-                TitanOrder o2 = new TitanOrder();
-                o2.setField(ES_SearchField.m_identifier.toString());
-                o2.setScript(".select('version_result').choose(select('version_result').has('" + ES_SearchField.lc_version.toString() + "'),select('version_result').values('" + ES_SearchField.lc_version.toString() + "'),__.constant(''))");
-                o2.setSortOrder(TitanOrder.SORTORDER.ASC.toString());
-                orderList.add(o2);
-            }
+    public List<TitanOrder> dealWithOrder4EsIndexQuery(Map<String, String> orderMap,boolean hasWords) {
+        List<TitanOrder> orderList = new ArrayList<>();
+        if (hasWords){
+            TitanOrder o = new TitanOrder();
+            o.setOrderByField("_score").setField("_score").setSortOrder("DESC").setDataType("double");
+            orderList.add(o);
         }
-    }
-
-    private void dealWithTaxonpath(TitanExpression titanExpression,
-                                   Map<String, List<String>> taxonpathConditions) {
-        if (CollectionUtils.isEmpty(taxonpathConditions)) {
-            return;
-        }
-
-        TitanEdgeExpression taxonpathTitanEdgeExpression = new TitanEdgeExpression();
-        taxonpathTitanEdgeExpression.setTitanOp(TitanEdgeExpression.TitanOp.or);
-        titanExpression.addCondition(taxonpathTitanEdgeExpression);
-
-        TitanQueryEdgeAndVertex titanQueryEdgeAndVertex = new TitanQueryEdgeAndVertex();
-        taxonpathTitanEdgeExpression.addCondition(titanQueryEdgeAndVertex);
-
-        TitanQueryEdge titanQueryEdge = new TitanQueryEdge();
-        titanQueryEdge.setEdgeLabel(TitanKeyWords.has_categories_path
-                .toString());
-        titanQueryEdgeAndVertex.setTitanQueryEdge(titanQueryEdge);
-        TitanQueryVertex titanQueryVertex = new TitanQueryVertex();
-        titanQueryVertex.setVertexLabel(TitanKeyWords.categories_path
-                .toString());
-        Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-        Map<Titan_OP, List<Object>> taxonpathConditionMap = new HashMap<Titan_OP, List<Object>>();
-
-        List<Object> eqValueList = new ArrayList<Object>();
-        List<Object> neValueList = new ArrayList<Object>();
-        List<Object> likeValueList = new ArrayList<Object>();
-
-        // deal with path eq (can contain * like)
-        List<String> eqTaxonpathConditions = taxonpathConditions.get(ES_OP.eq
-                .toString());
-
-        if (CollectionUtils.isNotEmpty(eqTaxonpathConditions)) {
-            for (String value : eqTaxonpathConditions) {
-                if (value == null) {
-                    continue;
-                }
-                if (value.contains("*")) {
-                    likeValueList.add(value);
-                } else {
-                    eqValueList.add(value);
+        if (CollectionUtils.isNotEmpty(orderMap)) {
+            Set<String> orderFields = orderMap.keySet();
+            for (String field : orderFields) {
+                if (ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
+                    TitanOrder order = new TitanOrder();
+                    // field,field,ASC/DESC,dataType
+                    order.setOrderByField(field).setField(field).setSortOrder(orderMap.get(field).toUpperCase()).setDataType(TitanUtils.convertToEsDataType(field));
+                    orderList.add(order);
                 }
             }
-
         }
-
-        // deal with path ne
-        List<String> neTaxonpathConditions = taxonpathConditions.get(ES_OP.ne
-                .toString());
-
-        if (CollectionUtils.isNotEmpty(neTaxonpathConditions)) {
-
-            for (String value : neTaxonpathConditions) {
-                neValueList.add(value);
-            }
+        // TODO 是否要加上默认排序
+        if (CollectionUtils.isEmpty(orderList)) {
+            TitanOrder order = new TitanOrder();
+            order.setField(ES_SearchField.lc_create_time.toString()).setOrderByField( ES_SearchField.lc_create_time.toString()).setSortOrder("DESC").setDataType("long");
+            orderList.add(order);
         }
-
-        if (!eqValueList.isEmpty()) {
-            taxonpathConditionMap.put(Titan_OP.eq, eqValueList);
-        }
-
-        if (!neValueList.isEmpty()) {
-            taxonpathConditionMap.put(Titan_OP.ne, neValueList);
-        }
-        if (!likeValueList.isEmpty()) {
-            taxonpathConditionMap.put(Titan_OP.like, likeValueList);
-        }
-
-        vertexPropertiesMap.put(ES_SearchField.cg_taxonpath.toString(),
-                taxonpathConditionMap);
-        titanQueryVertex.setPropertiesMap(vertexPropertiesMap);
-        titanQueryEdgeAndVertex.setTitanQueryVertex(titanQueryVertex);
-
+        return orderList;
     }
 
     private void dealWithResource(TitanQueryVertex resourceQueryVertex,
@@ -1094,103 +910,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         }
         else {
             relationTitanEdgeExpression.addCondition(eqRelationTitanEdgeAndVertexExpression);
-        }
-
-    }
-
-
-    /**
-     * @param titanExpression
-     * @param relationConditions
-     * @author gsw
-     */
-    private void dealWithRelation4Statistics(TitanExpression titanExpression,
-                                  Map<String, List<String>> relationConditions, boolean reverse) {
-
-        // for now only deal with eq
-        if (CollectionUtils.isEmpty(relationConditions)) {
-            return;
-        }
-        List<String> eqRelationConditions = relationConditions
-                .get(PropOperationConstant.OP_EQ.toString());
-
-        if (CollectionUtils.isEmpty(eqRelationConditions)) {
-            return;
-        }
-
-        TitanEdgeExpression relationTitanEdgeExpression = new TitanEdgeExpression();
-        relationTitanEdgeExpression.setTitanOp(TitanEdgeExpression.TitanOp.and);
-        titanExpression.addCondition(relationTitanEdgeExpression);
-        for (String eqRelationCondition : eqRelationConditions) {
-            if (StringUtils.isEmpty(eqRelationCondition)) {
-                continue;
-            }
-            String[] chunks = eqRelationCondition.split("/");
-            if (chunks.length != 3) {
-                continue;
-            }
-            TitanQueryEdgeAndVertex eqRelationTitanEdgeAndVertexExpression = new TitanQueryEdgeAndVertex();
-
-            if (reverse) {
-                eqRelationTitanEdgeAndVertexExpression.setTitanDirection(TitanDirection.out);
-            } else {
-                eqRelationTitanEdgeAndVertexExpression.setTitanDirection(TitanDirection.in);
-            }
-            // 边
-            TitanQueryEdge titanQueryEdge = new TitanQueryEdge();
-            eqRelationTitanEdgeAndVertexExpression.setTitanQueryEdge(titanQueryEdge);
-
-            titanQueryEdge.setEdgeLabel(TitanKeyWords.has_relation.toString());
-            //
-            TitanQueryVertex titanQueryVertex = null;
-            // 关系递归（考虑章节与知识点）
-            if (chunks[1].endsWith("$")) {
-                chunks[1] = chunks[1].substring(0, chunks[1].length() - 1); // 去除$标志
-                titanQueryVertex = new TitanQueryVertexForTree();
-                if (ResourceNdCode.chapters.toString().equals(chunks[0])) {
-                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_chapter
-                            .toString());
-                } else if (ResourceNdCode.knowledges.toString().equals(
-                        chunks[0])) {
-                    ((TitanQueryVertexForTree) titanQueryVertex).setTreeEdgeLabel(TitanKeyWords.tree_has_knowledge
-                            .toString());
-                }
-
-            } else {
-                titanQueryVertex = new TitanQueryVertex();
-            }
-
-            eqRelationTitanEdgeAndVertexExpression.setTitanQueryVertex(titanQueryVertex);
-
-            Map<String, Map<Titan_OP, List<Object>>> edgePropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-            edgePropertiesMap.put(ES_Field.enable.toString(), generateFieldCondtion(ES_Field.enable.toString(), true));
-            // if(!"*".equals(chunks[2])){
-            // edgePropertiesMap.put(key, chunks[2]);
-            // }
-            titanQueryEdge.setPropertiesMap(edgePropertiesMap);
-            Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-            titanQueryVertex.setPropertiesMap(vertexPropertiesMap);
-            vertexPropertiesMap.put(
-                    TitanKeyWords.primary_category.toString(),
-                    generateFieldCondtion(TitanKeyWords.primary_category.toString(),
-                            chunks[0]));
-            vertexPropertiesMap.put(
-                    ES_Field.identifier.toString(),
-                    generateFieldCondtion(ES_Field.identifier.toString(),
-                            chunks[1]));
-            vertexPropertiesMap.put(
-                    ES_SearchField.lc_enable.toString(),
-                    generateFieldCondtion(ES_SearchField.lc_enable.toString(),
-                            true));
-            if (titanExpression.getFirstTitanQueryEdgeAndVertex() == null) {
-                titanExpression
-                        .setFirstTitanQueryEdgeAndVertex(eqRelationTitanEdgeAndVertexExpression);
-            }
-            else {
-                relationTitanEdgeExpression
-                        .addCondition(eqRelationTitanEdgeAndVertexExpression);
-            }
-
         }
 
     }
@@ -1369,190 +1088,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         }
 
         return propertiesMap;
-    }
-
-
-
-    /**
-     * for now only deal with code (eq),not deal with like (*)
-     *
-     * @param titanExpression
-     * @param categoryConditions
-     * @author linsm
-     */
-    private void dealWithTaxoncode(TitanExpression titanExpression,
-                                   Map<String, List<String>> categoryConditions) {
-        if (CollectionUtils.isEmpty(categoryConditions)) {
-            return;
-        }
-        List<String> eqCategoryConditions = categoryConditions.get(ES_OP.eq
-                .toString());
-
-        if (CollectionUtils.isEmpty(eqCategoryConditions)) {
-            return;
-        }
-        TitanEdgeExpression categoryTitanEdgeExpression = new TitanEdgeExpression();
-        categoryTitanEdgeExpression.setTitanOp(TitanEdgeExpression.TitanOp.or);
-        titanExpression.addCondition(categoryTitanEdgeExpression);
-        for (String eqCategoryCondition : eqCategoryConditions) {
-            if (eqCategoryCondition.contains(PropOperationConstant.OP_AND)) {
-                TitanEdgeExpression andCategoryTitanEdgeExpression = new TitanEdgeExpression();
-                andCategoryTitanEdgeExpression
-                        .setTitanOp(TitanEdgeExpression.TitanOp.and);
-                categoryTitanEdgeExpression
-                        .addCondition(andCategoryTitanEdgeExpression);
-                String[] chunkCodes = eqCategoryCondition
-                        .split(PropOperationConstant.OP_AND);
-                for (String chunkCode : chunkCodes) {
-                    if (StringUtils.isNotEmpty(chunkCode)) {
-                        String realValue = chunkCode.trim();
-                        setCategoryCodeCondition(
-                                andCategoryTitanEdgeExpression, realValue);
-                    }
-                }
-            } else {
-                setCategoryCodeCondition(categoryTitanEdgeExpression,
-                        eqCategoryCondition);
-            }
-        }
-
-    }
-
-    private void setCategoryCodeCondition(
-            TitanEdgeExpression categoryTitanEdgeExpression, String realValue) {
-
-        TitanQueryEdgeAndVertex categoryTitanQueryEdgeAndVertex = new TitanQueryEdgeAndVertex();
-        categoryTitanEdgeExpression
-                .addCondition(categoryTitanQueryEdgeAndVertex);
-        TitanQueryEdge titanQueryEdge = new TitanQueryEdge();
-        categoryTitanQueryEdgeAndVertex.setTitanQueryEdge(titanQueryEdge);
-        titanQueryEdge.setEdgeLabel(TitanKeyWords.has_category_code.toString());
-        TitanQueryVertex titanQueryVertex = new TitanQueryVertex();
-        categoryTitanQueryEdgeAndVertex.setTitanQueryVertex(titanQueryVertex);
-        titanQueryVertex.setVertexLabel(TitanKeyWords.category_code.toString());
-        Map<String, Map<Titan_OP, List<Object>>> vertexPropertiesMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-        vertexPropertiesMap
-                .put(ES_SearchField.cg_taxoncode.toString(),
-                        generateFieldCondtion(ES_SearchField.cg_taxoncode.toString(),
-                                realValue));
-        titanQueryVertex.setPropertiesMap(vertexPropertiesMap);
-
-    }
-
-    /**
-     * @param titanExpression
-     * @param coverageConditions
-     * @author linsm
-     */
-    private void dealWithCoverage(TitanExpression titanExpression,
-                                  Map<String, List<String>> coverageConditions) {
-        if (coverageConditions != null) {
-            for (Map.Entry<String, List<String>> entry : coverageConditions
-                    .entrySet()) {
-                // for now only deal with in
-                if (ES_OP.in.toString().equals(entry.getKey())) {
-                    // not deal with status
-                    List<String> coverages = entry.getValue();
-                    if (CollectionUtils.isEmpty(coverages)) {
-                        continue;
-                    }
-                    TitanEdgeExpression coverageTitanEdgeExpression = new TitanEdgeExpression();
-                    coverageTitanEdgeExpression
-                            .setTitanOp(TitanEdgeExpression.TitanOp.or);
-                    for (String coverage : coverages) {
-                        String[] chunks = coverage.split("/");
-                        if (chunks == null
-                                || (chunks.length != 3 && chunks.length != 4)) {
-                            continue;
-                        }
-                        TitanQueryEdgeAndVertex coverageTitanQueryEdgeAndVertex = null;
-                        if (chunks.length == 4) {
-                            // status;
-                            TitanQueryEdgeAndVertexForCoverage coverageTitanQueryEdgeAndVertexForCoverage = new TitanQueryEdgeAndVertexForCoverage();
-                            coverageTitanQueryEdgeAndVertexForCoverage
-                                    .setStatus(chunks[3]);
-                            coverageTitanQueryEdgeAndVertex = coverageTitanQueryEdgeAndVertexForCoverage;
-                        } else {
-                            coverageTitanQueryEdgeAndVertex = new TitanQueryEdgeAndVertex();
-                        }
-
-                        TitanQueryEdge titanQueryEdge = new TitanQueryEdge();
-                        coverageTitanQueryEdgeAndVertex
-                                .setTitanQueryEdge(titanQueryEdge);
-                        titanQueryEdge.setEdgeLabel(TitanKeyWords.has_coverage
-                                .toString());
-                        TitanQueryVertex titanQueryVertex = new TitanQueryVertex();
-                        coverageTitanQueryEdgeAndVertex
-                                .setTitanQueryVertex(titanQueryVertex);
-                        titanQueryVertex.setVertexLabel(TitanKeyWords.coverage
-                                .toString());
-
-                        if (!"*".equals(chunks[0])) {
-                            titanQueryVertex.getPropertiesMap().put(
-                                    ES_Field.target_type.toString(),
-                                    generateFieldCondtion(
-                                            ES_Field.target_type.toString(),
-                                            chunks[0]));
-                        }
-                        if (!"*".equals(chunks[1])) {
-                            titanQueryVertex.getPropertiesMap().put(
-                                    ES_Field.target.toString(),
-                                    generateFieldCondtion(
-                                            ES_Field.target.toString(),
-                                            chunks[1]));
-                        }
-                        if (!"*".equals(chunks[2])) {
-                            titanQueryVertex.getPropertiesMap().put(
-                                    ES_Field.strategy.toString(),
-                                    generateFieldCondtion(
-                                            ES_Field.strategy.toString(),
-                                            chunks[2]));
-                        }
-                        coverageTitanEdgeExpression
-                                .addCondition(coverageTitanQueryEdgeAndVertex);
-                    }
-                    titanExpression.addCondition(coverageTitanEdgeExpression);
-                }
-            }
-        }
-
-    }
-
-    /*************************
-     * TEST
-     **************************************/
-
-    public static void main(String[] args) {
-        /*Map<String, Map<String, List<String>>> params = new HashMap<String, Map<String, List<String>>>();
-
-        Map<String, List<String>> coverageConditions = new HashMap<String, List<String>>();
-        params.put(ES_SearchField.coverages.toString(), coverageConditions);
-        List<String> inCoverageConditions = new ArrayList<String>();
-        coverageConditions.put(ES_OP.in.toString(), inCoverageConditions);
-
-        inCoverageConditions.add("Org/nd/OWNER/ONLINE");
-        inCoverageConditions.add("User/890399/VIEW");
-
-        System.out.println(params);*/
-        // new TitanSearchServiceImpl().search(ResourceNdCode.tools.toString(),
-        // null, params, null, 0, 0, false);
-        TitanSearchServiceImpl t = new TitanSearchServiceImpl();
-        List<String> list = testData();
-        // t.generateResourceModel(list);
-
-
-    }
-
-    public static List<String> testData() {
-        List<String> list = new ArrayList<String>();
-        list.add("{preview=[{\"240\":\"\"}], cr_author=[UNKNOW], identifier=[9f665a4d-96b0-4ead-a8b5-7d11d06980ab], cr_right=[UNKNOW], lc_last_update=[1464167860717], keywords=[[]], lc_version=[v1.0], description=[], language=[zh_CN], lc_status=[ONLINE], custom_properties=[{\"app_version\":\"\",\"apk_package_name\":\"\",\"apk_activity_name\":\"\",\"chapters\":\"[{\\\"id\\\":\\\"805736b2-c78e-4c79-94f9-7568552fac57\\\",\\\"desc\\\":\\\"人教版>上册>小学>一年级>语文>识字（一）>1 一去二三里\\\",\\\"phase\\\":\\\"$ON020000\\\",\\\"grade\\\":\\\"$ON020100\\\",\\\"subject\\\":\\\"$SB0100\\\",\\\"edition\\\":\\\"$E001000\\\",\\\"subedition\\\":\\\"$E001001\\\",\\\"$$hashKey\\\":\\\"0ZE\\\"}]\"}], title=[img], tags=[[\"\"]], lc_provider=[NetDragon], lc_enable=[true], lc_provider_source=[img.dat], lc_creator=[2107196619], lc_create_time=[1464166854516]}");
-        list.add("==>{taxoncode=[$ON020100]}");
-        list.add("==>{taxoncode=[$SB0100]}");
-        list.add("==>{taxoncode=[$ON020000]}");
-        list.add("==>{taxonpath=[K12/$ON020000/$ON020100/$SB0100/$E001000/$E001001]}");
-        list.add("==>{identifier=[18196da8-85a1-4241-a79d-3a8ce3196a8b], ti_md5=[], ti_title=[source], ti_location=[${ref-path}/prepub_content_edu_product/esp/assets/9f665a4d-96b0-4ead-a8b5-7d11d06980ab.pkg/4251f652-3fec-4344-b3d2-7196ff011030.dat], ti_size=[196], ti_format=[application/octet-stream], ti_requirements=[[]]}");
-        list.add("==>{identifier=[b2281434-3654-4b5c-940a-e22dd81c7843], ti_md5=[], ti_title=[href], ti_location=[${ref-path}/prepub_content_edu_product/esp/assets/9f665a4d-96b0-4ead-a8b5-7d11d06980ab.pkg/4251f652-3fec-4344-b3d2-7196ff011030.dat], ti_size=[196], ti_format=[application/octet-stream], ti_requirements=[null]}");
-        return list;
     }
 
 }

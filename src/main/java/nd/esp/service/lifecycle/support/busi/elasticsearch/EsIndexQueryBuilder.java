@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanOrder;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
@@ -54,13 +55,14 @@ public class EsIndexQueryBuilder {
     private int size=10;
     private List<String> includes;
     private List<String> fields;
+    private List<TitanOrder> orders;
 
     private static final String DOUBLE_BLANK_AND = " AND ";
     private static final String DOUBLE_BLANK_OR = " OR ";
-    public static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
-    public static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT=' + count;resultList";
-    public static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT=' + count;resultList";
-    public static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
+    private static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
+    private static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT=' + count;resultList";
+    private static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT=' + count;resultList";
+    private static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
     public EsIndexQueryBuilder setIndex(String index) {
         this.index = index;
@@ -96,6 +98,11 @@ public class EsIndexQueryBuilder {
 
     public EsIndexQueryBuilder setFields(List<String> fields) {
         this.fields = fields;
+        return this;
+    }
+
+    public EsIndexQueryBuilder setOrders(List<TitanOrder> orders) {
+        this.orders = orders;
         return this;
     }
 
@@ -170,6 +177,48 @@ public class EsIndexQueryBuilder {
         query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 
         return query.toString();
+    }
+
+    public String generateScriptAfterEsUpdateOrderBy() {
+        StringBuffer query=new StringBuffer();
+        StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
+        String wordSegmentation=dealWithWordsContainsNot(this.words);
+        String other=dealWithParams();
+        String property = dealWithProp();
+        if ("".endsWith(wordSegmentation.trim())) {
+            other = other.trim().replaceFirst("AND", "");
+        }
+        baseQuery.append(wordSegmentation);
+        baseQuery.append(other);
+        baseQuery.append(dealWithResType());
+        if(!"".endsWith(property.trim())){
+            baseQuery.append(DOUBLE_BLANK_AND).append(property);
+        }
+        baseQuery.append("\")");
+        baseQuery.append(".offset(").append(this.from).append(")");
+        baseQuery.append(".limit(").append(this.size).append(")");
+        baseQuery.append(".addParameter(new Parameter('order_by',orders));");
+        baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
+        baseQuery.append("results = g.V(ids.toArray())");
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
+        query.append(dealWithOrders()).append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
+
+        return query.toString();
+    }
+
+    /**
+     *
+     * @return
+     */
+    private String dealWithOrders() {
+        StringBuffer orderScript = new StringBuffer();
+        orderScript.append("List<String> orders = new ArrayList<String>();");
+        for (TitanOrder order : orders) {
+            orderScript.append("orders.add('")
+                    .append(order.getField()).append("#").append(order.getSortOrder()).append("#").append(order.getDataType())
+                    .append("');");
+        }
+        return orderScript.toString();
     }
 
     /**
@@ -429,31 +478,31 @@ public class EsIndexQueryBuilder {
             query.append("\\\":(");
             StringBuffer queryCondition = new StringBuffer();
             for (Map.Entry<String, List<String>> entry : searchList.entrySet()) {
-                List<String> codes = entry.getValue();
+                List<String> values = entry.getValue();
                 String codeKey = entry.getKey();
-                if (CollectionUtils.isEmpty(codes)) continue;
-                for (String code : codes) {
-                    if (code.contains("$")) {
-                        code = code.replace("$", "\\$");
+                if (CollectionUtils.isEmpty(values)) continue;
+                for (String value : values) {
+                    if (value.contains("$")) {
+                        value = value.replace("$", "\\$");
                     }
-                    if (code.contains("/")) {
-                        code = code.replace("/", "\\\\/");
+                    if (value.contains("/")) {
+                        value = value.replace("/", "\\\\/");
                     }
-                    code = code.toLowerCase();
+                    value = value.toLowerCase();
 
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
-                        if (code.contains(PropOperationConstant.OP_AND)) {
-                            String[] strs=code.split(PropOperationConstant.OP_AND);
-                            code = "(*" + strs[0].trim() + "*" + DOUBLE_BLANK_AND + "*" + strs[1].trim() + "*)";
-                            //code = "(" + code.replaceAll(PropOperationConstant.OP_AND, "AND").trim() + ")";
-
+                        if (value.contains(PropOperationConstant.OP_AND)) {
+                            String[] strs=value.split(PropOperationConstant.OP_AND);
+                            // TODO 处理成精确的
+                            value = "(*" + strs[0].trim() + "*" + DOUBLE_BLANK_AND + "*" + strs[1].trim() + "*)";
                         }else{
-                            code = "*" + code.trim() + "*";
+                            // TODO 处理成精确的
+                            value = "*" + value.trim() + "*";
                         }
-                        queryCondition.append(code).append(" ");
+                        queryCondition.append(value).append(" ");
 
                     } else if (ES_OP.ne.toString().equals(codeKey)) {
-                        queryCondition.append("-").append("*").append(code.trim()).append("*").append(" ");
+                        queryCondition.append("-").append("*").append(value.trim()).append("*").append(" ");
                     }
                 }
             }
@@ -465,6 +514,93 @@ public class EsIndexQueryBuilder {
             return "";
         }
         return query.toString();
+    }
+
+    /**
+     *
+     * debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/
+     * k12/$on030000/$on030200/$sb0501012/$e004000/$e004001
+     * $f050005,$on030000,pt01001,$ra0100
+     * @param property
+     * @param searchList
+     * @return
+     */
+    private String dealWithSingleParamPrecise(String property, Map<String, List<String>> searchList) {
+        StringBuffer query = new StringBuffer();
+        if (CollectionUtils.isNotEmpty(searchList)) {
+            query.append("v.\\\"");
+            query.append(property);
+            query.append("\\\":(");
+            StringBuffer queryCondition = new StringBuffer();
+            for (Map.Entry<String, List<String>> entry : searchList.entrySet()) {
+                List<String> values = entry.getValue();
+                String codeKey = entry.getKey();
+                if (CollectionUtils.isEmpty(values)) continue;
+                for (String value : values) {
+                    if (value.contains("$")) {
+                        value = value.replace("$", "\\$");
+                    }
+                    if (value.contains("/")) {
+                        value = value.replace("/", "\\\\/");
+                    }
+                    value = value.toLowerCase();
+
+                    if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
+                        if (value.contains(PropOperationConstant.OP_AND)) {
+                            String[] andOP = value.split(PropOperationConstant.OP_AND);
+                            int length = andOP.length;
+                            value = "(";
+                            for (int i = 0; i < length; i++) {
+                                value = value + toPreciseStr(property, andOP[i].trim());
+                                if (i != length - 1) value = value + DOUBLE_BLANK_AND;
+                            }
+                            value = value +")";
+                        }else{
+                            value = toPreciseStr(property,value.trim());
+                        }
+                        queryCondition.append(value).append(" ");
+
+                    } else if (ES_OP.ne.toString().equals(codeKey)) {
+                        queryCondition.append("-").append("*").append(value.trim()).append("*").append(" ");
+                    }
+                }
+            }
+
+            query.append(queryCondition.toString());
+            query.deleteCharAt(query.length()-1);
+            query.append(") ");
+        }else{
+            return "";
+        }
+        return query.toString();
+    }
+
+    /**
+     * debug/qa//,debug/qa/test/creating,debug/qa//creating,debug/qa/test/
+     * k12/$on030000/$on030200/$sb0501012/$e004000/$e004001
+     * $f050005,$on030000,pt01001,$ra0100
+     * 一共有四种情况： 1) xxx 2): xxx,*  3): *,xxx,* 4) *,xxx
+     * @param value
+     * @return
+     */
+    private String toPreciseStr(String property, String value) {
+        if (TitanKeyWords.search_coverage_string.toString().equals(property)) {
+            int length = value.split("/").length;
+            if (length != 4) {
+                if (length == 3) value = value + "\\\\/";
+            }
+        }
+        StringBuffer script = new StringBuffer("(");
+        script.append(value)
+                .append(DOUBLE_BLANK_OR)
+                .append(value).append(",*")
+                .append(DOUBLE_BLANK_OR)
+                .append("*,").append(value).append(",*")
+                .append(DOUBLE_BLANK_OR)
+                .append("*,").append(value)
+                .append(")");
+
+        return script.toString();
     }
 
     public enum WordsCover {
