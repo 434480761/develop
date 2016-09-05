@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,8 +77,10 @@ import nd.esp.service.lifecycle.support.aop.ServiceAuthorAspect;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
+import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -112,6 +113,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.common.collect.Lists;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 import com.nd.gaea.rest.security.authens.UserInfo;
 import com.rits.cloning.Cloner;
@@ -756,7 +758,7 @@ public class NDResourceController {
                         .get("orderMapNew");
                 try {
                     if (mustQueryByTitanRT(coveragesList, isNotManagement)) {
-                        rListViewModel = resourceQueryByTitanRealTime(resType,
+                        rListViewModel = resourceQueryByTitanRealTime(resType, resCodes,
                                 includesList, categories, categoryExclude, relationsMap,
                                 coveragesList, propsMap, orderMap, words, limit,
                                 isNotManagement, reverseBoolean, printable, printableKey, statisticsType,
@@ -804,7 +806,7 @@ public class NDResourceController {
                         isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
                 break;
             case TITAN_REALTIME:
-                rListViewModel = resourceQueryByTitanRealTime(resType,
+                rListViewModel = resourceQueryByTitanRealTime(resType, resCodes,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
@@ -934,7 +936,7 @@ public class NDResourceController {
      * @return
      */
     @SuppressWarnings("unchecked")
-    private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType,List<String> includes,Set<String> categories,
+    private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType, String resCodes,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
         int intevalTimeMillis = -60000;
@@ -964,9 +966,10 @@ public class NDResourceController {
             includesList.add("LC");
         }
         
-        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resType, includesList, categories,
+        Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
+        Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resTypeSet, includesList, categories,
                 categoryExclude, relations, coverages, propsMap, orderMap, words, limitForTitan, isNotManagement, reverse,
-                printable, printableKey, excetorService);
+                printable, printableKey, excetorService, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         
         Map<String, String> orderMapForDb = new HashMap<String, String>();
         Map<String, Object> changeMap = changeKey(propsMapForDB,
@@ -1000,7 +1003,8 @@ public class NDResourceController {
         }
         excetorService.shutdown();
         
-        getFinalResult(orderMap, moreOffset, begin, size, titanQueryResult, dbQueryResult);
+        Map<String, String> orderBys = TitanUtils.dealOrderMap(orderMap, showVersion, reverse, relations, statisticsType, statisticsPlatform);
+        getFinalResult(orderMap, moreOffset, begin, size, titanQueryResult, dbQueryResult, orderBys);
 
         titanQueryResult.setLimit(limit);
         return titanQueryResult;
@@ -1022,20 +1026,11 @@ public class NDResourceController {
 
     private void getFinalResult(Map<String, String> orderMap, int moreOffset, int begin, int size,
             ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult) {
-        String field = "lc_create_time";
-        String sort = "DESC";
-        if (orderMap != null) {
-            for (Entry<String,String> entry : orderMap.entrySet()) {
-                field = entry.getKey();
-                sort = entry.getValue();
-                break;
-            }
-        }
+            ListViewModel<ResourceModel> dbQueryResult, Map<String, String> orderBys) {
         
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
         if (CollectionUtils.isNotEmpty(titanQueryResultItems)) {
-            mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, field, sort);
+            mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, orderBys);
             
             interceptResultFromMergedResult(moreOffset, begin, size, titanQueryResult);
         }else {
@@ -1079,74 +1074,16 @@ public class NDResourceController {
     }
 
     private void mergeAndSortTitanResultAndDbResult(ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult, String field, String sort) {
-        if (sort.equalsIgnoreCase("ASC")) {
-            insertDbResultToTitanResultAsc(titanQueryResult, dbQueryResult, field);
-        }
-        else if (sort.equalsIgnoreCase("DESC")){
-            insertDbResultToTitanResultDesc(titanQueryResult, dbQueryResult, field);
-        }
-    }
-
-    private void insertDbResultToTitanResultDesc(ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult, String field) {
+            ListViewModel<ResourceModel> dbQueryResult, Map<String, String> orderBys) {
         long totalResult = uniqueResults(titanQueryResult, dbQueryResult);
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
-        if (field.equals("lc_create_time")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o2.getLifeCycle().getCreateTime().compareTo(o1.getLifeCycle().getCreateTime());
-                }
-            });
+        List<String> fields = Lists.newLinkedList();
+        List<String> orders = Lists.newLinkedList();
+        for (Entry<String, String> orderBy : orderBys.entrySet()) {
+            fields.add(orderBy.getKey());
+            orders.add(orderBy.getValue().toUpperCase());
         }
-        else if (field.equals("lc_last_update")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o2.getLifeCycle().getLastUpdate().compareTo(o1.getLifeCycle().getLastUpdate());
-                }
-            });
-        }
-        else if (field.equals("title")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o2.getTitle().compareTo(o1.getTitle());
-                }
-            });
-        }
-        titanQueryResult.setTotal(totalResult);
-    }
-
-    private void insertDbResultToTitanResultAsc(ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult, String field) {
-        long totalResult = uniqueResults(titanQueryResult, dbQueryResult);
-        List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
-        if (field.equals("lc_create_time")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o1.getLifeCycle().getCreateTime().compareTo(o2.getLifeCycle().getCreateTime());
-                }
-            });
-        }
-        else if (field.equals("lc_last_update")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o1.getLifeCycle().getLastUpdate().compareTo(o2.getLifeCycle().getLastUpdate());
-                }
-            });
-        }
-        else if (field.equals("title")) {
-            Collections.sort(titanQueryResultItems, new Comparator<ResourceModel>() {
-                @Override
-                public int compare(ResourceModel o1, ResourceModel o2) {
-                    return o1.getTitle().compareTo(o2.getTitle());
-                }
-            });
-        }
+        Collections.sort(titanQueryResultItems, OrderField.comparator(fields, orders));
         titanQueryResult.setTotal(totalResult);
     }
 
@@ -1188,19 +1125,19 @@ public class NDResourceController {
         return dbFuture;
     }
 
-    private Future<ListViewModel<ResourceModel>> getTitanFuture(final String resType, final List<String> includes,
+    private Future<ListViewModel<ResourceModel>> getTitanFuture(final Set<String> resTypeSet, final List<String> includes,
             final Set<String> categories, final Set<String> categoryExclude, final List<Map<String, String>> relations,
             final List<String> coverages, final Map<String, Set<String>> propsMap, final Map<String, String> orderMap,
             final String words, final String limit, final boolean isNotManagement, final boolean reverse,
-            final Boolean printable, final String printableKey, ExecutorService excetorService) {
+            final Boolean printable, final String printableKey, ExecutorService excetorService, final String statisticsType, final String statisticsPlatform, final boolean forceStatus, final List<String> tags, final boolean showVersion) {
         Future<ListViewModel<ResourceModel>> titanFuture = excetorService.submit(new Callable<ListViewModel<ResourceModel>>() {
 
             @Override
             public ListViewModel<ResourceModel> call() throws Exception {
-              return ndResourceService.resourceQueryByTitan(resType,
+              return ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                   includes, categories, categoryExclude, relations,
                   coverages, propsMap, orderMap, words, limit,
-                  isNotManagement, reverse, printable, printableKey);
+                  isNotManagement, reverse, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
         }});
         return titanFuture;
     }

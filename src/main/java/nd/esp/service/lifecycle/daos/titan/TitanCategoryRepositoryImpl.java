@@ -39,7 +39,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		}
 		ResourceCategory rc = addOrUpdateResourceCategory(resourceCategory);
 		if(rc == null){
-//			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 		}
@@ -48,7 +47,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		if(path !=null && !path.equals("")){
 			String resultPath = addPath(resourceCategory.getResource(), resourceCategory.getPrimaryCategory(), path);
 			if(resultPath == null){
-//				LOG.info("Category处理出错");
 				titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 						resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 			}
@@ -92,7 +90,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		// FIXME
 		List<ResourceCategory> list = new ArrayList<>();
 		for(List<ResourceCategory> entryValueCategories:resourceCategoryMap.values()){
-			//FIXME 不是所有的添加都需要删除
 			ResourceCategory category = entryValueCategories.get(0);
 
 			//批量保存PATH
@@ -105,7 +102,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				if(rc!=null){
 					list.add(rc);
 				} else {
-//					LOG.info("Category处理出错");
 					titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 							resourceCategory.getPrimaryCategory(),resourceCategory.getResource());
 				}
@@ -171,9 +167,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			titanCommonRepository.executeScript(deleteScript, param);
 			titanCommonRepository.executeScript(deleteScript2, param);
 		} catch (Exception e) {
-//			e.printStackTrace();
-			//TODO titan sync
-//			LOG.info("Category处理出错");
 			titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 					primaryCategory, identifier);
 		}
@@ -208,7 +201,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 					if(p != null){
 						pathList.add(p);
 					} else {
-//						LOG.info("Category处理出错");
 						titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
 								primaryCategory,key);
 					}
@@ -269,7 +261,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
-				//TODO titan sync
 				return null;
 			}
 		} else {
@@ -299,7 +290,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				edgeId = titanCommonRepository.executeScriptUniqueString(script.toString(), graphParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),resourceCategory.getResource());
-				//TODO titan sync
 				return null;
 			}
 		}
@@ -328,8 +318,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			oldPathId = titanCommonRepository.executeScriptUniqueString(checkPathExist, checkPathParam);
 		} catch (Exception e) {
 			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
-			//TODO titan sync
-			//获取ID不成功后直接返回，不进行后续的操作
 			return null;
 		}
 		if(StringUtils.isNotEmpty(oldPathId)){
@@ -344,8 +332,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			sourcePathId = titanCommonRepository.executeScriptUniqueLong(queryPathScript,queryPathParams);
 		} catch (Exception e) {
 			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
-			//TODO titan sync
-			//获取ID不成功后直接返回，不进行后续的操作
 			return null;
 		}
 
@@ -364,7 +350,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
-				//TODO titan sync
 				return null;
 			}
 		} else {
@@ -378,7 +363,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				edgeId = titanCommonRepository.executeScriptUniqueString(addPathScript.toString(), addScriptParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),resource);
-				//TODO titan sync
 				return null;
 			}
 		}
@@ -402,7 +386,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 				taxoncodeId = titanCommonRepository.executeScriptUniqueLong(scriptString, graphParams);
 			} catch (Exception e) {
 				LOG.error("titan_repository error:{}" ,e.getMessage());
-				//FIXME 这个地方的代码应该做
 			}
 
 			if(TitanCacheData.taxoncode.getCacheMap().size() < 2000){
@@ -439,9 +422,6 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 			titanCommonRepository.executeScript(script.toString(), param);
 		} catch (Exception e) {
 			LOG.error("titan_repository error:{}  identifier:{}" ,e.getMessage(),identifier);
-			// TODO Auto-generated catch block
-			//TODO titan sync
-//			e.printStackTrace();
 		}
 	}
 
