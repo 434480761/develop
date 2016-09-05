@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.utils.titan.script.model.TitanEducationQuestions
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageEdge;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
+import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModel;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelVertex;
@@ -233,6 +234,10 @@ public class ParseAnnotation {
         edge.setTargetType("User");
 
         createScriptModel(edge);
+
+
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+        builder.update(edge);
 
     }
 }
