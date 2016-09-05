@@ -69,7 +69,6 @@ public class TitanExpression implements TitanScriptGenerator {
 
     private String innerCondition;// 用于保存中间产生的条件；主要避免重复产生脚本：总数，分页
 
-    private Map<String, String> orderMap;
     private int from;
     private int end;
 
@@ -79,10 +78,6 @@ public class TitanExpression implements TitanScriptGenerator {
 
     public void setResTypeSet(Set<String> resTypeSet) {
         this.resTypeSet = resTypeSet;
-    }
-
-    public void setOrderMap(Map<String, String> orderMap) {
-        this.orderMap = orderMap;
     }
 
     public void setRange(int from, int size) {
@@ -261,7 +256,6 @@ public class TitanExpression implements TitanScriptGenerator {
         Map<String, String> or = new HashedMap<String, String>();
         or.put("field1", "desc");
         or.put("field21", "asc");
-        titanExpression.setOrderMap(or);
         titanExpression.setRange(1, 10);
         return titanExpression;
     }
