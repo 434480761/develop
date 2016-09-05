@@ -399,6 +399,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
 				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
 				if (CollectionUtils.isEmpty(knowledges) || CollectionUtils.isEmpty(instructionalObjective2Type)) {
+					results.put(id,idWithTitle.getValue());
 					continue;
 				}
 				// 获取多个知识点的title
