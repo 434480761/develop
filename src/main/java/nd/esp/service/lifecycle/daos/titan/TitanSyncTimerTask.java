@@ -28,7 +28,7 @@ import java.util.*;
 public class TitanSyncTimerTask {
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncTimerTask.class);
     public static int MAX_REPORT_TIMES = 10;
-    public static boolean TITAN_SYNC_SWITCH = true;
+    public static boolean TITAN_SYNC_SWITCH = false;
 
     @Autowired
     private TitanSyncService titanSyncService;
@@ -38,72 +38,102 @@ public class TitanSyncTimerTask {
 
     @Autowired
     @Qualifier(value = "defaultJdbcTemplate")
-    private JdbcTemplate jdbcTemplate;;
+    private JdbcTemplate jdbcTemplate;
 
 
-    @Scheduled(fixedDelay=30000)
-    public void syncTask(){
+    @Scheduled(fixedDelay=1000)
+    public void syncTask4SaveOrUpdate(){
         if(!TITAN_SYNC_SWITCH){
-            LOG.info("titan_sync_closed");
+            LOG.info("titan_sync_save_or_update_closed");
             return;
         }
         if (!StaticDatas.TITAN_SWITCH){
             LOG.info("titan_client_closed");
             return;
         }
-        if (checkHaveData()){
+        if (checkHaveData(TitanSyncType.SAVE_OR_UPDATE_ERROR)){
             LOG.info("titan_sync_start");
             try{
-                syncData();
+                syncData(TitanSyncType.SAVE_OR_UPDATE_ERROR);
             } catch (Exception e){
                 LOG.info("titan_sync_error {}",e.getLocalizedMessage());
             }
         }
     }
 
-    private void syncData() {
-        int page = 0;
-        Page<TitanSync> resourcePage;
-        do {
-            String fieldName = "createTime";
-            int row = 10;
-            List<TitanSync> entitylist;
-            List<Item<? extends Object>> items = new ArrayList<>();
-            Item<Integer> resourceTypeItem = new Item<>();
-            resourceTypeItem.setKey("executeTimes");
-            resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
-            resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
-            resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
-            items.add(resourceTypeItem);
 
-            Sort sort = new Sort(Sort.Direction.ASC, fieldName);
-            Pageable pageable = new PageRequest(page, row, sort);
-            try {
-                resourcePage = titanSyncRepository.findByItems(items, pageable);
-            } catch (EspStoreException e) {
-                e.printStackTrace();
-                return;
+    @Scheduled(fixedDelay=180000)
+    public void syncTask4VersionRepair(){
+        if(!TITAN_SYNC_SWITCH){
+            LOG.info("titan_sync_version_repair_closed");
+            return;
+        }
+        if (!StaticDatas.TITAN_SWITCH){
+            LOG.info("titan_client_closed");
+            return;
+        }
+        if (checkHaveData(TitanSyncType.VERSION_SYNC)){
+            LOG.info("titan_version_repair_start");
+            try{
+                syncData(TitanSyncType.VERSION_SYNC);
+            } catch (Exception e){
+                LOG.info("titan_version_repair_error {}",e.getLocalizedMessage());
             }
-            if (resourcePage == null) {
-                return;
-            }
-            entitylist = resourcePage.getContent();
-            if (entitylist == null) {
-                continue;
-            }
-            for (TitanSync titanSync : entitylist) {
-                if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                    titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                } else if (TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(TitanSyncType.value(titanSync.getType()))) {
-                    titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource());
-                }
-            }
-
-        } while (++page < resourcePage.getTotalPages());
+        }
     }
 
-    private boolean checkHaveData(){
-        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES;
+    private void syncData(TitanSyncType titanSyncType) {
+        int page = 0;
+        Page<TitanSync> resourcePage;
+        if(!TITAN_SYNC_SWITCH){
+            return;
+        }
+        String fieldName = "createTime";
+        int row = 10;
+        List<TitanSync> entitylist;
+        List<Item<? extends Object>> items = new ArrayList<>();
+        Item<Integer> resourceTypeItem = new Item<>();
+        resourceTypeItem.setKey("executeTimes");
+        resourceTypeItem.setComparsionOperator(ComparsionOperator.LT);
+        resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
+        resourceTypeItem.setValue(ValueUtils.newValue(MAX_REPORT_TIMES));
+
+        Item<String> resourceTypeItemType = new Item<>();
+        resourceTypeItemType.setKey("type");
+        resourceTypeItemType.setComparsionOperator(ComparsionOperator.EQ);
+        resourceTypeItemType.setLogicalOperator(LogicalOperator.AND);
+        resourceTypeItemType.setValue(ValueUtils.newValue(titanSyncType.toString()));
+
+        items.add(resourceTypeItem);
+        items.add(resourceTypeItemType);
+
+        Sort sort = new Sort(Sort.Direction.ASC, fieldName);
+        Pageable pageable = new PageRequest(page, row, sort);
+        try {
+            resourcePage = titanSyncRepository.findByItems(items, pageable);
+        } catch (EspStoreException e) {
+            e.printStackTrace();
+            return;
+        }
+        if (resourcePage == null) {
+            return;
+        }
+        entitylist = resourcePage.getContent();
+        if (entitylist == null) {
+            return;
+        }
+        for (TitanSync titanSync : entitylist) {
+            if (TitanSyncType.DROP_RESOURCE_ERROR.equals(TitanSyncType.value(titanSync.getType()))
+                    && TitanSyncType.SAVE_OR_UPDATE_ERROR.equals(titanSyncType)) {
+                titanSyncService.deleteResource(titanSync.getPrimaryCategory(), titanSync.getResource());
+            } else if (titanSyncType.equals(TitanSyncType.value(titanSync.getType()))) {
+                titanSyncService.reportResource(titanSync.getPrimaryCategory(), titanSync.getResource(), titanSyncType);
+            }
+        }
+    }
+
+    private boolean checkHaveData(TitanSyncType titanSyncType){
+        String script = "select count(*) from titan_sync WHERE  execute_times <" + MAX_REPORT_TIMES +" AND type = '"+ titanSyncType.toString()+"'";
 
         Long total = jdbcTemplate.queryForLong(script);
 

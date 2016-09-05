@@ -9,6 +9,8 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4ImportData;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanCacheData;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.InterceptingClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -58,6 +61,15 @@ public class TitanResourceController {
 			titanResourceService.importData4Script(resourceType);
 		}
 //
+		titanResourceService.createChapterRelation();
+		titanResourceService.createKnowledgeRealtion();
+		titanResourceService.importAllRelation();
+		titanResourceService.importKnowledgeRelation();
+	}
+
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/relation/ckr", method = RequestMethod.GET)
+	public void importAllRealtion(){
 		titanResourceService.createChapterRelation();
 		titanResourceService.createKnowledgeRealtion();
 		titanResourceService.importAllRelation();
@@ -135,6 +147,13 @@ public class TitanResourceController {
 	@RequestMapping(value = "/all/relation", method = RequestMethod.GET)
 	public void indexAllRelation() {
 		titanResourceService.importAllRelation();
+	}
+
+
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/relation/{page}", method = RequestMethod.GET)
+	public void indexAllRelationPage(@PathVariable Integer page) {
+		titanResourceService.importAllRelationPage(page);
 	}
 
 	/**
@@ -215,6 +234,15 @@ public class TitanResourceController {
 		return 0;
 	}
 	
+	/**
+	 * 校验一类资源在titan 中是否存在
+	 * @param resourceType
+	 * @param beginDate
+	 * @param endDate
+	 * @return
+	 * @since 1.2.6
+	 * @see
+	 */
     @RequestMapping(value = "/{resourceType}/check", method = RequestMethod.GET,
             produces = { MediaType.APPLICATION_JSON_VALUE })
     public String checkAllData(@PathVariable String resourceType, @RequestParam(required = true,value="beginDate") String beginDate, @RequestParam(required = true,value="endDate")String endDate) {
@@ -229,20 +257,44 @@ public class TitanResourceController {
         } catch (ParseException e) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CommonSearchParamError.getCode(),
-                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss或 yyyy-MM-dd HH:mm:ss.SSS");
+                    "时间格式错误,格式为:yyyy-MM-dd HH:mm:ss");
         }
         return "执行成功";
     }
 
+    
+//    @RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
+//            produces = { MediaType.APPLICATION_JSON_VALUE })
+//    public long checkAllData() {
+//        titanResourceService.checkResource(ResourceNdCode.chapters.toString());
+//        for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+//            titanResourceService.checkResource(resourceType);
+//        }
+//        return 0;
+//    }
+    
+    /**
+     * 检验所有资源在titan 中是否存在
+     * @return
+     * @since 1.2.6
+     * @see
+     */
 	@RequestMapping(value = "/all/check/exist", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long checkAllData() {
-		titanResourceService.checkResource(ResourceNdCode.chapters.toString());
+//		titanResourceService.checkResource(ResourceNdCode.chapters.toString());
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
-			titanResourceService.checkResource(resourceType);
+			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1162275200000L), new Date());
 		}
 		return 0;
 	}
+	
+    @RequestMapping(value = "/all/check/relations/exist", method = RequestMethod.GET,
+            produces = { MediaType.APPLICATION_JSON_VALUE })
+    public long checkAllRelations() {
+        titanResourceService.checkAllResourceRelations();
+        return 0;
+    }
 
 	@RequestMapping(value = "importStatus", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -263,7 +315,43 @@ public class TitanResourceController {
 	public void importAllStatistical() {
 		titanResourceService.importStatistical();
 	}
-	
+
+	@RequestMapping(value = "/sync/update", method = RequestMethod.GET)
+	public String changeSyncType(@RequestParam String newType, @RequestParam String oldType , @RequestParam Integer executeTimes){
+		if (!TitanSyncType.contain(newType) || !TitanSyncType.contain(newType)){
+			return "不包含指定的同步类型";
+		}
+
+		if (!TitanSyncType.VERSION_SYNC.toString().equals(newType)
+				&& ! TitanSyncType.SAVE_OR_UPDATE_ERROR.toString().equals(newType)){
+			return "不可以更改成指定的同步类型";
+		}
+
+		if (titanResourceService.changeSyncType(newType, oldType ,executeTimes)){
+			return "更新成功";
+		}
+		return "更新失败";
+
+	}
+
+	@RequestMapping(value = "/sync/delete/{type}", method = RequestMethod.GET)
+	public String deleteSyncType(@PathVariable String type ){
+		if (!TitanSyncType.contain(type)){
+			return "不包含指定的同步类型";
+		}
+
+		if (titanResourceService.deleteSyncType(type)){
+			return "删除成功";
+		}
+		return "删除失败";
+
+	}
+	@RequestMapping(value = "/sync/errorRelation", method = RequestMethod.GET)
+	public void detailErrorRelation(){
+		titanResourceService.detailErrorRelation();
+	}
+
+
 	/**
 	 * 测试导数据时：一个环境只允许一个任务
 	 * 
@@ -282,5 +370,14 @@ public class TitanResourceController {
 			LOG.info("task_running");
 		}
 		return "task_complete";
+	}
+	
+	/**
+	 * 清理Titan缓存数据
+	 */
+	@RequestMapping(value = "/clearTitanCache", method = RequestMethod.GET)
+	public void clearTitanCache() {
+		// TitanCacheData.coverage.getCacheMap().put("123", 333L);
+		TitanCacheData.clearAllCacheMap();
 	}
 }

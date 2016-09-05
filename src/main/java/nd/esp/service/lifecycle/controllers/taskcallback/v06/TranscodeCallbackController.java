@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.services.task.v06.TranscodeCallbackService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -59,6 +60,9 @@ public class TranscodeCallbackController {
     
     @Autowired
     private OfflineService offlineService;
+
+    @Autowired
+    private TitanSyncService titanSyncService;
     
     /**
      * 课件转码回调接口
@@ -104,7 +108,9 @@ public class TranscodeCallbackController {
         //异步过程：同步元数据
         offlineService.writeToCsAsync(res_type, id);
         esResourceOperation.asynAdd(new Resource(res_type, id));
-        
+
+        titanSyncService.syncEducation(res_type,id);
+
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }
 
@@ -144,6 +150,7 @@ public class TranscodeCallbackController {
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));
+            titanSyncService.syncEducation(res_type,id);
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
@@ -186,6 +193,7 @@ public class TranscodeCallbackController {
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));
+            titanSyncService.syncEducation(res_type,id);
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);

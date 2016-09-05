@@ -14,6 +14,7 @@ public interface TitanResourceService {
 
 	void timeTaskImport(Integer page , String type);
 	long importAllRelation();
+	void importAllRelationPage(Integer page);
 	void repairAllRelation();
 	void repairOne(String resourceType, String id);
 	void timeTaskRepair(Integer page , String type);
@@ -37,5 +38,12 @@ public interface TitanResourceService {
 
 
     void checkOneResourceTypeData(String primaryCategory, Date beginDate, Date endDate);
+
+    void checkAllResourceRelations();
+
+	public boolean changeSyncType(String newType,String oldType, Integer executeTimes);
+	public boolean deleteSyncType(String type);
+
+	public void detailErrorRelation();
 
 }

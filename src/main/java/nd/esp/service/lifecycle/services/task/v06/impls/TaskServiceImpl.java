@@ -150,7 +150,7 @@ public class TaskServiceImpl implements TaskService {
         }
         
         if(null != taskInfo) {
-            
+
             if(TASK_BUSS_TYPE_PACK.equals(taskInfo.getBussType())) {
                 if(CollectionUtils.isNotEmpty(uriParams)) {
                     try {
@@ -200,10 +200,16 @@ public class TaskServiceImpl implements TaskService {
             UpdateTaskInfo(taskInfo);
         }
     }
-    
+
     @Override
     @Transactional
     public void DealInvalidTask(String taskId, String errMsg) {
+        DealInvalidTask(taskId, errMsg, PackageUtil.PackStatus.ERROR.getStatus());
+    }
+
+    @Override
+    @Transactional
+    public void DealInvalidTask(String taskId, String errMsg, String status) {
         TaskStatusInfo taskInfo = null;
         try {
             Query query = taskRepository.getEntityManager().createNamedQuery("queryByTaskId");
@@ -221,8 +227,8 @@ public class TaskServiceImpl implements TaskService {
                 LOG.info("任务id被刷新， 取消处理无效任务");
                 return;
             }
-            
-            taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
+
+            taskInfo.setStatus(status);
             taskInfo.setErrMsg(errMsg);
             if(TASK_BUSS_TYPE_TRANSCODE.equals(taskInfo.getBussType())) {
                 TransCodeCallBackParam transCodeCallBackParam = new TransCodeCallBackParam();

@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.task.v06.PackCallbackService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -50,6 +51,9 @@ public class PackCallbackController {
     
     @Autowired
     private AsynEsResourceService esResourceOperation;
+
+    @Autowired
+    private TitanSyncService titanSyncService;
     
     /**
      * 课件转码回调接口
@@ -106,6 +110,9 @@ public class PackCallbackController {
         //异步过程：同步元数据
         //bylsm 同步数据到elasticsearch (与祁凌确认，都是callbackParams中的res_type,identifier)
         esResourceOperation.asynAdd(new Resource(res_type, id));
+
+
+        titanSyncService.syncEducation(res_type,id);
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }

@@ -22,10 +22,24 @@ public enum  TitanSyncType {
     UPDATE_DATA_CATEGORY,
     CHECK_NOT_EXIST,
     CHECK_REPEAT,
+    CHECK_TI_NOT_EXIST,
+    CHECK_TI_REPEAT,
+    CHECK_CG_NOT_EXIST,
+    CHECK_CG_REPEAT,
+    CHECK_RC_NOT_EXIST,
+    CHECK_RC_REPEAT,
+    CHECK_STA_NOT_EXIST,
+    CHECK_STA_REPEAT,
+    CHECK_RR_NOT_EXIST,
+    CHECK_RR_REPEAT,
+    CHECK_NR_NOT_EXIST,
+    CHECK_NR_REPEAT,
     UPDATE_DATA_OTHER,
     DELETE_CATEGORY_ERROR,
     DELETE_COVERAGE_ERROR,
-    DELETE_TECH_INFO_ERROR;
+    DELETE_TECH_INFO_ERROR,
+    //不同版本数据库差量修复数据
+    VERSION_SYNC;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {
@@ -38,4 +52,7 @@ public enum  TitanSyncType {
         return map.get(key);
     }
 
+    public static boolean contain(String type){
+        return map.containsKey(type);
+    }
 }

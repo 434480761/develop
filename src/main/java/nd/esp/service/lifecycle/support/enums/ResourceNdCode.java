@@ -24,6 +24,7 @@ public enum ResourceNdCode {
 
     // 学研素材
     teachingmaterials("$RA0201"), // 教材
+    metacurriculums("$RA0213"),
     chapters("$RA0202"), // 章节
     lessons("$RA0203"), // 课时
     instructionalobjectives("$RA0204"), // 教学目标

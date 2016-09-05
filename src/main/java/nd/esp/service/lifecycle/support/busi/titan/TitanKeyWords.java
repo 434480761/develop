@@ -24,7 +24,11 @@ public enum TitanKeyWords {
     //树形结构
     tree_has_chapter("tree_has_chapters"),tree_has_knowledge("tree_has_knowledges"),tree_order("tree_order_num"),
     //统计
-    statistical,has_resource_statistical
+    statistical,has_resource_statistical,
+    // order by的几个条件字段和值
+    sta_key_title,sta_data_from,ti_title,href,ti_size,
+    // select_version_result
+    select_version_result("select('version_result')")
     ;
 
     private String name;

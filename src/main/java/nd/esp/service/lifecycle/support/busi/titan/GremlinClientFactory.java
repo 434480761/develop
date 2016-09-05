@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 /**
  * This Component exists to provide other beans with access to the TitanGraph
  * instance.
- * 
+ *
  * @author linsm
  */
 @Component
@@ -38,7 +38,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 	/**
 	 * 用于除查询外的其它操作
-	 * 
+	 *
 	 * @return
 	 */
 	public static Client getSingleClient() {
@@ -47,7 +47,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 	/**
 	 * 用于查询操作；
-	 * 
+	 *
 	 * @return
 	 */
 	public static Client getSearchClient() {
@@ -100,7 +100,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 	/**
 	 * 客户端类型
-	 * 
+	 *
 	 * @author linsm
 	 *
 	 */
@@ -111,11 +111,13 @@ public class GremlinClientFactory implements ApplicationContextAware {
 				Builder singleBuilder = defaulBuilder();
 				List<String> addressList = checkAndGetAddress(address);
 				// only add one address;
-				singleBuilder.addContactPoint(addressList.get(RandomUtils.nextInt(addressList.size())));
+				int index = 0;
+				// index=RandomUtils.nextInt(addressList.size());
+				singleBuilder.addContactPoint(addressList.get(index));
 				checkAndSetPoolSizePoolSize(singleBuilder);
 				return singleBuilder;
 			}
-			
+
 			@Override
 			protected void checkAndSetPoolSizePoolSize(Builder singleBuilder) {
 				checkAndSetPoolSizePoolSize(singleBuilder,
@@ -159,8 +161,8 @@ public class GremlinClientFactory implements ApplicationContextAware {
 			}
 		}, // 用于查询接口（使用集群中的所有结点）
 		;
-		
-		
+
+
 		private static final int minConnectionPoolSize = 0;
 		private static final int maxConnectionPoolSize = 1;
 		private static final int nioPoolSize = 2;
@@ -168,7 +170,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 对所有client 默认的配置
-		 * 
+		 *
 		 * @return
 		 */
 		private static Builder defaulBuilder() {
@@ -193,7 +195,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 读取并验证titan线程池相关配置
-		 * 
+		 *
 		 * @param titanSearchPoolSize
 		 * @return
 		 */
@@ -230,7 +232,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 						"LC/titan/conf",
 						"minConnectionPoolSize must not be greater than maxConnectionPoolSize");
 			}
-			
+
 			searchBuilder.minConnectionPoolSize(poolSizes.get(minConnectionPoolSize));
 			searchBuilder.maxConnectionPoolSize(poolSizes.get(maxConnectionPoolSize));
 			searchBuilder.nioPoolSize(poolSizes.get(nioPoolSize));
@@ -239,7 +241,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 重新连接服务
-		 * 
+		 *
 		 * @param address
 		 */
 		public boolean reConnectServer(String address) {
@@ -264,7 +266,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 检查并获取titan节点地址
-		 * 
+		 *
 		 * @param address
 		 * @return
 		 */
@@ -302,7 +304,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 判断是否连接
-		 * 
+		 *
 		 * @return
 		 */
 		private boolean isConnection() {
@@ -335,7 +337,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 
 		/**
 		 * 初始化客户端
-		 * 
+		 *
 		 * @param address
 		 */
 		private void init(String address) {
@@ -347,7 +349,7 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		public abstract Client getClient();
 
 		public abstract void setClient(Client client);
-		
+
 		protected abstract void checkAndSetPoolSizePoolSize(
 				Builder searchBuilder);
 	}
