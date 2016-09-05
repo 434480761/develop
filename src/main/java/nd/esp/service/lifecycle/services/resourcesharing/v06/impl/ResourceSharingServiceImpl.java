@@ -48,7 +48,10 @@ public class ResourceSharingServiceImpl implements ResourceSharingService {
 		ResourceSharing resourceSharing = BeanMapperUtils.beanMapper(rsm, ResourceSharing.class);
 		if(userInfo != null){
 			resourceSharing.setSharerId(userInfo.getUserId());
-			resourceSharing.setSharerName(userInfo.getUserName());
+			resourceSharing.setSharerName(
+					userInfo.getOrgExinfo() != null 
+					? (String)(userInfo.getOrgExinfo().get("org_user_code")) 
+					: "");
 		}
 		
 		//生成密码
