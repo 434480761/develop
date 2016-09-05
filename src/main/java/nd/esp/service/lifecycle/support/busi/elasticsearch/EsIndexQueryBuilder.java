@@ -210,16 +210,17 @@ public class EsIndexQueryBuilder {
      *
      * @return
      */
-    private String dealWithOrders(){
+    private String dealWithOrders() {
         StringBuffer orderScript = new StringBuffer();
         orderScript.append("List<String> orders = new ArrayList<String>();");
-        for (TitanOrder order : this.orders)
+        for (TitanOrder order : orders) {
             orderScript.append("orders.add('")
                     .append(order.getField()).append("#").append(order.getSortOrder()).append("#").append(order.getDataType())
                     .append("');");
-
+        }
         return orderScript.toString();
     }
+
     /**
      * 处理可用资源（primary_category、lc_enable）
      * @return
