@@ -524,26 +524,29 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			sb.append(knowledges.length > i ? knowledges[i]:"");
 		}
 		// 替换（X）
-		String xn = sb.toString();
-		String[] xs = xn.split("（X）");
-		int pos = xs[0].length();
-
-		sb = new StringBuilder();
-		sb.append(xs[0]);
-
-		for (int i = 1;i < xs.length;i++) {
-			int index = originTitle.indexOf(xs[i], pos);
-
-			if (-1 == index) {
-				sb.append(originTitle.substring(pos));
-				break;
-			}
-
-			sb.append(originTitle.substring(pos, index));
-			sb.append(xs[i]);
-
-			pos = index + xs[i].length();
+		if(sb.toString().contains("（X）")){
+			return originTitle;
 		}
+//		String xn = sb.toString();
+//		String[] xs = xn.split("（X）");
+//		int pos = xs[0].length();
+//
+//		sb = new StringBuilder();
+//		sb.append(xs[0]);
+//
+//		for (int i = 1;i < xs.length;i++) {
+//			int index = originTitle.indexOf(xs[i], pos);
+//
+//			if (-1 == index) {
+//				sb = new StringBuilder(originTitle);
+//				break;
+//			}
+//
+//			sb.append(originTitle.substring(pos, index));
+//			sb.append(xs[i]);
+//
+//			pos = index + xs[i].length();
+//		}
 
 		return sb.toString();
 	}
