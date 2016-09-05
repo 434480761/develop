@@ -193,4 +193,32 @@ public class VrLifeController {
         
 		return result;
 	}
+	
+	/**
+	 * 添加推荐列表  -- 内部使用
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param resources
+	 * @return
+	 */
+	@RequestMapping(value = "/role/recommend/add", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String addRecommendedResource(@RequestParam(value="resource") List<String> resources){
+		
+		vrLifeService.addRecommendedResource(resources);
+		return "添加推荐成功";
+	}
+	
+	/**
+	 * 删除推荐资源 -- 内部使用
+	 * @author xiezy
+	 * @date 2016年9月2日
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "/role/recommend/{id}", method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public String deleteRecommendedResource(@PathVariable(value="id") String id){
+		
+		vrLifeService.deleteRecommendedResource(id);
+		return id + ":删除推荐成功";
+	}
 }

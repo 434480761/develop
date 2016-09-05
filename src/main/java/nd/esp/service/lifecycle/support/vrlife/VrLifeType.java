@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 public enum VrLifeType {
 	SKELETON("skeleton"),
 	ROLECONFIG("roleconfig"),
+	SKELETONCONFIG("skeletonconfig"),
 	ACTION("action")
 	;
 	

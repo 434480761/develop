@@ -463,6 +463,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         List<String> cmds = param.getCommands();
         extParam.put("src", srcDir+File.separator+srcFileName);
         extParam.put("destDir", destDir);
+        extParam.put("srcDir", srcDir);
         extParam.put("fileNameNoEx", NameWithoutEx);
         
         long timeStart = System.currentTimeMillis();
@@ -603,7 +604,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         
         List<String> cmds = param.getCommands();
         extParam.put("src", srcDir+File.separator+srcFileName);
-        extParam.put("tempMp4", destDir+File.separator+NameWithoutEx+".mp4");
+        extParam.put("srcDir", srcDir);
         extParam.put("destDir", destDir);
         extParam.put("fileNameNoEx", NameWithoutEx);
         extParam.put("targetPreview", previewDir);
@@ -1143,7 +1144,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 //    }
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\",\"session\":\"b5199eef-746c-49ef-8cce-158c02140234\",\"task_execute_env\":\"integration\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/27b28f1d-f0c7-4121-aeaf-5415493b4bd7.pkg/test3.swf\",\"ext_param\":{\"subtype\":\"video\",\"coverNum\":\"16\",\"targetFmt\":\"mp4\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/27b28f1d-f0c7-4121-aeaf-5415493b4bd7.pkg\",\"commands\":[\"mswf2avi /f #src# /o #tempMp4# /pi ini\\\\mp4.ini /pn Mp4 video normal quality /de 1\",\"ffmpeg -i \\\"#tempMp4#\\\" -y -s 1920x1080 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#destDir#/1080p/#fileNameNoEx#.mp4\\\"\",\"ffmpeg -i \\\"#tempMp4#\\\" -y -s 1280x720 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#destDir#/720p/#fileNameNoEx#.mp4\\\"\",\"ffmpeg -i \\\"#tempMp4#\\\" -y -s 720x480 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#destDir#/480p/#fileNameNoEx#.mp4\\\"\",\"ffmpeg -i \\\"#tempMp4#\\\" -y -s 640x360 -ab 48k -vcodec libx264 -c:a libvo_aacenc -ar 44100 -qscale 4 -f #targetFmt# -movflags faststart -map 0:v:0 -map 0:a? -ac 2 \\\"#destDir#/360p/#fileNameNoEx#.mp4\\\"\",\"ffmpeg2theora \\\"#destDir#/1080p/#fileNameNoEx#.mp4\\\" --width 1920 --height 1080 --videoquality 7 --audioquality 5 -o \\\"#destDir#/1080p-ogv/#fileNameNoEx#.ogv\\\"\",\"ffmpeg2theora \\\"#destDir#/720p/#fileNameNoEx#.mp4\\\" --width 1280 --height 720 --videoquality 7 --audioquality 5 -o \\\"#destDir#/720p-ogv/#fileNameNoEx#.ogv\\\"\",\"ffmpeg2theora \\\"#destDir#/480p/#fileNameNoEx#.mp4\\\" --width 720 --height 480 --videoquality 7 --audioquality 5 -o \\\"#destDir#/480p-ogv/#fileNameNoEx#.ogv\\\"\",\"ffmpeg2theora \\\"#destDir#/360p/#fileNameNoEx#.mp4\\\" --width 640 --height 360 --videoquality 7 --audioquality 5 -o \\\"#destDir#/360p-ogv/#fileNameNoEx#.ogv\\\"\",\"thumbnail -in \\\"#tempMp4#\\\" -picint #intervalTime# -s 160x120 -out \\\"#targetCover#\\\" -join 4x4\",\"ffmpeg -y -ss 5 -i \\\"#tempMp4#\\\" -frames 1 -f image2 #targetPreview#/frame1.jpg\"],\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\",\"session\":\"92f5935e-54ef-4016-b0e9-fc12eb61c34d\",\"task_execute_env\":\"integration\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/d785d889-59f2-4c10-9fa3-d96243aebfca.pkg/test8.swf\",\"ext_param\":{\"subtype\":\"video\",\"coverNum\":\"16\",\"targetFmt\":\"mp4\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/d785d889-59f2-4c10-9fa3-d96243aebfca.pkg\",\"commands\":[\"floatPlayer.exe \\\"#src#\\\" -s\",\"move \\\"#srcDir#\\\\#fileNameNoEx#.jpg\\\" \\\"#targetPreview#\\\\frame1.jpg\\\" /y\"],\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);

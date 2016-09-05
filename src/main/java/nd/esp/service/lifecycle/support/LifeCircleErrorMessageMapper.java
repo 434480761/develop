@@ -483,6 +483,14 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	CoverageSharingNotFound("LC/COVERAGE_SHARING_NOT_FOUND",getPropertyValue("coverageSharingServiceImpl.deleteCoverageSharing.check.coverageSharingNotExist.fail")),
 	DeleteCoverageSharingSuccess("LC/DELETE_COVERAGE_SHARING_SUCCESS",getPropertyValue("coverageSharingController.deleteCoverageSharing.operation.success")),
 	
+	//资源分享
+	GetUserInfoFail("LC/GET_USER_INFO_FAIL",getPropertyValue("resourceSharingController.getUserInfo.operation.fail")),
+	CreateResourceSharingFail("LC/CREATE_RESOURCE_SHARING_FAIL",getPropertyValue("resourceSharingServiceImpl.createResourceSharing.operation.fail")),
+	DeleteResourceSharingFail("LC/DELETE_RESOURCE_SHARING_FAIL",getPropertyValue("resourceSharingServiceImpl.deleteResourceSharingBySharingId.operation.fail")),
+	DeleteResourceSharingSuccess("LC/DELETE_RESOURCE_SHARING_SUCCESS",getPropertyValue("resourceSharingServiceImpl.deleteResourceSharingBySharingId.operation.success")),
+	ProtectPasswdIsNotEmpty("LC/PROTECT_PASSWD_IS_NOT_EMPTY",getPropertyValue("resourceSharingController.protectPasswd.checkNotEmpty.fail")),
+	ProtectedSharingResourceNotFound("LC/PROTECTED_SHARING_RESOURCE_NOT_FOUND",getPropertyValue("resourceSharingController.protectedSharingResource.checkIsExist.fail")),
+	
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
 
