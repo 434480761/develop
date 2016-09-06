@@ -960,11 +960,7 @@ public class NDResourceController {
         
         String limitForTitan = modifyTitanLimit(moreOffset, begin, size);
         
-//        需要使用LifeCycle 字段，默认带上
-        List<String> includesList = cloner.deepClone(includes);
-        if (!includesList.contains("LC")) {
-            includesList.add("LC");
-        }
+        List<String> includesList = checkIncludes(includes);
         
         Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
         Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resTypeSet, includesList, categories,
@@ -1008,6 +1004,22 @@ public class NDResourceController {
 
         titanQueryResult.setLimit(limit);
         return titanQueryResult;
+    }
+
+    private List<String> checkIncludes(List<String> includes) {
+        // 排序使用到的字段与 includes 相关，必须带上
+        Cloner cloner = new Cloner();
+        List<String> includesList = cloner.deepClone(includes);
+        if (!includesList.contains("LC")) {
+            includesList.add("LC");
+        }
+        if (!includesList.contains("TI")) {
+            includesList.add("TI");
+        }
+        if (!includesList.contains("CG")) {
+            includesList.add("CG");
+        }
+        return includesList;
     }
 
     private String modifyTitanLimit(int moreOffset, int begin, int size) {
@@ -1080,8 +1092,14 @@ public class NDResourceController {
         List<String> fields = Lists.newLinkedList();
         List<String> orders = Lists.newLinkedList();
         for (Entry<String, String> orderBy : orderBys.entrySet()) {
-            fields.add(orderBy.getKey());
-            orders.add(orderBy.getValue().toUpperCase());
+            // sta_key_value 这个字段返回值比较特殊:desc#xxxx#xxxx，只需要截取第一部分
+            if ("sta_key_value".equals(orderBy.getKey())) {
+                fields.add(orderBy.getKey());
+                orders.add(orderBy.getValue().split("#")[0].toUpperCase());
+            } else {
+                fields.add(orderBy.getKey());
+                orders.add(orderBy.getValue().toUpperCase());
+            }
         }
         Collections.sort(titanQueryResultItems, OrderField.comparator(fields, orders));
         titanQueryResult.setTotal(totalResult);

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
+import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -22,22 +24,230 @@ public enum OrderField {
 	lc_create_time {
 		@Override
 		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-			return firstModel.getLifeCycle().getCreateTime()
-					.compareTo(secondModel.getLifeCycle().getCreateTime());
+		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
+                return 1;
+            }
+            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
+                return -1;
+            }
+            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
+                return firstModel.getLifeCycle().getCreateTime()
+                        .compareTo(secondModel.getLifeCycle().getCreateTime());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
 		}
 	},
 	lc_last_update {
 		@Override
 		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-			return firstModel.getLifeCycle().getLastUpdate()
-					.compareTo(secondModel.getLifeCycle().getLastUpdate());
+		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
+                return 1;
+            }
+            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
+                return -1;
+            }
+            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
+                return firstModel.getLifeCycle().getLastUpdate()
+                        .compareTo(secondModel.getLifeCycle().getLastUpdate());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
 		}
 	},
 	title {
 		@Override
 		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-			return firstModel.getTitle().compareTo(secondModel.getTitle());
+		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
+                return 1;
+            }
+            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
+                return -1;
+            }
+            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
+                return firstModel.getTitle().compareTo(secondModel.getTitle());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
 		}
+	},
+	ti_size {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (CollectionUtils.isNotEmpty(firstModel.getTechInfoList()) && CollectionUtils.isEmpty(secondModel.getTechInfoList())) {
+                return 1;
+            }
+            if (CollectionUtils.isEmpty(firstModel.getTechInfoList()) && CollectionUtils.isNotEmpty(secondModel.getTechInfoList())) {
+                return -1;
+            }
+            if (CollectionUtils.isNotEmpty(firstModel.getTechInfoList()) && CollectionUtils.isNotEmpty(secondModel.getTechInfoList())) {
+                long firstModelSize = 0L;
+                for (ResTechInfoModel techInfo : firstModel.getTechInfoList()) {
+                    if("href".equals(techInfo.getTitle())){
+                        firstModelSize = techInfo.getSize();
+                        break;
+                    }
+                }
+                long secondeModelSize = 0L;
+                for (ResTechInfoModel techInfo : secondModel.getTechInfoList()) {
+                    if("href".equals(techInfo.getTitle())){
+                        secondeModelSize = techInfo.getSize();
+                        break;
+                    }
+                }
+                return (int) (firstModelSize - secondeModelSize);
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	    
+	},
+//	sort_num {
+//        @Override
+//        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+//            // TODO Auto-generated method stub
+//            return 0;
+//        }
+//	},
+	cg_taxoncode {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (CollectionUtils.isNotEmpty(firstModel.getCategoryList()) && CollectionUtils.isEmpty(secondModel.getCategoryList())) {
+                return 1;
+            }
+            if (CollectionUtils.isEmpty(firstModel.getCategoryList()) && CollectionUtils.isNotEmpty(secondModel.getCategoryList())) {
+                return -1;
+            }
+            if (CollectionUtils.isNotEmpty(firstModel.getCategoryList()) && CollectionUtils.isNotEmpty(secondModel.getCategoryList())){
+                // taxoncode 以 "RL" 开关才排序，不以 "RL" 开关则默认设为空字符串("")
+                String firstModelTaxoncode = "";
+                for (ResClassificationModel category : firstModel.getCategoryList()) {
+                    if (category.getTaxoncode().startsWith("RL")) {
+                        firstModelTaxoncode = category.getTaxoncode();
+                    }
+                }
+                String secondModelTaxoncode = "";
+                for (ResClassificationModel category : firstModel.getCategoryList()) {
+                    if (category.getTaxoncode().startsWith("RL")) {
+                        secondModelTaxoncode = category.getTaxoncode();
+                    }
+                }
+                return firstModelTaxoncode.compareTo(secondModelTaxoncode);
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	},
+	sta_key_value {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+                return 1;
+            }
+            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+                return -1;
+            }
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	},
+	top {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+                return 1;
+            }
+            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+                return -1;
+            }
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	},
+	scores {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+                return 1;
+            }
+            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+                return -1;
+            }
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	},
+	votes {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+                return 1;
+            }
+            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+                return -1;
+            }
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	},
+	views {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+                return 1;
+            }
+            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+                return -1;
+            }
+            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
+	}, 
+	m_identifier {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getmIdentifier() != null && secondModel.getmIdentifier() == null) {
+                return 1;
+            }
+            if (firstModel.getmIdentifier() == null && secondModel.getmIdentifier() != null) {
+                return -1;
+            }
+            if (firstModel.getmIdentifier() != null && secondModel.getmIdentifier() != null) {
+                return firstModel.getmIdentifier().compareTo(secondModel.getmIdentifier());
+            }
+            return 0;
+        }
+	},
+	lc_version {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
+                return 1;
+            }
+            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
+                return -1;
+            }
+            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
+                return firstModel.getLifeCycle().getVersion().compareTo(secondModel.getLifeCycle().getVersion());
+            }
+            // 两个都为 null，则默认为相等
+            return 0;
+        }
 	},
 	;
 
