@@ -2424,13 +2424,12 @@ public class NDResourceServiceImpl implements NDResourceService{
                     IndexSourceType.InstructionalObjectiveType.getName(),
                     objectsId
             ));
-            if (resType.equals(IndexSourceType.ChapterType.getName())) {
-                relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
-                        IndexSourceType.ChapterType.getName(),
-                        IndexSourceType.InstructionalObjectiveType.getName(),
-                        objectsId
-                ));
-            }
+            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                    IndexSourceType.ChapterType.getName(),
+                    IndexSourceType.InstructionalObjectiveType.getName(),
+                    objectsId
+            ));
+            
             // 教学目标挂载的章节/课时id集合
             Map<String, String> relationsMap = new HashMap<>();
             for (ResourceRelation rr : relations) {

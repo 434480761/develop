@@ -355,7 +355,6 @@ public class NDResourceController {
      * @param nodeType     节点类型（chapters or lessions）,可选，默认为chapters
      * @return
      */
-    @MarkAspect4OfflineJsonToCS
     @RequestMapping(value = "/business/{objective_id}", method = RequestMethod.DELETE, produces = {MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody Map<String, String> deleteInstructionalObjective(
             @PathVariable("res_type") String resourceType,
