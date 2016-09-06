@@ -85,9 +85,6 @@ public class TitanSyncTimerTask {
     private void syncData(TitanSyncType titanSyncType) {
         int page = 0;
         Page<TitanSync> resourcePage;
-        if(!TITAN_SYNC_SWITCH){
-            return;
-        }
         String fieldName = "createTime";
         int row = 10;
         List<TitanSync> entitylist;
