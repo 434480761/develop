@@ -160,8 +160,10 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 						if(maxNum > 0){
 							am.setTitle(String.valueOf(maxNum+1));
 						}else{
-							am.setTitle(String.valueOf(System.currentTimeMillis()));
+							am.setTitle(String.valueOf(likeName)+"01");
 						}
+					}else{
+						am.setTitle(String.valueOf(likeName)+"01");
 					}
 				} catch (NumberFormatException e) {
 					am.setTitle(String.valueOf(System.currentTimeMillis()));
