@@ -99,7 +99,13 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             //资源不存在触发删除资源
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
         } else {
-            boolean reportSuccess = report(education);
+            boolean reportSuccess = false;
+            try {
+                reportSuccess = report(education);
+            } catch (Exception e){
+                LOG.error(e.getLocalizedMessage());
+            }
+
             if(reportSuccess){
                 titanRepositoryUtils.titanSync4MysqlDeleteAll(primaryCategory,identifier);
             } else {
