@@ -247,7 +247,7 @@ public enum OrderField {
                 if (orderFieldEnum == null) {
                     throw new LifeCircleException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
-                            "LC/titan/search", "order field not support");
+                            "LC/titan/search", orderField+" has not supported");
                 }
                 orderFieldsEnumList.add(orderFieldEnum);
             }
