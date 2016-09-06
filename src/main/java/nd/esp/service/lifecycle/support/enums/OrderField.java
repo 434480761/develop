@@ -37,6 +37,11 @@ public enum OrderField {
             // 两个都为 null，则默认为相等
             return 0;
 		}
+		
+		@Override
+		public void addInclude(List<String> includes) {
+			includes.add("LC");
+		}
 	},
 	lc_last_update {
 		@Override
@@ -252,6 +257,9 @@ public enum OrderField {
 	;
 
 	abstract int compare(ResourceModel firstModel, ResourceModel secondModel);
+	public  void addInclude(List<String> includes){
+		
+	}
 
 	/**
 	 * 对 ResourceModel进行排序

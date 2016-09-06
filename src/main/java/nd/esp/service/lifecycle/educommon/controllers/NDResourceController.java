@@ -960,7 +960,21 @@ public class NDResourceController {
         
         String limitForTitan = modifyTitanLimit(moreOffset, begin, size);
         
-        List<String> includesList = checkIncludes(includes);
+        Map<String, String> orderBys = TitanUtils.dealOrderMap(orderMap, showVersion, reverse, relations, statisticsType, statisticsPlatform);
+        List<String> fields = Lists.newLinkedList();
+        List<String> orders = Lists.newLinkedList();
+        for (Entry<String, String> orderBy : orderBys.entrySet()) {
+            // sta_key_value 这个字段返回值比较特殊:desc#xxxx#xxxx，只需要截取第一部分
+            if ("sta_key_value".equals(orderBy.getKey())) {
+                fields.add(orderBy.getKey());
+                orders.add(orderBy.getValue().split("#")[0].toUpperCase());
+            } else {
+                fields.add(orderBy.getKey());
+                orders.add(orderBy.getValue().toUpperCase());
+            }
+        }
+        
+        List<String> includesList = checkIncludes(includes,fields);
         
         Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
         Future<ListViewModel<ResourceModel>> titanFuture = getTitanFuture(resTypeSet, includesList, categories,
@@ -999,26 +1013,30 @@ public class NDResourceController {
         }
         excetorService.shutdown();
         
-        Map<String, String> orderBys = TitanUtils.dealOrderMap(orderMap, showVersion, reverse, relations, statisticsType, statisticsPlatform);
-        getFinalResult(orderMap, moreOffset, begin, size, titanQueryResult, dbQueryResult, orderBys);
+//        Map<String, String> orderBys = TitanUtils.dealOrderMap(orderMap, showVersion, reverse, relations, statisticsType, statisticsPlatform);
+        getFinalResult(orderMap, moreOffset, begin, size, titanQueryResult, dbQueryResult, fields,orders);
 
         titanQueryResult.setLimit(limit);
         return titanQueryResult;
     }
 
-    private List<String> checkIncludes(List<String> includes) {
+    private List<String> checkIncludes(List<String> includes,List<String> orderFields) {
         // 排序使用到的字段与 includes 相关，必须带上
         Cloner cloner = new Cloner();
         List<String> includesList = cloner.deepClone(includes);
-        if (!includesList.contains("LC")) {
-            includesList.add("LC");
-        }
-        if (!includesList.contains("TI")) {
-            includesList.add("TI");
-        }
-        if (!includesList.contains("CG")) {
-            includesList.add("CG");
-        }
+       List<OrderField> orderFieldEnumList = OrderField.fromString(orderFields);
+       for(OrderField orderField:orderFieldEnumList){
+    	   orderField.addInclude(includes);
+       }
+//        if (!includesList.contains("LC")) {
+//            includesList.add("LC");
+//        }
+//        if (!includesList.contains("TI")) {
+//            includesList.add("TI");
+//        }
+//        if (!includesList.contains("CG")) {
+//            includesList.add("CG");
+//        }
         return includesList;
     }
 
@@ -1038,11 +1056,11 @@ public class NDResourceController {
 
     private void getFinalResult(Map<String, String> orderMap, int moreOffset, int begin, int size,
             ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult, Map<String, String> orderBys) {
+            ListViewModel<ResourceModel> dbQueryResult,  List<String> fields,List<String> orders) {
         
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
         if (CollectionUtils.isNotEmpty(titanQueryResultItems)) {
-            mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, orderBys);
+            mergeAndSortTitanResultAndDbResult(titanQueryResult, dbQueryResult, fields,orders);
             
             interceptResultFromMergedResult(moreOffset, begin, size, titanQueryResult);
         }else {
@@ -1086,21 +1104,9 @@ public class NDResourceController {
     }
 
     private void mergeAndSortTitanResultAndDbResult(ListViewModel<ResourceModel> titanQueryResult,
-            ListViewModel<ResourceModel> dbQueryResult, Map<String, String> orderBys) {
+            ListViewModel<ResourceModel> dbQueryResult, List<String> fields,List<String> orders) {
         long totalResult = uniqueResults(titanQueryResult, dbQueryResult);
         List<ResourceModel> titanQueryResultItems = titanQueryResult.getItems();
-        List<String> fields = Lists.newLinkedList();
-        List<String> orders = Lists.newLinkedList();
-        for (Entry<String, String> orderBy : orderBys.entrySet()) {
-            // sta_key_value 这个字段返回值比较特殊:desc#xxxx#xxxx，只需要截取第一部分
-            if ("sta_key_value".equals(orderBy.getKey())) {
-                fields.add(orderBy.getKey());
-                orders.add(orderBy.getValue().split("#")[0].toUpperCase());
-            } else {
-                fields.add(orderBy.getKey());
-                orders.add(orderBy.getValue().toUpperCase());
-            }
-        }
         Collections.sort(titanQueryResultItems, OrderField.comparator(fields, orders));
         titanQueryResult.setTotal(totalResult);
     }
