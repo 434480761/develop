@@ -1378,6 +1378,7 @@ public class NDResourceController {
 						|| orderMap.containsKey("top")
 						|| orderMap.containsKey("scores")
 						|| orderMap.containsKey("votes")
+						|| orderMap.containsKey("status")
 						|| orderMap.containsKey("views")
 						|| orderMap.containsKey("sort_num") || orderMap
 							.containsKey("taxOnCode"))))) {
@@ -1441,6 +1442,7 @@ public class NDResourceController {
 						|| orderMap.containsKey("top")
 						|| orderMap.containsKey("scores")
 						|| orderMap.containsKey("votes")
+						|| orderMap.containsKey("status")
 						|| orderMap.containsKey("views")
 						|| orderMap.containsKey("sort_num") || orderMap
 							.containsKey("taxOnCode"))));
