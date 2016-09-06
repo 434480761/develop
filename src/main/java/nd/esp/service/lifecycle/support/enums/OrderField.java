@@ -18,212 +18,126 @@ import org.springframework.http.HttpStatus;
  * 用于实时查询排序
  * 
  * @author linsm
- *
  */
 public enum OrderField {
-	lc_create_time {
-		@Override
-		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
-                return 1;
-            }
-            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
-                return -1;
-            }
-            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
-                return firstModel.getLifeCycle().getCreateTime()
-                        .compareTo(secondModel.getLifeCycle().getCreateTime());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
-		}
-		
-		@Override
-		public void addInclude(List<String> includes) {
-			includes.add("LC");
-		}
-	},
-	lc_last_update {
-		@Override
-		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
-                return 1;
-            }
-            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
-                return -1;
-            }
-            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
-                return firstModel.getLifeCycle().getLastUpdate()
-                        .compareTo(secondModel.getLifeCycle().getLastUpdate());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
-		}
-	},
-	title {
-		@Override
-		int compare(ResourceModel firstModel, ResourceModel secondModel) {
-		    if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
-                return 1;
-            }
-            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
-                return -1;
-            }
-            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
-                return firstModel.getTitle().compareTo(secondModel.getTitle());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
-		}
-	},
-	ti_size {
+    lc_create_time {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (CollectionUtils.isNotEmpty(firstModel.getTechInfoList()) && CollectionUtils.isEmpty(secondModel.getTechInfoList())) {
-                return 1;
+            return firstModel.getLifeCycle().getCreateTime()
+                    .compareTo(secondModel.getLifeCycle().getCreateTime());
+        }
+
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("LC")) {
+                includes.add("LC");
             }
-            if (CollectionUtils.isEmpty(firstModel.getTechInfoList()) && CollectionUtils.isNotEmpty(secondModel.getTechInfoList())) {
-                return -1;
+        }
+    },
+    lc_last_update {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            return firstModel.getLifeCycle().getLastUpdate()
+                    .compareTo(secondModel.getLifeCycle().getLastUpdate());
+        }
+
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("LC")) {
+                includes.add("LC");
             }
-            if (CollectionUtils.isNotEmpty(firstModel.getTechInfoList()) && CollectionUtils.isNotEmpty(secondModel.getTechInfoList())) {
-                long firstModelSize = 0L;
-                for (ResTechInfoModel techInfo : firstModel.getTechInfoList()) {
-                    if("href".equals(techInfo.getTitle())){
-                        firstModelSize = techInfo.getSize();
-                        break;
-                    }
+        }
+    },
+    title {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            return firstModel.getTitle().compareTo(secondModel.getTitle());
+        }
+    },
+    ti_size {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            long firstModelSize = 0L;
+            for (ResTechInfoModel techInfo : firstModel.getTechInfoList()) {
+                if ("href".equals(techInfo.getTitle())) {
+                    firstModelSize = techInfo.getSize();
+                    break;
                 }
-                long secondeModelSize = 0L;
-                for (ResTechInfoModel techInfo : secondModel.getTechInfoList()) {
-                    if("href".equals(techInfo.getTitle())){
-                        secondeModelSize = techInfo.getSize();
-                        break;
-                    }
+            }
+            long secondeModelSize = 0L;
+            for (ResTechInfoModel techInfo : secondModel.getTechInfoList()) {
+                if ("href".equals(techInfo.getTitle())) {
+                    secondeModelSize = techInfo.getSize();
+                    break;
                 }
-                return (int) (firstModelSize - secondeModelSize);
             }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return (int) (firstModelSize - secondeModelSize);
         }
-	    
-	},
-//	sort_num {
-//        @Override
-//        int compare(ResourceModel firstModel, ResourceModel secondModel) {
-//            // TODO Auto-generated method stub
-//            return 0;
-//        }
-//	},
-	cg_taxoncode {
+
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("TI")) {
+                includes.add("TI");
+            }
+        }
+    },
+    cg_taxoncode {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (CollectionUtils.isNotEmpty(firstModel.getCategoryList()) && CollectionUtils.isEmpty(secondModel.getCategoryList())) {
-                return 1;
-            }
-            if (CollectionUtils.isEmpty(firstModel.getCategoryList()) && CollectionUtils.isNotEmpty(secondModel.getCategoryList())) {
-                return -1;
-            }
-            if (CollectionUtils.isNotEmpty(firstModel.getCategoryList()) && CollectionUtils.isNotEmpty(secondModel.getCategoryList())){
-                // taxoncode 以 "RL" 开关才排序，不以 "RL" 开关则默认设为空字符串("")
-                String firstModelTaxoncode = "";
-                for (ResClassificationModel category : firstModel.getCategoryList()) {
-                    if (category.getTaxoncode().startsWith("RL")) {
-                        firstModelTaxoncode = category.getTaxoncode();
-                    }
+            // taxoncode 以 "RL" 开关才排序，不以 "RL" 开关则默认设为空字符串("")
+            String firstModelTaxoncode = "";
+            for (ResClassificationModel category : firstModel.getCategoryList()) {
+                if (category.getTaxoncode().startsWith("RL")) {
+                    firstModelTaxoncode = category.getTaxoncode();
                 }
-                String secondModelTaxoncode = "";
-                for (ResClassificationModel category : firstModel.getCategoryList()) {
-                    if (category.getTaxoncode().startsWith("RL")) {
-                        secondModelTaxoncode = category.getTaxoncode();
-                    }
+            }
+            String secondModelTaxoncode = "";
+            for (ResClassificationModel category : firstModel.getCategoryList()) {
+                if (category.getTaxoncode().startsWith("RL")) {
+                    secondModelTaxoncode = category.getTaxoncode();
                 }
-                return firstModelTaxoncode.compareTo(secondModelTaxoncode);
             }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return firstModelTaxoncode.compareTo(secondModelTaxoncode);
         }
-	},
-	sta_key_value {
+
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("CG")) {
+                includes.add("CG");
+            }
+        }
+    },
+    sta_key_value {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-                return 1;
-            }
-            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-                return -1;
-            }
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return compareStatisticsNum(firstModel, secondModel);
         }
-	},
-	top {
+    },
+    top {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-                return 1;
-            }
-            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-                return -1;
-            }
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return compareStatisticsNum(firstModel, secondModel);
         }
-	},
-	scores {
+    },
+    scores {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-                return 1;
-            }
-            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-                return -1;
-            }
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return compareStatisticsNum(firstModel, secondModel);
         }
-	},
-	votes {
+    },
+    votes {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-                return 1;
-            }
-            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-                return -1;
-            }
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return compareStatisticsNum(firstModel, secondModel);
         }
-	},
-	views {
+    },
+    views {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-                return 1;
-            }
-            if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-                return -1;
-            }
-            if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-                return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return compareStatisticsNum(firstModel, secondModel);
         }
-	}, 
-	m_identifier {
+    },
+    m_identifier {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
             if (firstModel.getmIdentifier() != null && secondModel.getmIdentifier() == null) {
@@ -237,126 +151,138 @@ public enum OrderField {
             }
             return 0;
         }
-	},
-	lc_version {
+    },
+    lc_version {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() == null) {
-                return 1;
-            }
-            if (firstModel.getLifeCycle() == null && secondModel.getLifeCycle() != null) {
-                return -1;
-            }
-            if (firstModel.getLifeCycle() != null && secondModel.getLifeCycle() != null) {
-                return firstModel.getLifeCycle().getVersion().compareTo(secondModel.getLifeCycle().getVersion());
-            }
-            // 两个都为 null，则默认为相等
-            return 0;
+            return firstModel.getLifeCycle().getVersion().compareTo(secondModel.getLifeCycle().getVersion());
         }
-	},
-	;
+        
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("LC")) {
+                includes.add("LC");
+            }
+        }
+    },
+    ;
 
-	abstract int compare(ResourceModel firstModel, ResourceModel secondModel);
-	public  void addInclude(List<String> includes){
-		
-	}
+    abstract int compare(ResourceModel firstModel, ResourceModel secondModel);
 
-	/**
-	 * 对 ResourceModel进行排序
-	 * 
-	 * @param fields
-	 *            顺序字段,重要在前（与MySQL一致）
-	 * @param orders
-	 *            与fields一一对应，使用方保证（ASC，DESC）
-	 * @return
-	 */
-	public static Comparator<ResourceModel> comparator(List<String> fields,
-			List<String> orders) {
+    public void addInclude(List<String> includes) {
+        // 默认什么都不做
+    }
 
-		final List<OrderField> orderFieldEnumList = OrderField
-				.fromString(fields);
-		final List<Order> orderEnumList = Order.fromString(orders);
-		return new Comparator<ResourceModel>() {
+    public int compareStatisticsNum(ResourceModel firstModel, ResourceModel secondModel) {
+        if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
+            return 1;
+        }
+        if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
+            return -1;
+        }
+        if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
+            return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+        }
+        // 两个都为 null，则默认为相等
+        return 0;
+    }
 
-			@Override
-			public int compare(ResourceModel o1, ResourceModel o2) {
-				int value = 0;
-				for (int i = 0; i < orderFieldEnumList.size(); i++) {
-					value = orderFieldEnumList.get(i).compare(o1, o2);
-					if (value != 0) {
-						switch (orderEnumList.get(i)) {
-						case ASC:
-							return value;
-						case DESC:
-							return -value;
-						default:
-							throw new LifeCircleException(
-									HttpStatus.INTERNAL_SERVER_ERROR,
-									"LC/titan/search",
-									"order direction is invalid");
-						}
-					}
-				}
-				return value;
-			}
-		};
-	}
+    /**
+     * 对 ResourceModel进行排序
+     * 
+     * @param fields
+     *            顺序字段,重要在前（与MySQL一致）
+     * @param orders
+     *            与fields一一对应，使用方保证（ASC，DESC）
+     * @return
+     */
+    public static Comparator<ResourceModel> comparator(List<String> fields,
+            List<String> orders) {
 
-	private static Map<String, OrderField> map = new HashMap<String, OrderField>();
-	static {
-		for (OrderField orderField : OrderField.values()) {
-			map.put(orderField.toString(), orderField);
-		}
-	}
+        final List<OrderField> orderFieldEnumList = OrderField
+                .fromString(fields);
+        final List<Order> orderEnumList = Order.fromString(orders);
+        return new Comparator<ResourceModel>() {
 
-	private static OrderField fromString(String orderField) {
-		return map.get(orderField);
-	}
+            @Override
+            public int compare(ResourceModel o1, ResourceModel o2) {
+                int value = 0;
+                for (int i = 0; i < orderFieldEnumList.size(); i++) {
+                    value = orderFieldEnumList.get(i).compare(o1, o2);
+                    if (value != 0) {
+                        switch (orderEnumList.get(i)) {
+                        case ASC:
+                            return value;
+                        case DESC:
+                            return -value;
+                        default:
+                            throw new LifeCircleException(
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "LC/titan/search",
+                                    "order direction is invalid");
+                        }
+                    }
+                }
+                return value;
+            }
+        };
+    }
 
-	public static List<OrderField> fromString(List<String> orderFieldList) {
-		List<OrderField> orderFieldsEnumList = new ArrayList<OrderField>();
-		if (CollectionUtils.isNotEmpty(orderFieldList)) {
-			for (String orderField : orderFieldList) {
-				OrderField orderFieldEnum = fromString(orderField);
-				if (orderFieldEnum == null) {
-					throw new LifeCircleException(
-							HttpStatus.INTERNAL_SERVER_ERROR,
-							"LC/titan/search", "order field not support");
-				}
-				orderFieldsEnumList.add(orderFieldEnum);
-			}
-		}
-		return orderFieldsEnumList;
-	}
+    private static Map<String, OrderField> map = new HashMap<String, OrderField>();
+    static {
+        for (OrderField orderField : OrderField.values()) {
+            map.put(orderField.toString(), orderField);
+        }
+    }
 
-	static private enum Order {
-		ASC, DESC, ;
+    private static OrderField fromString(String orderField) {
+        return map.get(orderField);
+    }
 
-		private static Map<String, Order> map = new HashMap<String, Order>();
-		static {
-			for (Order order : Order.values()) {
-				map.put(order.toString(), order);
-			}
-		}
+    public static List<OrderField> fromString(List<String> orderFieldList) {
+        List<OrderField> orderFieldsEnumList = new ArrayList<OrderField>();
+        if (CollectionUtils.isNotEmpty(orderFieldList)) {
+            for (String orderField : orderFieldList) {
+                OrderField orderFieldEnum = fromString(orderField);
+                if (orderFieldEnum == null) {
+                    throw new LifeCircleException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "LC/titan/search", "order field not support");
+                }
+                orderFieldsEnumList.add(orderFieldEnum);
+            }
+        }
+        return orderFieldsEnumList;
+    }
 
-		static private Order fromString(String order) {
-			return map.get(order);
-		}
+    static private enum Order {
+        ASC, DESC, ;
 
-		public static List<Order> fromString(List<String> orderList) {
-			List<Order> ordersEnumList = new ArrayList<Order>();
-			if (CollectionUtils.isNotEmpty(orderList)) {
-				for (String orderField : orderList) {
-					Order orderFieldEnum = fromString(orderField);
-					if (orderFieldEnum == null) {
-						throw new LifeCircleException(
-								HttpStatus.INTERNAL_SERVER_ERROR,
-								"LC/titan/search", "order direction is invalid");
-					}
-					ordersEnumList.add(orderFieldEnum);
-				}
-			}
-			return ordersEnumList;
-		}
-	}
+        private static Map<String, Order> map = new HashMap<String, Order>();
+        static {
+            for (Order order : Order.values()) {
+                map.put(order.toString(), order);
+            }
+        }
+
+        static private Order fromString(String order) {
+            return map.get(order);
+        }
+
+        public static List<Order> fromString(List<String> orderList) {
+            List<Order> ordersEnumList = new ArrayList<Order>();
+            if (CollectionUtils.isNotEmpty(orderList)) {
+                for (String orderField : orderList) {
+                    Order orderFieldEnum = fromString(orderField);
+                    if (orderFieldEnum == null) {
+                        throw new LifeCircleException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "LC/titan/search", "order direction is invalid");
+                    }
+                    ordersEnumList.add(orderFieldEnum);
+                }
+            }
+            return ordersEnumList;
+        }
+    }
 }

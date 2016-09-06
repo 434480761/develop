@@ -1026,17 +1026,8 @@ public class NDResourceController {
         List<String> includesList = cloner.deepClone(includes);
        List<OrderField> orderFieldEnumList = OrderField.fromString(orderFields);
        for(OrderField orderField:orderFieldEnumList){
-    	   orderField.addInclude(includes);
+    	   orderField.addInclude(includesList);
        }
-//        if (!includesList.contains("LC")) {
-//            includesList.add("LC");
-//        }
-//        if (!includesList.contains("TI")) {
-//            includesList.add("TI");
-//        }
-//        if (!includesList.contains("CG")) {
-//            includesList.add("CG");
-//        }
         return includesList;
     }
 
