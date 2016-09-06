@@ -48,6 +48,20 @@ public enum OrderField {
             }
         }
     },
+    lc_status {
+        @Override
+        int compare(ResourceModel firstModel, ResourceModel secondModel) {
+            return firstModel.getLifeCycle().getStatus()
+                    .compareTo(secondModel.getLifeCycle().getStatus());
+        }
+
+        @Override
+        public void addInclude(List<String> includes) {
+            if (!includes.contains("LC")) {
+                includes.add("LC");
+            }
+        }
+    },
     title {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
