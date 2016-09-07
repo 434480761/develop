@@ -214,8 +214,11 @@ public class EsIndexQueryBuilder {
         StringBuffer orderScript = new StringBuffer();
         orderScript.append("List<String> orders = new ArrayList<String>();");
         for (TitanOrder order : orders) {
+            String field = order.getField();
+            // FIXME 暂时的特殊处理
+            if (ES_SearchField.title.toString().equals(field)) field = "title__STRING";
             orderScript.append("orders.add('")
-                    .append(order.getField()).append("#").append(order.getSortOrder()).append("#").append(order.getDataType())
+                    .append(field).append("#").append(order.getSortOrder()).append("#").append(order.getDataType())
                     .append("');");
         }
         return orderScript.toString();
