@@ -14,28 +14,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import nd.esp.service.lifecycle.daos.offlinemetadata.OfflineDao;
 import nd.esp.service.lifecycle.educommon.services.impl.NDResourceServiceImpl;
 import nd.esp.service.lifecycle.educommon.vos.ResTechInfoViewModel;
 import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
+import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 import nd.esp.service.lifecycle.services.ContentService;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.PrePackUtil;
+import nd.esp.service.lifecycle.support.cs.ContentServiceHelper;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
-import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 
@@ -50,10 +48,11 @@ public class OfflineServiceImpl implements OfflineService {
 
     private final static ExecutorService executorService = CommonHelper.getForkJoinPool();
 
-    private final static String HREF_KEY="href";
-    private final static String SOURCE_KEY="source";
+    private final static String HREF_KEY = "href";
+    private final static String SOURCE_KEY = "source";
     
     private final static JacksonCustomObjectMapper OBJECT_MAPPER = new JacksonCustomObjectMapper();
+    
     @Autowired
     private OfflineDao offlineDao;
     
@@ -106,7 +105,7 @@ public class OfflineServiceImpl implements OfflineService {
             String json = offlineDao.getDetail(resType, uuid);
 
             ResourceViewModel resourceViewModel = OBJECT_MAPPER.readValue(json, ResourceViewModel.class);
-//            Assert.assertNotNull(resourceViewModel);
+            
             if(resourceViewModel == null){
                 throw new Exception("取不到资源视图");
             }
@@ -124,7 +123,6 @@ public class OfflineServiceImpl implements OfflineService {
             
             CSInstanceInfo csInstanceInfo = NDResourceServiceImpl.getCsInstanceAccordingRootPath(rootPath);
 
-
             String path = NDResourceServiceImpl.producePath(rootPath, resType, uuid);
             
 //            LOG.info("path:{}"+path);
@@ -137,19 +135,20 @@ public class OfflineServiceImpl implements OfflineService {
             }
             
 //            LOG.info("csSession:{}"+csSession.getSession());
-            
-            
 
-//            byte[] content = OBJECT_MAPPER.writeValueAsBytes(resourceViewModel);
             byte[] content = json.getBytes();
-            offlineDao.upFileToCs(content,
-                                  path,
-                                  "metadata.json",
-                                  csSession.getSession());
+            
+//			使用http api请求的方式
+//            offlineDao.upFileToCs(content,
+//                                  path,
+//                                  "metadata.json",
+//                                  csSession.getSession());
+            
+            //cs sdk方式
+            ContentServiceHelper.uploadByByte(content, path, "metadata.json", 
+            		path + "/metadata.json", "prepub_content_edu_product", csSession.getSession());
             
             LOG.info("consume time (ms):{}",System.currentTimeMillis()-start);
-            
-        	
             
         } catch (Exception e) {
 
@@ -173,13 +172,11 @@ public class OfflineServiceImpl implements OfflineService {
                 
                 LOG.error(errorMessage+",but create task fail,reason: "+e1.getMessage());
             }
-
         }
         
         if(null != resource) {
         	prePackUtil.tryPrePack(resource, resType, true);
         }
-
     }
 
     /**

@@ -24,7 +24,7 @@ public class TaskQueryTimerTask {
     private CommonServiceHelper commonServiceHelper;
     
     //cron="0/15 * *  * * ? "
-    @Scheduled(fixedDelay=10000)
+//    @Scheduled(fixedDelay=10000)
     public void runQuery() {  
         if(commonServiceHelper.queryAndUpdateSynVariable(SynVariable.queryAsyncTask.getValue()) == 0){
             return;

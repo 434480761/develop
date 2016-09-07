@@ -17,6 +17,7 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 
 import com.nd.gaea.rest.AbstractWafWebApplicationInitializer;
 import com.nd.gaea.util.WafJsonMapper;
+import com.nd.sdp.cs.common.CsConfig;
 
 
 /**
@@ -116,6 +117,9 @@ public class LifeCircleApplicationInitializer extends
 		
 		WafJsonMapper.getMapper().setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
         servletContext.addListener(new RequestContextListener());
+        
+        //CS sdk配置
+        CsConfig.setHost(LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_sdk_host"));
         
         super.onStartup(servletContext);
 	}
