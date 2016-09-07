@@ -144,23 +144,23 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
     final String techInfoEdgeLabel = TitanKeyWords.has_tech_info.toString();
     
     /**
-     * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，存在一条即可
+     * 根据tech_infos 表的title 字段去重， 相同资源的tech_infos 记录，根据title 分组，titan 中存在一条即可
      * @param education
      * @param techInfos
      * @since 1.2.6
      * @see
      */
     private void checkTechInfos(Education education, List<TechInfo> techInfos){
-        String baseScript = new Builder("g.V()").has(primaryCategory,"identifier", educationIdentifier).build();
-        Builder baseBuilder = new Builder(baseScript).outE().hasLabel(techInfoEdgeLabel);
+        Builder baseBuilder = new Builder("g.V()").has(primaryCategory,"identifier", educationIdentifier).outE().hasLabel(techInfoEdgeLabel);
         Multimap<String, TechInfo> techInfoMultiMap = toTechInfoMultimap(techInfos);
         Set<String> keySet = techInfoMultiMap.keySet();
         int size = keySet.size();
         String[] arr = keySet.toArray(new String[size]);
         Builder nodeBuilder = null;
         Map<String, Object> params = null;
+        Long hrefCount = 0L;
+        Long sourceCount = 0L;
         for (int i = 0; i < size; i++) {
-            Long count = 0L;
             Collection<TechInfo> teachInfoList = techInfoMultiMap.get(arr[i]);
             for (TechInfo techInfo : teachInfoList) {
                 Map<String, Object> initParams = initParams(education, techInfoEdgeLabel);
@@ -171,14 +171,35 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
                 
                 nodeBuilder = generateScript(builder.build(), techInfoPartField, techInfoField);
                 Long tmp = executeScriptUniqueLong(params, nodeBuilder.count());
-                count = techInfoEdgeScriptExecutionException(builder, params, count, tmp);
+                if("href".equals(techInfo.getTitle())){
+                    hrefCount = scriptExecuteException(builder, params, hrefCount, tmp);
+                }
+                if("source".equals(techInfo.getTitle())){
+                    sourceCount = scriptExecuteException(builder, params, sourceCount, tmp);
+                }
             }
-            saveAbnormalData(nodeBuilder, params, count, TitanSyncType.CHECK_TI_NOT_EXIST, TitanSyncType.CHECK_TI_REPEAT);
+        }
+        Long count = executeScriptUniqueLong(params, baseBuilder.count());
+        techInfoAbnormalData(nodeBuilder, params, hrefCount, sourceCount, count);
+    }
+
+    private void techInfoAbnormalData(Builder nodeBuilder, Map<String, Object> params, Long hrefCount, Long sourceCount, Long count) {
+        if (count.intValue() > 2) {
+            LOG.info("techInfo: titan 中数据重复, has_tech_info 边数量:{} script:{}, param:{}", count, nodeBuilder.build(), params);
+            titanSync(TitanSyncType.CHECK_TI_REPEAT, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
+            return;
+        }
+        if (hrefCount.intValue() == 0 || sourceCount.intValue() == 0) {
+            LOG.info("techInfo: mysql 中数据在 titan 中不存在, hrefCount:{}, sourceCount: {}, script:{}, param:{}", hrefCount, sourceCount, nodeBuilder.build(), params);
+            titanSync(TitanSyncType.CHECK_TI_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
+        } else if (hrefCount.intValue() >= 2 || sourceCount.intValue() >= 2) {
+            LOG.info("techInfo: titan 中数据重复, hrefCount:{}, sourceCount: {}, script:{}, param:{}", hrefCount, sourceCount, nodeBuilder.build(), params);
+            titanSync(TitanSyncType.CHECK_TI_REPEAT, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
         }
     }
     
 
-    private Long techInfoEdgeScriptExecutionException(Builder builder, Map<String, Object> paramMap, Long count, Long tmp) {
+    private Long scriptExecuteException(Builder builder, Map<String, Object> paramMap, Long count, Long tmp) {
         if (tmp != null) {
             count += tmp;
         }else {
@@ -224,8 +245,7 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
      * @see
      */
     private void checkResCoverage(Education education,List<ResCoverage> resCoverages){
-        String baseScript = new Builder("g.V()").has(primaryCategory,"identifier", educationIdentifier).build();
-        Builder baseBuilderEdge = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel);
+        Builder baseBuilderEdge = new Builder("g.V()").has(primaryCategory,"identifier", educationIdentifier).outE().hasLabel(coverageEdgeLabel);
         Multimap<String, ResCoverage> coverageMultiMap = toCoverageMultimap(resCoverages);
         Set<String> keySet = coverageMultiMap.keySet();
         int size = keySet.size();
@@ -240,13 +260,14 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
                 List<Object> techInfoPartFieldEdges = fillResCoverageEdgePartField(coverage);
                 params = fillParams(initParams, techInfoPartFieldEdges, coverageEdgeField);
                 builder = generateScript(baseBuilderEdge.build(), techInfoPartFieldEdges, coverageEdgeField);
+                Builder baseBuilderNode = new Builder(builder);
                 Long tmp = executeScriptUniqueLong(params, builder.count());
-                count = techInfoEdgeScriptExecutionException(builder, params, count, tmp);
+                count = scriptExecuteException(builder, params, count, tmp);
                 
                 if (count == 1) {
-                    Builder baseBuilderNode = new Builder(baseScript).outE().hasLabel(coverageEdgeLabel).inV();
+//                    Builder baseBuilderNode = new Builder(baseBuilderEdge).outE().hasLabel(coverageEdgeLabel).inV();
                     List<Object> techInfoPartFieldNodes = fillResCoverageNodePartField(coverage);
-                    Builder nodeBuilder = generateScript(baseBuilderNode.build(), techInfoPartFieldNodes, coverageNodeField);
+                    Builder nodeBuilder = generateScript(baseBuilderNode.inV().build(), techInfoPartFieldNodes, coverageNodeField);
                     Long nodeCount = executeScriptUniqueLong(params, nodeBuilder.count());
                     saveAbnormalData(nodeBuilder, params, nodeCount, TitanSyncType.CHECK_RC_NOT_EXIST, TitanSyncType.CHECK_RC_REPEAT);
                 }
