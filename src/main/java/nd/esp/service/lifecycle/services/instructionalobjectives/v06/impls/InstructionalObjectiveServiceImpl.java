@@ -576,10 +576,14 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			if(customPropertiesMap != null){
 				StringBuilder sbTmp = new StringBuilder();
 				String[] xs = xn.split(SPECIAL_SPLIT);
+				int length = xs.length;
+				if(xn.endsWith(SPECIAL_SPLIT)){
+					length ++;
+				}
 				for (int i = 0;i < xs.length;i++) {
 					sbTmp.append(xs[i]);
 					String sin = "input_"+i;
-					if(customPropertiesMap.containsKey(sin) && (String)customPropertiesMap.get(sin) != null){
+					if(customPropertiesMap.containsKey(sin) && (String)customPropertiesMap.get(sin) != null && i < length-1){
 						sbTmp.append((String)customPropertiesMap.get(sin));
 					}
 				}
@@ -589,6 +593,11 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			}
 		}
 		return xn;
+	}
+	
+	public static void main(String[] args) {
+		String a = "aaabbb（X）";
+		System.out.println(a.split("（X）").length);
 	}
 
     @Override
