@@ -118,6 +118,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setRange(from, size);
         if(showVersion) titanExpression.setShowSubVersion(true);
 
+        // 多个关系？？
+        List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
+        boolean iSMutiRelations = false;
+        if (CollectionUtils.isNotEmpty(relations)) {
+            if (relations.size() > 1) iSMutiRelations = true;
+        }
+
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
@@ -161,6 +168,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // for count and result
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
+        // TODO 优化多个关系的查询脚本
+        if(iSMutiRelations){
+            scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
+        }
 
         System.out.println(scriptForResultAndCount);
         System.out.println(scriptParamMap);
