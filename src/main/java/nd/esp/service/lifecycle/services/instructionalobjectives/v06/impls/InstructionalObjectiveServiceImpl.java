@@ -64,6 +64,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,6 +112,8 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
     @PersistenceContext(unitName = "entityManagerFactory")
     EntityManager defaultEm;
+    
+    private final String SPECIAL_SPLIT = "（X）";
 
 
 
@@ -339,7 +343,39 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		if (0 == idWithTitles.size()) {
 			return Collections.emptyMap();
 		}
-
+		
+		//教学目标id集合
+		List<String> ids = new ArrayList<String>();
+		for (Map.Entry<String, String> entry : idWithTitles) {
+			ids.add(entry.getKey());
+		}
+		
+		//根据教学目标id获取custom_properties
+		String cSql = "select identifier,custom_properties from ndresource where primary_category = 'instructionalobjectives' and enable = 1 and identifier in (:ids)";
+		NamedParameterJdbcTemplate npjt = new NamedParameterJdbcTemplate(jt);
+		
+		Map<String,Object> params = new HashMap<String, Object>();
+		params.put("ids", ids);
+		
+    	List<Map<String,Object>> iList = npjt.query(cSql, params, new RowMapper<Map<String,Object>>(){
+			@Override
+			public Map<String, Object> mapRow(ResultSet rs, int rowNum)
+					throws SQLException {
+				Map<String,Object> m = new HashMap<String, Object>();
+				String identifier = rs.getString("identifier");
+				String customProperties = rs.getString("custom_properties");
+				
+				m.put("identifier", identifier);
+				if(StringUtils.isNotEmpty(customProperties)){
+					m.put("customProperties", ObjectUtils.fromJson(customProperties, Map.class));
+				}else{
+					m.put("customProperties", null);
+				}
+				
+				return m;
+			}
+    	});
+    	
 		try {
 			Collection<String> idString = Collections2.transform(idWithTitles, new Function<Map.Entry<String, String>, String>() {
 				@Nullable
@@ -395,7 +431,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 			for (Map.Entry<String, String> idWithTitle : idWithTitles) {
 				String id = idWithTitle.getKey();
-
+				
 				Map<String, Object> instructionalObjective2Type = instructionalObjective2TypeMap.get(id);
 				List<Map<String, Object>> knowledges = knowledgesMap.get(id);
 				if (CollectionUtils.isEmpty(knowledges) || CollectionUtils.isEmpty(instructionalObjective2Type)) {
@@ -412,7 +448,16 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 				});
 
 				String typeString = (String) instructionalObjective2Type.get("description");
-				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle, idWithTitle.getValue()));
+				Map<String,Object> customPropertiesMap = null;
+				if(typeString.contains(SPECIAL_SPLIT)){
+					for (Map<String,Object> mm : iList) {
+						if(id.equals(mm.get("identifier"))){
+							customPropertiesMap = (Map)mm.get("customProperties");
+						}
+					}
+				}
+				
+				results.put(id, toInstructionalObjectiveTitle(typeString, knowledgesTitle, idWithTitle.getValue(),customPropertiesMap));
 			}
 
 			return results;
@@ -507,13 +552,15 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		}
 	}
 
-	/***
-	 * 根据教学目标类型与知识点拼接知识点title
+	/**
+	 * 
 	 * @param typeString 教学目标类型描述
 	 * @param knowledgeTitle 知识点title
+	 * @param originTitle
+	 * @param customPropertiesMap customProperties集合
 	 * @return 拼接后的字符串
 	 */
-	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle, String originTitle) {
+	private String toInstructionalObjectiveTitle(String typeString, Collection<String> knowledgeTitle, String originTitle,Map<String,Object> customPropertiesMap) {
 		Pattern pattern = Pattern.compile("<span.*?>.*?</span>");
 		String[] split = pattern.split(typeString);
 		String[] knowledges = knowledgeTitle.toArray(new String[knowledgeTitle.size()]);
@@ -523,32 +570,25 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 			sb.append(split[i]);
 			sb.append(knowledges.length > i ? knowledges[i]:"");
 		}
-		// 替换（X）
-		if(sb.toString().contains("（X）")){
-			return originTitle;
+		// 替换（X） 
+		String xn = sb.toString();
+		if(xn.contains(SPECIAL_SPLIT)){
+			if(customPropertiesMap != null){
+				StringBuilder sbTmp = new StringBuilder();
+				String[] xs = xn.split(SPECIAL_SPLIT);
+				for (int i = 0;i < xs.length;i++) {
+					sbTmp.append(xs[i]);
+					String sin = "input_"+i;
+					if(customPropertiesMap.containsKey(sin) && (String)customPropertiesMap.get(sin) != null){
+						sbTmp.append((String)customPropertiesMap.get(sin));
+					}
+				}
+				return sbTmp.toString();
+			}else{
+				return sb.toString().replaceAll(SPECIAL_SPLIT, "");
+			}
 		}
-//		String xn = sb.toString();
-//		String[] xs = xn.split("（X）");
-//		int pos = xs[0].length();
-//
-//		sb = new StringBuilder();
-//		sb.append(xs[0]);
-//
-//		for (int i = 1;i < xs.length;i++) {
-//			int index = originTitle.indexOf(xs[i], pos);
-//
-//			if (-1 == index) {
-//				sb = new StringBuilder(originTitle);
-//				break;
-//			}
-//
-//			sb.append(originTitle.substring(pos, index));
-//			sb.append(xs[i]);
-//
-//			pos = index + xs[i].length();
-//		}
-
-		return sb.toString();
+		return xn;
 	}
 
     @Override
