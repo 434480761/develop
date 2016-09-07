@@ -118,11 +118,11 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setRange(from, size);
         if(showVersion) titanExpression.setShowSubVersion(true);
 
-        // 多个关系？？
+        // 多个关系:限制成2个关系走优化脚本
         List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
         boolean iSMutiRelations = false;
         if (CollectionUtils.isNotEmpty(relations)) {
-            if (relations.size() > 1) iSMutiRelations = true;
+            if (relations.size() == 2) iSMutiRelations = true;
         }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
