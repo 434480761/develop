@@ -191,12 +191,17 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
         List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+        List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(resourceTypes,uuids);
 
         boolean success = titanImportRepository.importOneData(education,resCoverageList,resourceCategoryList,techInfos);
         if (!success){
             return false;
         }
 
+        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
+        if (statisticalList.size() != resultStatisticals.size()){
+            return false;
+        }
         LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
