@@ -895,8 +895,7 @@ public class NDResourceController {
                             statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,relationsExcludeMap,
                             coveragesList, propsMap, orderMap, reverseBoolean,firstKnLevel);
                 }
-            }
-            else {
+            }else {
                 rListViewModel = ndResourceService.resourceQueryByDB(resType,
                         resCodes, includesList, categories, categoryExclude,
                         relationsMap,relationsExcludeMap, coveragesList, propsMap, orderMap, words,
@@ -1462,7 +1461,7 @@ public class NDResourceController {
         Map<String,String> orderMapNew = null;
 
         if(CollectionUtils.isNotEmpty(orderMap)){
-            orderMapNew = new HashMap<String, String>();
+            orderMapNew = new LinkedHashMap<String, String>();
             for(String orderKey : orderMap.keySet()){
                 String afterChangeKey = "";
                 if(isDB){
