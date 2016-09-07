@@ -17,4 +17,6 @@ public interface ResLifecycleDao {
      * @return
      */
     public boolean updatePreview(String resType, String resId, Map<String,String> preview);
+
+    public boolean updateLifecycleStatus(String resType, String resId, String status);
 }

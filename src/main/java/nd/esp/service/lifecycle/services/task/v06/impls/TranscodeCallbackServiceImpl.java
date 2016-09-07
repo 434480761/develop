@@ -90,28 +90,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             return ;
         }
         try {
-            int status = argument.getStatus();
-            String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
-            if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
-                lifecycleService.addLifecycleStep(resType, id, status==1,
-                        status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
-                //恢复原状态
-                if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
-                    ResContributeModel contributeModel = new ResContributeModel();
-                    contributeModel.setTargetId("777");
-                    contributeModel.setTargetName("LCMS");
-                    contributeModel.setTargetType("USER");
-                    contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
-                    contributeModel.setLifecycleStatus(taskInfo.getDescription());
-                    contributeModel.setProcess(100.0f);
-                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
-                    MDC.put("resource", id);
-                    MDC.put("res_type", resType);
-                    MDC.put("operation_type", "转码完成");
-                    MDC.put("remark", "历史转码完成："+taskInfo.getErrMsg());
-                }
-                MDC.clear();
-            }
+            int status = UpdateResouceStatus(argument, taskInfo, resType, id, resource);
 
             if (1 == status) {
                 if(TransCodeUtil.SUBTYPE_VIDEO.equals(argument.getTranscodeType())
@@ -162,28 +141,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             return ;
         }
         try {
-            int status = argument.getStatus();
-            String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
-            if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
-                lifecycleService.addLifecycleStep(resType, id, status==1,
-                        status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
-                //恢复原状态
-                if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
-                    ResContributeModel contributeModel = new ResContributeModel();
-                    contributeModel.setTargetId("777");
-                    contributeModel.setTargetName("LCMS");
-                    contributeModel.setTargetType("USER");
-                    contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
-                    contributeModel.setLifecycleStatus(taskInfo.getDescription());
-                    contributeModel.setProcess(100.0f);
-                    lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
-                    MDC.put("resource", id);
-                    MDC.put("res_type", resType);
-                    MDC.put("operation_type", "转码完成");
-                    MDC.put("remark", "历史转码完成："+taskInfo.getErrMsg());
-                }
-                MDC.clear();
-            }
+            int status = UpdateResouceStatus(argument, taskInfo, resType, id, resource);
 
             if (1 == status) {
                 updateImageTechInfos(resource, argument, resType);
@@ -198,6 +156,35 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
         } catch (Exception e) {
             LOG.error("转码任务回调失败", e);
         }
+    }
+
+    private int UpdateResouceStatus(TransCodeCallBackParam argument, TaskStatusInfo taskInfo, String resType, String id, ResourceModel resource) {
+        int status = argument.getStatus();
+        String updateStatus = status==1 ? TransCodeUtil.getTransEdStatus(true) : TransCodeUtil.getTransErrStatus(true);
+        if(!updateStatus.equals(resource.getLifeCycle().getStatus())) {
+            lifecycleService.addLifecycleStep(resType, id, status==1,
+                    status==1?"转码成功："+argument.getErrMsg():"转码失败："+argument.getErrMsg());
+            //恢复原状态
+            if(StringUtils.isNotEmpty(taskInfo.getDescription())) {
+                updateStatus = taskInfo.getDescription();
+                ResContributeModel contributeModel = new ResContributeModel();
+                contributeModel.setTargetId("777");
+                contributeModel.setTargetName("LCMS");
+                contributeModel.setTargetType("USER");
+                contributeModel.setMessage("恢复资源原状态："+taskInfo.getDescription());
+                contributeModel.setLifecycleStatus(taskInfo.getDescription());
+                contributeModel.setProcess(100.0f);
+                lifecycleService.addLifecycleStep(resType, id, contributeModel, false);
+                MDC.put("resource", id);
+                MDC.put("res_type", resType);
+                MDC.put("operation_type", "转码完成");
+                MDC.put("remark", "历史转码完成："+taskInfo.getErrMsg());
+            }
+            MDC.clear();
+            resLifecycleDao.updateLifecycleStatus(resType, id, updateStatus);
+        }
+
+        return status;
     }
 
     /**
