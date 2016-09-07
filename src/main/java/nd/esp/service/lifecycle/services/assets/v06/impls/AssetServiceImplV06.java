@@ -19,6 +19,7 @@ import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	@Override
 	public AssetModel createAsset(AssetModel am) {
 		if("auto_increment".equals(am.getTitle())){
+			Pattern suitePattern = Pattern.compile("^套件[0-9]*$");
+			Pattern subSuitePattern = Pattern.compile("^套件[0-9.]*$");
+			
 			String cp = am.getCustomProperties();
 			Map<String,Object> map = ObjectUtils.fromJson(cp, Map.class);
 			String category = (String)map.get("category");
@@ -77,7 +81,7 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 					List<String> titles = new ArrayList<String>();
 					if(parent.toLowerCase().equals("root")){
 						for (Asset asset : assetList) {
-							if(asset.getTitle().startsWith("套件")){
+							if(suitePattern.matcher(asset.getTitle()).find()){
 								titles.add(asset.getTitle());
 							}
 						}
@@ -97,7 +101,7 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 						List<Asset> list2 = assetDao.queryBySourceId(parent,category);
 						if(CollectionUtils.isNotEmpty(list2)){
 							for (Asset asset : list2) {
-								if(asset.getTitle().startsWith("套件")){
+								if(subSuitePattern.matcher(asset.getTitle()).find()){
 									titles.add(asset.getTitle());
 								}
 							}
@@ -183,10 +187,10 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 			String max = titleList.get(0);
 			if(max.length() > 2){
 				if(max.contains(".")){
-					String s = max.substring(max.lastIndexOf("."));
+					String s = max.substring(max.lastIndexOf(".")+1);
 					try {
 						int i = Integer.valueOf(s);
-						return max.substring(0,max.lastIndexOf("."))+(i+1);
+						return max.substring(0,max.lastIndexOf(".")+1)+(i+1);
 					} catch (NumberFormatException e) {
 					}
 				}else{
