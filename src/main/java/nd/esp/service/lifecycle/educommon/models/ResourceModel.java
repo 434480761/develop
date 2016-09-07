@@ -59,6 +59,10 @@ public class ResourceModel {
 	private Double statisticsNum;
 	
 	/**
+	 * 资源关系
+	 */
+	private String relationId;
+	/**
 	 * 自定义扩展属性
 	 */
 	private String customProperties;
@@ -233,6 +237,15 @@ public class ResourceModel {
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
 	}
+
+	public String getRelationId() {
+		return relationId;
+	}
+
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
+	}
+
 
 	public Double getStatisticsNum() {
 		return statisticsNum;

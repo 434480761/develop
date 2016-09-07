@@ -821,7 +821,7 @@ public class TransCodeUtil {
                     String ndCode = category.getTaxoncode();
                     if (StringUtils.isNotEmpty(ndCode)) {
                         // 媒体类型:视频
-                        if (ndCode.startsWith("$F03")) {
+                        if (ndCode.startsWith("$F03") || ndCode.startsWith("$F04")) {
                             return true;
                         }
                     }

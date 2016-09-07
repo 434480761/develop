@@ -2,13 +2,14 @@ package nd.esp.service.lifecycle.daos.ResLifecycle.v06.impl;
 
 import java.util.Map;
 
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import nd.esp.service.lifecycle.repository.sdk.ContributeRepository;
-import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
@@ -21,9 +22,14 @@ import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 @Service
 public class ResLifecycleDaoImpl implements ResLifecycleDao {
     private static final Logger LOG = LoggerFactory.getLogger(ResLifecycleDaoImpl.class);
-    
+
     @Autowired
-    private ContributeRepository contributeRepository;
+    @Qualifier("defaultJdbcTemplate")
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    @Qualifier("questionJdbcTemplate")
+    private JdbcTemplate questionJdbcTemplate;
     
     
     /**
@@ -33,12 +39,32 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
      */
     @Override
     public boolean updatePreview(String resType, String resId, Map<String,String> preview) {
+        JdbcTemplate jdbcTemplateInUse = jdbcTemplate;
+        if (IndexSourceType.QuestionType.getName().equals(resType) || IndexSourceType.SourceCourseWareObjectType.equals(resType)) {
+            jdbcTemplateInUse = questionJdbcTemplate;
+        }
+
         String sql = "UPDATE ndresource SET preview='" + ObjectUtils.toJson(preview) + "' WHERE identifier = '" + resId + "'";
         
-        LOG.info(contributeRepository.getJdbcTemple().toString() + "; preview更新sql:"+sql);
+        LOG.info(jdbcTemplateInUse.toString() + "; preview更新sql:"+sql);
         
 //        contributeRepository.getEntityManager().createNativeQuery(sql).executeUpdate();
-        contributeRepository.getJdbcTemple().execute(sql);
+        jdbcTemplateInUse.execute(sql);
+        return true;
+    }
+
+    @Override
+    public boolean updateLifecycleStatus(String resType, String resId, String status) {
+        JdbcTemplate jdbcTemplateInUse = jdbcTemplate;
+        if (IndexSourceType.QuestionType.getName().equals(resType) || IndexSourceType.SourceCourseWareObjectType.equals(resType)) {
+            jdbcTemplateInUse = questionJdbcTemplate;
+        }
+
+        String sql = "UPDATE ndresource SET estatus='" + status + "' WHERE identifier = '" + resId + "'";
+
+        LOG.info(jdbcTemplateInUse.toString() + "; status更新sql:"+sql);
+
+        jdbcTemplateInUse.execute(sql);
         return true;
     }
 }

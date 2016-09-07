@@ -1,10 +1,13 @@
 package nd.esp.service.lifecycle.models.v06;
 
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
+
 /**
- * 素材业务model
- * @author xuzy
+ * 子教学目标业务model
+ * @author yanguanyu(290536)
  *
  */
-public class InstructionalObjectiveModel extends ResourceModel{
+public class SubInstructionModel extends ResourceModel {
+
+    
 }

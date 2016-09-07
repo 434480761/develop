@@ -34,6 +34,7 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewModel;
+import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -87,8 +88,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                                        String relationType,
                                                                        String limit,
                                                                        boolean reverse,
-                                                                       String coverage
-                                                                       ) {
+                                                                       String coverage,
+                                                                       boolean isPortal) {
         // 获取资源对应的tableName
         String tableName = LifeCircleApplicationInitializer.tablenames_properties.getProperty(targetType);
         
@@ -126,6 +127,7 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                             limit,
                                                             reverse,
                                                             coverage,
+                                                            isPortal,
                                                             results);
             resultViewModels = results;
 
@@ -139,7 +141,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                       relationType,
                                                       limit,
                                                       reverse,
-                                                      coverage);
+                                                      coverage,
+                                                      isPortal);
         }
         
         Integer result[] = ParamCheckUtil.checkLimit(limit);
@@ -154,7 +157,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                   relationType,
                                                   reverse,
                                                   coverage,
-                                                  result[0].intValue() == 0 ? true : false);
+                                                  result[0].intValue() == 0 ? true : false,
+                                                  isPortal);
         }
 
         listViewModel.setLimit(limit);
@@ -209,7 +213,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                                    String relationType,
                                                                    String limit,
                                                                    boolean reverse,
-                                                                   String coverage) {
+                                                                   String coverage,
+                                                                   boolean isPortal) {
         final boolean isNeedPreview = this.isNeedPreview(targetType);
         String commonSelect = "b.identifier AS identifier, b.title AS title, b.description AS description, b.tags AS tags, b.keywords AS keywords, rr1.identifier AS relation_id, rr1.relation_type AS relation_type, rr1.label AS label, rr1.order_num AS order_num, rr1.enable AS enable, rr1.tags AS relation_tags,rr1.resource_target_type AS target_type, rr1.creator AS creator,rr1.estatus AS status, rr1.create_time AS create_time, rr1.last_update AS last_update";
         StringBuffer querySqlTmp =  new StringBuffer(commonSelect);
@@ -223,7 +228,7 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
             querySqlTmp.append(", b.preview AS preview");
         }
         
-        StringBuffer querySql = commonSql(querySqlTmp, targetType, categories, coverage, label, tags, relationType, reverse);
+        StringBuffer querySql = commonSql(querySqlTmp, targetType, categories, coverage, label, tags, relationType, reverse, isPortal);
         
         querySql.append(") AND rr1.enable = 1 AND rr1.resource_target_type = :targetType AND b.primary_category = :primaryTargetType");
         if (reverse) {
@@ -322,6 +327,7 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                    String limit,
                                                    boolean reverse,
                                                    String coverage,
+                                                   boolean isPortal,
                                                    List<RelationForQueryViewModel> viewModels) {
         final boolean isNeedPreview = this.isNeedPreview(targetType);
         
@@ -346,7 +352,7 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                                                            reverse);
         
         // 查数据的sql
-        String resourceSql = resourceCommonSqlForQuestion(targetType, categories, coverage);
+        String resourceSql = resourceCommonSqlForQuestion(targetType, categories, coverage, isPortal);
 
         // 查数据参数注入
         Map<String, Object> resourceParams = resourceSqlParamDealForQuestion(new ArrayList<String>(resourceUuids),
@@ -520,10 +526,11 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                          String relationType,
                                          boolean reverse,
                                          String coverage,
-                                         boolean isFirstPage) {
+                                         boolean isFirstPage,
+                                         boolean isPortal) {
         String commonSelect = "COUNT(rr1.identifier) AS total";
         StringBuffer countSqlTmp =  new StringBuffer(commonSelect);
-        StringBuffer countSql = commonSql(countSqlTmp, targetType, categories, coverage, label, tags, relationType, reverse);
+        StringBuffer countSql = commonSql(countSqlTmp, targetType, categories, coverage, label, tags, relationType, reverse, isPortal);
         
         countSql.append(") AND rr1.enable = 1 AND rr1.resource_target_type = :targetType AND b.primary_category = :primaryTargetType");
         if (reverse) {
@@ -574,7 +581,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                                    String label,
                                    String tags,
                                    String relationType,
-                                   boolean reverse) {
+                                   boolean reverse,
+                                   boolean isPortal) {
         StringBuffer buffer = new StringBuffer("SELECT ");
         buffer.append(stringBuffer).append(" FROM ndresource b INNER JOIN resource_relations rr1 ON b.identifier IN (SELECT a.identifier FROM ndresource a INNER JOIN resource_relations rr ON (a.primary_category = :primaryTargetType AND rr.res_type = :resType AND rr.resource_target_type = :targetType");
         
@@ -617,6 +625,12 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
             StringBuffer coverageSql = new StringBuffer(" INNER JOIN res_coverages rcv ON a.identifier = rcv.resource AND rcv.res_type='");
             coverageSql.append(targetType).append("' AND (").append(coverageParam4Sql(coverage)).append(")");
             buffer.append(coverageSql);
+        }
+        
+        if(!isPortal){
+        	StringBuffer portalSql = new StringBuffer(" LEFT JOIN res_coverages portal ON a.identifier = portal.resource AND portal.res_type='");
+        	portalSql.append(targetType).append("' WHERE (").append(portalParam4Sql()).append(")");
+            buffer.append(portalSql);
         }
         
         return buffer;
@@ -709,7 +723,8 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
      */
     private String resourceCommonSqlForQuestion(String targetType,
                                               String categories,
-                                              String coverage) {
+                                              String coverage,
+                                              boolean isPortal) {
         final boolean isNeedPreview = this.isNeedPreview(targetType);
 
         String commonSelect = "SELECT a.identifier AS identifier, a.title AS title, a.description AS description, a.tags AS tags, a.keywords AS keywords ";
@@ -722,9 +737,9 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
         
         Set<String> set = null;
         
-        if(StringUtils.isEmpty(coverage) && StringUtils.isEmpty(categories)){
+        if(StringUtils.isEmpty(coverage) && StringUtils.isEmpty(categories) && isPortal){
             querySqlTmp.append("WHERE ");
-        } else if(StringUtils.isNotEmpty(coverage) || StringUtils.isNotEmpty(categories)){
+        } else if(StringUtils.isNotEmpty(coverage) || StringUtils.isNotEmpty(categories) || !isPortal){
             if(StringUtils.isNotEmpty(categories)){
                 set = new HashSet<String>();
                 set.addAll(Arrays.asList(categories.split(",")));
@@ -737,6 +752,12 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
                 StringBuffer coverageSql = new StringBuffer(" INNER JOIN res_coverages rcv ON a.identifier = rcv.resource AND rcv.res_type='");
                 coverageSql.append(targetType).append("' AND (").append(coverageParam4Sql(coverage)).append(")");
                 querySqlTmp.append(coverageSql);
+            }
+            
+            if (!isPortal){
+            	StringBuffer portalSql = new StringBuffer(" LEFT JOIN res_coverages portal ON a.identifier = portal.resource AND portal.res_type='");
+            	portalSql.append(targetType).append("' WHERE (").append(portalParam4Sql()).append(")");
+            	querySqlTmp.append(portalSql);
             }
             
             querySqlTmp.append(" AND ");
@@ -859,6 +880,20 @@ public class EducationRelationDaoImpl implements EducationRelationDao {
         result = StringUtils.join(condition, " AND ");
 
         return result;
+    }
+    
+    /**
+     * 当isPortal=false时需要对资源的覆盖范围做特殊处理
+     * @author xiezy
+     * @date 2016年8月31日
+     * @return
+     */
+    private String portalParam4Sql(){
+    	String result = "portal.target IS NULL OR ";
+    	
+    	result += "portal.target != '" + CoverageConstant.ESP_PORTAL_ZH_COVERAGE_TARGET + "'";
+    	
+    	return result;
     }
     
     /**
