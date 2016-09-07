@@ -118,8 +118,15 @@ public class LifeCircleApplicationInitializer extends
 		WafJsonMapper.getMapper().setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
         servletContext.addListener(new RequestContextListener());
         
-        //CS sdk配置
+        /**
+         * CS SDK配置：
+         * 1)配置cs的host（默认：cs.101.com）：CsConfig.setHost(String host)
+         * 2)配置url的协议(默认：http):CsConfig.setUrlProtocol(String urlProtocol);
+         * 3)配置cs的版本(默认：v0.1):CsConfig.setVersion(String version);
+         */
         CsConfig.setHost(LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_sdk_host"));
+//        CsConfig.setUrlProtocol(LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_sdk_url_protocol"));
+//        CsConfig.setVersion(LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_sdk_version"));
         
         super.onStartup(servletContext);
 	}

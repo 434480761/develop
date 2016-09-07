@@ -211,7 +211,6 @@ public class ContentServiceImpl implements ContentService {
             result.setDentryId(dentryId);
         }
         return result;
-
     }
 
     /**
@@ -261,5 +260,4 @@ public class ContentServiceImpl implements ContentService {
             break;
         }
     }
-
 }

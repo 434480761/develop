@@ -4,14 +4,12 @@ import java.math.BigDecimal;
 
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.nd.gaea.util.WafJsonMapper;
-import com.nd.sdp.cs.common.CsConfig;
 import com.nd.sdp.cs.sdk.Dentry;
 import com.nd.sdp.cs.sdk.ExtendUploadData;
 import com.nd.sdp.cs.sdk.UploadProgressCallBack;
@@ -25,12 +23,20 @@ import com.nd.sdp.cs.sdk.UploadProgressCallBack;
 public class ContentServiceHelper {
 	private static final Logger LOG = LoggerFactory.getLogger(ContentServiceHelper.class);
 	
-	public static String uploadByByte(byte[] bytes, String path, 
+	/**
+	 * 文件上传 -- byte上传
+	 * @author xiezy
+	 * @date 2016年9月7日
+	 * @param bytes			文件的byte[] 
+	 * @param path			父目录项路径，支持自动创建目录
+	 * @param fileName		文件名,传的时候为【覆盖上传】
+	 * @param filePath		文件完整路径
+	 * @param serviceName	申请的内容服务名称
+	 * @param session		会话标签
+	 * @return
+	 */
+	public static Dentry uploadByByte(byte[] bytes, String path, 
 			String fileName, String filePath, String serviceName, String session) {
-		
-		System.out.println(CsConfig.getUrlProtocol());
-		System.out.println(CsConfig.getHost());
-		System.out.println(CsConfig.getVersion());
 		
 		try {
 			// 参数设置
@@ -40,7 +46,9 @@ public class ContentServiceHelper {
 			//如果有传此项，将会覆盖旧文件数据 dentryId和filePath二选一 覆盖上传时不用传parentId，path，name
 			// request.setDentryId("96340084-775d-4740-ae2f-b2dea289618b");
 			//如果有传此项，将会覆盖旧文件数据，dentryId和filePath二选一 覆盖上传时不用传parentId，path，name
-			requestData.setFilePath(filePath);
+			if(StringUtils.hasText(filePath)){
+				requestData.setFilePath(filePath);
+			}
 			//父目录项id（UUID），（path 和 parent_id 二选一）
 			// request.setParentId("96340084-775d-4740-ae2f-b2dea289618b");
 			
@@ -77,7 +85,7 @@ public class ContentServiceHelper {
 	            		LifeCircleErrorMessageMapper.CSSdkFail);
 			}
 			
-			return WafJsonMapper.toJson(BeanMapperUtils.beanMapper(result, nd.esp.service.lifecycle.entity.cs.Dentry.class));
+			return result;
 		} catch (Exception e) {
 			
 			LOG.error(LifeCircleErrorMessageMapper.CSSdkFail.getMessage(),e);

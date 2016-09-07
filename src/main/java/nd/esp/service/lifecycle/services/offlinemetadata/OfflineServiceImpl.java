@@ -146,7 +146,7 @@ public class OfflineServiceImpl implements OfflineService {
             
             //cs sdk方式
             ContentServiceHelper.uploadByByte(content, path, "metadata.json", 
-            		path + "/metadata.json", "prepub_content_edu_product", csSession.getSession());
+            		path + "/metadata.json", csInstanceInfo.getServiceName(), csSession.getSession());
             
             LOG.info("consume time (ms):{}",System.currentTimeMillis()-start);
             
