@@ -90,7 +90,10 @@ public class OfflineDaoImpl implements OfflineDao{
 
     /* (non-Javadoc)
      * @see nd.esp.service.lifecycle.services.offlinemetadata.dao.offlineDao#upFileToCs(byte[], java.lang.String, java.lang.String, java.lang.String)
+     * 
+     * 备注：该上传文件到CS的方式是使用http api请求的方式,目前已替换为CS SDK的方式,详见：ContentServiceHelper.uploadByByte
      */
+    @Deprecated
     @Override
     public Dentry upFileToCs(byte[] content, String path, String fileName, String session) throws Exception {
         return ObjectUtils.fromJson(UploadSmallFileToCS(content, path, fileName, session, CS_API_URL), Dentry.class);
@@ -296,6 +299,4 @@ public class OfflineDaoImpl implements OfflineDao{
 //            return result;
 //        }
 //    }
-
-
 }

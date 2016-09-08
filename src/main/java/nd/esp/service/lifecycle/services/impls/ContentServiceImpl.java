@@ -49,7 +49,10 @@ public class ContentServiceImpl implements ContentService {
 	private BearerAuthorizationProvider authorProvider = new DeliverBearerAuthorizationProvider();
 	private static CloseableHttpClient httpClient = ConnectionPoolUtil.getHttpClient();
 	
-
+	/**
+	 * 备注：该CS添加目录项的方式是使用http api请求的方式,目前已替换为CS SDK的方式,详见：ContentServiceHelper.createDir
+	 */
+	@Deprecated
     @Override
     public Dentry createDir(String path, String dirname, String sessionId) {
         String url = Constant.CS_API_URL + "/dentries?session=" + sessionId;
@@ -109,38 +112,50 @@ public class ContentServiceImpl implements ContentService {
             }
         }
                 
-/*
-        Dentry req = new Dentry();
-        req.setPath(path);
-        req.setName(dirname);
-        req.setScope(Dentry.SCOPE_PUBLIC);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Dentry> entity = new HttpEntity<Dentry>(req, headers);
-        /*
-         * HttpHeaders headers = new HttpHeaders(); headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-         */
-//        WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-//        Dentry resp = wafSecurityHttpClient.executeForObject(Constant.CS_API_URL + "/dentries?session={session}", HttpMethod.POST, entity,  Dentry.class,sessionId);
-       // ResponseEntity<Dentry> resp = wafSecurityHttpClient.postForEntity(Constant.CS_API_URL + "/dentries?session={session}", entity, Dentry.class,
-                //sessionId);
-       // RestTemplate template = new RestTemplate();
-        /*Map map = template.postForObject(Constant.CS_API_URL + "/dentries?session={session}", entity, Map.class,
-                sessionId);*/
-        //Dentry resp = new Dentry();
+		/*
+		 * Dentry req = new Dentry(); req.setPath(path); req.setName(dirname);
+		 * req.setScope(Dentry.SCOPE_PUBLIC); HttpHeaders headers = new
+		 * HttpHeaders(); headers.setContentType(MediaType.APPLICATION_JSON);
+		 * HttpEntity<Dentry> entity = new HttpEntity<Dentry>(req, headers); /*
+		 * HttpHeaders headers = new HttpHeaders();
+		 * headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		 */
+		// WafSecurityHttpClient wafSecurityHttpClient = new
+		// WafSecurityHttpClient();
+		// Dentry resp =
+		// wafSecurityHttpClient.executeForObject(Constant.CS_API_URL +
+		// "/dentries?session={session}", HttpMethod.POST, entity,
+		// Dentry.class,sessionId);
+		// ResponseEntity<Dentry> resp =
+		// wafSecurityHttpClient.postForEntity(Constant.CS_API_URL +
+		// "/dentries?session={session}", entity, Dentry.class,
+		// sessionId);
+		// RestTemplate template = new RestTemplate();
+		/*
+		 * Map map = template.postForObject(Constant.CS_API_URL +
+		 * "/dentries?session={session}", entity, Map.class, sessionId);
+		 */
+		// Dentry resp = new Dentry();
         return resp;
     }
-
+	
+	/**
+	 * 备注：该CS获取目录项列表的方式是使用http api请求的方式,目前已替换为CS SDK的方式,详见：ContentServiceHelper.getDentryItems
+	 */
+	@Deprecated
     @Override
     public DentryArray getDentryItems(String path, String sessionId) {
-        // TODO Auto-generated method stub
         WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient(Constant.WAF_CLIENT_RETRY_COUNT);
         DentryArray result = wafSecurityHttpClient.getForObject(Constant.CS_API_URL
                 + "/dentries?path={path}&session={sessionId}&$limit=999", DentryArray.class, path, sessionId);
 
         return result;
     }
-
+	
+	/**
+	 * 备注：该CS拷贝目录项的方式是使用http api请求的方式,目前已替换为CS SDK的方式,详见：ContentServiceHelper.copyDirOnNdr
+	 */
+	@Deprecated
     @Override
     public boolean copyDir(String srcPath, String descPath, String sessionId) {
 
@@ -148,7 +163,7 @@ public class ContentServiceImpl implements ContentService {
         Dentry descDentry = getDentry(descPath, sessionId);
         DentryArray dentryArray = getDentryItems(srcPath, sessionId);
         List<Dentry> dentries = dentryArray.getItems();
-        List dentry_ids = new ArrayList();
+        List<String> dentry_ids = new ArrayList<String>();
         if (CollectionUtils.isNotEmpty(dentries)) {
             for (Dentry dentry : dentries) {
                 dentry_ids.add(dentry.getDentryId());
@@ -190,7 +205,11 @@ public class ContentServiceImpl implements ContentService {
         }
         return copyFlag;
     }
-
+	
+	/**
+	 * 备注：该CS获取目录项的方式是使用http api请求的方式,目前已替换为CS SDK的方式,详见：ContentServiceHelper.getDentry
+	 */
+	@Deprecated
     @Override
     public Dentry getDentry(String path, String sessionId) {
         Dentry result = new Dentry();
@@ -204,21 +223,19 @@ public class ContentServiceImpl implements ContentService {
         // httpHeaders.set("x-http-method-override", "PATCH ");
         org.springframework.http.HttpEntity<Map<String, Object>> entity = new org.springframework.http.HttpEntity<Map<String, Object>>(requestBody, httpHeaders);
         // Map<String, List<Map>> re = wafSecurityHttpClient.getRestTemplate().postForObject(url, entity, Map.class);
-        Map<String, List<Map>> re = wafSecurityHttpClient.executeForObject(url, HttpMethod.PATCH, entity, Map.class);
+		Map<String, List<Map<String,Object>>> re = wafSecurityHttpClient.executeForObject(url, HttpMethod.PATCH, entity, Map.class);
         // Map<String, List<Map>> re = wafSecurityHttpClient.exchange(url, HttpMethod.PATCH, requestBody, Map.class);
         if (CollectionUtils.isNotEmpty(re)) {
             String dentryId = re.get("items").get(0).get("dentry_id").toString();
             result.setDentryId(dentryId);
         }
         return result;
-
     }
 
     /**
      * 
      * arg[0] uid,arg[1] role,arg[2] expires
      * */
-
     @Override
     public CsSession getAssignSession(String path, String serviceId, String... arg) {
         Assert.assertNotNull("path不能为空", path);
@@ -261,5 +278,4 @@ public class ContentServiceImpl implements ContentService {
             break;
         }
     }
-
 }
