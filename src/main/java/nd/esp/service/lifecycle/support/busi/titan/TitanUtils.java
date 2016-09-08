@@ -37,6 +37,7 @@ public class TitanUtils {
 		scriptBuffer.append(dealRelation(mapForTotalCount.get("relation2"))).append(".collect{ids2.add(it.id())};");
 		scriptBuffer.append("if(ids2.size()==0){return 'TOTALCOUNT=0'};");
 		scriptBuffer.append("if(ids1.size()<ids2.size()){ids1.retainAll(ids2);retain=ids1;}else{ids2.retainAll(ids1);retain=ids2;};");
+		scriptBuffer.append("if(retain.size()==0){return 'TOTALCOUNT=0'};");
 		// TODO 加上过滤条件
 		scriptBuffer.append("TOTALCOUNT=g.V(retain.toArray())").append(mapForTotalCount.get("conditions")).append(".as('x')").append(mapForTotalCount.get("script")).append(".count();");
 		// TODO 取得 count
