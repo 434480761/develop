@@ -98,7 +98,7 @@ public enum OrderField {
     cg_taxoncode {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            // taxoncode 以 "RL" 开关才排序，不以 "RL" 开关则默认设为空字符串("")
+            // taxoncode 以 "RL" 开头才排序，不以 "RL" 开头则默认设为空字符串("")
             String firstModelTaxoncode = "";
             for (ResClassificationModel category : firstModel.getCategoryList()) {
                 if (category.getTaxoncode().startsWith("RL")) {
@@ -106,7 +106,7 @@ public enum OrderField {
                 }
             }
             String secondModelTaxoncode = "";
-            for (ResClassificationModel category : firstModel.getCategoryList()) {
+            for (ResClassificationModel category : secondModel.getCategoryList()) {
                 if (category.getTaxoncode().startsWith("RL")) {
                     secondModelTaxoncode = category.getTaxoncode();
                 }
