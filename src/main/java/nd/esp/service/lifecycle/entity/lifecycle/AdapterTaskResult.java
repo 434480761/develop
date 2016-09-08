@@ -73,7 +73,8 @@ public class AdapterTaskResult {
     }
 
     public int getTotalCount() {
-        return executeCount+unexecuteCount;
+    	totalCount = executeCount+unexecuteCount;
+        return totalCount;
     }
 
 

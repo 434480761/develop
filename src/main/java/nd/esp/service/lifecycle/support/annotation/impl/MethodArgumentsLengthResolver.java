@@ -1,19 +1,14 @@
 package nd.esp.service.lifecycle.support.annotation.impl;
 
+import java.util.Iterator;
+
 import nd.esp.service.lifecycle.support.annotation.ParamLength;
-import nd.esp.service.lifecycle.utils.StringUtils;
-import org.springframework.beans.BeanUtils;
+
 import org.springframework.core.MethodParameter;
-import org.springframework.util.Assert;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-
-import javax.servlet.http.HttpServletRequest;
-import java.lang.annotation.*;
-import java.util.Enumeration;
-import java.util.Iterator;
 
 /**
  * @title 处理参数长度解决者
