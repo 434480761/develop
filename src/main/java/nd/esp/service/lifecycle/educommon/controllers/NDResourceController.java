@@ -2411,6 +2411,20 @@ public class NDResourceController {
     }
 
     /**
+     * 获取资源预览图的列表
+     *
+     * @author:qil
+     * @date:2016年9月8日
+     * @param res_type
+     * @param uuid
+     * @return
+     */
+    @RequestMapping(value="/{uuid}/previews", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
+        return ndResourceService.triggerTranscode(resType, uuid);
+    }
+
+    /**
      * 离线版资源同步入库，具体流程是：
      * 1.同步上传离线版的元数据。
      * 2.上传结束后，提交元数据的存储相对地址信息。

@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
@@ -74,6 +75,7 @@ import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.support.busi.titan.TitanOrderFields;
@@ -105,6 +107,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.spi.MappingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -233,6 +236,11 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Autowired
     @Qualifier("lifecycleService4QtiV06")
     private LifecycleServiceV06 lifecycleService4Qti;
+
+	@Autowired
+	private TransCodeUtil transCodeUtil;
+	@Autowired
+	private ResLifecycleDao resLifecycleDao;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -3576,5 +3584,36 @@ public class NDResourceServiceImpl implements NDResourceService{
 			List<String> coverages, Set<String> categories, boolean isAll) {
 		
 		return ndResourceDao.statisticsCountsByChapters(resType, tmId, chapterIds, coverages, categories, isAll);
+	}
+
+	@Override
+	public Map<String, Object> triggerTranscode(String resType, String uuid) {
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+
+		ResourceModel cm = getDetail(resType, uuid,
+				IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI + "," + IncludesConstant.INCLUDE_LC
+						+ "," + IncludesConstant.INCLUDE_CG));
+
+		String statusBackup = null;
+		if(!(cm.getLifeCycle().getStatus()!=null && cm.getLifeCycle().getStatus().contains("TRANSCOD"))) {
+			statusBackup = cm.getLifeCycle().getStatus();
+		}
+
+		ResContributeModel contributeModel = new ResContributeModel();
+		contributeModel.setTargetId("830917");
+		contributeModel.setTargetName("LCMS");
+		contributeModel.setTargetType("USER");
+		contributeModel.setMessage("触发资源转码");
+		contributeModel.setLifecycleStatus(TransCodeUtil.getTransIngStatus(true));
+		contributeModel.setProcess(0.0f);
+		LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
+		service.addLifecycleStep(resType, cm.getIdentifier(), contributeModel, false);
+		resLifecycleDao.updateLifecycleStatus(resType, uuid, TransCodeUtil.getTransIngStatus(true));
+
+		transCodeUtil.triggerTransCode(cm, resType, statusBackup);
+
+		returnMap.put("process_state", "资源触发转码成功");
+		returnMap.put("process_code", "LC/TRIGGER_TRANSCODE_SUCCESS");
+		return returnMap;
 	}
 }

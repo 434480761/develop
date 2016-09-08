@@ -345,4 +345,13 @@ public interface NDResourceService {
     public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
     		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
     		Set<String> categories,boolean isAll);
+
+
+    /**
+     * 触发资源转码
+     * @param resType
+     * @param uuid
+     * @return
+     */
+    public Map<String, Object> triggerTranscode(String resType,String uuid);
 }
