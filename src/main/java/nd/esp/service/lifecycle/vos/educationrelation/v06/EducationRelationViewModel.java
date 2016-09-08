@@ -52,7 +52,7 @@ public class EducationRelationViewModel {
     /**
      * 关系的顺序值
      */
-    @NotNull(message = "{educationRelationModel.orderNum.notNull.validmsg}", groups = { UpdateEducationRelationDefault.class, CreateEducationRelationDefault.class })
+    //@NotNull(message = "{educationRelationModel.orderNum.notNull.validmsg}", groups = { UpdateEducationRelationDefault.class, CreateEducationRelationDefault.class })
     private Integer orderNum;
     
     /**

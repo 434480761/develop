@@ -211,4 +211,10 @@ public class TeachingMaterialServiceImplV06 implements
 		}
 		return chapterList;
 	}
+
+	@Override
+	public TeachingMaterial getById(String id) throws EspStoreException {
+		return teachingMaterialRepository.get(id);
+	}
+
 }

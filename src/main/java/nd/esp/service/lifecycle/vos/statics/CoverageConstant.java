@@ -31,7 +31,6 @@ public class CoverageConstant {
     public final static String TARGET_TYPE_ORG = TargetType.TARGET_TYPE_ORG.code;
     // Org/nd, 代表101资源
     public final static String ORG_CODE_ND = "nd";
-    
     //公共库target
     public final static String TARGET_PUBLIC = "public";
 
@@ -44,7 +43,10 @@ public class CoverageConstant {
     //智能出题覆盖范围
     public final static String INTELLI_KNOWLEDGE_COVERAGE = 
             TargetType.TARGET_TYPE_SERVICE.getCode() + "/intelli-knowledge/" + Strategy.STRATEGY_SUPPORT.getCode();
-
+    
+    //资源门户-智慧知识 target
+    public final static String ESP_PORTAL_ZH_COVERAGE_TARGET = "esp-portal-zhzs";
+    
     /**
      * 判断资源操作类型是否在可选范围内
      * <p>Create Time: 2015年6月18日   </p>

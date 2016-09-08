@@ -12,6 +12,7 @@ package nd.esp.service.lifecycle.educommon.services.impl;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import nd.esp.service.lifecycle.models.v06.LearningPlanModel;
 import nd.esp.service.lifecycle.models.v06.LessonModel;
 import nd.esp.service.lifecycle.models.v06.LessonPlanModel;
 import nd.esp.service.lifecycle.models.v06.QuestionModel;
+import nd.esp.service.lifecycle.models.v06.SubInstructionModel;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
@@ -60,6 +62,7 @@ import nd.esp.service.lifecycle.repository.model.Lesson;
 import nd.esp.service.lifecycle.repository.model.LessonPlan;
 import nd.esp.service.lifecycle.repository.model.Question;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.SubInstruction;
 import nd.esp.service.lifecycle.repository.model.TeachingActivities;
 import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
@@ -81,6 +84,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResCoverage4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceCategory4QuestionDBRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceCategoryRepository;
+import nd.esp.service.lifecycle.repository.sdk.SubInstructionRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingActivitiesRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
@@ -105,6 +109,7 @@ import nd.esp.service.lifecycle.vos.learningplans.v06.LearningPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessonplans.v06.LessonPlanViewModel;
 import nd.esp.service.lifecycle.vos.lessons.v06.LessonViewModel;
 import nd.esp.service.lifecycle.vos.questions.v06.QuestionViewModel;
+import nd.esp.service.lifecycle.vos.subinstruction.v06.SubInstructionViewModel;
 import nd.esp.service.lifecycle.vos.teachingmaterial.v06.TeachingMaterialViewModel;
 
 import org.slf4j.Logger;
@@ -173,6 +178,9 @@ public class CommonServiceHelper {
     //教学目标
     @Autowired
     InstructionalobjectiveRepository instructionalObjectiveRepository;
+    //子教学目标
+    @Autowired
+    SubInstructionRepository subInstructionRepository;
     
 	@Autowired
 	CategoryRepository categoryRepository;
@@ -304,6 +312,15 @@ public class CommonServiceHelper {
                                                                 InstructionalObjective.class,
                                                                 false,
                                                                 false));
+
+        // 子教学目标
+        repositoryAndModelMap.put("subInstruction",
+                new RepositoryAndModelAndView(subInstructionRepository,
+                        SubInstructionModel.class,
+                        SubInstructionViewModel.class,
+                        SubInstruction.class,
+                        false,
+                        false));
         
         //课件
         repositoryAndModelMap.put("coursewares", new RepositoryAndModelAndView(coursewareRepository,
@@ -704,6 +721,22 @@ public class CommonServiceHelper {
                 + "' AND target='" + uuid + "') OR (res_type = '" + resourceType + "' AND source_uuid='" + uuid + "')";
         Query query = em.createNativeQuery(sql);
         query.executeUpdate();
+    }
+
+    @Transactional(value = "transactionManager")
+    public void deleteRelationById(Collection<String> ids) {
+        if (ids.size() > 0) {
+            String idStr = "";
+            for (String id : ids) {
+                idStr += "'" + id + "',";
+            }
+            idStr = idStr.substring(0, idStr.lastIndexOf(","));
+            String sql = "UPDATE resource_relations SET enable = 0 where identifier in(" + idStr + ")";
+            Query query = em.createNativeQuery(sql);
+            query.executeUpdate();
+        } else {
+            return;
+        }
     }
     
     /**

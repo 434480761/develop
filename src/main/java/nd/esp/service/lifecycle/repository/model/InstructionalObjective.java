@@ -27,12 +27,6 @@ public class InstructionalObjective extends Education {
 	
 	private String classification;
 	
-	@Column(name="kb_id")
-    private String kbId;
-    
-	@Column(name="oc_id")
-    private String ocId;
-	
 	public void setLesson(String lesson) {
 		this.lesson = lesson;
 	}
@@ -49,29 +43,9 @@ public class InstructionalObjective extends Education {
 		return this.lesson;
 	}
 
-
 	@Override
 	public IndexSourceType getIndexType() {
 		this.setPrimaryCategory(IndexSourceType.InstructionalObjectiveType.getName());
 		return IndexSourceType.InstructionalObjectiveType;
 	}
-
-	public String getKbId() {
-		return kbId;
-	}
-
-	public void setKbId(String kbId) {
-		this.kbId = kbId;
-	}
-
-	public String getOcId() {
-		return ocId;
-	}
-
-	public void setOcId(String ocId) {
-		this.ocId = ocId;
-	}
-
-	
-	
 }

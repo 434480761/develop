@@ -55,7 +55,7 @@ public class ResourceViewModel {
 	 * 学习对象的标题名称
 	 */
     @NotBlank(message="{resourceViewModel.title.notBlank.validmsg}",groups={BasicInfoDefault.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class})
-    @Length(message="{resourceViewModel.title.maxlength.validmsg}",max=200,groups={BasicInfoDefault.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class})
+    @Length(message="{resourceViewModel.title.maxlength.validmsg}",max=200,groups={BasicInfoDefault.class})
 	private String title;
 	/**
 	 * 学习对象的文字描述，对于文字描述的长度约定为100个汉字
@@ -81,14 +81,18 @@ public class ResourceViewModel {
 	 * 关键字
 	 */
 	private List<String> keywords;
-	
 	/**
 	 * 资源编码
 	 */
 	@Length(message="{resourceViewModel.ndresCode.maxlength.validmsg}",max=100,groups={BasicInfoDefault.class, CoursewareObjectBasicInfo.class, LessPropertiesDefault.class, UpdateKnowledgeDefault.class,InstructionalObjectiveDefault.class})
 	@JsonInclude(Include.NON_NULL)
 	private String ndresCode;
-	
+	/**
+	 * 资源关系
+	 */
+	@JsonInclude(Include.NON_NULL)
+	private String relationId;
+
 	/**
 	 * 统计数量
 	 */
@@ -283,6 +287,14 @@ public class ResourceViewModel {
 
 	public void setNdresCode(String ndresCode) {
 		this.ndresCode = ndresCode;
+	}
+	
+	public String getRelationId() {
+		return relationId;
+	}
+
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
 	}
 
 	public Double getStatisticsNum() {
