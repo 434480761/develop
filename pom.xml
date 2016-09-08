@@ -287,7 +287,15 @@
 			<artifactId>gremlin-driver</artifactId>
 			<version>3.0.2-incubating</version>
 		</dependency>
-
+		
+		<!-- JAVA_CS_SDK -->
+		<dependency>
+		  <groupId>com.nd.component.java</groupId>
+		  <artifactId>sdpcs_java_sdk</artifactId>
+		  <version>3.0.0</version>
+		</dependency>
+		
+		<!-- Rabbit MQ -->
 		<dependency>
 			<groupId>com.lcmq.component</groupId>
 			<artifactId>lc_msglist</artifactId>

@@ -17,9 +17,7 @@ import org.junit.Assert;
  */
 public class ModelPropertiesUtil {
     //获取源资源对象的属性key value
-    public static final String SOURCE_VALUE="source";
-    
-    
+    public static final String SOURCE_VALUE = "source";
     
     public static String getStatus(  ResourceModel resourceModel){
         
@@ -32,12 +30,12 @@ public class ModelPropertiesUtil {
         return lifeCycleModel.getStatus();
         
     }
+    
     public static String getStatus( ResLifeCycleModel lifeCycleModel){
         
         Assert.assertNotNull("资源视图对象中的生命对象属性不能为空", lifeCycleModel);
         
         return lifeCycleModel.getStatus();
-        
     }
     
     
@@ -62,17 +60,14 @@ public class ModelPropertiesUtil {
      */
     public static ResTechInfoModel getAssignTechInfo(ResourceModel resourceModel,String key){
         if(StringUtils.isEmpty(key)){
-            key=SOURCE_VALUE;
+            key = SOURCE_VALUE;
         }
         List<ResTechInfoModel>techInfoModels=  resourceModel.getTechInfoList();
         for(ResTechInfoModel techInfoModel:techInfoModels ){
             if(techInfoModel.getTitle().equals(key)){
                 return techInfoModel;
             }
-            
         }
         return null;
     }
-    
-
 }

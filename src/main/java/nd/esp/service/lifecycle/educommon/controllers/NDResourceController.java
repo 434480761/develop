@@ -881,10 +881,16 @@ public class NDResourceController {
                                 statisticsPlatform, forceStatus, tags, showVersion);
                         LOG.warn("Titan 实时查询完成");
                     } else {
-                        rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                       /* rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                                 includesList, categories, categoryExclude, relationsMap,
                                 coveragesList, propsMap, orderMap, words, limit,
-                                isNotManagement, reverseBoolean, printable, printableKey);
+                                isNotManagement, reverseBoolean, printable, printableKey);*/
+                        Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
+                        rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+
                         LOG.warn("Titan 查询完成");
                     }
 
@@ -895,8 +901,7 @@ public class NDResourceController {
                             statisticsPlatform, forceStatus, tags, showVersion, includesList, relationsMap,relationsExcludeMap,
                             coveragesList, propsMap, orderMap, reverseBoolean,firstKnLevel);
                 }
-            }
-            else {
+            }else {
                 rListViewModel = ndResourceService.resourceQueryByDB(resType,
                         resCodes, includesList, categories, categoryExclude,
                         relationsMap,relationsExcludeMap, coveragesList, propsMap, orderMap, words,
@@ -1462,7 +1467,7 @@ public class NDResourceController {
         Map<String,String> orderMapNew = null;
 
         if(CollectionUtils.isNotEmpty(orderMap)){
-            orderMapNew = new HashMap<String, String>();
+            orderMapNew = new LinkedHashMap<String, String>();
             for(String orderKey : orderMap.keySet()){
                 String afterChangeKey = "";
                 if(isDB){

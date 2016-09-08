@@ -270,34 +270,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		listViewModel.setLimit(limit);
 		return listViewModel;
 	}
-    
-    /**
-     * 资源检索(titan)
-     * @author linsm
-     */
-    @Override
-	public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,
-			List<String> includes, Set<String> categories, Set<String> categoryExclude,
-			List<Map<String, String>> relations, List<String> coverages,
-			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
-			String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey) {
-		// 返回的结果集
-		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
 
-		// 参数整理
-		Map<String, Map<String, List<String>>> params = this
-				.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey);
-		Integer result[] = ParamCheckUtil.checkLimit(limit);
-		if(includes == null){
-			includes = new ArrayList<String>();
-		}
-		//just for test by lsm
-		listViewModel = 
-				titanSearchService.searchWithAdditionProperties(resType, includes, params, orderMap,
-						result[0], result[1],reverse,words);
-		listViewModel.setLimit(limit);
-		return listViewModel;
-	}
 
 	/**
 	 * 资源检索(titan)
@@ -311,7 +284,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
 		// 返回的结果集
 		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
-
 		// 参数整理
 		Map<String, Map<String, List<String>>> params = this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey,forceStatus);
 		// FIXME 处理orderMap 暂时放在这里
@@ -1364,7 +1336,6 @@ public class NDResourceServiceImpl implements NDResourceService{
             }else{
                 rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
             }
-           
         } else {
             // 非续约，要判断是否存在对应的元数据
             if (!renew) {
@@ -1373,8 +1344,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
                 if (resourceModel == null) {
                     // 不存在对应的资源
-                    
-                   
                     LOG.error(LifeCircleErrorMessageMapper.CSResourceNotFound.getMessage());
                    
                     throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1390,7 +1359,6 @@ public class NDResourceServiceImpl implements NDResourceService{
                     rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
                 }
             }
-
         }
         
         LOG.debug("各个组织cs根目录："+rootPath);

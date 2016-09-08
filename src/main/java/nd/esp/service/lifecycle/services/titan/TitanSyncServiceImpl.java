@@ -64,6 +64,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Autowired
     private TitanStatisticalRepository titanStatisticalRepository;
 
+    @Autowired
+    private TitanCommonRepository titanCommonRepository;
+
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -78,30 +81,39 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     @Override
     public boolean reportResource(String primaryCategory, String identifier ,TitanSyncType titanSyncType) {
         if(ResourceNdCode.fromString(primaryCategory)==null){
+            titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
             return true;
         }
 
-        boolean deleteSuccess = delete(primaryCategory, identifier);
-        if(!deleteSuccess){
-            return false;
-        }
         EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
         Education education;
         try {
             education = (Education) espRepository.get(identifier);
         } catch (EspStoreException e) {
-            e.printStackTrace();
+            titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
             return false;
         }
 
 
         if(education == null){
             //资源不存在触发删除资源
-            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.DROP_RESOURCE_ERROR,primaryCategory,identifier);
+            deleteResource(primaryCategory, identifier);
         } else {
             boolean reportSuccess = false;
             try {
-                reportSuccess = report(education);
+                if (titanSyncType.equals(TitanSyncType.SAVE_OR_UPDATE_ERROR)){
+                    boolean deleteSuccess = delete(primaryCategory, identifier);
+                    if(deleteSuccess){
+                        reportSuccess = report(education);
+                    }
+                } else if (titanSyncType.equals(TitanSyncType.VERSION_SYNC)){
+                    if (!checkExist(primaryCategory, identifier)){
+                        reportSuccess = report4Import(education);
+                    } else {
+                        reportSuccess = true;
+                    }
+                }
+
             } catch (Exception e){
                 LOG.error(e.getLocalizedMessage());
             }
@@ -155,6 +167,38 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             LOG.info("titan_sync : delete {} success",identifier);
         }
         return techInfoDeleted && resourceDeleted;
+    }
+
+    private boolean report4Import(Education education){
+        if(education == null){
+            return true;
+        }
+
+        if(StringUtils.isEmpty(education.getPrimaryCategory())){
+            return false;
+        }
+        LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
+                education.getPrimaryCategory(),education.getIdentifier());
+        String primaryCategory = education.getPrimaryCategory();
+
+        Set<String> uuids = new HashSet<>();
+        uuids.add(education.getIdentifier());
+
+
+        List<String> resourceTypes = new ArrayList<>();
+        resourceTypes.add(primaryCategory);
+
+        List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
+        List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+
+        boolean success = titanImportRepository.importOneData(education,resCoverageList,resourceCategoryList,techInfos);
+        if (!success){
+            return false;
+        }
+
+        LOG.info("titan_sync : report {} success",education.getIdentifier());
+        return true;
     }
 
     /**
@@ -226,6 +270,20 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
         LOG.info("titan_sync : report {} success",education.getIdentifier());
+        return true;
+    }
+
+    private boolean checkExist(String primaryCategory, String identifier){
+        Long id = null;
+        try {
+            id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
+        } catch (Exception e) {
+            return false;
+        }
+        if (id == null){
+            return false;
+        }
+
         return true;
     }
 }

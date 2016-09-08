@@ -38,70 +38,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
     private final Logger LOG = LoggerFactory.getLogger(TitanSearchServiceImpl.class);
 
 
-
-    @Override
-    public ListViewModel<ResourceModel> searchWithAdditionProperties(
-            String resType, List<String> includes,
-            Map<String, Map<String, List<String>>> params,
-            Map<String, String> orderMap, int from, int size, boolean reverse,
-            String words) {
-
-        long generateScriptBegin = System.currentTimeMillis();
-        TitanExpression titanExpression = new TitanExpression();
-        titanExpression.setIncludes(includes);
-        titanExpression.setResType(resType);
-        titanExpression.setRange(from, size);
-
-        Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-
-        // FIXME 处理order by
-        List<TitanOrder> orderList = new ArrayList<>();
-        dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,false);
-        titanExpression.setOrderList(orderList);
-        dealWithRelation(titanExpression, params.get("relation"), reverse);
-        params.remove("relation");
-
-        TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
-        resourceQueryVertex.setIsFilter(resType);
-
-        Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
-        resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
-        // for now only deal with code
-        dealWithSearchCode(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxoncode.toString()));
-        params.remove(ES_SearchField.cg_taxoncode.toString());
-
-        dealWithSearchPath(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxonpath.toString()));
-        params.remove(ES_SearchField.cg_taxonpath.toString());
-
-        dealWithSearchCoverage(resourceVertexPropertyMap,
-                params.get(ES_SearchField.coverages.toString()));
-        params.remove(ES_SearchField.coverages.toString());
-
-        resourceQueryVertex.setWords(words);
-        // FIXME
-        // resourceQueryVertex.setVertexLabel(resType);
-
-        resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldCondtion(TitanKeyWords.primary_category.toString(), resType));
-        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
-                        generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
-        dealWithResource(resourceQueryVertex, params);
-        titanExpression.addCondition(resourceQueryVertex);
-
-        // for count and result
-        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
-        LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
-
-        System.out.println(scriptForResultAndCount);
-        System.out.println(scriptParamMap);
-        long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
-        LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
-
-        return getListViewModelResourceModel(resultSet,resType,includes);
-    }
-
     @Override
     public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
                                                              List<String> includes,
@@ -117,6 +53,16 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         titanExpression.setResTypeSet(resTypeSet);
         titanExpression.setRange(from, size);
         if(showVersion) titanExpression.setShowSubVersion(true);
+
+        // 多个关系:限制成2个关系走优化脚本
+        Map<String, List<String>> re = params.get("relation");
+        boolean iSMutiRelations = false;
+        if (CollectionUtils.isNotEmpty(re)) {
+            List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
+            if (CollectionUtils.isNotEmpty(relations)) {
+                if (relations.size() == 2) iSMutiRelations = true;
+            }
+        }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // FIXME 处理order by
@@ -161,6 +107,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // for count and result
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
+        // TODO 优化多个关系的查询脚本
+        if(iSMutiRelations){
+            scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
+        }
 
         System.out.println(scriptForResultAndCount);
         System.out.println(scriptParamMap);
