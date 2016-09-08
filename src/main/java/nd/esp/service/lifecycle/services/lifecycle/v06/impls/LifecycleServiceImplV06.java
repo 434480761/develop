@@ -440,9 +440,8 @@ public class LifecycleServiceImplV06 implements LifecycleServiceV06{
      * <p>Create Time: 2015年7月20日   </p>
      * <p>Create author: qil   </p>
      * @param resType   资源类型
-     * @param resIds    资源id集合
+     * @param entry    资源id集合
      */
-    @SuppressWarnings("unused")
 	private void UpdatePropertyInResource(String resType, EspEntity entry, String status, boolean bUpdateTime){
         try {
             //获取通用SDK仓库

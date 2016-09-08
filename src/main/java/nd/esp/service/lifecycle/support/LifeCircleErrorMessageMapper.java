@@ -173,6 +173,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
     MoveKnowledgeFail("LC/MOVE_KNOWLEDGE_FAIL",""),
     KnowledgeParentNotFound("LC/KNOWLEDEG_PARENT_NOT_FOUND",getPropertyValue("knowledgeServiceImplV06.createKnowledge.checkParent.fail")),
     CheckResKnowledgeFail("LC/CHECK_RES_KNOWLEDGE_VALID_FAIL",getPropertyValue("knowledgeControllerV06.checkResKnowledgeFail.fail")),
+	checkResKnowledgeTitleUniqueFail("LC/CHECK_RES_KNOWLEDGE_TITLE_VALID_FAIL",getPropertyValue("knowledgeControllerV06.checkResKnowledgeTitleUniqueFail.fail")),
     CheckAddTagsOutlineParamFail("LC/CHECK_ADD_TAGS_OUTLINE_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsOutlineParam.fail")),
     CheckAddTagsKnowledgeParamFail("LC/CHECK_ADD_TAGS_KNOWLEDGE_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsKnowledgeParam.fail")),
     CheckAddTagsTagsParamFail("LC/CHECK_ADD_TAGS_TAGS_PARAM_FAIL",getPropertyValue("knowledgeControllerV06.checkAddTagsTagsParam.fail")),
@@ -300,7 +301,9 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	CommonAPINotSupportResourceType("LC/COMMON_API_NOT_SUPPORT_RESOURCE_TYPE",getPropertyValue("commonServiceHelper.getRepositoryOrModel.fail")),
 	DeleteResourceSuccess("LC/DELETE_RESOURCE_SUCCESS",getPropertyValue("NDResourceController.delete.operation.success")),
 	ResourceNotFound("LC/RESOURCE_NOT_FOUND",getPropertyValue("NDResourceServiceImpl.resource.exist.check.fail")),
-	
+	CheckDeleteInstructionalObjectiveParamFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("NDResourceController.deleteInstructionalObjective.checkParam.fail")),
+
+
 	//ResAnnotation
 	CourseWareObjectNotFound("LC/COURSEWAREOBJECT_NOT_FOUND",getPropertyValue("courseWareObjectController.deleteResAnnotation.check.fail")),
 	ResAnnotationNotFound("LC/RESANNOTATION_NOT_FOUND",getPropertyValue("courseWareObjectController.updateResAnnotation.check.fail")),

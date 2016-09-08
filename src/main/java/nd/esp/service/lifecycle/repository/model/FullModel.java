@@ -23,9 +23,16 @@ public class FullModel {
     private String keywords;
     private String customProperties;
     private String code;
+    private String relationId;
     private Double statistics_num;
     
-    //**********************LC(生命周期)**********************\\
+    public String getRelationId() {
+		return relationId;
+	}
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
+	}
+	//**********************LC(生命周期)**********************\\
     private String lifeCycle_version;
     private String lifeCycle_status;
     private String lifeCycle_enable;
