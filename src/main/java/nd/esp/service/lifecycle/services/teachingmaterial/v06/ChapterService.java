@@ -120,4 +120,6 @@ public interface ChapterService {
      * @return
      */
     public Map<String,List<Map<String,Object>>> countResourceByTeachingMaterials(Set<String> mtidList,String targetType);
+
+    public ChapterModel findChapterByIdAndType(String id, String type);
 }

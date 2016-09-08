@@ -18,6 +18,169 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
+	/**
+	 * 优化多个关系时的查询脚本
+	 * 暂时只处理两个关系的查询
+	 * @param script
+	 * @return
+     */
+	public static String optimizeMultiRelationsQuery(String script) {
+		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
+		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
+		Map<String, String> mapForTotalCount = fetchScript(totalCount);
+		Map<String, String> mapForResult = fetchScript(result);
+
+		StringBuffer scriptBuffer = new StringBuffer("Set<Long> ids1=new HashSet<Long>();Set<Long> ids2=new HashSet<Long>();Set<Long> retain=new HashSet<Long>();");
+		// TODO 获取交集
+		scriptBuffer.append(mapForTotalCount.get("relation1")).append(".collect{ids1.add(it.id())};");
+		scriptBuffer.append(dealRelation(mapForTotalCount.get("relation2"))).append(".collect{ids2.add(it.id())};");
+		scriptBuffer.append("if(ids1.size()<ids2.size()){ids1.retainAll(ids2);retain=ids1;}else{ids2.retainAll(ids1);retain=ids2;};");
+		// TODO 加上过滤条件
+		scriptBuffer.append("TOTALCOUNT=g.V(retain.toArray())").append(mapForTotalCount.get("conditions")).append(mapForTotalCount.get("script")).append(".count();");
+		// TODO 取得 count
+		scriptBuffer.append("long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};");
+		// TODO 查询结果数据
+		scriptBuffer.append("RESULT=g.V(retain.toArray())").append(mapForResult.get("conditions")).append(mapForResult.get("script")).append(".valueMap(true);");
+		// TODO 处理返回数据
+		scriptBuffer.append("List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
+
+		//System.out.println(scriptBuffer.toString());
+		return scriptBuffer.toString();
+	}
+
+	/**
+	 * .and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2))
+	 * @param relation
+	 * @return
+     */
+	private static String dealRelation(String relation) {
+		StringBuffer scriptBuffer = new StringBuffer("g.V()");
+		String[] ev = relation.split(".as\\('e'\\)");
+		String e = ev[0];
+		String v = ev[1];
+		v = v.substring(v.indexOf(".has("), v.length() - 1);
+		if (relation.contains("inE(has_relation")) {
+			e = e.substring(e.indexOf("inE(has_relation"), e.length());
+			scriptBuffer.append(v);
+			e = e.replace("inE(", "outE(");
+			scriptBuffer.append(".").append(e).append(".inV()");
+		}else if (relation.contains("outE(has_relation")) {
+			e = e.substring(e.indexOf("outE(has_relation"), e.length());
+			scriptBuffer.append(v);
+			e = e.replace("outE(", "inE(");
+			scriptBuffer.append(".").append(e).append(".outV()");
+		}/*else{
+
+		}*/
+
+		return scriptBuffer.toString();
+	}
+
+	/**
+	 * @param script
+	 * @return
+	 */
+	private static Map<String, String> fetchScript(String script) {
+		String relation1 = script.substring(script.indexOf("g.V().has"), script.indexOf(".as('e')"));
+		script = script.replace(relation1, "");
+		if (relation1.contains("outE")) {
+			relation1 = relation1 + ".inV()";
+		} else if (relation1.contains("inE")) {
+			relation1 = relation1 + ".outV()";
+		}
+		// 条件
+		String conditions = script.substring(script.indexOf(".has("), script.indexOf(".as('x')"));
+		script = script.replace(conditions, "");
+		script = script.substring(script.indexOf(".and("), script.length());
+
+		String relation2 = null;
+		if (script.contains(".and(inE(")) {
+			relation2 = script.substring(script.indexOf(".and(inE("), script.indexOf(".select('x')"));
+		} else if (script.contains(".and(outE(")) {
+			relation2 = script.substring(script.indexOf(".and(outE("), script.indexOf(".select('x')"));
+		}
+		if (relation2 != null) script = script.replace(relation2, "");
+
+		Map<String, String> map = new HashMap<>();
+
+		map.put("relation1", relation1);
+		map.put("conditions", conditions);
+		map.put("relation2", relation2);
+		map.put("script", script);
+		//System.out.println(relation1);
+		//System.out.println(conditions);
+		//System.out.println(relation2);
+		//System.out.println(script);
+		return map;
+	}
+
+	/**
+	 *
+	 * @param script
+	 * @return
+     */
+	private static Map<String, String> fetchScript2(String script) {
+		script = script.substring(script.indexOf("RESULT="), script.length());
+
+		String relation1 = script.substring(script.indexOf("g.V().has"), script.indexOf(".as('e')"));
+		script = script.replace(relation1, "");
+		if (relation1.contains("outE")) {
+			relation1 = relation1 + ".inV()";
+		} else if (relation1.contains("inE")) {
+			relation1 = relation1 + ".outV()";
+		}
+
+		// 条件
+		String conditions = script.substring(script.indexOf(".has("), script.indexOf(".as('x')"));
+		script = script.replace(conditions, "");
+		script = script.substring(script.indexOf(".and("), script.length());
+		String relation2=null;
+		if (script.contains(".and(inE(")) {
+			relation2 = script.substring(script.indexOf(".and(inE("), script.indexOf(".select('x')"));
+		} else if (script.contains(".and(outE(")) {
+			relation2 = script.substring(script.indexOf(".and(outE("), script.indexOf(".select('x')"));
+		}
+		if (relation2 != null) script = script.replace(relation2, "");
+		// 判断是否是有 .aggregate('subversion')
+		String conditions2 =null;
+		if(script.contains(".aggregate('subversion')")){
+			conditions2 = script.substring(0, script.indexOf(".select('version_result')"));
+			script = script.replace(conditions2, "");
+			if (script.contains("has('ti_printable'")) {
+				if (script.startsWith(".select('version_result').outE('has_tech_info')")) {
+					script = script.substring(script.indexOf(".outE('has_tech_info')"),script.length());
+				}
+				String conditions3 = script.substring(0, script.indexOf(".select('version_result')"));
+				script = script.replace(conditions3, "");
+				conditions2 = conditions2 + ".select('version_result')" + conditions3;
+			}
+		}else{
+			if (script.contains("has('ti_printable'")) {
+				conditions2 = script.substring(0, script.indexOf(".dedup().select('x')"));
+			}
+		}
+
+
+
+		//if (conditions2 != null) script = script.replace(conditions2, "");
+
+
+
+		String orderAndLimitAndUnion = script;
+
+		Map<String, String> map = new HashMap<>();
+
+		map.put("relation1",relation1);
+		map.put("conditions",conditions);
+		map.put("orderAndLimitAndUnion",orderAndLimitAndUnion);
+		map.put("relation2",relation2);
+		System.out.println(relation1);
+		System.out.println(conditions);
+		System.out.println(relation2);
+		System.out.println(conditions2);
+		System.out.println(orderAndLimitAndUnion);
+		return map;
+	}
 
 	/**
 	 * 处理orderMap 返回一个有序的 order排序
@@ -219,7 +382,7 @@ public class TitanUtils {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Set<String> set = new HashSet<>();
+		/*Set<String> set = new HashSet<>();
 		System.out.println("测试非knowledges");
 		set.add(ResourceNdCode.assets.toString());
 		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), set, false,false,null));
@@ -232,7 +395,16 @@ public class TitanUtils {
 		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), set, false,false,null));
 		System.out.println(generateScriptForInclude(IncludesConstant.getIncludesList(), set, true,false,null));
 		System.out.println(generateScriptForInclude(null, set, false,false,null));
-		System.out.println(generateScriptForInclude(null, set, true,false,null));
+		System.out.println(generateScriptForInclude(null, set, true,false,null));*/
+		optimizeMultiRelationsQuery("TOTALCOUNT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').count();long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};RESULT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').order().by('lc_create_time',decr).select('x').range(0,10).as('v').union(select('v'),outE('has_category_code')).valueMap(true);List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
+		System.out.println("------------");
+		optimizeMultiRelationsQuery("TOTALCOUNT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within('instructionalobjectives')).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result').select('version_result').count();long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};RESULT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within('instructionalobjectives')).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result').select('version_result').choose(select('version_result').has('lc_version'),select('version_result').values('lc_version'),__.constant('')).order().by(incr).select('version_result').choose(select('version_result').has('m_identifier'),select('version_result').values('m_identifier'),__.constant('')).order().by(incr).select('version_result').range(0,10).as('v').union(select('v'),outE('has_category_code')).valueMap(true);List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
+		System.out.println("------------");
+		optimizeMultiRelationsQuery("TOTALCOUNT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within('instructionalobjectives')).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result').select('version_result').outE('has_tech_info').has('ti_printable',true).has('ti_title','source').select('version_result').dedup().select('version_result').count();long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};RESULT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').aggregate('subversion').emit().repeat(outE('has_relation').has('res_type',within('instructionalobjectives')).has('relation_type','VERSION').inV().aggregate('subversion')).times(1).select('subversion').unfold().dedup().as('version_result').select('version_result').outE('has_tech_info').has('ti_printable',true).has('ti_title','source').select('version_result').dedup().select('version_result').choose(select('version_result').has('lc_version'),select('version_result').values('lc_version'),__.constant('')).order().by(incr).select('version_result').choose(select('version_result').has('m_identifier'),select('version_result').values('m_identifier'),__.constant('')).order().by(incr).select('version_result').range(0,10).as('v').union(select('v'),outE('has_category_code')).valueMap(true);List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
+		System.out.println("------------");
+		optimizeMultiRelationsQuery("TOTALCOUNT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').outE('has_tech_info').has('ti_printable',true).has('ti_title','source').select('x').dedup().select('x').count();long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};RESULT=g.V().has('identifier',identifier0).has('lc_enable',lc_enable0).has('primary_category',primary_category0).outE(has_relation0).has('enable',enable0).as('e').inV().has('lc_enable',lc_enable1).has('primary_category',primary_category1).has('search_coverage',within(search_coverage0)).has('lc_status',within(lc_status0)).or(has('search_code',search_code0)).as('x').select('x').and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2)).select('x').outE('has_tech_info').has('ti_printable',true).has('ti_title','source').select('x').dedup().select('x').order().by('lc_create_time',decr).select('x').range(0,10).as('v').union(select('v'),outE('has_category_code')).valueMap(true);List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
+
+
 	}
 
 }

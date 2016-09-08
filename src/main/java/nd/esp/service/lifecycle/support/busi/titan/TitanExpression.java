@@ -123,7 +123,8 @@ public class TitanExpression implements TitanScriptGenerator {
             buildConditions(scriptParamMap);
         }
         return new StringBuffer(TitanKeyWords.TOTALCOUNT.toString()).append("=")
-                .append(this.innerCondition + (".count();")).toString();
+                .append(this.innerCondition).append(".").append(this.asResult).append(".count();").append("long count=TOTALCOUNT.toList()[0];")
+                .append("if(count==0){return 'TOTALCOUNT=0'};").toString();
     }
 
     private void buildConditions(Map<String, Object> scriptParamMap) {
@@ -232,11 +233,13 @@ public class TitanExpression implements TitanScriptGenerator {
                 .append("List<Object> resultList="
                         + TitanKeyWords.RESULT.toString() +
                         ".toList();")
-                .append("List<Object> countsList="
+             /*   .append("List<Object> countsList="
                         + TitanKeyWords.TOTALCOUNT.toString() +
                         ".toList();")
                 .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" +
-                        "countsList[0];").toString();
+                        "countsList[0];").toString();*/
+        .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" +
+                "count;").toString();
     }
 
     /************************************
