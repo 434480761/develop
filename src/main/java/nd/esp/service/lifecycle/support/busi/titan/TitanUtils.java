@@ -33,14 +33,17 @@ public class TitanUtils {
 		StringBuffer scriptBuffer = new StringBuffer("Set<Long> ids1=new HashSet<Long>();Set<Long> ids2=new HashSet<Long>();Set<Long> retain=new HashSet<Long>();");
 		// TODO 获取交集
 		scriptBuffer.append(mapForTotalCount.get("relation1")).append(".collect{ids1.add(it.id())};");
+		scriptBuffer.append("if(ids1.size()==0){return 'TOTALCOUNT=0'};");
 		scriptBuffer.append(dealRelation(mapForTotalCount.get("relation2"))).append(".collect{ids2.add(it.id())};");
+		scriptBuffer.append("if(ids2.size()==0){return 'TOTALCOUNT=0'};");
 		scriptBuffer.append("if(ids1.size()<ids2.size()){ids1.retainAll(ids2);retain=ids1;}else{ids2.retainAll(ids1);retain=ids2;};");
+		scriptBuffer.append("if(retain.size()==0){return 'TOTALCOUNT=0'};");
 		// TODO 加上过滤条件
-		scriptBuffer.append("TOTALCOUNT=g.V(retain.toArray())").append(mapForTotalCount.get("conditions")).append(mapForTotalCount.get("script")).append(".count();");
+		scriptBuffer.append("TOTALCOUNT=g.V(retain.toArray())").append(mapForTotalCount.get("conditions")).append(".as('x')").append(mapForTotalCount.get("script")).append(".count();");
 		// TODO 取得 count
 		scriptBuffer.append("long count=TOTALCOUNT.toList()[0];if(count==0){return 'TOTALCOUNT=0'};");
 		// TODO 查询结果数据
-		scriptBuffer.append("RESULT=g.V(retain.toArray())").append(mapForResult.get("conditions")).append(mapForResult.get("script")).append(".valueMap(true);");
+		scriptBuffer.append("RESULT=g.V(retain.toArray())").append(mapForResult.get("conditions")).append(".as('x')").append(mapForResult.get("script")).append(".valueMap(true);");
 		// TODO 处理返回数据
 		scriptBuffer.append("List<Object> resultList=RESULT.toList();resultList << 'TOTALCOUNT='+count;");
 
