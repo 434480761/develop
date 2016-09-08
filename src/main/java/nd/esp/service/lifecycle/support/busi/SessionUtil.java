@@ -98,11 +98,11 @@ public class SessionUtil {
         if(StringUtils.isEmpty(href)){
             throw new IllegalArgumentException("href必须不为空");
         }
-        if(href.indexOf("/")<0){
+        if(href.indexOf("/") < 0){
             throw new IllegalArgumentException("href格式不对");
         }
 
-        int secondSlash=href.indexOf("/", href.indexOf("/")+1);
+        int secondSlash = href.indexOf("/", href.indexOf("/")+1);
         return href.substring(0, secondSlash);
     }
     
