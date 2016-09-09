@@ -97,7 +97,7 @@ public class CoursewareControllerV06 {
 		CoursewareModel cm = CommonHelper.convertViewModelIn(viewModel, CoursewareModel.class,ResourceNdCode.coursewares);
 		
 		boolean bTranscode = TransCodeManager.canTransCode(viewModel, IndexSourceType.SourceCourseWareType.getName());
-        if(bTranscode || transCodeUtil.isNdpxTransCode(cm, IndexSourceType.AssetType.getName())) {
+        if(bTranscode) {
             cm.getLifeCycle().setStatus(TransCodeUtil.getTransIngStatus(true));
         }
 		
@@ -107,7 +107,7 @@ public class CoursewareControllerV06 {
 		//model转换
 		viewModel = CommonHelper.convertViewModelOut(cm,CoursewareViewModel.class);
 		
-		if (bTranscode || transCodeUtil.isNdpxTransCode(cm, IndexSourceType.AssetType.getName())) {
+		if (bTranscode) {
             transCodeUtil.triggerTransCode(cm, IndexSourceType.SourceCourseWareType.getName());
         }
 		
