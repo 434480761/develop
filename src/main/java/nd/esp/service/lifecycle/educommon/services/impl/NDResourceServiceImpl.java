@@ -248,7 +248,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     private static final int ND_AND_PERSON_ROOT_PATH_LENGTH=2;
     private static final String ND_AND_PERSON_DEFAUL_ORG = "esp";
     private static final int OTHER_ORG_ROOT_PATH_LENGTH=3;
-	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans"});
+	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans", "teachingmaterials"});
     
     @Override
 	public ListViewModel<ResourceModel> resourceQueryByEla(String resType,
