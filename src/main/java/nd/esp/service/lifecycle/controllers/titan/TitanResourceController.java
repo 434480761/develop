@@ -65,6 +65,7 @@ public class TitanResourceController {
 		titanResourceService.createKnowledgeRealtion();
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
+		titanResourceService.importStatistical();
 	}
 
 	@MarkAspect4ImportData
@@ -286,6 +287,7 @@ public class TitanResourceController {
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
 			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1162275200000L), new Date());
 		}
+		checkAllRelations();
 		return 0;
 	}
 	

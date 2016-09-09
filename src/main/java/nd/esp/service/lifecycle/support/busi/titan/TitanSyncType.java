@@ -38,6 +38,7 @@ public enum  TitanSyncType {
     DELETE_CATEGORY_ERROR,
     DELETE_COVERAGE_ERROR,
     DELETE_TECH_INFO_ERROR,
+    RELATION,
     //不同版本数据库差量修复数据
     VERSION_SYNC;
 

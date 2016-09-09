@@ -94,35 +94,32 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
-
         if(education == null){
             //资源不存在触发删除资源
             deleteResource(primaryCategory, identifier);
-        } else {
-            boolean reportSuccess = false;
-            try {
-                if (titanSyncType.equals(TitanSyncType.SAVE_OR_UPDATE_ERROR)){
-                    boolean deleteSuccess = delete(primaryCategory, identifier);
-                    if(deleteSuccess){
-                        reportSuccess = report(education);
-                    }
-                } else if (titanSyncType.equals(TitanSyncType.VERSION_SYNC)){
-                    if (!checkExist(primaryCategory, identifier)){
-                        reportSuccess = report4Import(education);
-                    } else {
-                        reportSuccess = true;
-                    }
+            return true;
+        }
+
+        boolean reportSuccess = false;
+        try {
+            if (titanSyncType.equals(TitanSyncType.SAVE_OR_UPDATE_ERROR)){
+                boolean deleteSuccess = delete(primaryCategory, identifier);
+                if(deleteSuccess){
+                    reportSuccess = report(education);
                 }
-
-            } catch (Exception e){
-                LOG.error(e.getLocalizedMessage());
+            } else if (titanSyncType.equals(TitanSyncType.VERSION_SYNC)){
+                if(deleteCoverageTechInfoCategory(primaryCategory, identifier)) {
+                    reportSuccess = report4Import(education);
+                }
             }
+        } catch (Exception e){
+            LOG.error(e.getLocalizedMessage());
+        }
 
-            if(reportSuccess){
-                titanRepositoryUtils.titanSync4MysqlDeleteAll(primaryCategory,identifier);
-            } else {
-                titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
-            }
+        if(reportSuccess){
+            titanRepositoryUtils.titanSyncUpdateErrorType(titanSyncType,primaryCategory,identifier, TitanSyncType.RELATION);
+        } else {
+            titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
         }
 
         return false;
@@ -169,6 +166,24 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         return techInfoDeleted && resourceDeleted;
     }
 
+    private boolean deleteCoverageTechInfoCategory(String primaryCategory, String identifier){
+        boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
+        if (!techInfoDeleted){
+            return false;
+        }
+        String script = "g.V().has(primaryCategory,'identifier',identifier).outE('has_coverage','has_category_code','has_categories_path').drop()";
+        Map<String, Object> param = new HashMap<>();
+        param.put("primaryCategory",primaryCategory);
+        param.put("identifier",identifier);
+        try {
+            titanCommonRepository.executeScript(script, param);
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
     private boolean report4Import(Education education){
         if(education == null){
             return true;
@@ -191,12 +206,36 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResCoverage> resCoverageList = coverageDao.queryCoverageByResource(primaryCategory, uuids);
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
         List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+        List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(resourceTypes,uuids);
 
-        boolean success = titanImportRepository.importOneData(education,resCoverageList,resourceCategoryList,techInfos);
-        if (!success){
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
+
+        Education resultEducation = titanResourceRepository.add(education);
+        if(resultEducation == null){
             return false;
         }
 
+        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
+        if(coverageList.size() != resultCoverage.size()){
+            return false;
+        }
+
+        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
+        if(resourceCategoryList.size()!=resultCategory.size()){
+            return false;
+        }
+
+        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
+        if(techInfoList.size()!=resultTechInfos.size()){
+            return false;
+        }
+
+
+        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
+        if (statisticalList.size() != resultStatisticals.size()){
+            return false;
+        }
         LOG.info("titan_sync : report {} success",education.getIdentifier());
         return true;
     }
