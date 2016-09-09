@@ -2425,8 +2425,9 @@ public class NDResourceController {
      * @return
      */
     @RequestMapping(value="/{uuid}/transcode", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
-        return ndResourceService.triggerTranscode(resType, uuid);
+    public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid,
+                                                       @RequestParam(value = "status_backup", required = false, defaultValue = "false") boolean bStatusBackup){
+        return ndResourceService.triggerTranscode(resType, uuid, bStatusBackup);
     }
 
     /**

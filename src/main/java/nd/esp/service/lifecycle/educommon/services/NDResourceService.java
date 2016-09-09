@@ -348,5 +348,6 @@ public interface NDResourceService {
      * @param uuid
      * @return
      */
-    public Map<String, Object> triggerTranscode(String resType,String uuid);
+    public Map<String, Object> triggerTranscode(String resType, String uuid, boolean bStatusBackup);
+
 }
