@@ -248,6 +248,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     private static final int ND_AND_PERSON_ROOT_PATH_LENGTH=2;
     private static final String ND_AND_PERSON_DEFAUL_ORG = "esp";
     private static final int OTHER_ORG_ROOT_PATH_LENGTH=3;
+	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans"});
     
     @Override
 	public ListViewModel<ResourceModel> resourceQueryByEla(String resType,
@@ -3556,6 +3557,11 @@ public class NDResourceServiceImpl implements NDResourceService{
 
 	@Override
 	public Map<String, Object> triggerTranscode(String resType, String uuid) {
+		if(!TRANSCODE_TYPES.contains(resType)) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"LC/TRNASCODE_NOT_SUPPORTED", "资源类型不支持转码");
+		}
+
 		Map<String,Object> returnMap = new HashMap<String, Object>();
 
 		ResourceModel cm = getDetail(resType, uuid,
