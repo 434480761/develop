@@ -65,6 +65,7 @@ public class TitanResourceController {
 		titanResourceService.createKnowledgeRealtion();
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
+		titanResourceService.importStatistical();
 	}
 
 	@MarkAspect4ImportData
