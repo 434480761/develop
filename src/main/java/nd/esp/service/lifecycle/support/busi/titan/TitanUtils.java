@@ -23,20 +23,35 @@ public class TitanUtils {
 	 * 暂时只处理两个关系的查询
 	 * @param script
 	 * @return
-     */
+	 */
 	public static String optimizeMultiRelationsQuery(String script) {
 		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
 		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
 		Map<String, String> mapForTotalCount = fetchScript(totalCount);
 		Map<String, String> mapForResult = fetchScript(result);
 
-		StringBuffer scriptBuffer = new StringBuffer("Set<Long> ids1=new HashSet<Long>();Set<Long> ids2=new HashSet<Long>();Set<Long> retain=new HashSet<Long>();");
+		StringBuffer scriptBuffer = new StringBuffer("Set<Long> ids0=new HashSet<Long>();Set<Long> retain=new HashSet<Long>();");
 		// TODO 获取交集
-		scriptBuffer.append(mapForTotalCount.get("relation1")).append(".collect{ids1.add(it.id())};");
-		scriptBuffer.append("if(ids1.size()==0){return 'TOTALCOUNT=0'};");
-		scriptBuffer.append(dealRelation(mapForTotalCount.get("relation2"))).append(".collect{ids2.add(it.id())};");
-		scriptBuffer.append("if(ids2.size()==0){return 'TOTALCOUNT=0'};");
-		scriptBuffer.append("if(ids1.size()<ids2.size()){ids1.retainAll(ids2);retain=ids1;}else{ids2.retainAll(ids1);retain=ids2;};");
+		scriptBuffer.append(mapForTotalCount.get("relation1")).append(".collect{ids0.add(it.id())};");
+		scriptBuffer.append("if(ids0.size()==0){return 'TOTALCOUNT=0'};");
+		List<String> relations = dealRelation(mapForTotalCount.get("relation2"));
+		int size = relations.size();
+		for (int i = 0; i < size; i++) {
+			String id = "ids" + (i + 1);
+			scriptBuffer.append("Set<Long> ").append(id).append("=new HashSet<Long>();");
+			scriptBuffer.append(relations.get(i)).append(".collect{").append(id).append(".add(it.id())};");
+			scriptBuffer.append("if(").append(id).append(".size()==0){return 'TOTALCOUNT=0'};");
+		}
+		scriptBuffer.append("if(ids0.size()<ids1.size()){ids0.retainAll(ids1);retain=ids0;}else{ids1.retainAll(ids0);retain=ids1;};");
+		scriptBuffer.append("if(retain.size()==0){return 'TOTALCOUNT=0'};");
+		if (size > 1) {
+			for (int i = 1; i < size; i++) {
+				String id = "ids" + (i + 1);
+				scriptBuffer.append("if(retain.size()<").append(id).append(".size()){retain.retainAll(").append(id).append(");}else{").append(id).append(".retainAll(retain);retain=").append(id).append(";};");
+				scriptBuffer.append("if(retain.size()==0){return 'TOTALCOUNT=0'};");
+			}
+		}
+
 		// TODO 加上过滤条件
 		scriptBuffer.append("TOTALCOUNT=g.V(retain.toArray())").append(mapForTotalCount.get("conditions")).append(".as('x')").append(mapForTotalCount.get("script")).append(".count();");
 		// TODO 取得 count
@@ -51,31 +66,42 @@ public class TitanUtils {
 	}
 
 	/**
+	 * .and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2),inE(has_relation2).has('enable',enable2).as('e').outV().has('identifier',identifier2).has('lc_enable',lc_enable3).has('primary_category',primary_category3))
 	 * .and(inE(has_relation1).has('enable',enable1).as('e').outV().has('identifier',identifier1).has('lc_enable',lc_enable2).has('primary_category',primary_category2))
 	 * @param relation
 	 * @return
-     */
-	private static String dealRelation(String relation) {
-		StringBuffer scriptBuffer = new StringBuffer("g.V()");
-		String[] ev = relation.split(".as\\('e'\\)");
-		String e = ev[0];
-		String v = ev[1];
-		v = v.substring(v.indexOf(".has("), v.length() - 1);
-		if (relation.contains("inE(has_relation")) {
-			e = e.substring(e.indexOf("inE(has_relation"), e.length());
-			scriptBuffer.append(v);
-			e = e.replace("inE(", "outE(");
-			scriptBuffer.append(".").append(e).append(".inV()");
-		}else if (relation.contains("outE(has_relation")) {
-			e = e.substring(e.indexOf("outE(has_relation"), e.length());
-			scriptBuffer.append(v);
-			e = e.replace("outE(", "inE(");
-			scriptBuffer.append(".").append(e).append(".outV()");
-		}/*else{
+	 */
+	private static List<String> dealRelation(String relation) {
+		List<String> list = new ArrayList<>();
+		if (relation.startsWith(".and(")) relation = relation.replace(".and(", "");
+		if (relation.endsWith("))")) relation = relation.substring(0, relation.length() - 1);
+		// ), --> )),
+		relation = relation.replaceAll("\\),", "\\)),");
+		String[] relations = relation.split("\\),");
+		for (String r : relations) {
+			StringBuffer scriptBuffer = new StringBuffer("g.V()");
+			String[] ev = r.split(".as\\('e'\\)");
+			String e = ev[0];
+			String v = ev[1];
+			v = v.substring(v.indexOf(".has("), v.length());
+			if (r.contains("inE(has_relation")) {
+				//e = e.substring(e.indexOf("inE(has_relation"), e.length());
+				scriptBuffer.append(v);
+				e = e.replace("inE(", "outE(");
+				scriptBuffer.append(".").append(e).append(".inV()");
+			} else if (r.contains("outE(has_relation")) {
+				//e = e.substring(e.indexOf("outE(has_relation"), e.length());
+				scriptBuffer.append(v);
+				e = e.replace("outE(", "inE(");
+				scriptBuffer.append(".").append(e).append(".outV()");
+			}/*else{
 
 		}*/
+			list.add(scriptBuffer.toString());
+		}
 
-		return scriptBuffer.toString();
+
+		return list;
 	}
 
 	/**
@@ -116,73 +142,6 @@ public class TitanUtils {
 		return map;
 	}
 
-	/**
-	 *
-	 * @param script
-	 * @return
-     */
-	private static Map<String, String> fetchScript2(String script) {
-		script = script.substring(script.indexOf("RESULT="), script.length());
-
-		String relation1 = script.substring(script.indexOf("g.V().has"), script.indexOf(".as('e')"));
-		script = script.replace(relation1, "");
-		if (relation1.contains("outE")) {
-			relation1 = relation1 + ".inV()";
-		} else if (relation1.contains("inE")) {
-			relation1 = relation1 + ".outV()";
-		}
-
-		// 条件
-		String conditions = script.substring(script.indexOf(".has("), script.indexOf(".as('x')"));
-		script = script.replace(conditions, "");
-		script = script.substring(script.indexOf(".and("), script.length());
-		String relation2=null;
-		if (script.contains(".and(inE(")) {
-			relation2 = script.substring(script.indexOf(".and(inE("), script.indexOf(".select('x')"));
-		} else if (script.contains(".and(outE(")) {
-			relation2 = script.substring(script.indexOf(".and(outE("), script.indexOf(".select('x')"));
-		}
-		if (relation2 != null) script = script.replace(relation2, "");
-		// 判断是否是有 .aggregate('subversion')
-		String conditions2 =null;
-		if(script.contains(".aggregate('subversion')")){
-			conditions2 = script.substring(0, script.indexOf(".select('version_result')"));
-			script = script.replace(conditions2, "");
-			if (script.contains("has('ti_printable'")) {
-				if (script.startsWith(".select('version_result').outE('has_tech_info')")) {
-					script = script.substring(script.indexOf(".outE('has_tech_info')"),script.length());
-				}
-				String conditions3 = script.substring(0, script.indexOf(".select('version_result')"));
-				script = script.replace(conditions3, "");
-				conditions2 = conditions2 + ".select('version_result')" + conditions3;
-			}
-		}else{
-			if (script.contains("has('ti_printable'")) {
-				conditions2 = script.substring(0, script.indexOf(".dedup().select('x')"));
-			}
-		}
-
-
-
-		//if (conditions2 != null) script = script.replace(conditions2, "");
-
-
-
-		String orderAndLimitAndUnion = script;
-
-		Map<String, String> map = new HashMap<>();
-
-		map.put("relation1",relation1);
-		map.put("conditions",conditions);
-		map.put("orderAndLimitAndUnion",orderAndLimitAndUnion);
-		map.put("relation2",relation2);
-		System.out.println(relation1);
-		System.out.println(conditions);
-		System.out.println(relation2);
-		System.out.println(conditions2);
-		System.out.println(orderAndLimitAndUnion);
-		return map;
-	}
 
 	/**
 	 * 处理orderMap 返回一个有序的 order排序
