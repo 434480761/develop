@@ -4,7 +4,7 @@ import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 
 /**
  * 试卷业务层model
- * 
+ * 习题集业务层model
  * @author xuzy
  * @since 
  *

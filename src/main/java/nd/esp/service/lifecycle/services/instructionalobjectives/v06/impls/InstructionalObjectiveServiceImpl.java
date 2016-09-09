@@ -594,11 +594,6 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 		}
 		return xn;
 	}
-	
-	public static void main(String[] args) {
-		String a = "aaabbb（X）";
-		System.out.println(a.split("（X）").length);
-	}
 
     @Override
     public ListViewModel<ResourceModel> getResourcePageByChapterId(List<String> includes, List<Map<String, String>> relationsMap, List<String> coveragesList, String limit, boolean reverseBoolean) {

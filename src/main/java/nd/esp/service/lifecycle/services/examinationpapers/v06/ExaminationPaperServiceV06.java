@@ -13,12 +13,12 @@ public interface ExaminationPaperServiceV06 {
 	/**
 	 * 试卷创建
 	 */
-	public ExaminationPaperModel createExaminationPaper(ExaminationPaperModel model);
+	public ExaminationPaperModel createExaminationPaper(ExaminationPaperModel model,String resType);
 	
 	/**
 	 * 试卷修改
 	 */
-	public ExaminationPaperModel updateExaminationPaper(ExaminationPaperModel model);
+	public ExaminationPaperModel updateExaminationPaper(ExaminationPaperModel model,String resType);
 
-	ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model);
+	ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model,String resType);
 }

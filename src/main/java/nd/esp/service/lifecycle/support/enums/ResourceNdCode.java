@@ -48,6 +48,7 @@ public enum ResourceNdCode {
     homeworks("$RE0100"), // 作业
     questions("$RE0200"), // 习题 FIXME 游戏化习题
     examinationpapers("$RE0300"), // 试卷
+    exercisesset("$RE0500"),//习题集
 
 
     // 学习资源
