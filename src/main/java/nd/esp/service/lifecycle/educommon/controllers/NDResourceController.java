@@ -2424,7 +2424,7 @@ public class NDResourceController {
      * @param uuid
      * @return
      */
-    @RequestMapping(value="/{uuid}/previews", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    @RequestMapping(value="/{uuid}/transcode", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
         return ndResourceService.triggerTranscode(resType, uuid);
     }
