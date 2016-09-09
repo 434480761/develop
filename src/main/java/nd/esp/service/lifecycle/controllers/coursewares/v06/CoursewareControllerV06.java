@@ -107,7 +107,7 @@ public class CoursewareControllerV06 {
 		//model转换
 		viewModel = CommonHelper.convertViewModelOut(cm,CoursewareViewModel.class);
 		
-		if (bTranscode) {
+		if (bTranscode || transCodeUtil.isNdpxTransCode(cm, IndexSourceType.AssetType.getName())) {
             transCodeUtil.triggerTransCode(cm, IndexSourceType.SourceCourseWareType.getName());
         }
 		
