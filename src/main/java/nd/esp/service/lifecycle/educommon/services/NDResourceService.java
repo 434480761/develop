@@ -48,11 +48,6 @@ public interface NDResourceService {
 	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,
 	            Boolean printable, String printableKey);
-    
-	 
-	 public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,List<String> includes,Set<String> categories,
-	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
-	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
 
     public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(Set<String> resTypeSet,
                                                                  List<String> includes, Set<String> categories, Set<String> categoryExclude,
@@ -345,4 +340,13 @@ public interface NDResourceService {
     public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
     		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
     		Set<String> categories,boolean isAll);
+
+
+    /**
+     * 触发资源转码
+     * @param resType
+     * @param uuid
+     * @return
+     */
+    public Map<String, Object> triggerTranscode(String resType,String uuid);
 }

@@ -463,6 +463,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	ConvertCallbackSuccess("LC/CONVERT_CALLBACK_SUCCESS","TransCodeController.convertCallback.success"),
 	
 	StoreSdkFail("LC/STORE_SDK_FAIL",getPropertyValue("store.sdk.fail")),
+	CSSdkFail("CS/CS_SDK_FAIL",getPropertyValue("cs.sdk.fail")),
 	InvokingCSFail("CS/INVOKING_CS_FAIL",getPropertyValue("invoking.cs.fail")),
 	InvokingUCFail("UC/INVOKING_UC_FAIL",getPropertyValue("invoking.uc.fail")),
 	

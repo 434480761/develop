@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.controllers.v06;
 
 import com.nd.gaea.rest.security.authens.UserInfo;
+
 import nd.esp.service.lifecycle.controllers.ResourceController;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
 import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
@@ -16,12 +17,14 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.models.AccessModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.*;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,23 +65,10 @@ public class DuplicateControllerV06 {
 
     final LifeCircleErrorMessageMapper copyFailMapper = LifeCircleErrorMessageMapper.CopyFail;
     final String failCode = copyFailMapper.getCode();
-
-    public static void main(String[] args) {
-
-        String str = "/a/b/c";
-        System.out.println(str.substring(str.indexOf("/", 1) + 1));
-        Pattern pattern = Pattern.compile("[0-9]+");
-        Matcher matcher = pattern.matcher("1");
-
-        System.out.println(matcher.matches());
-
-        String title = "123456789012345678901234567890123456789012345678901";
-
-
-        System.out.println(title.substring(0, 47));
-
-    }
-
+    
+    private final static String TI_KEY_HREF = "href";
+    private final static String TI_KEY_SOURCE = "source";
+    
     /**
      * @param id
      * @param resType
@@ -104,12 +94,10 @@ public class DuplicateControllerV06 {
         // ResourceTypesUtil.checkResType(resType, LifeCircleErrorMessageMapper.ResourceTypeNotSupportFail);
         commonServiceHelper.assertDownloadable(resType);
 
-
         //获取资源对象(由于getDetail方法中已经对异常进行捕获和处理,这里就一并去掉了)
         //原先是 {@link IncludesConstant#getIncludesList()},然后在去filter,现在是获取明细的时候,直接带入参数
         List<String> availableIncludes = IncludesConstant.getValidIncludes(include);
         List<ResCoverageViewModel> coverages = new ArrayList<>();
-
 
         /**
          *
@@ -118,9 +106,7 @@ public class DuplicateControllerV06 {
          * condition 2：生命周期对应的状态范围
          * condition 3：实例是否合法，为拷贝做判断(也可以放在拷贝那边去做处理)
          * */
-
         ResourceModel resourceModel = ndResourceService.getDetail(resType, id, availableIncludes, isAll);
-
 
         ResLifeCycleModel cycleModel = resourceModel.getLifeCycle();
         //判断对象的生命周期属性,如果为空,不允许发起拷贝
@@ -135,7 +121,7 @@ public class DuplicateControllerV06 {
         String status = cycleModel.getStatus();
         //todo
         //等后续数据规范了,下面这段校验需要开启
-     /*   boolean checkStatus=false;
+        /*   boolean checkStatus=false;
         for(LifecycleStatus ss:LifecycleStatus.values()){
             
             if(ss.getCode().equals(status)){
@@ -160,10 +146,10 @@ public class DuplicateControllerV06 {
             }
         }
         // 获取Href属性
-        ResTechInfoModel techInfoModel = ModelPropertiesUtil.getAssignTechInfo(resourceModel, "href");
+        ResTechInfoModel techInfoModel = ModelPropertiesUtil.getAssignTechInfo(resourceModel, TI_KEY_HREF);
         boolean isAssets_pic = false;//特殊处理素材图片
-        if (techInfoModel == null && "assets".equals(resType)) {
-            techInfoModel = ModelPropertiesUtil.getAssignTechInfo(resourceModel, "source");
+        if (techInfoModel == null && IndexSourceType.AssetType.getName().equals(resType)) {
+            techInfoModel = ModelPropertiesUtil.getAssignTechInfo(resourceModel, TI_KEY_SOURCE);
             isAssets_pic = true;
         }
         if (techInfoModel == null) {
@@ -192,8 +178,7 @@ public class DuplicateControllerV06 {
             resCoverageViewModel = ParameterVerificationHelper.convertResCoverageViewModel(to);
         }
 
-
-       /* edu_product/esp/
+        /* edu_product/esp/
         edu/esp/coursewares --coverage
         edu/rsd/worksapce rsd/worksapce*/
         String organization = NDResourceServiceImpl.getRootPathFromLocation(href);
@@ -205,18 +190,17 @@ public class DuplicateControllerV06 {
             coverage = organization.substring(organization.indexOf("/", 1) + 1);
         }
 
-
         //获取上传信息
         AccessModel uploadResponse = ndResourceService.getUploadUrl(resType, Constant.DEFAULT_UPLOAD_URL_ID,
                 CsSession.CS_DEFAULT_UID, false, coverage);
         
         LOG.info("资源拷贝接口， 获取session用时："+(System.currentTimeMillis()-startTime)+"ms");
-        startTime=System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
         
         String newUUID = copyHelper.copyOnLC(instanceKey, resType, resourceModel, uploadResponse, coverage);
         
         LOG.info("资源拷贝接口， 调用cs接口拷贝资源文件用时："+(System.currentTimeMillis()-startTime)+"ms");
-        startTime=System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
         
         //todo 保留后相关属性,全部保留,后续可能会根据业务进行调整filterXX
         // store_info中只保留href属性
@@ -228,7 +212,7 @@ public class DuplicateControllerV06 {
 
         ResourceViewModel resourceViewModel = CommonHelper.changeToView(resourceModel, resType, availableIncludes, commonServiceHelper);
         //需要将lifecycle中的状态进行替换 update 20151022  by liuwx 屏蔽掉 程序不再做处理
-       /*
+        /*
         if (belongToTransCodeType) {
             //需要将状态替换成新资源能识别到的状态
             //这里使用try catch是因为旧数据,有可能出现lifecycle为空的情况,为了不影响正常流程
@@ -249,7 +233,7 @@ public class DuplicateControllerV06 {
                 String key = entry.getKey();
                 ResTechInfoViewModel value = entry.getValue();
                 if (value != null) {
-                    if ((isAssets_pic && "source".equals(key)||!"source".equals(key))) {
+                    if ((isAssets_pic && TI_KEY_SOURCE.equals(key) || !TI_KEY_SOURCE.equals(key))) {
                         String location = value.getLocation();
                         if (StringUtils.hasText(location)) {
                             value.setLocation(location.replace(id, resourceViewModel.getIdentifier()));
@@ -303,11 +287,12 @@ public class DuplicateControllerV06 {
 
 
         resourceViewModel.setCoverages(null);
+        resourceViewModel.setmIdentifier(newUUID);
         return resourceViewModel;
     }
 
-
-    @Deprecated
+    @SuppressWarnings("unused")
+	@Deprecated
     private ResourceViewModel convertToViewModel(String resType, ResourceModel copyModel) {
 
         boolean lcFlag = true;
@@ -355,7 +340,6 @@ public class DuplicateControllerV06 {
         return matcher.matches();
     }
 
-
     /**
      * 校验creator是否符合条件 eg 123456 is ok ,123abc is bad
      * <p>如果符合条件,则替换掉源资源的creator</p>
@@ -370,5 +354,4 @@ public class DuplicateControllerV06 {
         }
         return false;
     }
-
 }

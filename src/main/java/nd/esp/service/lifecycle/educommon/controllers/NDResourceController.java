@@ -881,10 +881,16 @@ public class NDResourceController {
                                 statisticsPlatform, forceStatus, tags, showVersion);
                         LOG.warn("Titan 实时查询完成");
                     } else {
-                        rListViewModel = ndResourceService.resourceQueryByTitan(resType,
+                       /* rListViewModel = ndResourceService.resourceQueryByTitan(resType,
                                 includesList, categories, categoryExclude, relationsMap,
                                 coveragesList, propsMap, orderMap, words, limit,
-                                isNotManagement, reverseBoolean, printable, printableKey);
+                                isNotManagement, reverseBoolean, printable, printableKey);*/
+                        Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
+                        rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
+                                includesList, categories, categoryExclude, relationsMap,
+                                coveragesList, propsMap, orderMap, words, limit,
+                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+
                         LOG.warn("Titan 查询完成");
                     }
 
@@ -2407,6 +2413,20 @@ public class NDResourceController {
     @RequestMapping(value="/{uuid}/previews", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public Map<String,Object> getResPreviewUrls(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
         return ndResourceService.getResPreviewUrls(resType, uuid);
+    }
+
+    /**
+     * 获取资源预览图的列表
+     *
+     * @author:qil
+     * @date:2016年9月8日
+     * @param res_type
+     * @param uuid
+     * @return
+     */
+    @RequestMapping(value="/{uuid}/previews", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
+        return ndResourceService.triggerTranscode(resType, uuid);
     }
 
     /**

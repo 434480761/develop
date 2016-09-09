@@ -148,6 +148,45 @@ public class Constant {
      **/
     public static final String CS_ADDON_SERVICE_ID="95a721c7-bffe-4f3c-beb0-c3c11876670f"; 
     
+    //cs的默认实例(/edu)
+    public final static String CS_DEFAULT_INSTANCE = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_default_instance");
+    //cs的另外一个默认实例(/edu_product)
+    public final static String CS_DEFAULT_INSTANCE_OTHER = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_default_instance_other");
+    //addon的cs实例(/module_mng)
+    public final static String CS_ADDON_INSTANCE = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_module_instance");
+    //icplayer的cs实例
+    public final static String CS_ICPLAYER_INSTANCE = "${icplayer}";
+    
+    /**
+     * CS服务实例信息： 存储path，api url，service id，service name
+     */
+    public final static Map<String,CSInstanceInfo> CS_INSTANCE_MAP = new HashMap<String,CSInstanceInfo>();
+    //初始化 CS_INSTANCE_MAP
+    static {
+        String propRefKey = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_key");
+        String[] refKeys = propRefKey.split(",");
+        String propUrl = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_url");
+        String[] urls = propUrl.split(",");
+        String propPath = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_file_path");
+        String[] paths = propPath.split(",");
+        String propServiceId = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_service_id");
+        String[] serviceIds = propServiceId.split(",");
+        String propServiceName = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_service_name");
+        String[] serviceNames = propServiceName.split(",");
+        
+        for(int count = 0; count<refKeys.length; ++count) {
+            CSInstanceInfo info = new CSInstanceInfo();
+            info.setUrl(urls[count]);
+            info.setPath(paths[count]);
+            info.setServiceId(serviceIds[count]);
+            info.setServiceName(serviceNames[count]);
+            CS_INSTANCE_MAP.put(refKeys[count], info);
+        }
+    }
+    
+    /**
+     * CS服务实例对象
+     */
     public static class CSInstanceInfo {
         CSInstanceInfo(){}
         public String getUrl() {
@@ -168,38 +207,17 @@ public class Constant {
         public void setServiceId(String serviceId) {
             this.serviceId = serviceId;
         }
-        private String url;
+        public String getServiceName() {
+			return serviceName;
+		}
+		public void setServiceName(String serviceName) {
+			this.serviceName = serviceName;
+		}
+
+		private String url;
         private String path;
         private String serviceId;
-    }
-    /**
-    * CS服务实例信息： 存储path，api url，service id
-    */
-    public final static Map<String,CSInstanceInfo> CS_INSTANCE_MAP = new HashMap<String,CSInstanceInfo>();
-    //cs的默认实例(/edu)
-    public final static String CS_DEFAULT_INSTANCE = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_default_instance");
-    //cs的另外一个默认实例(/edu_product)
-    public final static String CS_DEFAULT_INSTANCE_OTHER = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_default_instance_other");
-    //addon的cs实例(/module_mng)
-    public final static String CS_ADDON_INSTANCE = LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_module_instance");
-    //icplayer的cs实例
-    public final static String CS_ICPLAYER_INSTANCE = "${icplayer}";
-    static {
-        String propRefKey=LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_key");
-        String[] refKeys = propRefKey.split(",");
-        String propUrl=LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_url");
-        String[] urls = propUrl.split(",");
-        String propPath=LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_file_path");
-        String[] paths = propPath.split(",");
-        String propServiceId=LifeCircleApplicationInitializer.properties.getProperty("sdp_cs_ref_service_id");
-        String[] serviceIds = propServiceId.split(",");
-        for(int count = 0; count<refKeys.length; ++count) {
-            CSInstanceInfo info = new CSInstanceInfo();
-            info.setUrl(urls[count]);
-            info.setPath(paths[count]);
-            info.setServiceId(serviceIds[count]);
-            CS_INSTANCE_MAP.put(refKeys[count], info);
-        }
+        private String serviceName;
     }
     
     //打包接口：   asynpack异步   pack同步
@@ -213,24 +231,24 @@ public class Constant {
 
 
     //生命周期地址
-    public  static String LIFE_CYCLE_DOMAIN_URL = LifeCircleApplicationInitializer.worker_properties.getProperty("lc_domain_url");
-  //生命周期API接口版本号
-    public  static String LIFE_CYCLE_API_VERSION = LifeCircleApplicationInitializer.worker_properties.getProperty("lc_api_url_version");
+    public static String LIFE_CYCLE_DOMAIN_URL = LifeCircleApplicationInitializer.worker_properties.getProperty("lc_domain_url");
+    //生命周期API接口版本号
+    public static String LIFE_CYCLE_API_VERSION = LifeCircleApplicationInitializer.worker_properties.getProperty("lc_api_url_version");
     
     //生命周期API接口地址
-    public  static String LIFE_CYCLE_API_URL=LIFE_CYCLE_DOMAIN_URL+"/"+LIFE_CYCLE_API_VERSION;
+    public static String LIFE_CYCLE_API_URL=LIFE_CYCLE_DOMAIN_URL + "/" + LIFE_CYCLE_API_VERSION;
     
     //拷贝worker的service id
-    public  static String WORKER_COPY_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_copy_service");
+    public static String WORKER_COPY_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_copy_service");
     //转码worker的service id
-    public  static String WORKER_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_transcode_service");
+    public static String WORKER_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_transcode_service");
     //教案转码worker的service id
-    public  static String WORKER_LESSONPLAN_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_lessonplan_transcode_service");
+    public static String WORKER_LESSONPLAN_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_lessonplan_transcode_service");
     //拷贝worker的service 优先级
-    public  static String WORKER_COPY_PRIORITY = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_copy_priority");
+    public static String WORKER_COPY_PRIORITY = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_copy_priority");
     
     //拷贝worker的默认group id
-    public  static String WORKER_DEFAULT_GROUP_ID = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_default_group_id");
+    public static String WORKER_DEFAULT_GROUP_ID = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_default_group_id");
     // 打包服务优先级
     public final static String PACKAGING_PRIORITY=LifeCircleApplicationInitializer.worker_properties.getProperty("packaging_priority");
 
@@ -240,9 +258,9 @@ public class Constant {
     public final static boolean AUDIO_TRANSCODE = true;
     
     //视频转码service id
-    public  static String WORKER_VIDEO_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_video_transcode_service");
+    public static String WORKER_VIDEO_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_video_transcode_service");
 
-    public  static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
+    public static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
 
     /**
      * 后门API开关
