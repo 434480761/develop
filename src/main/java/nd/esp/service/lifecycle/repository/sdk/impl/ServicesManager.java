@@ -94,6 +94,7 @@ public class ServicesManager implements ApplicationContextAware {
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ToolsType.getName(), ToolsRepository.class);  //FIXME 
 		RESOURCE_REPOSITORIES.put(IndexSourceType.SourceTeachingActivitiesType.getName(), TeachingActivitiesRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ExaminationPapersType.getName(), ExaminationPaperRepository.class);
+		RESOURCE_REPOSITORIES.put(IndexSourceType.Exercisesset.getName(), ExaminationPaperRepository.class);
 		RESOURCE_REPOSITORIES.put("knowledgebases", KnowledgeBaseRepository.class);
 	}
 	
