@@ -27,7 +27,7 @@ public class TitanTransactionAspect {
     }
 
     @Before("performanceAnnon()")
-    public void executeAnnon(JoinPoint point) {
+    public void beforeExecuteAnnon() {
         initTitanTransaction();
     }
 
