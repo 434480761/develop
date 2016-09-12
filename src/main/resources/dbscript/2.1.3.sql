@@ -1,3 +1,5 @@
+-------------------------------------------------------------------------------------------------------
+--暂不执行
 --增加分区
 ALTER TABLE ndresource ADD PARTITION (PARTITION p_exercisesset VALUES in ('exercisesset') ENGINE = InnoDB);
 ALTER TABLE resource_categories ADD PARTITION (PARTITION p_exercisesset VALUES in ('exercisesset') ENGINE = InnoDB);
