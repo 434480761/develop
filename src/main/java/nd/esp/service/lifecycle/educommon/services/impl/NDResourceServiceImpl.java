@@ -248,7 +248,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     private static final int ND_AND_PERSON_ROOT_PATH_LENGTH=2;
     private static final String ND_AND_PERSON_DEFAUL_ORG = "esp";
     private static final int OTHER_ORG_ROOT_PATH_LENGTH=3;
-	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans"});
+	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans", "teachingmaterials"});
     
     @Override
 	public ListViewModel<ResourceModel> resourceQueryByEla(String resType,
@@ -3556,7 +3556,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 	}
 
 	@Override
-	public Map<String, Object> triggerTranscode(String resType, String uuid) {
+	public Map<String, Object> triggerTranscode(String resType, String uuid, boolean bStatusBackup) {
 		if(!TRANSCODE_TYPES.contains(resType)) {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 					"LC/TRNASCODE_NOT_SUPPORTED", "资源类型不支持转码");
@@ -3569,7 +3569,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 						+ "," + IncludesConstant.INCLUDE_CG));
 
 		String statusBackup = null;
-		if(!(cm.getLifeCycle().getStatus()!=null && cm.getLifeCycle().getStatus().contains("TRANSCOD"))) {
+		if(bStatusBackup && !(cm.getLifeCycle().getStatus()!=null && cm.getLifeCycle().getStatus().contains("TRANSCOD"))) {
 			statusBackup = cm.getLifeCycle().getStatus();
 		}
 
