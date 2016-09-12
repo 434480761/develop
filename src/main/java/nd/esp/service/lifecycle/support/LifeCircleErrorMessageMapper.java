@@ -497,6 +497,9 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
+	
+	//icrs
+	DateFormatFail("LC/DateFormatError",getPropertyValue("icrsController.getResourceTotal.dataFormat.fail")),
 
 	//说明 add by @author lanyl
 	//数据加密相关错误配置
