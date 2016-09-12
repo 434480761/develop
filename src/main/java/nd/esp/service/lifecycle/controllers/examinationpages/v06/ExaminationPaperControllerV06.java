@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author xuzy
  */
 @RestController
-@RequestMapping(value={"/v0.6/examinationpapers","/v0.6/exercisesset"})
+@RequestMapping(value={"/v0.6/examinationpapers"})
 public class ExaminationPaperControllerV06 {
     private static final Logger LOG = LoggerFactory.getLogger(ExaminationPaperControllerV06.class);
 
