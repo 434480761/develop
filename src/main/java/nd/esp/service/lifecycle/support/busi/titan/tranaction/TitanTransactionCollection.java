@@ -41,13 +41,14 @@ public class TitanTransactionCollection {
 
         //TODO 提交失败的数据需要保存到mysql数据中
 
-        transactionMap.remove(titanTransaction);
+        transactionMap.remove(transactionName);
     }
 
     private void deleteDirtyTransaction(){
-        for (TitanTransaction titanTransaction : transactionMap.values()){
+        for (String transactionName : transactionMap.keySet()){
+            TitanTransaction titanTransaction = transactionMap.get(transactionName);
             if (!titanTransaction.isAvailable()){
-                transactionMap.remove(titanTransaction);
+                transactionMap.remove(transactionName);
             }
         }
     }

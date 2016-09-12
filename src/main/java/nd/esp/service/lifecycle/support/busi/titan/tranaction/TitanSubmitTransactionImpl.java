@@ -10,6 +10,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     @Override
     public boolean submit(TitanTransaction transaction) {
 
-        return false;
+        return true;
     }
 }
