@@ -298,7 +298,7 @@ public class NDResourceServiceImpl implements NDResourceService{
      * @author linsm
      */
     @Override
-	public ListViewModel<ResourceModel> resourceQueryByTitanES(String resType,List<String> fields,
+	public ListViewModel<ResourceModel> resourceQueryByTitanES(Set<String> resTypeSet,List<String> fields,
 			List<String> includes, Set<String> categories, Set<String> categoryExclude,
 			List<Map<String, String>> relations, List<String> coverages,
 			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
@@ -315,7 +315,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		//just for test by lsm
 		listViewModel = 
-				titanSearchService.searchUseES(resType,fields, includes, params, orderMap,
+				titanSearchService.searchUseES(resTypeSet,fields, includes, params, orderMap,
 						result[0], result[1],reverse,words);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;

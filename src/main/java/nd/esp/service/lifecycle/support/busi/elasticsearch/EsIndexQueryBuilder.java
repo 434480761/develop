@@ -12,10 +12,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import org.springframework.http.HttpStatus;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ******************************************
@@ -48,7 +45,8 @@ public class EsIndexQueryBuilder {
 
     private String index="mixed_ndresource";
     private String words;
-    private String resType;
+    //private String resType;
+    private Set<String> resTypeSet;
     private Map<String, Map<String, List<String>>> params;
     private int from = 0;
     private int end = 10;
@@ -60,7 +58,6 @@ public class EsIndexQueryBuilder {
     private static final String DOUBLE_BLANK_AND = " AND ";
     private static final String DOUBLE_BLANK_OR = " OR ";
     private static final String DEFINE_SCRIPT="List<String> ids = new ArrayList<String>();";
-    private static final String GET_COUNT="List<Object> resultList = results.toList();count = ids.size();resultList << 'TOTALCOUNT=' + count;resultList";
     private static final String COUNT="List<Object> resultList = results.toList();Long count = builder.count();resultList << 'TOTALCOUNT=' + count;resultList";
     private static final String BUILDER_CLASS="com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder ";
 
@@ -74,8 +71,13 @@ public class EsIndexQueryBuilder {
         return this;
     }
 
-    public EsIndexQueryBuilder setResType(String resType) {
+    /*public EsIndexQueryBuilder setResType(String resType) {
         this.resType = resType;
+        return this;
+    }*/
+
+    public EsIndexQueryBuilder setResTypeSet(Set<String> resTypeSet) {
+        this.resTypeSet = resTypeSet;
         return this;
     }
 
@@ -107,79 +109,28 @@ public class EsIndexQueryBuilder {
     }
 
     /**
-     * 构建indexQuery查询脚本
-     * :> List<String> ids = new ArrayList<String>();
-     * graph.indexQuery("mixed_ndresource","v.\"search_coverage_string\":(Org/nd/* ) ").vertices().collect{ids.add(it.getElement().id())};
-     * results=g.V(ids.toArray()).range(0,10).valueMap();
+     * List<String> orders = new ArrayList<String>();
+     * orders.add('_score#DESC#double');
+     * orders.add('lc_last_update#DESC#long');
+     * List<String> ids = new ArrayList<String>();
+     * com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder builder =
+     * graph.indexQuery("mixed_ndresource",
+     * "(v.\"cr_description\":(High) OR v.\"description\":(High) OR v.\"keywords\":(High) OR v.\"tags\":(High) OR v.\"edu_description\":(High) OR v.\"title\":(High))
+     * AND v.\"search_coverage_string\":(*org\\/495331477993\\/shareing*)
+     * AND v.\"primary_category\":(assets OR lessons)
+     * AND v.\"lc_enable\":(true)")
+     * .offset(0).limit(6)
+     * .addParameter(new Parameter('order_by',orders));
+     * builder.vertices().collect{ids.add(it.getElement().id())};
+     * if(ids.size()==0){return 'TOTALCOUNT=0'};
+     * results = g.V(ids.toArray()).as('v')
+     * .union(select('v'),outE('has_category_code'),out('has_tech_info')).valueMap(true);
      * List<Object> resultList = results.toList();
-     * count =ids.size();resultList << 'COUNT:'+count;
-     * resultList
+     * Long count = builder.count();
+     * resultList << 'TOTALCOUNT=' + count;resultList
      * @return
      */
     public String generateScript() {
-        StringBuffer query=new StringBuffer();
-        StringBuffer baseQuery=new StringBuffer("graph.indexQuery(\"").append(this.index).append("\",\"");
-        String wordSegmentation=dealWithWordsContainsNot(this.words);
-        String other=dealWithParams();
-        if("".endsWith(wordSegmentation.trim())){
-            other=other.trim().replaceFirst("AND","");
-        }
-        baseQuery.append(wordSegmentation);
-        baseQuery.append(other);
-        baseQuery.append(dealWithResType());
-
-        baseQuery.append("\")");
-        baseQuery.append(".vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
-        baseQuery.append(getRangeIds());
-        baseQuery.append("results = g.V(rangeids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
-        baseQuery.append(".valueMap();");
-
-        query.append(DEFINE_SCRIPT).append(baseQuery).append(GET_COUNT);
-
-        return query.toString();
-    }
-
-    /**
-     * List<String> ids = new ArrayList<String>();
-     * com.thinkaurelius.titan.graphdb.query.graph.IndexQueryBuilder builder = graph.indexQuery("mixed_ndresource","(v.\"keywords\":(test) OR v.\"title\":(test))").offset(0).limit(10);
-     * builder.vertices().collect{ids.add(it.getElement().id())};
-     * if(ids.size()==0){return};
-     * results = g.V(ids.toArray()).valueMap();
-     * List<Object> resultList = results.toList();
-     * Long count = builder.count();
-     * resultList << 'TOTALCOUNT:' + count;resultList
-     * @return
-     */
-    public String generateScriptAfterEsUpdate() {
-        StringBuffer query=new StringBuffer();
-        StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
-        String wordSegmentation=dealWithWordsContainsNot(this.words);
-        String other=dealWithParams();
-        String property = dealWithProp();
-        //System.out.println(dealWithProp());
-        if ("".endsWith(wordSegmentation.trim())) {
-            other = other.trim().replaceFirst("AND", "");
-        }
-        baseQuery.append(wordSegmentation);
-        baseQuery.append(other);
-        baseQuery.append(dealWithResType());
-        if(!"".endsWith(property.trim())){
-            baseQuery.append(DOUBLE_BLANK_AND).append(property);
-        }
-        baseQuery.append("\")");
-        baseQuery.append(".offset(").append(this.from).append(")");
-        baseQuery.append(".limit(").append(this.size).append(");");
-        baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
-        baseQuery.append("results = g.V(ids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
-        //baseQuery.append(".valueMap();");
-        query.append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
-
-        return query.toString();
-    }
-
-    public String generateScriptAfterEsUpdateOrderBy() {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation=dealWithWordsContainsNot(this.words);
@@ -200,7 +151,7 @@ public class EsIndexQueryBuilder {
         baseQuery.append(".addParameter(new Parameter('order_by',orders));");
         baseQuery.append("builder.vertices().collect{ids.add(it.getElement().id())};if(ids.size()==0){return 'TOTALCOUNT=0'};");
         baseQuery.append("results = g.V(ids.toArray())");
-        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resType,false,false,null));
+        baseQuery.append(TitanUtils.generateScriptForInclude(this.includes,this.resTypeSet,false,false,null));
         query.append(dealWithOrders()).append(DEFINE_SCRIPT).append(BUILDER_CLASS).append(baseQuery).append(COUNT);
 
         return query.toString();
@@ -230,7 +181,14 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithResType() {
         StringBuffer query = new StringBuffer();
-        query.append(DOUBLE_BLANK_AND).append("v.\\\"primary_category\\\":(").append(this.resType).append(")");
+        query.append(DOUBLE_BLANK_AND).append("v.\\\"primary_category\\\":(");
+        for (String res : this.resTypeSet) {
+            query.append(res);
+            query.append(DOUBLE_BLANK_OR);
+        }
+        query.delete(query.length() - 4, query.length());
+        query.append(")");
+
         query.append(DOUBLE_BLANK_AND).append("v.\\\"lc_enable\\\":(true)");
 
         return query.toString();

@@ -71,8 +71,8 @@ public class TestEsIndexQueryBuilder  extends BaseControllerConfig {
 
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
-        builder.setWords("test").setParams(params).setResType("assets").setRange(1, 10).setIncludes(IncludesConstant.getIncludesList()).setFields(fields);
-        String script = builder.generateScriptAfterEsUpdate();
+        builder.setWords("test").setParams(params).setResTypeSet(new HashSet<String>()).setRange(1, 10).setIncludes(IncludesConstant.getIncludesList()).setFields(fields);
+        String script = builder.generateScript();
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
 
