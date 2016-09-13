@@ -188,17 +188,15 @@ public enum OrderField {
     }
 
     public int compareStatisticsNum(ResourceModel firstModel, ResourceModel secondModel) {
-        if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() == null) {
-            return 1;
-        }
-        if (firstModel.getStatisticsNum() == null && secondModel.getStatisticsNum() != null) {
-            return -1;
-        }
-        if (firstModel.getStatisticsNum() != null && secondModel.getStatisticsNum() != null) {
-            return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
-        }
-        // 两个都为 null，则默认为相等
-        return 0;
+    	if (firstModel.getStatisticsNum() == null) {
+			firstModel.setStatisticsNum(new Double(0L));
+		}
+    	
+    	if (secondModel.getStatisticsNum() == null) {
+    		secondModel.setStatisticsNum(new Double(0L));
+		}
+    	
+        return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
     }
 
     /**

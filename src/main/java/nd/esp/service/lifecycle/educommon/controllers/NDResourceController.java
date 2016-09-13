@@ -86,6 +86,7 @@ import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.support.enums.StatisticalType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -1060,7 +1061,7 @@ public class NDResourceController {
     private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType, String resCodes,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
-        int intevalTimeMillis = -60000;
+        int intevalTimeMillis = -10*60000;
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MILLISECOND, intevalTimeMillis);
         Cloner cloner = new Cloner();
@@ -1118,6 +1119,8 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
+        statisticsType = StatisticalType.getStatisticsType(orderMapForDb);
+        orderMapForDb = StatisticalType.mapping(orderMapForDb);
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
