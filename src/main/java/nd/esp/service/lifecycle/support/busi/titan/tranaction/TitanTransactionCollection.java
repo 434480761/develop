@@ -36,14 +36,14 @@ public class TitanTransactionCollection {
             return;
         }
 
-        //TODO 这个地方可以做事务的重试
-        boolean success = titanSubmitTransaction.submit(titanTransaction);
-
-        //TODO 提交失败的数据需要保存到mysql数据中
+        titanSubmitTransaction.submit(titanTransaction);
 
         transactionMap.remove(transactionName);
     }
 
+    /**
+     * 清楚因为异常等终端无法正常删除的事务
+     * */
     private void deleteDirtyTransaction(){
         for (String transactionName : transactionMap.keySet()){
             TitanTransaction titanTransaction = transactionMap.get(transactionName);

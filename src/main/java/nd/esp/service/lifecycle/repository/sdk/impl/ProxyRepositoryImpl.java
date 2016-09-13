@@ -34,6 +34,7 @@ import nd.esp.service.lifecycle.repository.index.QueryRequest;
 import nd.esp.service.lifecycle.repository.index.QueryResponse;
 import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.sdk.DBCallBack;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransactionUtils;
 import nd.esp.service.lifecycle.utils.SpringContextUtil;
 
 import org.apache.commons.beanutils.PropertyUtils;
@@ -90,6 +91,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 	private  TransactionTemplate transactionTemplate;
 	
 	public TitanRepository titanRepository;
+
+	public TitanTransactionUtils titanTransactionUtils;
 	
 	/**
 	 * Instantiates a new proxy repository impl.
@@ -132,8 +135,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
         }
 		
 		//TODO titan repository code add
-				getTitanRepository().add(bean);
-		
+//				getTitanRepository().add(bean);
+		titanTransactionUtils().add(bean);
 		return converterOut(result);
 	}
 	
@@ -175,8 +178,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
         }
 		
 		//TODO titan repository code update
-				getTitanRepository().update(bean);
-		
+//				getTitanRepository().update(bean);
+		titanTransactionUtils().update(bean);
 		return converterOut(result);
 	}
 
@@ -434,7 +437,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			throw new EspStoreException(e);
 		}
 
-		getTitanRepository().delete(id);
+//		getTitanRepository().delete(id);
+		titanTransactionUtils().delete(id);
 	}
 
 	/**
@@ -454,8 +458,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		List<T> result = this.save(bean);
 		
 		//TODO titan repository code batchAdd
-				getTitanRepository().batchAdd(bean);
-
+//				getTitanRepository().batchAdd(bean);
+		titanTransactionUtils().batchAdd(bean);
 		return batchConverterOut(result);
 	}
 
@@ -509,7 +513,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 			throw new EspStoreException(e);
 		}
 
-		getTitanRepository().batchDelete(ids);
+//		getTitanRepository().batchDelete(ids);
+		titanTransactionUtils().batchDelete(ids);
 	}
 
 	/**
@@ -1333,5 +1338,13 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 		return titanRepository;
 	}
 
+	public TitanTransactionUtils titanTransactionUtils(){
+		if (titanTransactionUtils == null){
+			titanTransactionUtils = SpringContextUtil.getApplicationContext()
+					.getBean("TitanTransactionUtils",TitanTransactionUtils.class);
+		}
+
+		return titanTransactionUtils;
+	}
 
 }
