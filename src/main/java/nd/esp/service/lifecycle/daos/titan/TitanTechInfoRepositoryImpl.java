@@ -131,9 +131,10 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
     }
 
     private TechInfo addOrUpdateTechInfo(TechInfo techInfo){
-        String checkTechInfoExist = "g.E().hasLabel('has_tech_info').has('identifier',edgeIdentifier).id()";
+        String checkTechInfoExist = "g.V().has('identifier',sourceId).outE().hasLabel('has_tech_info').has('ti_title',title).id()";
         Map<String, Object> checkTechInfoParam = new HashMap<>();
-        checkTechInfoParam.put("edgeIdentifier",techInfo.getIdentifier());
+        checkTechInfoParam.put("sourceId",techInfo.getResource());
+        checkTechInfoParam.put("title",techInfo.getTitle());
         String oldTechInfoId = null;
         try {
             oldTechInfoId = titanCommonRepository.executeScriptUniqueString(checkTechInfoExist, checkTechInfoParam);
@@ -169,17 +170,17 @@ public class TitanTechInfoRepositoryImpl implements TitanTechInfoRepository {
                 return null;
             }
         } else {
-            scriptBuffer = new StringBuffer("g.V().has('identifier',identifier)");
-            graphParams = TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
-            scriptBuffer.append(";");
-            graphParams.put("identifier",techInfo.getIdentifier());
+            scriptBuffer = new StringBuffer("g.V().has(primaryCategory,'identifier',resource).outE('has_tech_info').inV().has('ti_title',title)");
+            TitanScritpUtils.getParamAndChangeScript4Update(scriptBuffer, techInfo);
 
-            StringBuffer updateEdge = new StringBuffer("g.E().has('identifier',identifier)");
+            StringBuffer updateEdge = new StringBuffer("g.V().has(primaryCategory,'identifier',resource).outE('has_tech_info').has('ti_title',title)");
             Map<String, Object>  updateEdgeParam = TitanScritpUtils.getParamAndChangeScript4Update(updateEdge,techInfo);
-            updateEdgeParam.put("identifier", techInfo.getIdentifier());
-            
+            updateEdgeParam.put("primaryCategory", techInfo.getResType());
+            updateEdgeParam.put("resource", techInfo.getResource());
+            updateEdgeParam.put("title", techInfo.getTitle());
+
             try {
-                titanCommonRepository.executeScript(scriptBuffer.toString(), graphParams);
+                titanCommonRepository.executeScript(scriptBuffer.toString(), updateEdgeParam);
                 titanCommonRepository.executeScript(updateEdge.toString(), updateEdgeParam);
             } catch (Exception e) {
                 LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),techInfo.getResource());

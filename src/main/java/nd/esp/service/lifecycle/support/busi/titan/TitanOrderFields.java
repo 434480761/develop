@@ -34,7 +34,7 @@ import java.util.Map;
  * @date 2016/8/23
  */
 public enum TitanOrderFields {
-    title, lc_create_time, lc_last_update, ti_size, sort_num, cg_taxoncode, sta_key_value, top, scores, votes, views;
+    title, lc_create_time, lc_last_update, ti_size, sort_num, cg_taxoncode, sta_key_value, top, scores, votes, views, m_identifier, lc_version,lc_status;
 
     private final static String VIP_LEVEL_LIKE = "RL.*";
     /**
@@ -71,7 +71,7 @@ public enum TitanOrderFields {
         String edgeScript = "";
         StringBuffer script = new StringBuffer();
         TitanOrder order = new TitanOrder();
-        if (this.equals(title) || this.equals(lc_create_time) || this.equals(lc_last_update)) {
+        if (this.equals(title) || this.equals(lc_create_time) || this.equals(lc_last_update)|| this.equals(lc_status)) {
             order.setOrderByField(this.toString());
         } else if (this.equals(sta_key_value)) {
             //desc#downloads#TOTAL
@@ -123,13 +123,12 @@ public enum TitanOrderFields {
                     +TitanKeyWords.ti_title.toString()
                     +"',"
                     + valueKey
-                    + ")";
+                    + ").limit(1)";
             script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
                     .append(asResult).append(".").append(edgeScript).append(".values('").append(TitanKeyWords.ti_size.toString())
                     .append("'),__.constant(new Long(0)))");
             order.setScript(script.toString());
-        } /*else if (this.equals(sort_num)) {
-        }*/ else if (this.equals(cg_taxoncode)) {
+        } else if (this.equals(cg_taxoncode)) {
             String valueKey = TitanUtils.generateKey(scriptParamMap, ES_SearchField.cg_taxoncode.toString());
             scriptParamMap.put(valueKey, VIP_LEVEL_LIKE);
             edgeScript = "outE('"
@@ -141,6 +140,15 @@ public enum TitanOrderFields {
             script.append(".").append(asResult).append(".choose(").append(asResult).append(".").append(edgeScript).append(",")
                     .append(asResult).append(".").append(edgeScript).append(".values('")
                     .append(ES_SearchField.cg_taxoncode.toString()).append("'),__.constant(''))");
+            order.setScript(script.toString());
+        } else if (this.equals(m_identifier) || this.equals(lc_version)) {
+            script.append(".").append(asResult).append(".choose(")
+                    .append(asResult).append(".has('").append(this.toString()).append("'),")
+                    .append(asResult).append(".values('").append(this.toString()).append("'),__.constant(''))");
+            order.setScript(script.toString());
+        } else if (this.equals(sort_num)) {
+            script.append(".select('e').choose(" +
+                    "select('e').has('").append(this.toString()).append("'),select('e').values('").append(this.toString()).append("'),__.constant(new Float(0)))");
             order.setScript(script.toString());
         } else {
             return;

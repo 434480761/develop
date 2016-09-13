@@ -4,16 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.daos.common.CommonDao;
 import nd.esp.service.lifecycle.daos.teachingmaterial.v06.ChapterDao;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRelationRepository;
@@ -61,9 +53,11 @@ import nd.esp.service.lifecycle.repository.model.CategoryData;
 import nd.esp.service.lifecycle.repository.model.Chapter;
 import nd.esp.service.lifecycle.repository.model.ResRepoInfo;
 import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResRepoInfoRepository;
+import nd.esp.service.lifecycle.repository.v02.ResourceRelationApiService;
 import nd.esp.service.lifecycle.services.coverages.v06.CoverageService;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceForQuestionV06;
 import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelationServiceV06;
@@ -72,6 +66,7 @@ import nd.esp.service.lifecycle.services.elasticsearch.ES_Search;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
+import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.titan.TitanSearchService;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
@@ -80,7 +75,11 @@ import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.support.busi.titan.TitanOrderFields;
+import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeService;
@@ -108,6 +107,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.spi.MappingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -223,6 +223,11 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Autowired
     private NotifyReportService nds;
+
+    @Autowired
+    private ChapterService chapterService;
+    @Autowired
+    private ResourceRelationApiService resourceRelationApiService;
     
     @Autowired
     @Qualifier("lifecycleServiceV06")
@@ -231,6 +236,11 @@ public class NDResourceServiceImpl implements NDResourceService{
     @Autowired
     @Qualifier("lifecycleService4QtiV06")
     private LifecycleServiceV06 lifecycleService4Qti;
+
+	@Autowired
+	private TransCodeUtil transCodeUtil;
+	@Autowired
+	private ResLifecycleDao resLifecycleDao;
     
     //默认路径key
     private static final String DEFAULT_LOCATION_KEY="href"; 
@@ -238,6 +248,7 @@ public class NDResourceServiceImpl implements NDResourceService{
     private static final int ND_AND_PERSON_ROOT_PATH_LENGTH=2;
     private static final String ND_AND_PERSON_DEFAUL_ORG = "esp";
     private static final int OTHER_ORG_ROOT_PATH_LENGTH=3;
+	private static List<String> TRANSCODE_TYPES = Arrays.asList(new String[] {"coursewares", "assets", "lessonplans", "learningplans", "teachingmaterials"});
     
     @Override
 	public ListViewModel<ResourceModel> resourceQueryByEla(String resType,
@@ -260,66 +271,36 @@ public class NDResourceServiceImpl implements NDResourceService{
 		listViewModel.setLimit(limit);
 		return listViewModel;
 	}
-    
-    /**
-     * 资源检索(titan)
-     * @author linsm
-     */
-    @Override
-	public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,
-			List<String> includes, Set<String> categories, Set<String> categoryExclude,
-			List<Map<String, String>> relations, List<String> coverages,
-			Map<String, Set<String>> propsMap, Map<String, String> orderMap,
-			String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey) {
-		// 返回的结果集
-		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
 
-		// 参数整理
-		Map<String, Map<String, List<String>>> params = this
-				.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey);
-		Integer result[] = ParamCheckUtil.checkLimit(limit);
-		if(includes == null){
-			includes = new ArrayList<String>();
-		}
-		//just for test by lsm
-		listViewModel = 
-				titanSearchService.searchWithAdditionProperties(resType, includes, params, orderMap,
-						result[0], result[1],reverse,words);
-		listViewModel.setLimit(limit);
-		return listViewModel;
-	}
 
 	/**
 	 * 资源检索(titan)
-	 * @author linsm
+	 * @author gsw
 	 */
 	@Override
-	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(String resType,
+	public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(Set<String> resTypeSet,
 															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
 															 List<Map<String, String>> relations, List<String> coverages,
 															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
 															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
 		// 返回的结果集
 		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
-
 		// 参数整理
 		Map<String, Map<String, List<String>>> params = this.dealFieldAndValues(categories, categoryExclude, relations, coverages, propsMap, isNotManagement,printable,printableKey,forceStatus);
 		// FIXME 处理orderMap 暂时放在这里
-		if (CollectionUtils.isNotEmpty(orderMap)) {
-			if (orderMap.containsKey("sta_key_value")) {
-				orderMap.put("sta_key_value", orderMap.get("sta_key_value") + "#" + statisticsType + "#" + statisticsPlatform);
-			}
-		}
+		Map<String, String> orders = TitanUtils.dealOrderMap(orderMap,showVersion,reverse,relations,statisticsType,statisticsPlatform);
+
 		Integer result[] = ParamCheckUtil.checkLimit(limit);
 		if(includes == null){
 			includes = new ArrayList<String>();
 		}
 		listViewModel =
-				titanSearchService.searchWithStatistics(resType, includes, params, orderMap,
+				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orders,
 						result[0], result[1],reverse,words, forceStatus, tags, showVersion);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
+
 
 	/**
      * 资源检索(titan)
@@ -563,24 +544,24 @@ public class NDResourceServiceImpl implements NDResourceService{
     
     @Override
     public ListViewModel<ResourceModel> resourceQueryByDB(String resType,String resCodes, List<String> includes,
-            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,List<Map<String, String>> relationsExclude, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String>orderMap, String words, String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion) {
+            Boolean printable, String printableKey,boolean firstKnLevel,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion) {
     	
     	ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
         rListViewModel.setLimit(limit);
         
         //判断使用IN还是EXISTS
-        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,forceStatus,tags,showVersion);
+        boolean useIn = ndResourceDao.judgeUseInOrExists(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, isNotManagement, reverse, printable, printableKey,firstKnLevel,forceStatus,tags,showVersion);
         
         //查总数和Items使用线程同时查询
         List<Callable<QueryThread>> threads = new ArrayList<Callable<QueryThread>>();
-        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
+        QueryThread countThread = new QueryThread(true, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, null, words, limit, isNotManagement, reverse,useIn, printable, printableKey,firstKnLevel,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         QueryThread queryThread = null;
         if(ndResourceDao.judgeUseRedisOrNot("(0,1)", isNotManagement, coverages, orderMap)){//如果是走Redis的,useIn=true
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, true, printable, printableKey,firstKnLevel,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         }else{
-            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
+            queryThread = new QueryThread(false, resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit, isNotManagement, reverse, useIn, printable, printableKey,firstKnLevel,statisticsType,statisticsPlatform,forceStatus,tags,showVersion);
         }
         threads.add(countThread);
         threads.add(queryThread);
@@ -628,6 +609,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private Set<String> categories;
         private Set<String> categoryExclude;
         private List<Map<String, String>> relations;
+        private List<Map<String, String>> relationsExclude;
         private List<String> coverages;
         private Map<String, Set<String>> propsMap;
         private Map<String, String>orderMap;
@@ -638,6 +620,7 @@ public class NDResourceServiceImpl implements NDResourceService{
         private boolean useIn;
         private Boolean printable;
         private String printableKey;
+        private boolean firstKnLevel;
         private String statisticsType;
         private String statisticsPlatform;
         private boolean forceStatus;
@@ -661,9 +644,9 @@ public class NDResourceServiceImpl implements NDResourceService{
         }
 
         QueryThread(boolean isCount, String resType,String resCodes, List<String> includes,
-            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations, List<String> coverages,
+            Set<String> categories, Set<String> categoryExclude, List<Map<String, String>> relations,List<Map<String, String>> relationsExclude, List<String> coverages,
             Map<String, Set<String>> propsMap,Map<String, String> orderMap, String words, String limit,boolean isNotManagement,boolean reverse,boolean useIn,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion){
+            Boolean printable, String printableKey,boolean firstKnLevel,String statisticsType,String statisticsPlatform,boolean forceStatus,List<String> tags,boolean showVersion){
             this.isCount = isCount;
             this.resType = resType;
             this.resCodes = resCodes;
@@ -671,6 +654,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.categories = categories;
             this.categoryExclude = categoryExclude;
             this.relations = relations;
+            this.relationsExclude = relationsExclude;
             this.coverages = coverages;
             this.propsMap = propsMap;
             this.orderMap = orderMap;
@@ -681,6 +665,7 @@ public class NDResourceServiceImpl implements NDResourceService{
             this.useIn = useIn;
             this.printable = printable;
             this.printableKey = printableKey;
+            this.firstKnLevel = firstKnLevel;
             this.statisticsType = statisticsType;
             this.statisticsPlatform = statisticsPlatform;
             this.forceStatus = forceStatus;
@@ -691,9 +676,9 @@ public class NDResourceServiceImpl implements NDResourceService{
         @Override
         public QueryThread call() throws Exception {
             if(isCount){
-                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,forceStatus,tags,showVersion);
+                this.total = ndResourceDao.commomQueryCount(resType, resCodes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel,forceStatus,tags,showVersion);
             }else{
-                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                this.items = ndResourceDao.commomQueryByDB(resType, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, propsMap, orderMap, words, limit,isNotManagement,reverse,useIn, printable, printableKey,firstKnLevel, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
             }
             
             return this;
@@ -817,9 +802,9 @@ public class NDResourceServiceImpl implements NDResourceService{
 	public Map<String, Integer> resourceStatistics(String resType,
 			Set<String> categories, List<String> coverages,
 			Map<String, Set<String>> propsMap, String groupBy,
-			boolean isNotManagement) {
+			boolean isNotManagement,boolean firstKnLevel) {
 		
-		return ndResourceDao.resourceStatistics(resType, categories, coverages, propsMap, groupBy, isNotManagement);
+		return ndResourceDao.resourceStatistics(resType, categories, coverages, propsMap, groupBy, isNotManagement,firstKnLevel);
 	}
 
     /**	
@@ -1352,7 +1337,6 @@ public class NDResourceServiceImpl implements NDResourceService{
             }else{
                 rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
             }
-           
         } else {
             // 非续约，要判断是否存在对应的元数据
             if (!renew) {
@@ -1361,8 +1345,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
                 if (resourceModel == null) {
                     // 不存在对应的资源
-                    
-                   
                     LOG.error(LifeCircleErrorMessageMapper.CSResourceNotFound.getMessage());
                    
                     throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1378,7 +1360,6 @@ public class NDResourceServiceImpl implements NDResourceService{
                     rootPath = assertHasAuthorizationAndGetPath(coverage,uid);
                 }
             }
-
         }
         
         LOG.debug("各个组织cs根目录："+rootPath);
@@ -2306,7 +2287,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
                 LOG.debug("调用sdk方法：add");
                 LOG.debug("创建资源类型:{},uuid:{}", resourceType, education.getIdentifier());
-
                 education = (Education) resourceRepository.add(education);
 
             } else if (operationType == OperationType.UPDATE) {
@@ -2391,6 +2371,69 @@ public class NDResourceServiceImpl implements NDResourceService{
                                LifeCircleErrorMessageMapper.KnowledgeCheckParamFail.getMessage());
       }
         return model;
+    }
+
+    @Override
+    public void deleteInstructionalObjectives(String objectsId, List<String> parentNodes, String resType) {
+        try {
+            // 章节及挂载的课时Id集合
+            Set<String> idSet = new HashSet<>();
+            //
+            idSet.addAll(parentNodes);
+            // 如果是章节，需要同时删除与该章节下课时关联
+            if (resType.equals(IndexSourceType.ChapterType.getName())) {
+                for (String parentNode : parentNodes) {
+                    // 查找章节挂载的课时
+                    List<ResourceRelation> chapterRelation = resourceRelationApiService.getByResTypeAndTargetTypeAndSourceId(
+                            IndexSourceType.ChapterType.getName(),
+                            IndexSourceType.LessonType.getName(),
+                            parentNode);
+
+                    for (ResourceRelation rr : chapterRelation) {
+                        idSet.add(rr.getTarget());
+                    }
+                }
+            }
+            // 查找教学目标与章节&课时关系
+            List<ResourceRelation> relations = new ArrayList<>();
+            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                    IndexSourceType.LessonType.getName(),
+                    IndexSourceType.InstructionalObjectiveType.getName(),
+                    objectsId
+            ));
+            relations.addAll(resourceRelationApiService.getByResTypeAndTargetTypeAndTargetId(
+                    IndexSourceType.ChapterType.getName(),
+                    IndexSourceType.InstructionalObjectiveType.getName(),
+                    objectsId
+            ));
+            
+            // 教学目标挂载的章节/课时id集合
+            Map<String, String> relationsMap = new HashMap<>();
+            for (ResourceRelation rr : relations) {
+                relationsMap.put(rr.getSourceUuid(), rr.getIdentifier());
+            }
+            // 求章节及其课时和教学目标挂载的章节/课时的交集
+            idSet.retainAll(relationsMap.keySet());
+            // 如果传入的章节/课时集合与教学目标所关联的章节/课时相等，则删除教学目标
+            if (idSet.size() == relationsMap.size()) {
+                // 删除教学目标，同时会删除关联
+                this.delete(IndexSourceType.InstructionalObjectiveType.getName(), objectsId);
+            } else {
+                // 只删除教学目标与章节/课时关联
+                Set<String> relationIds = new HashSet<>();
+                // 获得交集对应的关联Id
+                for (String id : idSet) {
+                    relationIds.add(relationsMap.get(id));
+                }
+                // 根据id删除关系
+                commonServiceHelper.deleteRelationById(relationIds);
+            }
+        } catch (EspStoreException e) {
+            LOG.error("删除教学目标数据出错！", e);
+            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+                    e.getLocalizedMessage());
+        }
     }
 
     /**
@@ -3510,5 +3553,41 @@ public class NDResourceServiceImpl implements NDResourceService{
 			List<String> coverages, Set<String> categories, boolean isAll) {
 		
 		return ndResourceDao.statisticsCountsByChapters(resType, tmId, chapterIds, coverages, categories, isAll);
+	}
+
+	@Override
+	public Map<String, Object> triggerTranscode(String resType, String uuid, boolean bStatusBackup) {
+		if(!TRANSCODE_TYPES.contains(resType)) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"LC/TRNASCODE_NOT_SUPPORTED", "资源类型不支持转码");
+		}
+
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+
+		ResourceModel cm = getDetail(resType, uuid,
+				IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI + "," + IncludesConstant.INCLUDE_LC
+						+ "," + IncludesConstant.INCLUDE_CG));
+
+		String statusBackup = null;
+		if(bStatusBackup && !(cm.getLifeCycle().getStatus()!=null && cm.getLifeCycle().getStatus().contains("TRANSCOD"))) {
+			statusBackup = cm.getLifeCycle().getStatus();
+		}
+
+		ResContributeModel contributeModel = new ResContributeModel();
+		contributeModel.setTargetId("830917");
+		contributeModel.setTargetName("LCMS");
+		contributeModel.setTargetType("USER");
+		contributeModel.setMessage("触发资源转码");
+		contributeModel.setLifecycleStatus(TransCodeUtil.getTransIngStatus(true));
+		contributeModel.setProcess(0.0f);
+		LifecycleServiceV06 service = CommonServiceHelper.isQuestionDb(resType) ? lifecycleService4Qti : lifecycleService;
+		service.addLifecycleStep(resType, cm.getIdentifier(), contributeModel, false);
+		resLifecycleDao.updateLifecycleStatus(resType, uuid, TransCodeUtil.getTransIngStatus(true));
+
+		transCodeUtil.triggerTransCode(cm, resType, statusBackup);
+
+		returnMap.put("process_state", "资源触发转码成功");
+		returnMap.put("process_code", "LC/TRIGGER_TRANSCODE_SUCCESS");
+		return returnMap;
 	}
 }

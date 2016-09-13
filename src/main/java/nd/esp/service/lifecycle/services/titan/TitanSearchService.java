@@ -11,18 +11,18 @@ import nd.esp.service.lifecycle.vos.educationrelation.v06.RelationForQueryViewMo
 
 public interface TitanSearchService {
 
-	public ListViewModel<ResourceModel> search(String resType,
+/*	public ListViewModel<ResourceModel> search(String resType,
 			List<String> includes,
 			Map<String, Map<String, List<String>>> params,
 			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
+	*/
 	
-	
-	public ListViewModel<ResourceModel> searchWithAdditionProperties(String resType,
+/*	public ListViewModel<ResourceModel> searchWithAdditionProperties(String resType,
 			List<String> includes,
 			Map<String, Map<String, List<String>>> params,
-			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
+			Map<String, String> orderMap, int from, int size, boolean reverse,String words);*/
 
-	public ListViewModel<ResourceModel> searchWithStatistics(String resType,
+	public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
 																	 List<String> includes,
 																	 Map<String, Map<String, List<String>>> params,
 																	 Map<String, String> orderMap, int from, int size, boolean reverse,String words, boolean forceStatus, List<String> tags, boolean showVersion);

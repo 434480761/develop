@@ -70,8 +70,7 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         Map<String, Object> result = TitanScritpUtils.buildScript(education,coverageList,resourceCategoryList,techInfoList,categoryPathList);
         //校验addVertex中的参数个数过多，个数超过250返回为null
         if(CollectionUtils.isEmpty(result)){
-            //TODO 这种错误情况保存到数据库中，返回true
-            titanSync(education);
+            return false;
         } else {
             Long educationId = null;
             try {
@@ -83,7 +82,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
                 return  false;
             }
             if(educationId == null){
-            	titanSync(education);
                 return false;
             }
         }
@@ -93,14 +91,6 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
 
     @Override
     public boolean importStatistical(List<ResourceStatistical> statisticalList) {
-//        Map<TitanScritpUtils.KeyWords, Object> result = TitanScritpUtils.buildStatisticalScript(statisticalList);
-//        String script = result.get(TitanScritpUtils.KeyWords.script).toString();
-//        Map<String, Object> param = (Map<String, Object>) result.get(TitanScritpUtils.KeyWords.params);
-//        try {
-//            titanCommonRepository.executeScript(script, param);
-//        } catch (Exception e) {
-//            LOG.info(e.getLocalizedMessage());
-//        }
         titanStatisticalRepository.batchAdd4Import(statisticalList);
         return false;
     }

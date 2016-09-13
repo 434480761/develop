@@ -48,6 +48,7 @@ public enum ResTypeEnum {
     homeworks("homeworks"), // 作业
     questions("questions"), // 习题 FIXME 游戏化习题
     examinationpapers("examinationpapers"), // 试卷
+    exercisesset("exercisesset"),//习题集
 
 
     // 学习资源

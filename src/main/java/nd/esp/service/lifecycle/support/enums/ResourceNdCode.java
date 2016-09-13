@@ -31,6 +31,7 @@ public enum ResourceNdCode {
     knowledges("$RA0205"), // 知识点
     
     guidancebooks("$RA0207"),//教辅
+    subInstruction("$RA0212"),//子教学目标
 
     // 教学资源
     coursewares("$RT0100"), // 课件
@@ -47,6 +48,7 @@ public enum ResourceNdCode {
     homeworks("$RE0100"), // 作业
     questions("$RE0200"), // 习题 FIXME 游戏化习题
     examinationpapers("$RE0300"), // 试卷
+    exercisesset("$RE0500"),//习题集
 
 
     // 学习资源

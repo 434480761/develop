@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4ImportData;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanCacheData;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.InterceptingClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -63,6 +65,7 @@ public class TitanResourceController {
 		titanResourceService.createKnowledgeRealtion();
 		titanResourceService.importAllRelation();
 		titanResourceService.importKnowledgeRelation();
+		titanResourceService.importStatistical();
 	}
 
 	@MarkAspect4ImportData
@@ -145,6 +148,13 @@ public class TitanResourceController {
 	@RequestMapping(value = "/all/relation", method = RequestMethod.GET)
 	public void indexAllRelation() {
 		titanResourceService.importAllRelation();
+	}
+
+
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/relation/{page}", method = RequestMethod.GET)
+	public void indexAllRelationPage(@PathVariable Integer page) {
+		titanResourceService.importAllRelationPage(page);
 	}
 
 	/**
@@ -277,6 +287,7 @@ public class TitanResourceController {
 		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
 			titanResourceService.checkOneResourceTypeData(resourceType, new Date(1162275200000L), new Date());
 		}
+		checkAllRelations();
 		return 0;
 	}
 	
@@ -306,7 +317,43 @@ public class TitanResourceController {
 	public void importAllStatistical() {
 		titanResourceService.importStatistical();
 	}
-	
+
+	@RequestMapping(value = "/sync/update", method = RequestMethod.GET)
+	public String changeSyncType(@RequestParam String newType, @RequestParam String oldType , @RequestParam Integer executeTimes){
+		if (!TitanSyncType.contain(newType) || !TitanSyncType.contain(newType)){
+			return "不包含指定的同步类型";
+		}
+
+		if (!TitanSyncType.VERSION_SYNC.toString().equals(newType)
+				&& ! TitanSyncType.SAVE_OR_UPDATE_ERROR.toString().equals(newType)){
+			return "不可以更改成指定的同步类型";
+		}
+
+		if (titanResourceService.changeSyncType(newType, oldType ,executeTimes)){
+			return "更新成功";
+		}
+		return "更新失败";
+
+	}
+
+	@RequestMapping(value = "/sync/delete/{type}", method = RequestMethod.GET)
+	public String deleteSyncType(@PathVariable String type ){
+		if (!TitanSyncType.contain(type)){
+			return "不包含指定的同步类型";
+		}
+
+		if (titanResourceService.deleteSyncType(type)){
+			return "删除成功";
+		}
+		return "删除失败";
+
+	}
+	@RequestMapping(value = "/sync/errorRelation", method = RequestMethod.GET)
+	public void detailErrorRelation(){
+		titanResourceService.detailErrorRelation();
+	}
+
+
 	/**
 	 * 测试导数据时：一个环境只允许一个任务
 	 * 

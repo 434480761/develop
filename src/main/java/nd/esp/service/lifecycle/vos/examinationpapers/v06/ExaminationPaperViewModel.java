@@ -4,7 +4,7 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 
 /**
  * 试卷视图数据模型
- * 
+ * 习题集视图数据模型
  * @author xuzy
  * @since
  */

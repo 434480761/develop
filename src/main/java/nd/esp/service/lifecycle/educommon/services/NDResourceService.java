@@ -48,13 +48,8 @@ public interface NDResourceService {
 	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
 	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,
 	            Boolean printable, String printableKey);
-    
-	 
-	 public ListViewModel<ResourceModel> resourceQueryByTitan(String resType,List<String> includes,Set<String> categories,
-	    		Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
-	            Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey);
 
-    public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(String resType,
+    public ListViewModel<ResourceModel> resourceQueryByTitanWithStatistics(Set<String> resTypeSet,
                                                                  List<String> includes, Set<String> categories, Set<String> categoryExclude,
                                                                  List<Map<String, String>> relations, List<String> coverages,
                                                                  Map<String, Set<String>> propsMap, Map<String, String> orderMap,
@@ -88,10 +83,10 @@ public interface NDResourceService {
     public ListViewModel<ResourceModel> resourceQueryByDB(
             String resType,String resCodes,List<String> includes,
             Set<String> categories,Set<String> categoryExclude,
-            List<Map<String,String>> relations,List<String> coverages,
+            List<Map<String,String>> relations,List<Map<String,String>> relationsExclude,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap,
             String words,String limit,boolean isNotManagement,boolean reverse,
-            Boolean printable, String printableKey,String statisticsType,String statisticsPlatform,
+            Boolean printable, String printableKey,boolean firstKnLevel,String statisticsType,String statisticsPlatform,
             boolean forceStatus,List<String> tags,boolean showVersion);
     
     /**
@@ -117,7 +112,7 @@ public interface NDResourceService {
      * @return
      */
     public Map<String, Integer> resourceStatistics(String resType, Set<String> categories, List<String> coverages,
-    		Map<String, Set<String>> propsMap, String groupBy, boolean isNotManagement);
+    		Map<String, Set<String>> propsMap, String groupBy, boolean isNotManagement,boolean firstKnLevel);
     
     /**
      * 获取资源详细
@@ -294,6 +289,8 @@ public interface NDResourceService {
     Map<String, Object> getResPreviewByHref(String resType,String location);
     
     public TreeTrargetAndParentModel getTreeTargetAndParent(KnowledgeModel knowledgeModel, Chapter knowledge);
+
+    void deleteInstructionalObjectives(String objectsId, List<String> parentNodes, String resType);
     
     /**
      * 创建资源新版本
@@ -343,4 +340,14 @@ public interface NDResourceService {
     public Map<String, ChapterStatisticsViewModel> statisticsCountsByChapters(
     		String resType,String tmId,Set<String> chapterIds,List<String> coverages,
     		Set<String> categories,boolean isAll);
+
+
+    /**
+     * 触发资源转码
+     * @param resType
+     * @param uuid
+     * @return
+     */
+    public Map<String, Object> triggerTranscode(String resType, String uuid, boolean bStatusBackup);
+
 }

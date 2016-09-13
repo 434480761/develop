@@ -21,6 +21,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceStatisticalRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.impls.CourseWareObjectServiceImplV06;
 import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalService;
+import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
@@ -103,6 +104,11 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
         }
+        
+        LOG.info("----统计成功:" + resType + "---" + id);
+        for (ResourceStatistical statistical : statisticalsList) {
+        	LOG.info("统计详情" + statistical.getKeyTitle() + "---" + statistical.getKeyValue());
+        }
 
         // 模型转出
         List<ResourceStatisticalModel> returnList = new ArrayList<ResourceStatisticalModel>();
@@ -162,6 +168,11 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+        }
+        
+        LOG.info("----统计累加成功:" + resType + "---" + id);
+        for (ResourceStatistical statistical : statisticalsList) {
+        	LOG.info("统计详情" + statistical.getKeyTitle() + "---" + statistical.getKeyValue());
         }
 
         // 模型转出
@@ -307,7 +318,7 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 		List<ResourceStatistical> rsList = resourceStatisticalsDao.getAllRsByReousrceId(id);
 		boolean flag = false;
 		//1、判断业务方是否为101ppt
-		if(nd.esp.service.lifecycle.support.Constant.BSYSKEY_101PPT.equals(bsyskey)){
+		if(Constant.BSYSKEY_101PPT.equals(bsyskey) || Constant.BSYSKEY_101PPT_HISENSE.equals(bsyskey)){
 			flag = true;
 		}
 		List<ResourceStatistical> datas = new ArrayList<ResourceStatistical>();

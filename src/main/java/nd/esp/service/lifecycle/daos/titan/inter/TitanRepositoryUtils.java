@@ -14,4 +14,5 @@ public interface TitanRepositoryUtils {
     public boolean checkRelationExistInMysql(ResourceRelation resourceRelation);
     public void titanSync4MysqlImportAdd(TitanSyncType errorType, String primaryCategory, String source);
     public void titanSync4MysqlAdd(TitanSyncType errorType,String primaryCategory , String source, int executeTimes);
+    public void titanSyncUpdateErrorType(TitanSyncType errorType, String primaryCategory, String source,TitanSyncType targetType);
 }

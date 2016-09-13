@@ -26,7 +26,6 @@ import nd.esp.service.lifecycle.repository.sdk.CoursewareObjectTemplateRepositor
 import nd.esp.service.lifecycle.repository.sdk.CoursewareRepository;
 import nd.esp.service.lifecycle.repository.sdk.EbookRepository;
 import nd.esp.service.lifecycle.repository.sdk.ExaminationPaperRepository;
-import nd.esp.service.lifecycle.repository.sdk.GuidanceBooksRepository;
 import nd.esp.service.lifecycle.repository.sdk.HomeWorkRepository;
 import nd.esp.service.lifecycle.repository.sdk.InstructionalobjectiveRepository;
 import nd.esp.service.lifecycle.repository.sdk.KnowledgeBaseRepository;
@@ -37,6 +36,7 @@ import nd.esp.service.lifecycle.repository.sdk.LessonRepository;
 import nd.esp.service.lifecycle.repository.sdk.QuestionRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResCoverageRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
+import nd.esp.service.lifecycle.repository.sdk.SubInstructionRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingActivitiesRepository;
 import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.repository.sdk.ToolsRepository;
@@ -78,6 +78,7 @@ public class ServicesManager implements ApplicationContextAware {
 		RESOURCE_REPOSITORIES.put(IndexSourceType.TeachingMaterialType.getName(), TeachingMaterialRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.LessonType.getName(), LessonRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.InstructionalObjectiveType.getName(), InstructionalobjectiveRepository.class);
+		RESOURCE_REPOSITORIES.put(IndexSourceType.SubInstructionType.getName(), SubInstructionRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ResourceRelationType.getName(), ResourceRelationRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.EbookType.getName(), EbookRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.CategoryType.getName(), CategoryRepository.class);
@@ -93,6 +94,7 @@ public class ServicesManager implements ApplicationContextAware {
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ToolsType.getName(), ToolsRepository.class);  //FIXME 
 		RESOURCE_REPOSITORIES.put(IndexSourceType.SourceTeachingActivitiesType.getName(), TeachingActivitiesRepository.class);
 		RESOURCE_REPOSITORIES.put(IndexSourceType.ExaminationPapersType.getName(), ExaminationPaperRepository.class);
+		RESOURCE_REPOSITORIES.put(IndexSourceType.Exercisesset.getName(), ExaminationPaperRepository.class);
 		RESOURCE_REPOSITORIES.put("knowledgebases", KnowledgeBaseRepository.class);
 	}
 	

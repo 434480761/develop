@@ -10,6 +10,7 @@ import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.model.ResCoverage;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 
@@ -212,6 +213,9 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
             LOG.error("titan_repository error:{};identifier:{}" ,e.getMessage(),identifier);
 		}
 
+        if (CollectionUtils.isEmpty(searchCoverages)){
+            return;
+        }
 
         script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
         TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);

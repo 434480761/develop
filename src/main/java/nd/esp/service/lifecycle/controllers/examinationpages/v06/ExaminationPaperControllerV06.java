@@ -1,7 +1,10 @@
 package nd.esp.service.lifecycle.controllers.examinationpages.v06;
 
+import javax.servlet.http.HttpServletRequest;
+
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.models.v06.ExaminationPaperModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.examinationpapers.v06.ExaminationPaperServiceV06;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
@@ -36,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author xuzy
  */
 @RestController
-@RequestMapping("/v0.6/examinationpapers")
+@RequestMapping(value={"/v0.6/examinationpapers"})
 public class ExaminationPaperControllerV06 {
     private static final Logger LOG = LoggerFactory.getLogger(ExaminationPaperControllerV06.class);
 
@@ -67,11 +70,13 @@ public class ExaminationPaperControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ExaminationPaperViewModel create(@Validated(ValidGroup.class) @RequestBody ExaminationPaperViewModel viewModel,
                                             BindingResult validResult,
-                                            @PathVariable String id) {
+                                            @PathVariable String id,HttpServletRequest request) {
+    	String resType = getResType(request);
+    	
         // 校验入参
-        checkParams(viewModel, validResult, id, CONTROLLER_CREATE_TYPE);
+        checkParams(viewModel, validResult, id, CONTROLLER_CREATE_TYPE,resType);
 
-        viewModel = examinationPaperApi(viewModel, CONTROLLER_CREATE_TYPE);
+        viewModel = examinationPaperApi(viewModel, CONTROLLER_CREATE_TYPE,resType);
 
         return viewModel;
     }
@@ -90,11 +95,13 @@ public class ExaminationPaperControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ExaminationPaperViewModel update(@Validated(Valid4UpdateGroup.class) @RequestBody ExaminationPaperViewModel viewModel,
                                             BindingResult validResult,
-                                            @PathVariable String id) {
+                                            @PathVariable String id,HttpServletRequest request) {
+    	String resType = getResType(request);
+    	
         // 校验入参
-        checkParams(viewModel, validResult, id, CONTROLLER_UPDATE_TYPE);
+        checkParams(viewModel, validResult, id, CONTROLLER_UPDATE_TYPE,resType);
 
-        viewModel = examinationPaperApi(viewModel, CONTROLLER_UPDATE_TYPE);
+        viewModel = examinationPaperApi(viewModel, CONTROLLER_UPDATE_TYPE,resType);
 
         return viewModel;
     }
@@ -112,20 +119,22 @@ public class ExaminationPaperControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ExaminationPaperViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody ExaminationPaperViewModel viewModel,
                                             BindingResult validResult, @PathVariable String id,
-                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,HttpServletRequest request){
+    	String resType = getResType(request);
+    	
         // 校验入参
-        checkParams(viewModel, validResult, id, CONTROLLER_PATCH_TYPE);
+        checkParams(viewModel, validResult, id, CONTROLLER_PATCH_TYPE,resType);
 
-        viewModel = examinationPaperApi(viewModel, CONTROLLER_PATCH_TYPE);
+        viewModel = examinationPaperApi(viewModel, CONTROLLER_PATCH_TYPE,resType);
 
         if(notice) {
-            offlineService.writeToCsAsync(ResourceNdCode.examinationpapers.toString(), id);
+            offlineService.writeToCsAsync(resType, id);
         }
 
         // offline metadata(coverage) to elasticsearch
-        if (ResourceTypeSupport.isValidEsResourceType(ResourceNdCode.examinationpapers.toString())) {
+        if (ResourceTypeSupport.isValidEsResourceType(resType)) {
             esResourceOperation.asynAdd(
-                    new Resource(ResourceNdCode.examinationpapers.toString(), id));
+                    new Resource(resType, id));
         }
 
         return viewModel;
@@ -143,18 +152,19 @@ public class ExaminationPaperControllerV06 {
     private void checkParams(ExaminationPaperViewModel viewModel,
                              BindingResult validResult,
                              String id,
-                             int type) {
+                             int type,
+                             String resType) {
     	viewModel.setIdentifier(id);
         // 入参合法性校验
         if (type == CONTROLLER_CREATE_TYPE) {
             ValidResultHelper.valid(validResult,
-                                    "LC/CREATE_EXAMINATIONPAPER_PARAM_VALID_FAIL",
+                                    "LC/CREATE_"+capitalResType(resType)+"_PARAM_VALID_FAIL",
                                     "examinationPaperControllerV06",
                                     "create");
             CommonHelper.inputParamValid(viewModel, "11111",OperationType.CREATE);
         } else if (type == CONTROLLER_UPDATE_TYPE) {
             ValidResultHelper.valid(validResult,
-                                    "LC/UPDATE_EXAMINATIONPAPER_PARAM_VALID_FAIL",
+                                    "LC/UPDATE_"+capitalResType(resType)+"_PARAM_VALID_FAIL",
                                     "examinationPaperControllerV06",
                                     "update");
             CommonHelper.inputParamValid(viewModel, "11111",OperationType.UPDATE);
@@ -169,40 +179,78 @@ public class ExaminationPaperControllerV06 {
      * @return ExaminationPaperViewModel
      * @since
      */
-    private ExaminationPaperViewModel examinationPaperApi(ExaminationPaperViewModel viewModel, int type) {
+    private ExaminationPaperViewModel examinationPaperApi(ExaminationPaperViewModel viewModel, int type,String resType) {
         ExaminationPaperModel model = null;
         if (type == CONTROLLER_CREATE_TYPE) {
             model = CommonHelper.convertViewModelIn(viewModel,
             		ExaminationPaperModel.class,
-                    ResourceNdCode.examinationpapers);
+            		getResourceNdCode(resType));
             // 创建试卷
             
-            LOG.info("试卷V06创建试卷操作，业务逻辑处理");
+            LOG.info(resType+"v06创建操作，业务逻辑处理");
             
-            model = examinationPaperService.createExaminationPaper(model);
+            model = examinationPaperService.createExaminationPaper(model,resType);
         } else if (type == CONTROLLER_UPDATE_TYPE) {
             model = CommonHelper.convertViewModelIn(viewModel,
             		ExaminationPaperModel.class,
-                    ResourceNdCode.examinationpapers);
+            		getResourceNdCode(resType));
             // 修改试卷
             
-            LOG.info("试卷v06更新试卷操作，业务逻辑处理");
+            LOG.info(resType+"v06更新操作，业务逻辑处理");
             
-            model = examinationPaperService.updateExaminationPaper(model);
+            model = examinationPaperService.updateExaminationPaper(model,resType);
         } else if (type == CONTROLLER_PATCH_TYPE) {
             model = CommonHelper.convertViewModelIn(viewModel,
             		ExaminationPaperModel.class,
-                    ResourceNdCode.examinationpapers,true);
+            		getResourceNdCode(resType),true);
             // 修改试卷
 
-            LOG.info("试卷v06局部更新试卷操作，业务逻辑处理");
+            LOG.info(resType+"v06局部更新操作，业务逻辑处理");
 
-            model = examinationPaperService.patchExaminationPaper(model);
+            model = examinationPaperService.patchExaminationPaper(model,resType);
         }
 
         viewModel = CommonHelper.convertViewModelOut(model, ExaminationPaperViewModel.class);
 
         return viewModel;
+    }
+    
+    /**
+     * 获取资源类型
+     * @param request
+     * @return
+     */
+    private String getResType(HttpServletRequest request){
+    	String url = request.getRequestURI();
+    	String resType = url.substring(url.indexOf("v0.6")+5, url.lastIndexOf("/"));
+    	return resType;
+    }
+    
+    /**
+     * 根据资源类型获取对应的枚举
+     * @param resType
+     * @return
+     */
+    private ResourceNdCode getResourceNdCode(String resType){
+    	if(ResourceNdCode.examinationpapers.toString().equals(resType)){
+    		return ResourceNdCode.examinationpapers;
+    	}else{
+    		return ResourceNdCode.exercisesset;
+    	}
+    }
+    
+    /**
+     * 将资源类型变为大写
+     * @param resType
+     * @return
+     */
+    private String capitalResType(String resType){
+    	if(resType.equals(IndexSourceType.ExaminationPapersType.getName())){
+    		return "EXAMINATIONPAPER";
+    	}else if(resType.equals(IndexSourceType.Exercisesset.getName())){
+    		return "EXERCISESSET";
+    	}
+    	return "";
     }
 
 }

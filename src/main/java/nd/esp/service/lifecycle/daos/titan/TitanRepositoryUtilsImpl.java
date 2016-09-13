@@ -82,6 +82,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
             }
         } else {
             titanSync.setExecuteTimes(titanSync.getExecuteTimes() + 1);
+            titanSync.setCreateTime(System.currentTimeMillis());
             try {
                 titanSyncRepository.update(titanSync);
             } catch (EspStoreException e) {
@@ -242,6 +243,25 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
            return true;
         }
         return false;
+    }
+
+    public void titanSyncUpdateErrorType(TitanSyncType errorType, String primaryCategory, String source,TitanSyncType targetType){
+        TitanSync example = new TitanSync();
+        example.setPrimaryCategory(primaryCategory);
+        example.setResource(source);
+        example.setType(errorType.toString());
+        List<TitanSync> titanSyncList = null;
+        try {
+            titanSyncList = titanSyncRepository.getAllByExample(example);
+            for (TitanSync titanSync : titanSyncList){
+                titanSync.setType(targetType.toString());
+                titanSync.setCreateTime(System.currentTimeMillis());
+            }
+
+            titanSyncRepository.batchAdd(titanSyncList);
+        } catch (EspStoreException e) {
+            LOG.info("");
+        }
     }
 
     private boolean checkEducationExistInMySql(String primaryCategory, String identifier){

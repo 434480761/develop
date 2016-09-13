@@ -128,9 +128,7 @@ public class TaskServiceImpl implements TaskService {
         }
         taskInfo.setTaskId(newTaskInfo.getTaskId());
         taskInfo.setPriority(newTaskInfo.getPriority());
-        if(StringUtils.isNotEmpty(newTaskInfo.getDescription())) {
-            taskInfo.setDescription(newTaskInfo.getDescription());
-        }
+        taskInfo.setDescription(newTaskInfo.getDescription());
         
         UpdateTaskInfo(taskInfo);
         

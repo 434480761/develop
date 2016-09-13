@@ -32,6 +32,8 @@ public enum IndexSourceType {
 	EbookType("ebooks",100,105),
 	/**试卷*/
 	ExaminationPapersType("examinationpapers", 100, 106),
+	/**习题集*/
+	Exercisesset("exercisesset",100,107),
 	/**教材*/
 	TeachingMaterialType("teachingmaterials", 200, 201),
 	/**章节*/
@@ -73,6 +75,8 @@ public enum IndexSourceType {
 	SourceTeachingActivitiesType("teachingactivities",200, 218),
 	
 	ToolsType("tools",200,218),
+    /**子教学目标*/
+    SubInstructionType("subInstruction",200,219) ,
 	/**章节资源*/
 	ChapterResourceType("ChapterResourceType",300,300),
 	/**章节知识点*/

@@ -37,7 +37,10 @@ public enum  TitanSyncType {
     UPDATE_DATA_OTHER,
     DELETE_CATEGORY_ERROR,
     DELETE_COVERAGE_ERROR,
-    DELETE_TECH_INFO_ERROR;
+    DELETE_TECH_INFO_ERROR,
+    RELATION,
+    //不同版本数据库差量修复数据
+    VERSION_SYNC;
 
     public static Map<String, TitanSyncType> map = new HashMap<>();
     static {
@@ -50,4 +53,7 @@ public enum  TitanSyncType {
         return map.get(key);
     }
 
+    public static boolean contain(String type){
+        return map.containsKey(type);
+    }
 }
