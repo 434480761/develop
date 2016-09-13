@@ -3,8 +3,6 @@ package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,17 +15,25 @@ public class TitanTransactionCollection {
     @Autowired
     private TitanSubmitTransaction titanSubmitTransaction;
 
+    /**
+     * 对事务进行初始化
+     * */
     public void initOneTransaction(String transactionName){
         transactionMap.put(transactionName, new TitanTransaction());
-        deleteDirtyTransaction();
     }
 
+    /**
+     * 通过事务名增加事务中的一个步骤
+     * */
     public void addOneStep(String transactionName, TitanRepositoryOperation repositoryOperation){
         TitanTransaction transaction = transactionMap.get(transactionName);
         transaction.addNextStep(repositoryOperation);
     }
 
-    public void submit(String transactionName){
+    /**
+     * 提交事务
+     * */
+    public void commit(String transactionName){
         TitanTransaction titanTransaction = transactionMap.get(transactionName);
         /**
          * TODO 在提交脚本前先解析出对应的资源类型和资源ID，解析策略，先资源；在techInfo、coverage等；最后通过删除资源的ID确定
@@ -36,13 +42,20 @@ public class TitanTransactionCollection {
 
         titanSubmitTransaction.submit(titanTransaction);
 
+        deleteTransaction(transactionName);
+    }
+
+    /**
+     * 删除事务
+     * */
+    public void deleteTransaction(String transactionName){
         transactionMap.remove(transactionName);
     }
 
     /**
      * 清楚因为异常等无法正常删除的事务
      * */
-    private void deleteDirtyTransaction(){
+    public void deleteDirtyTransaction(){
         for (String transactionName : transactionMap.keySet()){
             TitanTransaction titanTransaction = transactionMap.get(transactionName);
             if (!titanTransaction.isAvailable()){

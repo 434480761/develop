@@ -34,7 +34,12 @@ public class TitanTransactionAspect {
 
     @AfterReturning("performanceAnnon()")
     public void afterReturnExecuteAnnon(){
-        titanTransactionCollection.submit(TransactionSynchronizationManager.getCurrentTransactionName());
+        titanTransactionCollection.commit(TransactionSynchronizationManager.getCurrentTransactionName());
+    }
+
+    @AfterThrowing("performanceAnnon()")
+    public void exceptionExecuteAnnon(){
+        titanTransactionCollection.deleteTransaction(TransactionSynchronizationManager.getCurrentTransactionName());
     }
 
     private void initTitanTransaction(){
