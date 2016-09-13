@@ -5,13 +5,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Administrator on 2016/9/12.
  */
 @Component
 public class TitanTransactionCollection {
-    private static Map<String, TitanTransaction> transactionMap = new HashMap<>();
+    private static ConcurrentHashMap<String, TitanTransaction> transactionMap = new ConcurrentHashMap<>();
 
     @Autowired
     private TitanSubmitTransaction titanSubmitTransaction;
