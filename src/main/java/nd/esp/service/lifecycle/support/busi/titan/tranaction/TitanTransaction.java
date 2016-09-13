@@ -26,7 +26,7 @@ public class TitanTransaction {
         return MAX_RETRY_TIMES >= retryTimes && System.currentTimeMillis() - crateTime < MAX_TIMEOUT;
     }
 
-    public List<TitanRepositoryOperation> getAllStep(){
+    public LinkedList<TitanRepositoryOperation> getAllStep(){
         return repositoryOperations;
     }
 
