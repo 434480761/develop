@@ -144,12 +144,16 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 				} catch (EspStoreException e) {
 					e.printStackTrace();
 				}
-				String title = parentAsset.getTitle().substring(2);
+				String title = null;
+				if(parentAsset != null && parentAsset.getTitle() != null){
+					title = parentAsset.getTitle().substring(2);
+				}
 				try {
-					if(title.contains(".")){
+					int likeName = 0;
+					if(title != null && title.contains(".")){
 						title = title.substring(0,title.indexOf("."));
+						likeName = Integer.valueOf(title);
 					}
-					int likeName = Integer.valueOf(title);
 					List<Asset> list2 = assetDao.queryInsTypesByCategory(String.valueOf(likeName), category);
 					if(CollectionUtils.isNotEmpty(list2)){
 						int maxNum = 0;

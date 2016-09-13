@@ -295,29 +295,32 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 						}
 						while (cm != null && !cm.getParent().equals(cm.getTeachingMaterial()));
 						//循环获取章节，以及该节的父章节的信息。end
-						TeachingMaterial teachingMaterial = teachingMaterialService.getById(cm.getTeachingMaterial());//获取教材信息
+						//代码这样写是为了阻断。。。
+						if(cm != null && cm.getTeachingMaterial() != null){
+							TeachingMaterial teachingMaterial = teachingMaterialService.getById(cm.getTeachingMaterial());//获取教材信息
 
-						//拼接返回的字符串。begin
-						String pathStr = teachingMaterial.getIdentifier();
-						String textStr = teachingMaterial.getTitle();
-						String chapterIdStr = "";
-						if (chapterList != null && chapterList.size() > 0) {
-							for (int i = chapterList.size() - 1; i >= 0; i--) {
-								ChapterModel chapterModel = new ChapterModel();
-								chapterModel = chapterList.get(i);
-								if (i == 0) {
-									chapterIdStr = chapterModel.getIdentifier();
+							//拼接返回的字符串。begin
+							String pathStr = teachingMaterial.getIdentifier();
+							String textStr = teachingMaterial.getTitle();
+							String chapterIdStr = "";
+							if (chapterList != null && chapterList.size() > 0) {
+								for (int i = chapterList.size() - 1; i >= 0; i--) {
+									ChapterModel chapterModel = new ChapterModel();
+									chapterModel = chapterList.get(i);
+									if (i == 0) {
+										chapterIdStr = chapterModel.getIdentifier();
+									}
+									pathStr += "/" + chapterModel.getIdentifier();
+									textStr += "/" + chapterModel.getTitle();
 								}
-								pathStr += "/" + chapterModel.getIdentifier();
-								textStr += "/" + chapterModel.getTitle();
 							}
+							LinkedHashMap<String, Object> pathItem = new LinkedHashMap<>();
+							pathItem.put("path", pathStr);
+							pathItem.put("text", textStr);
+							pathItem.put("chapter_id", chapterIdStr);
+							pathList.add(pathItem);
+							//拼接返回的字符串。end
 						}
-						LinkedHashMap<String, Object> pathItem = new LinkedHashMap<>();
-						pathItem.put("path", pathStr);
-						pathItem.put("text", textStr);
-						pathItem.put("chapter_id", chapterIdStr);
-						pathList.add(pathItem);
-						//拼接返回的字符串。end
 					}
 				}
 			}
@@ -381,7 +384,10 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 				@Nullable
 				@Override
 				public String apply(@Nullable Map.Entry<String, String> idWithTitle) {
-					return String.format("\"%s\"", idWithTitle.getKey());
+					if(idWithTitle != null){
+						return String.format("\"%s\"", idWithTitle.getKey());
+					}
+					return null;
 				}
 			});
 
