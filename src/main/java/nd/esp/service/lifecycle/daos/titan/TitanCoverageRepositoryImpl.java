@@ -241,7 +241,11 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 	}
 
 	private ResCoverage addCoverage(ResCoverage resCoverage) {
-		delete(resCoverage.getIdentifier());
+		try {
+			titanCommonRepository.deleteEdgeById(resCoverage.getIdentifier());
+		} catch (Exception e) {
+			LOG.error(e.getLocalizedMessage());
+		}
 		Long coverageNodeId = getCoverageNodeId(resCoverage);
 		String coveragePathId;
 		if (coverageNodeId == null) {
