@@ -42,7 +42,7 @@ public class TitanTransactionCollection {
     }
 
     /**
-     * 清楚因为异常等终端无法正常删除的事务
+     * 清楚因为异常等无法正常删除的事务
      * */
     private void deleteDirtyTransaction(){
         for (String transactionName : transactionMap.keySet()){
