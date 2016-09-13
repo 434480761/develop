@@ -29,13 +29,12 @@ public class TeacherOutputResource {
      */
     private String subject;
     /**
-     *创建日期
+     *总的条数
      */
-    private Date data;
+    private Integer data;
     /**
      * 标签
      */
-    
 	public String getTeacherId() {
 		return teacherId;
 	}
@@ -72,12 +71,15 @@ public class TeacherOutputResource {
 	public void setSubject(String subject) {
 		this.subject = subject;
 	}
-	public Date getData() {
+	public Integer getData() {
 		return data;
 	}
-	public void setData(Date data) {
+	public void setData(Integer data) {
 		this.data = data;
 	}
+    
+	
+	
 
     
 }

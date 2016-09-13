@@ -1,9 +1,12 @@
 package nd.esp.service.lifecycle.repository.model;
 
+//import java.util.Date;
+
 import java.sql.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.ibm.icu.math.BigDecimal;
@@ -12,6 +15,7 @@ import com.ibm.icu.math.BigDecimal;
 @Table(name = "icrs_resource")
 public class Icrs {
 
+	@Id
 	@Column(name = "identifier")
 	private String identifier;
 	

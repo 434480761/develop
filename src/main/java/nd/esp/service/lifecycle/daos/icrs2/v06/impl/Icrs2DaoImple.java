@@ -13,6 +13,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.poi.ss.formula.functions.T;
+import org.joda.time.Hours;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -43,11 +44,11 @@ public class Icrs2DaoImple implements Icrs2Dao{
 	private JdbcTemplate jdbcTemplate;
 	 
 	@Override
-	public List<Icrs> queryBySchoolId(String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
+	public List<Map<String, Object>> queryBySchoolId(String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
             String order,String limit) {
-		
-		StringBuffer sqlStringBuffer = new StringBuffer("select * from icrs_resource  where 1 ");
-		
+				
+		//拼接sql语句
+		StringBuffer sqlStringBuffer = new StringBuffer("select teacher_id as teacherId,teacher_name as teacherName,grade_code as gradeCode,subject_code as subjectCode,count(*) from icrs_resource  where 1 ");
 		if (schoolId!=null) {
 			sqlStringBuffer.append(" and school_id = "+"'"+schoolId+"'");
 		}
@@ -55,47 +56,54 @@ public class Icrs2DaoImple implements Icrs2Dao{
 			sqlStringBuffer.append(" and res_type="+"'"+resType+"'");
 		}
 		if (fromDate!=null) {
-			sqlStringBuffer.append(" and create_date>="+fromDate);
-		} 
+			sqlStringBuffer.append(" and create_date>="+"\""+fromDate+"\""); // \转义
+		}   
 		if (toDate!=null) {
-			sqlStringBuffer.append(" and create_date<="+toDate);
+			sqlStringBuffer.append(" and create_date<="+"\""+toDate+"\"");
 		}
-//		if (grade!=null) {	
-//			sqlStringBuffer.append(" and grade="+"'"+grade+"'");   //如何根据gradecode来找grade
-//		}
-		if (subject!=null) {
+		if (grade!=null) {
 			
-			CategoryData cData = new CategoryData();  //根据subject来查找subject_code
-			//cData.setNdCode(subject);
-			cData.setTitle(subject);
-			try {
-				cData = categoryDataRepository.getByExample(cData);
-			} catch (EspStoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			sqlStringBuffer.append(" and subject_code="+"'"+cData.getNdCode()+"'");//如何根据subject来找subjectcode
+			sqlStringBuffer.append(" and grade="+"'"+grade+"'");   
 		}
-		if (order!=null) {//这个地方怎么依据数量排序,这里按创建的先后进行排序了
+		if (subject!=null) {    	
+			
+			sqlStringBuffer.append(" and subject_code="+"'"+subject+"'");
+		}
+		if (order!=null) {
 			sqlStringBuffer.append(" order by create_date "+"'"+order+"'");
 		}
 		if (limit!=null) {
-			sqlStringBuffer.append(" limit "+"'"+limit+"'");
+			sqlStringBuffer.append("  limit 0,").append(limit);
 		}
 		
-		
-		
-		Query query =em.createQuery(sqlStringBuffer.toString());	
-		List<Icrs> icrsList = query.getResultList();
-		return icrsList;
-		
+		//sql查询并把查询结果给list
+		String querySql = sqlStringBuffer.toString();
+		final List<Map<String,Object>> returnList = new ArrayList<Map<String,Object>>();
+		jdbcTemplate.query(querySql, new RowMapper<String>() {
+
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Map<String,Object> rowMap = new HashMap<String,Object>();
+				rowMap.put("teacherId", rs.getString("teacherId"));
+	            rowMap.put("teacherName", rs.getString("teacherName"));
+	            rowMap.put("gradeCode",  rs.getString("gradeCode"));
+	            rowMap.put("subjectCode", rs.getString("subjectCode"));
+	            rowMap.put("data", rs.getInt(5));
+	            returnList.add(rowMap);
+	            return null;
+	            }
+
+	        });	
+		return returnList;
+	
 	}
+	
 
 	@Override
 	public List<Map<String, Object>> getResourcePerHour(String schoolId,String resType, Date queryDate) {
 
-		StringBuffer sqlStringBuffer = new StringBuffer("select create_hour as hour,count(*) from icrs_resource  where 1 ");
-		
+		//sql拼接
+		StringBuffer sqlStringBuffer = new StringBuffer("select create_hour as hour,count(*) from icrs_resource  where 1 ");	
 		if (schoolId!=null) {
 			sqlStringBuffer.append(" and school_id = "+"'"+schoolId+"'");
 		}
@@ -103,28 +111,38 @@ public class Icrs2DaoImple implements Icrs2Dao{
 			sqlStringBuffer.append(" and res_type="+"'"+resType+"'");
 		}
 		if (queryDate!=null) {
-			sqlStringBuffer.append(" and create_date="+queryDate);
+			sqlStringBuffer.append(" and create_date="+"\""+queryDate+"\"");
 		} 
 		
+		//sql查询
 		sqlStringBuffer.append(" group by create_hour order by create_hour");
 		String querySql = sqlStringBuffer.toString();
-		final List<Map<String,Object>> knowledgeList = new ArrayList<Map<String,Object>>();
+		final List<Map<String,Object>> returnList = new ArrayList<Map<String,Object>>();
 		jdbcTemplate.query(querySql, new RowMapper<String>() {
 
 			@Override
 			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
 				Map<String,Object> rowMap = new HashMap<String,Object>();
-				rowMap.put("hour", rs.getString("hour"));
+			//create_hour在数据定义是tinity取值范围为（-127，127），若是float类型或者double类型，则向上取整Math.ceil(float a)
+				int isHourValid = rs.getInt(1);
+				if (isHourValid<1||isHourValid>24) {
+			//不取这个值,不注入到查询返回的结果中去
+					return null; 
+				}
+				rowMap.put("hour", rs.getInt(1));
 	            rowMap.put("data", rs.getInt(2));
-	            knowledgeList.add(rowMap);
+	            returnList.add(rowMap);   
 	            return null;
 	            }
 
 	        });
+
+		return returnList;
 		
-		return knowledgeList;
 		
 	}
+	
+   
 
 	
 

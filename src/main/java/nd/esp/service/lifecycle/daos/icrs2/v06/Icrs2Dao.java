@@ -19,7 +19,7 @@ public interface Icrs2Dao {
 	 * @param schoolId
 	 * @return ListViewModel<TeacherOutputResource>
 	 */
-	public List<Icrs> queryBySchoolId(String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
+	public List<Map<String, Object>> queryBySchoolId(String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
             String order,String limit);
 	
 	public List<Map<String, Object>> getResourcePerHour(String schoolId,String resType,Date queryDate);
