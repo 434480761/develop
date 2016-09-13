@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created by Administrator on 2016/9/12.
@@ -43,8 +44,7 @@ public class TitanTransactionAspect {
     }
 
     private String createTransactionName(){
-        Random random = new Random();
         return TransactionSynchronizationManager.getCurrentTransactionName()
-                + System.currentTimeMillis() + random.nextInt(10000) + "_titan";
+                + UUID.randomUUID().toString();
     }
 }

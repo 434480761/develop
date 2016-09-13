@@ -48,6 +48,9 @@ public class TitanTransactionUtils<M extends EspEntity> {
 
     private void addStep(M entity, TitanOperationType type){
         String name = TransactionSynchronizationManager.getCurrentTransactionName();
+        if (name == null){
+            return;
+        }
         TitanRepositoryOperation operation = new TitanRepositoryOperation();
         operation.setEntity(entity);
         operation.setOperationType(type);
