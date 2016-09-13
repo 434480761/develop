@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.repository.EspEntity;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -37,16 +38,26 @@ public class TitanTransactionUtils<M extends EspEntity> {
     }
 
     public boolean delete(String id) {
+        EspEntity entity = new EspEntity() {
+            public IndexSourceType getIndexType() {
+                return null;
+            }
+        };
 
+        entity.setIdentifier(id);
+
+        addStepEntity(entity, TitanOperationType.delete);
         return true;
     }
 
     public boolean batchDelete(List<String> ids) {
-
+        for (String id : ids){
+            delete(id);
+        }
         return true;
     }
 
-    private void addStep(M entity, TitanOperationType type){
+    private void addStepEntity(EspEntity entity ,TitanOperationType type){
         String name = TransactionSynchronizationManager.getCurrentTransactionName();
         if (name == null){
             return;
@@ -57,9 +68,14 @@ public class TitanTransactionUtils<M extends EspEntity> {
         titanTransactionCollection.addOneStep(name, operation);
     }
 
+    private void addStep(M entity, TitanOperationType type){
+        addStepEntity(entity,type);
+    }
+
     private void addStep(List<M> entities,TitanOperationType type){
         for (M entity : entities){
-            addStep(entity, type);
+            addStepEntity(entity, type);
         }
     }
+
 }
