@@ -50,6 +50,6 @@ public class TitanTransactionAspect {
 
     private String createTransactionName(){
         return TransactionSynchronizationManager.getCurrentTransactionName()
-                + UUID.randomUUID().toString();
+                + UUID.randomUUID().toString()+"_titan";
     }
 }

@@ -2,6 +2,8 @@ package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -13,6 +15,7 @@ import java.util.List;
  */
 @Component(value = "TitanTransactionUtils")
 public class TitanTransactionUtils<M extends EspEntity> {
+    private final static Logger LOG = LoggerFactory.getLogger(TitanTransactionUtils.class);
     @Autowired
     private TitanTransactionCollection titanTransactionCollection;
 
@@ -59,7 +62,8 @@ public class TitanTransactionUtils<M extends EspEntity> {
 
     private void addStepEntity(EspEntity entity ,TitanOperationType type){
         String name = TransactionSynchronizationManager.getCurrentTransactionName();
-        if (name == null){
+        if (name == null || !name.endsWith("_titan")){
+            LOG.info("titan_transaction可能初始化");
             return;
         }
         TitanRepositoryOperation operation = new TitanRepositoryOperation();

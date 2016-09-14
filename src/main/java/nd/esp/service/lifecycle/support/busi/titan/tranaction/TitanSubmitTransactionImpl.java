@@ -42,8 +42,12 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         TitanOperationType type = operation.getOperationType();
         switch (type){
             case add: titanRepository.add(operation.getEntity());
+                break;
             case update: titanRepository.update(operation.getEntity());
-            case delete:
+                break;
+            case delete: titanRepository.delete(operation.getEntity().getIdentifier());
+                break;
+            default:
         }
 
         return true;
