@@ -445,6 +445,14 @@
 				<env>lwxdb</env>
 			</properties>
 		</profile>
+
+		<profile>
+			<id>product</id>
+			<properties>
+				<env>product</env>
+			</properties>
+		</profile>
+
 		<profile>
 			<id>sonar</id>
 			<activation>
