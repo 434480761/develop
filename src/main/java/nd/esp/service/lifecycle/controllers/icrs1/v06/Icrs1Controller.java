@@ -28,12 +28,13 @@ import com.ibm.icu.text.SimpleDateFormat;
 @RestController
 @RequestMapping("/v0.6/icrs")
 public class Icrs1Controller {
-	
+
 	@Autowired
 	private Icrs1Service icrsService;
-	
+
 	/**
 	 * 查询本校不同类别资源的产出数量，统计范围为本校全部教师的个人库资源，统计类型包括课件、多媒体、基础习题、趣味题型
+	 * 
 	 * @author yuzc
 	 * @date 2016年9月9日
 	 * @param schoolId
@@ -41,29 +42,26 @@ public class Icrs1Controller {
 	 * @param to_date
 	 * @return
 	 */
-    @RequestMapping(value = "/{school_id}/statistics", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public ResourceTotalViewModel getResourceStatisticsTotal(
-    		@PathVariable(value="school_id") String schoolId,
-    		@RequestParam(required=false,value="from_date") String fromDate,
-            @RequestParam(required=false,value="to_date") String toDate){
-    
-    	//校验日期是否合法
-    	if(StringUtils.hasText(fromDate)&&StringUtils.hasText(toDate)){
-    		
-    		if(!(isValidDate(fromDate)&&isValidDate(toDate))){
-        		
-        		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-    					LifeCircleErrorMessageMapper.DateFormatFail);
-        	}
-    	}
+	@RequestMapping(value = "/{school_id}/statistics", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResourceTotalViewModel getResourceStatisticsTotal(
+			@PathVariable(value = "school_id") String schoolId,
+			@RequestParam(required = false, value = "from_date") String fromDate,
+			@RequestParam(required = false, value = "to_date") String toDate) {
+	
+		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
+			// 校验日期是否合法
+			isValidDate(fromDate);
+			isValidDate(toDate);
+		}
+		List<ResourceTotalModel> rtm = icrsService.getResourceTotal(schoolId,
+				fromDate, toDate);
+		return changeToViewModel(rtm);
 
-    	List<ResourceTotalModel>rtm=icrsService.getResourceTotal(schoolId,fromDate,toDate);
-    	return changeToViewModel(rtm);
+	}
 
-    }
-    
-    /**
+	/**
 	 * 查询本校资源的日产出数量，统计范围为本校全部教师的个人库资源，统计类型包括课件、多媒体、基础习题、趣味题型。
+	 * 
 	 * @author yuzc
 	 * @date 2016年9月9日
 	 * @param schoolId
@@ -71,28 +69,26 @@ public class Icrs1Controller {
 	 * @param to_date
 	 * @return
 	 */
-    @RequestMapping(value="/{school_id}/statistics/day",method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "from_date","to_date"})
-    public List<DailyDataViewModel> getResourceStatisticsByDay(
-    		@PathVariable(value="school_id") String schoolId,
-    		@RequestParam(required=false,value="res_type") String resType,
-    		@RequestParam String from_date,
-            @RequestParam String to_date){
-    	
-    	//校验日期是否合法
-    	if(!(isValidDate(from_date)&&isValidDate(to_date))){
-    		
-    		throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-					LifeCircleErrorMessageMapper.DateFormatFail);
-    	}
-//    	Date fromDate=DateUtils.parse(from_date,"yyyy-MM-dd");
-//    	Date toDate=DateUtils.parse(to_date,"yyyy-MM-dd");
-    	List<DailyDataViewModel> ddvmList=icrsService.getResourceStatisticsByDay(schoolId,resType,from_date,to_date);
-    	return ddvmList;
-    }
-    
-  
-    /**
+	@RequestMapping(value = "/{school_id}/statistics/day", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = {
+			"from_date", "to_date" })
+	public List<DailyDataViewModel> getResourceStatisticsByDay(
+			@PathVariable(value = "school_id") String schoolId,
+			@RequestParam(required = false, value = "res_type") String resType,
+			@RequestParam String from_date, @RequestParam String to_date) {
+
+		List<DailyDataViewModel> ddvmList = new ArrayList<DailyDataViewModel>();
+		// 校验日期是否合法
+		if (isValidDate(from_date) && isValidDate(to_date)) {
+
+			ddvmList = icrsService.getResourceStatisticsByDay(schoolId,
+					resType, from_date, to_date);
+		}
+		return ddvmList;
+	}
+
+	/**
 	 * 取得某一个教师上传的资源，所对应的教材列表
+	 * 
 	 * @author yuzc
 	 * @date 2016年9月9日
 	 * @param schoolId
@@ -100,70 +96,85 @@ public class Icrs1Controller {
 	 * @param resType
 	 * @return
 	 */
-    @RequestMapping(value="/{school_id}/{teacher_id}/teachingmaterials",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
-    public List<TextbookViewModel> getTeacherResource(
-    		@PathVariable(value="school_id")String schoolId,
-    		@PathVariable(value="teacher_id")String teacherId,
-    		@RequestParam(required=false,value="res_type")String resType){
-    	
-    	List<TextbookModel>list=icrsService.getTeacherResource(schoolId,teacherId,resType);
-    	List<TextbookViewModel> tvmlist=new ArrayList<TextbookViewModel>();
-    	if(CollectionUtils.isNotEmpty(list)){
-    		for(TextbookModel model : list){
-    			TextbookViewModel tvm=new TextbookViewModel();
-    			tvm.setUuid(model.getUuid());
-    			tvm.setTitle(model.getTitle());
-    			tvmlist.add(tvm);
-    		}
-    	}	
-    	return tvmlist;
-    }
+	@RequestMapping(value = "/{school_id}/{teacher_id}/teachingmaterials", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public List<TextbookViewModel> getTeacherResource(
+			@PathVariable(value = "school_id") String schoolId,
+			@PathVariable(value = "teacher_id") String teacherId,
+			@RequestParam(required = false, value = "res_type") String resType) {
 
-    /**
-   	 * 校验日期格式
-   	 * @author yuzc
-   	 * @date 2016年9月12日
-   	 * @param str
-   	 * @return 
-   	 */
-    public static boolean isValidDate(String str) {
-    	
-    	        boolean convertSuccess=true;
-    	         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-    	         format.setLenient(false);
-				try {
-					format.parse(str);
-				} catch (java.text.ParseException e) {
-					
-					e.printStackTrace();
-					convertSuccess=false;
-				} 
-    	        return convertSuccess;
-    }
-    
-    /**
-	 * List<ResourceTotalModel> 转换为  ResourceTotalViewModel
+		List<TextbookModel> list = icrsService.getTeacherResource(schoolId,
+				teacherId, resType);
+		List<TextbookViewModel> tvmlist = new ArrayList<TextbookViewModel>();
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (TextbookModel model : list) {
+				TextbookViewModel tvm = new TextbookViewModel();
+				tvm.setUuid(model.getUuid());
+				tvm.setTitle(model.getTitle());
+				tvmlist.add(tvm);
+			}
+		}
+		return tvmlist;
+	}
+
+	/**
+	 * 校验日期格式
+	 * 
+	 * @author yuzc
+	 * @date 2016年9月12日
+	 * @param str
+	 * @return
+	 */
+	public static boolean isValidDate(String str) {
+
+		boolean convertSuccess = true;
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		format.setLenient(false);
+		try {
+			format.parse(str);
+		} catch (java.text.ParseException e) {
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.DateFormatFail.getCode(),
+					LifeCircleErrorMessageMapper.DateFormatFail.getMessage());
+		}
+		return convertSuccess;
+	}
+
+	/**
+	 * List<ResourceTotalModel> 转换为 ResourceTotalViewModel
+	 * 
 	 * @author yuzc
 	 * @date 2016年9月12日
 	 * @param rtm
 	 * @return rtvm
 	 */
-    public  ResourceTotalViewModel changeToViewModel(List<ResourceTotalModel> rtm) {
-    	
-    	ResourceTotalViewModel rtvm=new ResourceTotalViewModel();
-    	int total=0;
-    	if (CollectionUtils.isNotEmpty(rtm)) {
+	public ResourceTotalViewModel changeToViewModel(List<ResourceTotalModel> rtm) {
+
+		ResourceTotalViewModel rtvm = new ResourceTotalViewModel();
+		int total = 0;
+		if (CollectionUtils.isNotEmpty(rtm)) {
 			for (ResourceTotalModel model : rtm) {
-				switch(model.getResType()){
-				  case "assets": total=model.getResTotal()==0?0:model.getResTotal();rtvm.setTotal_multimedia(total); break;
-				  case "cousewares": total=model.getResTotal()==0?0:model.getResTotal();rtvm.setTotal_courseware(total);break;
-				  case "questions": total=model.getResTotal()==0?0:model.getResTotal();rtvm.setTotal_basic_question(total);break;
-				  default : total=model.getResTotal()==0?0:model.getResTotal();rtvm.setTotal_funny_question(total);break;
+				switch (model.getResType()) {
+				case "assets":
+					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					rtvm.setTotalMultimedia(total);
+					break;
+				case "cousewares":
+					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					rtvm.setTotalCourseware(total);
+					break;
+				case "questions":
+					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					rtvm.setTotalBasicQuestion(total);
+					break;
+				default:
+					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					rtvm.setTotalBasicQuestion(total);
+					break;
 				}
 			}
 		}
-    	return rtvm;
+		return rtvm;
 	}
 
-    
 }

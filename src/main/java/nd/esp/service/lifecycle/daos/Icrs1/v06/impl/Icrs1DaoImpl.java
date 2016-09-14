@@ -36,16 +36,15 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<ResourceTotalModel> getResourceTotal(String schoolId,
 			String fromDate, String toDate) {
-		String querySql = null;
+		String querySql =  "select res_type as resType ,count(*) as resTotal  from icrs_resource  where school_id=:schoolId";
 		final List<ResourceTotalModel> totalList = new ArrayList<ResourceTotalModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
-			querySql = "select res_type as resType ,count(*) as resTotal  from icrs_resource  where school_id=:schoolId  and create_date between :fromDate  and :toDate group by res_type";
-
+			querySql=querySql+" and create_date between :fromDate  and :toDate group by res_type";
 			params.put("fromDate", fromDate);
 			params.put("toDate", toDate);
 		} else {
-			querySql = "select res_type as resType ,count(*) as resTotal  from icrs_resource  where school_id=:schoolId  group by res_type";
+			querySql = querySql+" group by res_type";
 		}
 		params.put("schoolId", schoolId);
 		LOG.info("查询的SQL语句：" + querySql.toString());
@@ -68,15 +67,14 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<DailyDataViewModel> getResourceStatisticsByDay(String schoolId,
 			String resType, String fromDate, String toDate) {
-		String sql = null;
+		String sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where  school_id=:schoolId and";
 		final List<DailyDataViewModel> dailyList = new ArrayList<DailyDataViewModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (resType == null) {
-			sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where "
-					+ "school_id=:schoolId and create_date between :fromDate  and :toDate  group by date";
+			sql=sql+" create_date between :fromDate  and :toDate  group by date";
+			
 		} else {
-			sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where "
-					+ "school_id=:schoolId and res_type=:resType and create_date between :fromDate  and :toDate  group by date";
+			sql=sql+" res_type=:resType and create_date between :fromDate  and :toDate  group by date";
 			params.put("resType", resType);
 		}
 		params.put("schoolId", schoolId);
@@ -102,18 +100,14 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType) {
-		String querySql = null;
+		String querySql = "SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource AS ndr INNER JOIN icrs_resource AS icrs ON "
+				+ "ndr.identifier=icrs.res_uuid WHERE icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
 		final List<TextbookModel> resourceList = new ArrayList<TextbookModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
-		if (StringUtils.hasText(resType)) {
-			querySql="SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource AS ndr INNER JOIN icrs_resource AS icrs ON "
-					+ "ndr.identifier=icrs.res_uuid WHERE  icrs.res_type=:resType  AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
-			params.put("resType", resType);
-			
-		} else {
-			querySql="SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource AS ndr INNER JOIN icrs_resource AS icrs ON "
-					+ "ndr.identifier=icrs.res_uuid WHERE icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
-		}
+		if (StringUtils.hasText(resType)) {		
+			querySql=querySql+" AND  icrs.res_type=:resType";
+			params.put("resType", resType);			
+		} 
 		params.put("schoolId", schoolId);
 		params.put("teacherId", teacherId);
 		LOG.info("查询的SQL语句：" + querySql.toString());
