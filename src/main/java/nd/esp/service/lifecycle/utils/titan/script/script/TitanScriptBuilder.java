@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
-import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
 
@@ -56,16 +55,8 @@ public class TitanScriptBuilder {
             return suffix +"_" +secondIndex;
         }
 
-        public void setSuffix(String suffix) {
-            this.suffix = suffix;
-        }
-
         public String getVariable() {
             return variable;
-        }
-
-        public void setVariable(String variable) {
-            this.variable = variable;
         }
     }
 
@@ -74,7 +65,17 @@ public class TitanScriptBuilder {
      * */
     public TitanScriptBuilder update(TitanModel model){
         TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        update(titanScriptModel);
+
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        update(titanScriptModel, variable, script ,param);
+
+        this.script.append(script).append(";");
+        this.param.putAll(param);
         return this;
     }
 
@@ -94,13 +95,47 @@ public class TitanScriptBuilder {
 
     public TitanScriptBuilder add(TitanModel model){
         TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        add(titanScriptModel);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        add(titanScriptModel, variable, script ,param);
+
+        this.script.append(script).append(";");
+        this.param.putAll(param);
         return this;
     }
 
     public TitanScriptBuilder saveOrUpdate(TitanModel model){
+        if (model == null){
+            return this;
+        }
+
         TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        add(titanScriptModel);
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+
+        saveOrUpdate(titanScriptModel,variable,script,param);
+        this.script.append(script).append(";");
+        this.param.putAll(param);
+        return this;
+    }
+
+    public TitanScriptBuilder addBeforeCheckExist(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        addBeforeCheckExist(titanScriptModel, variable, script ,param);
+
+        this.script.append(script).append(";");
+        this.param.putAll(param);
         return this;
     }
 
@@ -112,34 +147,42 @@ public class TitanScriptBuilder {
         return null;
     }
 
-    public TitanScriptBuilder ifStart(){
-        return null;
+    private void saveOrUpdate(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
+        StringBuilder ifConditionScript = new StringBuilder("!");
+        uniqueVertexOrNode(titanScriptModel,variable, ifConditionScript, param);
+        appendIterator(ifConditionScript);
+        appendHasNext(ifConditionScript);
+
+        StringBuilder ifRunScript = new StringBuilder();
+        add(titanScriptModel,variable ,ifRunScript ,param);
+
+        StringBuilder elseRunScript = new StringBuilder();
+        update(titanScriptModel, variable, elseRunScript, param);
+
+        ifElseScript(script,ifConditionScript.toString(),ifRunScript.toString(),elseRunScript.toString());
+
     }
 
-    public TitanScriptBuilder ifEnd(){
-        return null;
+    private void addBeforeCheckExist(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
+        StringBuilder ifConditionScript = new StringBuilder("!");
+        uniqueVertexOrNode(titanScriptModel,variable, ifConditionScript, param);
+        appendIterator(ifConditionScript);
+        appendHasNext(ifConditionScript);
+
+        StringBuilder ifRunScript = new StringBuilder();
+        add(titanScriptModel,variable ,ifRunScript ,param);
+
+        ifScript(script, ifConditionScript.toString(), ifRunScript.toString());
     }
 
-    public TitanScriptBuilder elseStart(){
-        return null;
-    }
-
-    public TitanScriptBuilder elseEnd(){
-        return null;
-    }
-
-    private void add(TitanScriptModel titanScriptModel){
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-
-        Map<String, Object> param = new HashMap<>();
+    private void add(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
-            script = new StringBuilder(variable.getVariable()+"=graph");
+            script.append(variable.getVariable()).append("=graph");
             appendAddVertex(titanScriptModel.getFieldMap(),titanScriptModel.getLabel(),variable,script,param);
         }
         if (titanScriptModel instanceof TitanScriptModelEdge){
             TitanScriptModelEdge edge = (TitanScriptModelEdge) titanScriptModel;
-            script = new StringBuilder("g.V()");
+            script.append("g.V()");
             appendHas(edge.getResourceKeyMap(),variable,script,param);
             appendNext(script);
 
@@ -152,17 +195,9 @@ public class TitanScriptBuilder {
         }
 
         appendId(script);
-
-        this.script.append(script).append(";");
-        this.param.putAll(param);
-
     }
 
-    private void update(TitanScriptModel titanScriptModel){
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-
-        Map<String, Object> param = new HashMap<>();
+    private void update(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
             script.append("g.V()");
         }
@@ -185,31 +220,19 @@ public class TitanScriptBuilder {
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
         appendProperty(updateValues,variable,script,param);
         appendProperties(dropValues,script);
-
         script.append(";");
-
-
-
-        this.script.append(script).append(";");
-
-
-
-        this.param.putAll(param);
     }
 
-    private void getTitanId(TitanScriptModel titanScriptModel){
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder("g.");
+    private void uniqueVertexOrNode(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
+        script.append("g");
         if (titanScriptModel instanceof TitanScriptModelVertex){
-            script.append("V()");
+            script.append(".V()");
         }
         if (titanScriptModel instanceof TitanScriptModelEdge){
-            script.append("E()");
+            script.append(".E()");
         }
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
         appendId(script);
-        this.script.append(script).append(";");
-        this.param.putAll(param);
     }
 
 
@@ -251,15 +274,34 @@ public class TitanScriptBuilder {
         script.append(")");
     }
 
+    private void ifScript(StringBuilder script, String conditionScript,String ifRunScript){
+        script.append("if(").append(conditionScript).append("){").append(ifRunScript).append("}");
+    }
+    private void ifElseScript(StringBuilder script, String conditionScript,String ifRunScript, String elseRunScript){
+        ifScript(script, conditionScript, ifRunScript);
+        script.append("else{").append(elseRunScript).append("}");
+    }
+
     private void appendDrop(StringBuilder script){
         script.append(".drop()");
     }
 
+    private void appendIterator(StringBuilder script){
+        script.append(".iterator()");
+    }
+
+    private void appendHasNext(StringBuilder script){
+        script.append(".hasNext()");
+    }
+
     private void appendAddVertex(Map<String, Object> values,String label , Variable variable, StringBuilder script , Map<String, Object> param){
         String labelName = "nodeLabel"+variable.getSuffix();
-        script.append(".addVertex(").append(labelName);
+        script.append(".addVertex(T.label,").append(labelName);
         param.put(labelName, label);
         for (String key : values.keySet()){
+            if (values.get(key)==null){
+                continue;
+            }
             String name = key + variable.getSuffix();
             script.append(",'").append(key).append("',").append(name);
             param.put(name, values.get(key));
@@ -272,10 +314,14 @@ public class TitanScriptBuilder {
         String labelName = "edgeLabel"+variable.getSuffix();
         script.append(".addEdge(").append(labelName).append(",").append(innerScript);
         for (String key : values.keySet()){
+            if (values.get(key)==null){
+                continue;
+            }
             String name = key + variable.getSuffix();
             script.append(",'").append(key).append("',").append(name);
             param.put(name, values.get(key));
         }
+        param.put(labelName, label);
         script.append(")");
     }
 

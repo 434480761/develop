@@ -1,7 +1,7 @@
 package nd.esp.service.lifecycle.utils.titan.script.utils;
 
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
-import nd.esp.service.lifecycle.utils.titan.script.model.TitanEducationQuestions;
+import nd.esp.service.lifecycle.utils.titan.script.model.TitanQuestions;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageEdge;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
@@ -19,6 +19,9 @@ import java.util.*;
  */
 public class ParseAnnotation {
     public static TitanScriptModel createScriptModel(TitanModel titanModel) {
+        if (titanModel == null){
+            return null;
+        }
         TitanScriptModel titanScriptModel = null;
         //处理节点
         if (titanModel.getClass().getAnnotation(TitanVertex.class) != null) {
@@ -214,7 +217,7 @@ public class ParseAnnotation {
 
 
     public static void main(String[] args) {
-        TitanEducationQuestions qustions = new TitanEducationQuestions();
+        TitanQuestions qustions = new TitanQuestions();
         qustions.setDbpreview("123");
         qustions.setIdentifier(UUID.randomUUID().toString());
         createScriptModel(qustions);
