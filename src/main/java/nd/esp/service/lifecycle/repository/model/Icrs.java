@@ -43,20 +43,14 @@ public class Icrs {
 	@Column(name = "grade_code")
 	private String gradeCode;
 	
-//	@Column(name = "grade")
-//	private String grade;
-	
 	@Column(name = "subject_code")
 	private String subjectCode;
-	
-//	@Column(name = "subject")
-//	private String subject;
 	
 	@Column(name = "create_time")
 	private BigDecimal createTime;
 	
 	@Column(name = "create_date")
-	private Date createDate;
+	private String createDate;
 	
 	@Column(name = "create_hour")
 	private Integer createHour;
@@ -153,11 +147,11 @@ public class Icrs {
 		this.createTime = createTime;
 	}
 
-	public Date getCreateDate() {
+	public String getCreateDate() {
 		return createDate;
 	}
 
-	public void setCreateDate(Date createDate) {
+	public void setCreateDate(String createDate) {
 		this.createDate = createDate;
 	}
 

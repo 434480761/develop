@@ -1,6 +1,6 @@
 package nd.esp.service.lifecycle.services.icrs2.v06.impls;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +22,7 @@ import nd.esp.service.lifecycle.repository.model.Icrs;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.services.icrs2.v06.IcrsServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
 
@@ -35,58 +36,92 @@ public class IcrsServiceV06imple implements IcrsServiceV06{
 	@Autowired
 	private CategoryDataRepository categoryDataRepository;
 	
+	
+	/**
+	 *  查询本校教师的资源产出数据，并将数据放入TeacherOutputResourcemodel输出
+	 * @methodName IcrsServiceV06imple.java
+	 * @author xm
+	 * @date 2016年9月15日 上午10:12:23
+	 * @param schoolId
+	 * @param resType
+	 * @param fromDate
+	 * @param toDate
+	 * @param grade
+	 * @param subject
+	 * @param order
+	 * @param limit
+	 * @return
+	 * @see nd.esp.service.lifecycle.services.icrs2.v06.IcrsServiceV06#queryTeacherResourceOutput(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
-	public ListViewModel<TeacherOutputResource> queryTeacherResourceOutputBySchoolId(String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
+	public ListViewModel<TeacherOutputResource> queryTeacherResourceOutput(String schoolId,String resType,String fromDate,String toDate,String grade,String subject,
             String order,String limit) {
-		// TODO Auto-generated method stub
-		
 		String gradeName = null;
 		String subjectName = null;
-		List<Map<String, Object>> List = Icrs2Dao.queryBySchoolId(schoolId,resType,fromDate,toDate,grade,subject,
+		List<Map<String, Object>> list = Icrs2Dao.querySchoolTeacherResource(schoolId,resType,fromDate,toDate,grade,subject,
 	                                               order,limit); 
 		List<TeacherOutputResource> items = new ArrayList<TeacherOutputResource>();	   
 		//遍历
 		TeacherOutputResource tor=null;
-		for (Map<String, Object> m : List) {
+		for (Map<String, Object> m : list) {
 			tor = new TeacherOutputResource();
 			tor.setTeacherId((String)m.get("teacherId"));
 			tor.setTeacherName((String)m.get("teacherName"));
 			tor.setGradeCode((String)m.get("gradeCode"));
 			tor.setSubjectCode((String)m.get("subjectCode"));	
 			
-			 if((String)m.get("gradeCode")!=null){
+			 if(StringUtils.hasText((String)m.get("gradeCode"))){
 				gradeName = accordingCodeFindCodeName((String)m.get("gradeCode"));//通过subject_code获得这个值
 				tor.setGrade(gradeName);
 			   }
-			  if((String)m.get("subjectCode")!=null){
+			  if(StringUtils.hasText((String)m.get("subjectCode"))){
 				subjectName = accordingCodeFindCodeName((String)m.get("subjectCode"));
 				tor.setSubject(subjectName);
 			   }
-			  
-									 
+			  									 
 			tor.setData( (Integer) m.get("data"));  
 			items.add(tor);
 		}
 		
 		ListViewModel<TeacherOutputResource> returnListViewModel = new ListViewModel<TeacherOutputResource>();
-		if (items.size()>0) {
-			returnListViewModel.setItems(items);
-			returnListViewModel.setLimit("(0,"+limit+")");//在这里先设他为空值，controller的时候再给他赋值就好了
-			returnListViewModel.setTotal((long) items.size());	
-		}else {
-			return null;
-		}
-		
+		returnListViewModel.setItems(items);
+		returnListViewModel.setLimit("(0,"+limit+")");//在这里先设他为空值，controller的时候再给他赋值就好了
+		returnListViewModel.setTotal((long) items.size());		
 		return returnListViewModel;
 	}
 
+	
+	/**
+	 * 查询本校资源一天内各时段的产出数量
+	 * @methodName IcrsServiceV06imple.java
+	 * @author xm
+	 * @date 2016年9月15日 上午10:12:46
+	 * @param schoolId
+	 * @param resType
+	 * @param queryDate
+	 * @return
+	 * @see nd.esp.service.lifecycle.services.icrs2.v06.IcrsServiceV06#queryResourcePerHourOutput(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
-	public List<Map<String, Object>> getResourcePerHourBySchoolId(
-			String schoolId, String resType, Date queryDate) {
-		List<Map<String, Object>> list = Icrs2Dao.getResourcePerHour(schoolId, resType, queryDate);
+	public List<Map<String, Object>> queryResourcePerHourOutput(
+			String schoolId, String resType, String queryDate) {
+		List<Map<String, Object>> list = Icrs2Dao.queryResourcePerHour(schoolId, resType, queryDate);
 		return list;
 	}
 
+	
+	/**
+	 * 根据code查找title，例如subject_code=$SB02000,查找subject为音乐
+	 * @author xm
+	 * @version 
+	 * @date 2016年9月15日 下午6:01:17
+	 * @method accordingCodeFindCodeName
+	 * @see 
+	 * @param sourceString
+	 * @return
+	 * String
+	 * @throws
+	 */
 	public  String accordingCodeFindCodeName(String sourceString) {
 		 String name = null;
 		 CategoryData cData = new CategoryData();  //根据grade来查找中文名称

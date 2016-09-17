@@ -41,6 +41,7 @@ public interface Icrs1Dao {
 	 * @param resType
 	 * @return
 	 */
+	
 	List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType);
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import nd.esp.service.lifecycle.models.icrs1.v06.ResourceTotalModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
+import nd.esp.service.lifecycle.repository.model.Icrs;
 import nd.esp.service.lifecycle.services.icrs1.v06.Icrs1Service;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -134,9 +135,8 @@ public class Icrs1Controller {
 				try {
 					format.parse(str);
 				} catch (java.text.ParseException e) {
-					
-					e.printStackTrace();
-					convertSuccess=false;
+					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+	    					LifeCircleErrorMessageMapper.DateFormatFail.getCode(),e.getMessage());
 				} 
     	        return convertSuccess;
     }

@@ -1,6 +1,6 @@
 package nd.esp.service.lifecycle.services.icrs2.v06;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -15,15 +15,40 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 public interface IcrsServiceV06 {
 
 	/**
-	 * 查询本校的教师资源产出数据
-	 * @param String schoolId
-	 * @return
+	 *定义查询本校教师的资源产出数据接口
+	 * @author xm
+	 * @version 
+	 * @date 2016年9月13日 下午5:56:22
+	 * @method queryTeacherResourceOutput
+	 * @see 
+	 * @param schoolId
+	 * @param resType
+	 * @param fromDate
+	 * @param toDate
+	 * @param grade
+	 * @param subject
+	 * @param order
+	 * @param limit
+	 * @return ListViewModel<TeacherOutputResource>
+	 * @throws
 	 */
-	public ListViewModel<TeacherOutputResource> queryTeacherResourceOutputBySchoolId (String schoolId,String resType,Date fromDate,Date toDate,String grade,String subject,
+	public ListViewModel<TeacherOutputResource> queryTeacherResourceOutput (String schoolId,String resType,String fromDate,String toDate,String grade,String subject,
             String order,String limit);
 	
-	
-	public List<Map<String, Object>> getResourcePerHourBySchoolId(String schoolId,String resType,Date queryDate );
+	/**
+	 * 定义查询本校资源一天内各时段的产出数量接口
+	 * @author xm
+	 * @version 
+	 * @date 2016年9月13日 下午5:56:14
+	 * @method queryResourcePerHourOutput
+	 * @see 
+	 * @param schoolId
+	 * @param resType
+	 * @param queryDate
+	 * @return List<Map<String,Object>>
+	 * @throws
+	 */
+	public List<Map<String, Object>> queryResourcePerHourOutput(String schoolId,String resType,String queryDate );
 	
 	
 }
