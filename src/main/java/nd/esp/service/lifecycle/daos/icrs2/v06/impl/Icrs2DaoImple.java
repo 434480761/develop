@@ -14,6 +14,8 @@ import javax.persistence.Query;
 
 import org.apache.poi.ss.formula.functions.T;
 import org.joda.time.Hours;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import com.mysql.fabric.xmlrpc.base.Data;
 
+import nd.esp.service.lifecycle.daos.Icrs1.v06.impl.Icrs1DaoImpl;
 import nd.esp.service.lifecycle.daos.icrs2.v06.Icrs2Dao;
 import nd.esp.service.lifecycle.models.TeacherOutputResource;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
@@ -35,6 +38,8 @@ import nd.esp.service.lifecycle.vos.ListViewModel;
 public class Icrs2DaoImple implements Icrs2Dao{
 
 	
+	
+	private static final Logger LOG = LoggerFactory.getLogger(Icrs2DaoImple.class);
 	
 	@PersistenceContext(unitName="entityManagerFactory")
 	EntityManager em;
@@ -95,6 +100,7 @@ public class Icrs2DaoImple implements Icrs2Dao{
 				
 		//sql查询并把查询结果给list
 		String querySql = sqlStringBuffer.toString();
+		LOG.info("sql语句为"+querySql);
 		final List<Map<String,Object>> resultList = new ArrayList<Map<String,Object>>();
 		jdbcTemplate.query(querySql, new RowMapper<String>() {
 
