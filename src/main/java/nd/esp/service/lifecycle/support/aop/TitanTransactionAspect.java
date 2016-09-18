@@ -2,7 +2,11 @@ package nd.esp.service.lifecycle.support.aop;
 
 import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransactionCollection;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -18,6 +22,8 @@ import java.util.UUID;
 @Component
 @Order
 public class TitanTransactionAspect {
+    private final static Logger LOG = LoggerFactory
+            .getLogger(TitanTransactionAspect.class);
 
     @Autowired
     private TitanTransactionCollection titanTransactionCollection;
@@ -28,13 +34,21 @@ public class TitanTransactionAspect {
     }
 
     @Before("performanceAnnon()")
-    public void beforeExecuteAnnon() {
+    public void beforeExecuteAnnon(JoinPoint point) {
         initTitanTransaction();
     }
 
     @AfterReturning("performanceAnnon()")
-    public void afterReturnExecuteAnnon(){
-        titanTransactionCollection.commit(TransactionSynchronizationManager.getCurrentTransactionName());
+    public void afterReturnExecuteAnnon(JoinPoint point){
+        Signature signature = point.getSignature();
+        MethodSignature methodSignature = (MethodSignature) signature;
+        String className = methodSignature.getMethod().getDeclaringClass().getPackage().getName();
+        String method =  methodSignature.getMethod().getName();
+        String currentTransactionName = TransactionSynchronizationManager.getCurrentTransactionName();
+        //防止被方法中的其它titan事务提交
+        if (currentTransactionName.contains(className) && currentTransactionName.contains(method)) {
+            titanTransactionCollection.commit(TransactionSynchronizationManager.getCurrentTransactionName());
+        }
     }
 
     @AfterThrowing("performanceAnnon()")
@@ -43,13 +57,15 @@ public class TitanTransactionAspect {
     }
 
     private void initTitanTransaction(){
-        String name = createTransactionName();
+        String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
+        if (oldName != null &&  oldName.endsWith("_titan")){
+            LOG.info("有内嵌titan事务 {}",oldName);
+            return;
+        }
+        String name = TransactionSynchronizationManager.getCurrentTransactionName()
+                + UUID.randomUUID().toString()+"_titan";
+
         TransactionSynchronizationManager.setCurrentTransactionName(name);
         titanTransactionCollection.initOneTransaction(name);
-    }
-
-    private String createTransactionName(){
-        return TransactionSynchronizationManager.getCurrentTransactionName()
-                + UUID.randomUUID().toString()+"_titan";
     }
 }

@@ -8,6 +8,8 @@ import nd.esp.service.lifecycle.repository.model.ResourceRelation;
 import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,8 @@ import java.util.Map;
  */
 @Component
 public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
+    private static final Logger LOG = LoggerFactory
+            .getLogger(TitanSubmitTransactionImpl.class);
     @Autowired
     private TitanRepository titanRepository;
 
@@ -70,9 +74,10 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     }
                     break;
                 case delete:
-//                    titanRepository.delete(operation.getEntity().getIdentifier());
+                    titanRepository.delete(operation.getEntity().getIdentifier());
                     break;
                 default:
+                    LOG.info("没有对应的处理方法");
             }
         }
 
