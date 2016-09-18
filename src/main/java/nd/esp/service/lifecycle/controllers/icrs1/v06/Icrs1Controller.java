@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.controllers.icrs1.v06;
 import java.util.ArrayList;
 import java.util.List;
 
+import nd.esp.service.lifecycle.models.icrs1.v06.DailyDataModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.ResourceTotalModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
 import nd.esp.service.lifecycle.services.icrs1.v06.Icrs1Service;
@@ -47,7 +48,7 @@ public class Icrs1Controller {
 			@PathVariable(value = "school_id") String schoolId,
 			@RequestParam(required = false, value = "from_date") String fromDate,
 			@RequestParam(required = false, value = "to_date") String toDate) {
-	
+
 		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
 			// 校验日期是否合法
 			isValidDate(fromDate);
@@ -76,12 +77,22 @@ public class Icrs1Controller {
 			@RequestParam(required = false, value = "res_type") String resType,
 			@RequestParam String from_date, @RequestParam String to_date) {
 
-		List<DailyDataViewModel> ddvmList = new ArrayList<DailyDataViewModel>();
+		List<DailyDataModel> ddmList = new ArrayList<DailyDataModel>();
 		// 校验日期是否合法
 		if (isValidDate(from_date) && isValidDate(to_date)) {
 
-			ddvmList = icrsService.getResourceStatisticsByDay(schoolId,
+			ddmList = icrsService.getResourceStatisticsByDay(schoolId,
 					resType, from_date, to_date);
+		}
+		
+		List<DailyDataViewModel> ddvmList = new ArrayList<DailyDataViewModel>();
+		if (CollectionUtils.isNotEmpty(ddmList)) {
+			for (DailyDataModel model : ddmList) {
+				DailyDataViewModel ddvm = new DailyDataViewModel();
+				ddvm.setData(model.getData());
+				ddvm.setDate(model.getDate());
+				ddvmList.add(ddvm);
+			}
 		}
 		return ddvmList;
 	}

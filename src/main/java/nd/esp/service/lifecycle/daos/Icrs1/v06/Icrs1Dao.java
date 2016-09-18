@@ -2,9 +2,9 @@ package nd.esp.service.lifecycle.daos.Icrs1.v06;
 
 import java.util.List;
 
+import nd.esp.service.lifecycle.models.icrs1.v06.DailyDataModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.ResourceTotalModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
-import nd.esp.service.lifecycle.vos.icrs1.v06.DailyDataViewModel;
 
 public interface Icrs1Dao {
 	
@@ -29,7 +29,7 @@ public interface Icrs1Dao {
 	 * @param toDate
 	 * @return
 	 */
-	List<DailyDataViewModel> getResourceStatisticsByDay(String schoolId,String resType, String fromDate, String toDate);
+	List<DailyDataModel> getResourceStatisticsByDay(String schoolId,String resType, String fromDate, String toDate);
 	
 	
 	/**
