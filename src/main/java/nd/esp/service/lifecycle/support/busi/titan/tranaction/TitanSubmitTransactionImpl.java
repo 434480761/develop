@@ -2,10 +2,8 @@ package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
-import nd.esp.service.lifecycle.repository.model.ResCoverage;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
-import nd.esp.service.lifecycle.repository.model.ResourceRelation;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
 import org.slf4j.Logger;
@@ -13,8 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Administrator on 2016/9/12.
@@ -49,27 +46,31 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
     private boolean submit(LinkedList<TitanRepositoryOperation> repositoryOperations){
         TitanScriptBuilder  builder = new TitanScriptBuilder();
+        List<String> deleteEdge = new ArrayList<>();
+        List<String> deleteVertex = new ArrayList<>();
 
         for (TitanRepositoryOperation operation : repositoryOperations) {
             TitanOperationType type = operation.getOperationType();
             switch (type) {
-                case add:
-                    if (operation.getEntity() instanceof ResCoverage || operation.getEntity() instanceof ResourceCategory ||operation.getEntity() instanceof TechInfo) {
+                case add: case update:
+                    if (operation.getEntity() instanceof ResCoverage
+                            || operation.getEntity() instanceof ResourceCategory) {
+                        deleteEdge.add(operation.getEntity().getIdentifier());
+
                         builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if (operation.getEntity() instanceof ResourceRelation){
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else {
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+                    } else if(operation.getEntity() instanceof  TechInfo
+                            || operation.getEntity() instanceof ResourceStatistical){
+                        deleteEdge.add(operation.getEntity().getIdentifier());
+                        deleteVertex.add(operation.getEntity().getIdentifier());
+
                         builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                    }
-                    break;
-                case update:
-                    if (operation.getEntity() instanceof ResCoverage || operation.getEntity() instanceof ResourceCategory) {
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+                    } else if (operation.getEntity() instanceof ResourceRelation){
+                        deleteEdge.add(operation.getEntity().getIdentifier());
                         builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    }else if (operation.getEntity() instanceof ResourceRelation){
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    }  else {
+                    } else
+                    if (operation.getEntity() instanceof Education){
                         builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
                     }
                     break;
@@ -81,17 +82,55 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
         }
 
-        builder.scriptEnd();
+
 
         Map<String, Object> param = builder.getParam();
         StringBuilder script = builder.getScript();
         if (param != null && param.size() > 0) {
             String id = null;
             try {
+                if (deleteEdge.size() != 0)
+                    batchDelete(deleteEdge,"edge");
+                if (deleteVertex.size() != 0){
+                    batchDelete(deleteVertex,"vertex");
+                }
                 id = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
             } catch (Exception e) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    public boolean batchDelete(List<String> identifierList, String type){
+        String titanType;
+        if ("edge".equals(type)){
+            titanType = "E";
+        } else {
+            titanType = "V";
+        }
+        StringBuilder scriptBuilder = new StringBuilder(
+                "g."+titanType+"().has('identifier',");
+        StringBuilder withInScript = new StringBuilder("within(");
+
+        Map<String, Object> params = new HashMap<>();
+        for (int i=0; i <identifierList.size() ;i ++){
+            String indentifierName = "identifier"+i;
+            if(i == 0){
+                withInScript.append(indentifierName);
+            } else {
+                withInScript.append(",").append(indentifierName);
+            }
+            params.put(indentifierName, identifierList.get(i));
+        }
+        withInScript.append(")");
+        scriptBuilder.append(withInScript).append(")").append(".drop()");
+
+        try {
+            titanCommonRepository.executeScript(scriptBuilder.toString(), params);
+        } catch (Exception e) {
+            return false;
         }
 
         return true;

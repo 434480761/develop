@@ -148,6 +148,20 @@ public class TitanScriptBuilder {
         return this;
     }
 
+    public TitanScriptBuilder delete(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        delete(titanScriptModel, variable, script ,param);
+
+        dealScriptAndParam(script, param);
+        return this;
+    }
+
     /**
      * 整个脚本结束，组合脚本中的方法，边和点通用
      * */
@@ -165,9 +179,7 @@ public class TitanScriptBuilder {
     /**
      * 删除节点，必须是一个单独节点
      * */
-    public TitanScriptBuilder delete(TitanScriptModel titanScriptModel){
-        return null;
-    }
+
 
 
     public TitanScriptBuilder methodEnd(){
@@ -182,9 +194,22 @@ public class TitanScriptBuilder {
     private void dealScriptAndParam(StringBuilder script, Map<String, Object> param){
         String method = "method" + firstIndex;
         methodNames.add(method);
-        this.script.append("public void ").append(method).append("(){").append(script).append(";").append("}").append(";");
+//        this.script.append("public void ").append(method).append("(){").append(script).append(" ").append("}").append(";");
+        this.script.append(script).append(";");
         this.param.putAll(param);
         this.firstIndex ++ ;
+    }
+
+    private void delete(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
+        script.append("g");
+        if (titanScriptModel instanceof TitanScriptModelVertex){
+            script.append(".V()");
+        }
+        if (titanScriptModel instanceof TitanScriptModelEdge){
+            script.append(".E()");
+        }
+        appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
+        appendDrop(script);
     }
 
     /**
@@ -284,11 +309,11 @@ public class TitanScriptBuilder {
             }
 
         }
-
+//        appendNext(script);
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
         appendProperty(updateValues,variable,script,param);
-        appendProperties(dropValues,script);
-        appendDrop(script);
+//        appendProperties(dropValues,script);
+//        appendDrop(script);
         script.append(";");
     }
 

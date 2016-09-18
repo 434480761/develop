@@ -1,16 +1,14 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanEdgeResourceKey;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanEdgeTargetKey;
-import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
+import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 
 import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2016/9/18.
  */
-public class TitanResourceStatisticalEdge {
+@TitanEdge(label = "has_resource_statistical")
+public class TitanResourceStatisticalEdge extends TitanModel{
     @TitanEdgeTargetKey(target = "identifier")
     @TitanCompositeKey
     @TitanField(name = "identifier")
@@ -25,8 +23,8 @@ public class TitanResourceStatisticalEdge {
     @TitanField(name = "sta_key_value")
     private Double keyValue;
 
-    @TitanField(name = "sta_update_time")
-    private Timestamp updateTime;
+//    @TitanField(name = "sta_update_time")
+//    private Timestamp updateTime;
 
     @TitanField(name = "sta_data_from")
     private String dataFrom;
@@ -71,13 +69,13 @@ public class TitanResourceStatisticalEdge {
         this.keyValue = keyValue;
     }
 
-    public Timestamp getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(Timestamp updateTime) {
-        this.updateTime = updateTime;
-    }
+//    public Timestamp getUpdateTime() {
+//        return updateTime;
+//    }
+//
+//    public void setUpdateTime(Timestamp updateTime) {
+//        this.updateTime = updateTime;
+//    }
 
     public String getDataFrom() {
         return dataFrom;

@@ -25,6 +25,10 @@ public class EducationToTitanBeanUtils {
             model = BeanMapperUtils.beanMapper(entity,TitanTechInfo.class);
         }
 
+        if (entity instanceof ResourceStatistical){
+            model = BeanMapperUtils.beanMapper(entity, TitanResourceStatistical.class);
+        }
+
         return model;
     }
 
@@ -45,6 +49,11 @@ public class EducationToTitanBeanUtils {
         if (entity instanceof ResourceRelation){
             model = BeanMapperUtils.beanMapper(entity,TitanResourceRelationEdge.class);
         }
+
+        if (entity instanceof ResourceStatistical){
+            model = BeanMapperUtils.beanMapper(entity, TitanResourceStatisticalEdge.class);
+        }
+
         return model;
     }
 }
