@@ -34,10 +34,10 @@ public class Icrs1ServiceImpl implements Icrs1Service {
 	}
 
 	@Override
-	public List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
-			String resType) {
-		
-		return icrsDao.getTeacherResource(schoolId,teacherId,resType);
+	public List<TextbookModel> getTeacherResource(String schoolId,
+			String teacherId, String resType) {
+
+		return icrsDao.getTeacherResource(schoolId, teacherId, resType);
 	}
 
 }

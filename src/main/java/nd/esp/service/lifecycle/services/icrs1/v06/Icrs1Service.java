@@ -40,7 +40,7 @@ public interface Icrs1Service {
 	 * @param schoolId
 	 * @param teacherId
 	 * @param resType
-	 * @return
+	 * @return List
 	 */
 	List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType);

@@ -47,7 +47,7 @@ public class Icrs1Controller {
 			@PathVariable(value = "school_id") String schoolId,
 			@RequestParam(required = false, value = "from_date") String fromDate,
 			@RequestParam(required = false, value = "to_date") String toDate) {
-	
+
 		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
 			// 校验日期是否合法
 			isValidDate(fromDate);
