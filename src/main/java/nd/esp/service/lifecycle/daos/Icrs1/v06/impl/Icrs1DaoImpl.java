@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import nd.esp.service.lifecycle.daos.Icrs1.v06.Icrs1Dao;
+import nd.esp.service.lifecycle.models.icrs1.v06.DailyDataModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.ResourceTotalModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
-import nd.esp.service.lifecycle.vos.icrs1.v06.DailyDataViewModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,10 +65,10 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	}
 
 	@Override
-	public List<DailyDataViewModel> getResourceStatisticsByDay(String schoolId,
+	public List<DailyDataModel> getResourceStatisticsByDay(String schoolId,
 			String resType, String fromDate, String toDate) {
 		String sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where  school_id=:schoolId and";
-		final List<DailyDataViewModel> dailyList = new ArrayList<DailyDataViewModel>();
+		final List<DailyDataModel> dailyList = new ArrayList<DailyDataModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (resType == null) {
 			sql=sql+" create_date between :fromDate  and :toDate  group by date";
@@ -87,10 +87,10 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 		namedJdbcTemplate.query(sql, params, new RowMapper<String>() {
 			@Override
 			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-				DailyDataViewModel ddvm = new DailyDataViewModel();
-				ddvm.setDate(rs.getString("date"));
-				ddvm.setData(rs.getInt("data"));
-				dailyList.add(ddvm);
+				DailyDataModel ddm = new DailyDataModel();
+				ddm.setDate(rs.getString("date"));
+				ddm.setData(rs.getInt("data"));
+				dailyList.add(ddm);
 				return null;
 			}
 		});
