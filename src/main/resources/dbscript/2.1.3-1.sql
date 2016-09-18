@@ -29,3 +29,5 @@ CREATE TABLE `icrs_sync_error` (`identifier` CHAR(36) CHARACTER
 SET utf8 COLLATE utf8_general_ci COMMENT = 'ICRS同步错误记录表';
 
 ALTER TABLE `icrs_sync_error` ADD PRIMARY KEY(`identifier`);
+
+INSERT INTO `synchronized_table` (`pid`, `value`) VALUES ('6', '0')

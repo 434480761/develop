@@ -33,7 +33,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
-
+/**
+ * 智慧教室-课堂数据统计平台 帮助类
+ * @author xiezy
+ * @date 2016年9月18日
+ */
 public class IcrsServiceHelper {
 	private static final Logger LOG = LoggerFactory.getLogger(IcrsServiceHelper.class);
 	
@@ -387,7 +391,7 @@ public class IcrsServiceHelper {
 		final List<String> gradeCodeList = new ArrayList<String>();
 		final List<String> subjectCodeList = new ArrayList<String>();
 
-		String querySql = "select rc.taxonpath as path from resource_categories rc where rc.resource='"
+		String querySql = "select distinct rc.taxonpath as path from resource_categories rc where rc.resource='"
 				+ resource + "'";
 		querySql += " and rc.primary_category='" + resType + "'";
 
