@@ -1061,7 +1061,7 @@ public class NDResourceController {
     private ListViewModel<ResourceModel> resourceQueryByTitanRealTime(String resType, String resCodes,List<String> includes,Set<String> categories,
             Set<String> categoryExclude,List<Map<String,String>> relations,List<String> coverages,
             Map<String,Set<String>> propsMap,Map<String, String> orderMap, String words,String limit,boolean isNotManagement,boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion){
-        int intevalTimeMillis = -10*60000;
+        int intevalTimeMillis = -60000;
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MILLISECOND, intevalTimeMillis);
         Cloner cloner = new Cloner();
