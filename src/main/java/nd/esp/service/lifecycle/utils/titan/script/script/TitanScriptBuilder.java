@@ -11,6 +11,7 @@ import java.util.*;
 public class TitanScriptBuilder {
     private StringBuilder script = new StringBuilder();
     private Map<String, Object> param = new HashMap<>();
+    private List<String> methodNames = new ArrayList<>();
     private enum KeyWords {
         node,edge,source,target,addVertex,has,next,id,addEdge,property
     }
@@ -61,7 +62,7 @@ public class TitanScriptBuilder {
     }
 
     /**
-     * 添加节点，脚本可以单独执行，返回titan内部ID
+     * 更新数据脚本，边和点通用
      * */
     public TitanScriptBuilder update(TitanModel model){
         TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
@@ -74,9 +75,74 @@ public class TitanScriptBuilder {
         Map<String, Object> param = new HashMap<>();
         update(titanScriptModel, variable, script ,param);
 
-        this.script.append(script).append(";");
-        this.param.putAll(param);
+        dealScriptAndParam(script, param);
         return this;
+    }
+
+    /**
+     * 添加数据脚本，边和点通用
+     * */
+    public TitanScriptBuilder add(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        add(titanScriptModel, variable, script ,param);
+
+        dealScriptAndParam(script, param);
+        return this;
+    }
+
+    /**
+     * 添加或者更新脚本，边和点通用
+     * */
+    public TitanScriptBuilder addOrUpdate(TitanModel model){
+        if (model == null){
+            return this;
+        }
+
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+
+        addOrUpdate(titanScriptModel,variable,script,param);
+        dealScriptAndParam(script, param);
+        return this;
+    }
+
+    /**
+     * 添加前检查数据是否已经存在，如果不存在则添加，否则不进行任何操作，边和点通用
+     * */
+    public TitanScriptBuilder addBeforeCheckExist(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        addBeforeCheckExist(titanScriptModel, variable, script ,param);
+
+        dealScriptAndParam(script, param);
+        return this;
+    }
+
+    /**
+     * 整个脚本结束，组合脚本中的方法，边和点通用
+     * */
+    public TitanScriptBuilder scriptEnd(){
+        script.append("public void method(){");
+        for (String methodName : methodNames){
+            script.append(methodName).append("();");
+        }
+
+        script.append("};method()");
+
+        return null;
     }
 
     /**
@@ -93,61 +159,31 @@ public class TitanScriptBuilder {
         return null;
     }
 
-    public TitanScriptBuilder add(TitanModel model){
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        if (titanScriptModel == null){
-            return this;
-        }
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-        add(titanScriptModel, variable, script ,param);
-
-        this.script.append(script).append(";");
-        this.param.putAll(param);
-        return this;
-    }
-
-    public TitanScriptBuilder saveOrUpdate(TitanModel model){
-        if (model == null){
-            return this;
-        }
-
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-
-        saveOrUpdate(titanScriptModel,variable,script,param);
-        this.script.append(script).append(";");
-        this.param.putAll(param);
-        return this;
-    }
-
-    public TitanScriptBuilder addBeforeCheckExist(TitanModel model){
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        if (titanScriptModel == null){
-            return this;
-        }
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-        addBeforeCheckExist(titanScriptModel, variable, script ,param);
-
-        this.script.append(script).append(";");
-        this.param.putAll(param);
-        return this;
-    }
 
     public TitanScriptBuilder methodEnd(){
         return null;
     }
 
-    public TitanScriptBuilder scriptEnd(){
-        return null;
+    /**
+     * 为脚本添加方法头不合尾部
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
+    private void dealScriptAndParam(StringBuilder script, Map<String, Object> param){
+        String method = "method" + firstIndex;
+        methodNames.add(method);
+        this.script.append("public void ").append(method).append("(){").append(script).append(";").append("}").append(";");
+        this.param.putAll(param);
+        this.firstIndex ++ ;
     }
 
-    private void saveOrUpdate(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
+    /**
+     * @param titanScriptModel titan脚本参数
+     * @param variable 单个脚本所需要的一些参数
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
+    private void addOrUpdate(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
         StringBuilder ifConditionScript = new StringBuilder("!");
         uniqueVertexOrNode(titanScriptModel,variable, ifConditionScript, param);
         appendIterator(ifConditionScript);
@@ -163,6 +199,12 @@ public class TitanScriptBuilder {
 
     }
 
+    /**
+     * @param titanScriptModel titan脚本参数
+     * @param variable 单个脚本所需要的一些参数
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
     private void addBeforeCheckExist(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         StringBuilder ifConditionScript = new StringBuilder("!");
         uniqueVertexOrNode(titanScriptModel,variable, ifConditionScript, param);
@@ -175,6 +217,12 @@ public class TitanScriptBuilder {
         ifScript(script, ifConditionScript.toString(), ifRunScript.toString());
     }
 
+    /**
+     * @param titanScriptModel titan脚本参数
+     * @param variable 单个脚本所需要的一些参数
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
     private void add(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
             script.append(variable.getVariable()).append("=graph");
@@ -197,6 +245,12 @@ public class TitanScriptBuilder {
         appendId(script);
     }
 
+    /**
+     * @param titanScriptModel titan脚本参数
+     * @param variable 单个脚本所需要的一些参数
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
     private void update(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
             script.append("g.V()");
@@ -220,9 +274,17 @@ public class TitanScriptBuilder {
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
         appendProperty(updateValues,variable,script,param);
         appendProperties(dropValues,script);
+        appendDrop(script);
         script.append(";");
     }
 
+    /**
+     * 获取唯一的节点或者边
+     * @param titanScriptModel titan脚本参数
+     * @param variable 单个脚本所需要的一些参数
+     * @param script 脚本
+     * @param param 脚本参数
+     * */
     private void uniqueVertexOrNode(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
         script.append("g");
         if (titanScriptModel instanceof TitanScriptModelVertex){
@@ -265,9 +327,9 @@ public class TitanScriptBuilder {
         script.append(".properties(");
         for (int i=0; i< keys.size() ; i++){
             if (i == 0){
-                script.append(keys.get(i));
+                script.append("'").append(keys.get(i)).append("'");
             } else {
-                script.append(",").append(keys.get(i));
+                script.append(",").append("'").append(keys.get(i)).append("'");
             }
         }
 
@@ -343,43 +405,4 @@ public class TitanScriptBuilder {
             param.put(name, values.get(key));
         }
     }
-
-
-    class Builder{
-        StringBuilder sb = new StringBuilder();
-        public Builder(Builder builder){
-            this.sb = new StringBuilder(builder.sb);
-        }
-        public Builder(String head){
-            sb.append(head);
-        }
-        public Builder has(String key, String value){
-            sb.append(".has(").append("'").append(key).append("'").append(",").append(value).append(")");
-            return this;
-        }
-        public Builder hasLabel(String key, String value){
-            sb.append(".hasLabel(").append("'").append(key).append("'").append(",").append(value).append(")");
-            return this;
-        }
-        public Builder outE(){
-            sb.append(".outE()");
-            return this;
-        }
-        public Builder inV(){
-            sb.append(".inV()");
-            return this;
-        }
-        public StringBuilder end(){
-            return sb.append(";");
-        }
-        public Builder id(){
-            sb.append(".id()");
-            return this;
-        }
-        public Builder count(){
-            sb.append(".count()");
-            return this;
-        }
-    }
-
 }
