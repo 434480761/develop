@@ -41,7 +41,7 @@ public interface TitanSearchService {
      * @param words
      * @return
      */
-	public ListViewModel<ResourceModel> searchUseES(String resType,List<String> fields,
+	public ListViewModel<ResourceModel> searchUseES(Set<String> resTypeSet,List<String> fields,
 			List<String> includes,
 			Map<String, Map<String, List<String>>> params,
 			Map<String, String> orderMap, int from, int size, boolean reverse,String words);
