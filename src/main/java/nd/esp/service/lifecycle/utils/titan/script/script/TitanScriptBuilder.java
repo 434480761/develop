@@ -132,6 +132,23 @@ public class TitanScriptBuilder {
     }
 
     /**
+     * 获取节点
+     * */
+    public TitanScriptBuilder get(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        uniqueVertexOrNode(titanScriptModel, variable, script ,param);
+
+        dealScriptAndParam(script, param);
+        return this;
+    }
+
+    /**
      * 整个脚本结束，组合脚本中的方法，边和点通用
      * */
     public TitanScriptBuilder scriptEnd(){
@@ -142,13 +159,6 @@ public class TitanScriptBuilder {
 
         script.append("};method()");
 
-        return null;
-    }
-
-    /**
-     * 获取节点
-     * */
-    public TitanScriptBuilder get(TitanScriptModel titanScriptModel){
         return null;
     }
 
@@ -182,6 +192,7 @@ public class TitanScriptBuilder {
      * @param variable 单个脚本所需要的一些参数
      * @param script 脚本
      * @param param 脚本参数
+     * 脚本模板 if(exist){update_script}else{add_script}
      * */
     private void addOrUpdate(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
         StringBuilder ifConditionScript = new StringBuilder("!");
@@ -204,6 +215,7 @@ public class TitanScriptBuilder {
      * @param variable 单个脚本所需要的一些参数
      * @param script 脚本
      * @param param 脚本参数
+     * 脚本模板 if(!exist){add_script}
      * */
     private void addBeforeCheckExist(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         StringBuilder ifConditionScript = new StringBuilder("!");
@@ -222,6 +234,7 @@ public class TitanScriptBuilder {
      * @param variable 单个脚本所需要的一些参数
      * @param script 脚本
      * @param param 脚本参数
+     * 脚本模板 add_script : node_0 = graph.addVertex(T.label,label,pro1,value1,...).id()
      * */
     private void add(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
@@ -250,6 +263,7 @@ public class TitanScriptBuilder {
      * @param variable 单个脚本所需要的一些参数
      * @param script 脚本
      * @param param 脚本参数
+     * 脚本模板 update_script:g.V().has('pro1',value1)...property('pro2',value2)...properties('pro3','pro4').drop()
      * */
     private void update(TitanScriptModel titanScriptModel,Variable variable, StringBuilder script , Map<String, Object> param){
         if (titanScriptModel instanceof TitanScriptModelVertex){
@@ -284,6 +298,7 @@ public class TitanScriptBuilder {
      * @param variable 单个脚本所需要的一些参数
      * @param script 脚本
      * @param param 脚本参数
+     * 脚本模板：g.V().has('pro1',value1)....id();
      * */
     private void uniqueVertexOrNode(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
         script.append("g");
