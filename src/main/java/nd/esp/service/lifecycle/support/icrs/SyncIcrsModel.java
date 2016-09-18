@@ -6,6 +6,7 @@ package nd.esp.service.lifecycle.support.icrs;
  */
 public class SyncIcrsModel {
 	private String identifier;
+	private Integer enable;
 	private Long createTime;
 	private String target;
 	
@@ -14,6 +15,12 @@ public class SyncIcrsModel {
 	}
 	public void setIdentifier(String identifier) {
 		this.identifier = identifier;
+	}
+	public Integer getEnable() {
+		return enable;
+	}
+	public void setEnable(Integer enable) {
+		this.enable = enable;
 	}
 	public Long getCreateTime() {
 		return createTime;

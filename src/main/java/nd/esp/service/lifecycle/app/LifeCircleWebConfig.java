@@ -12,6 +12,7 @@ import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
+import nd.esp.service.lifecycle.support.icrs.IcrsServiceHelper;
 import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.utils.JDomUtils;
 
@@ -166,6 +167,20 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
         CommonServiceHelper commonServiceHelper = new CommonServiceHelper();
 
         return commonServiceHelper;
+    }
+    
+    /**
+     * 加载 IcrsServiceHelper
+     * @author xiezy
+     * @date 2016年9月18日
+     * @return
+     */
+    @Bean
+    public IcrsServiceHelper getIcrsServiceHelper() {
+
+    	IcrsServiceHelper icrsServiceHelper = new IcrsServiceHelper();
+
+        return icrsServiceHelper;
     }
     
     /**

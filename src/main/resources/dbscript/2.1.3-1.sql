@@ -16,3 +16,16 @@ CREATE TABLE `icrs_resource` (`identifier` CHAR(36) CHARACTER
 SET utf8 COLLATE utf8_general_ci COMMENT = '智慧课堂的数据统计';
 ----索引
 ALTER TABLE `icrs_resource` ADD PRIMARY KEY(`identifier`);
+
+--------ICRS同步错误记录表
+CREATE TABLE `icrs_sync_error` (`identifier` CHAR(36) CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NULL , `title` VARCHAR(500) CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL , `description` TEXT CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL , `res_type` VARCHAR(20) CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '资源类型' , `res_uuid` CHAR(36) CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '资源UUID' , `create_time` BIGINT(20) NOT NULL COMMENT '资源创建时间' , `target` VARCHAR(255) CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '覆盖范围中的target' , `error_message` TEXT CHARACTER
+                                               SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '错误信息') ENGINE = InnoDB CHARACTER
+SET utf8 COLLATE utf8_general_ci COMMENT = 'ICRS同步错误记录表';
+
+ALTER TABLE `icrs_sync_error` ADD PRIMARY KEY(`identifier`);
