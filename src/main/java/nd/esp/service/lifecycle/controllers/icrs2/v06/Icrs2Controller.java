@@ -87,14 +87,12 @@ public class Icrs2Controller {
 		ListViewModel<TeacherOutputResource> returnList= icrsService.queryTeacherResourceOutput(schoolId, resType, fromDate, toDate, grade, subject, order, limit);
 		return returnList;
 	    }
-	
-	
-	
+		
 	/**
 	 * 查询本校资源一天内各时段的产出数量
 	 * @author xm
 	 * @version 
-	 * @date 2016年9月16日 下午6:13:01
+	 * @date 2016年9月14日 下午6:13:01
 	 * @method getRecourcesPerHour
 	 * @see 
 	 * @param schoolId
@@ -116,9 +114,7 @@ public class Icrs2Controller {
 		return returnList;
 	    }
 	
-	
-	
-	
+
 	/**
 	 * 对查询入参检验
 	 * @author xm
