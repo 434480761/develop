@@ -1,9 +1,7 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
 import nd.esp.service.lifecycle.repository.EspEntity;
-import nd.esp.service.lifecycle.repository.model.Asset;
-import nd.esp.service.lifecycle.repository.model.ResCoverage;
-import nd.esp.service.lifecycle.repository.model.ResourceCategory;
+import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 
 /**
@@ -23,6 +21,10 @@ public class EducationToTitanBeanUtils {
             model = BeanMapperUtils.beanMapper(entity,TitanResourceCategory.class);
         }
 
+        if (entity instanceof TechInfo){
+            model = BeanMapperUtils.beanMapper(entity,TitanTechInfo.class);
+        }
+
         return model;
     }
 
@@ -33,7 +35,15 @@ public class EducationToTitanBeanUtils {
         }
 
         if (entity instanceof ResourceCategory){
-            model = BeanMapperUtils.beanMapper(entity,TitanResourceCategory.class);
+            model = BeanMapperUtils.beanMapper(entity,TitanResourceCategoryEdge.class);
+        }
+
+        if (entity instanceof TechInfo){
+            model = BeanMapperUtils.beanMapper(entity,TitanTechInfoEdge.class);
+        }
+
+        if (entity instanceof ResourceRelation){
+            model = BeanMapperUtils.beanMapper(entity,TitanResourceRelationEdge.class);
         }
         return model;
     }
