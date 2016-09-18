@@ -63,7 +63,7 @@ public class TitanTransactionUtils<M extends EspEntity> {
     private void addStepEntity(EspEntity entity ,TitanOperationType type){
         String name = TransactionSynchronizationManager.getCurrentTransactionName();
         if (name == null || !name.endsWith("_titan")){
-            LOG.info("titan_transaction可能初始化");
+            LOG.info("{} titan_transaction可能没有初始化",name);
             return;
         }
         TitanRepositoryOperation operation = new TitanRepositoryOperation();
