@@ -26,5 +26,8 @@ public class InitIcrsResource {
 	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void init(){
 		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), true);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), true);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), true);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), true);
 	}
 }

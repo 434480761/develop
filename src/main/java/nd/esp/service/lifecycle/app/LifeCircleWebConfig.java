@@ -11,14 +11,11 @@ import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthRes
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
-import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
 import nd.esp.service.lifecycle.support.icrs.IcrsServiceHelper;
 import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.utils.JDomUtils;
 
 import org.elasticsearch.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -58,7 +55,7 @@ import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 @PropertySource(value = {"classpath:sdkdb/c3p0-config-main.properties","classpath:system.properties"})
 public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements SchedulingConfigurer{
 
-	private final static Logger LOG = LoggerFactory.getLogger(LifeCircleWebConfig.class);
+//	private final static Logger LOG = LoggerFactory.getLogger(LifeCircleWebConfig.class);
 
 	//@Value("${db.driver}")
 	 //private String driver;
