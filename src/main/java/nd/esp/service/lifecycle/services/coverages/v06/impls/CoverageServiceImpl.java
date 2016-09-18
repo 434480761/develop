@@ -16,6 +16,7 @@ import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -48,6 +49,7 @@ public class CoverageServiceImpl implements CoverageService{
     private NotifyReportService nrs;
     
     @Override
+    @TitanTransaction
     public CoverageViewModel createCoverage(CoverageModel coverageModel) {
         //判断一个资源是否已经有OWNER的覆盖策略
         if(coverageModel.getStrategy().equals(CoverageConstant.STRATEGY_OWNER)){
@@ -216,6 +218,7 @@ public class CoverageServiceImpl implements CoverageService{
     }
     
     @Override
+    @Transactional
     public CoverageViewModel updateCoverage(CoverageModelForUpdate coverageModelForUpdate) {
         //判断一个资源是否已经有OWNER的覆盖策略
         if(coverageModelForUpdate.getStrategy().equals(CoverageConstant.STRATEGY_OWNER)){

@@ -184,6 +184,7 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	}
 
 	@Override
+	@TitanTransaction
 	public AssetModel updateAsset(AssetModel am) {
 		return (AssetModel)ndResourceService.update(ResourceNdCode.assets.toString(), am);
 	}
