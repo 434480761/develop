@@ -75,7 +75,7 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<DailyDataModel> getResourceStatisticsByDay(String schoolId,
 			String resType, String fromDate, String toDate) {
-		String sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where  school_id=:schoolId and";
+		String sql = "select create_date as date,count(create_date) as data from icrs_resource where  school_id=:schoolId and";
 		
 		final List<DailyDataModel> dailyList = new ArrayList<DailyDataModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -111,7 +111,7 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType) {
-		String querySql = "SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource ndr INNER JOIN icrs_resource icrs ON "
+		String querySql = "SELECT distinct ndr.identifier AS uuid,ndr.title AS title FROM ndresource ndr INNER JOIN icrs_resource icrs ON "
 				+ "ndr.identifier=icrs.teachmaterial_uuid WHERE ndr.primary_category='teachingmaterials' "
 				+ "AND ndr.enable=1 AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId";
 		
