@@ -1,6 +1,5 @@
-package nd.esp.service.lifecycle.models;
+package nd.esp.service.lifecycle.models.icrs2.v06;
 
-import java.sql.Date;
 
 public class TeacherOutputResource {
 	

@@ -6,6 +6,7 @@ import java.util.List;
 import nd.esp.service.lifecycle.models.icrs1.v06.DailyDataModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.ResourceTotalModel;
 import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.icrs1.v06.Icrs1Service;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -49,10 +50,12 @@ public class Icrs1Controller {
 			@PathVariable(value = "school_id") String schoolId,
 			@RequestParam(required = false, value = "from_date") String fromDate,
 			@RequestParam(required = false, value = "to_date") String toDate) {
-
-		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
-			// 校验日期是否合法
+		
+		// 校验日期是否合法
+		if (StringUtils.hasText(fromDate)) {
 			isValidDate(fromDate);
+		}
+		if(StringUtils.hasText(toDate)){
 			isValidDate(toDate);
 		}
 		List<ResourceTotalModel> rtm = icrsService.getResourceTotal(schoolId,
@@ -181,29 +184,20 @@ public class Icrs1Controller {
 	public ResourceTotalViewModel changeToViewModel(List<ResourceTotalModel> rtm) {
 
 		ResourceTotalViewModel rtvm = new ResourceTotalViewModel();
-		int total = 0;
 		if (CollectionUtils.isNotEmpty(rtm)) {
 			for (ResourceTotalModel model : rtm) {
-				switch (model.getResType()) {
-				case "assets":
-					total = model.getResTotal();
-					rtvm.setTotalMultimedia(total);
-					break;
-				case "cousewares":
-					total = model.getResTotal();
-					rtvm.setTotalCourseware(total);
-					break;
-				case "questions":
-					total = model.getResTotal();
-					rtvm.setTotalBasicQuestion(total);
-					break;
-				default:
-					total = model.getResTotal();
-					rtvm.setTotalFunnyQuestion(total);
-					break;
+				if(model.getResType().equals(IndexSourceType.AssetType.getName())){
+					rtvm.setTotalMultimedia(model.getResTotal());
+				}else if(model.getResType().equals(IndexSourceType.SourceCourseWareType.getName())){
+					rtvm.setTotalCourseware(model.getResTotal());
+				}else if(model.getResType().equals(IndexSourceType.QuestionType.getName())){
+					rtvm.setTotalBasicQuestion(model.getResTotal());
+				}else if(model.getResType().equals(IndexSourceType.SourceCourseWareObjectType.getName())){
+					rtvm.setTotalFunnyQuestion(model.getResTotal());
 				}
 			}
 		}
+		
 		return rtvm;
 	}
 }

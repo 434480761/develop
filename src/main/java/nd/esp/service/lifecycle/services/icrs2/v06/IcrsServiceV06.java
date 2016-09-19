@@ -1,15 +1,9 @@
 package nd.esp.service.lifecycle.services.icrs2.v06;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.poi.ss.formula.functions.T;
-
-import com.mysql.fabric.xmlrpc.base.Data;
-
-import nd.esp.service.lifecycle.models.TeacherOutputResource;
-import nd.esp.service.lifecycle.models.v06.AssetModel;
+import nd.esp.service.lifecycle.models.icrs2.v06.HourDataModel;
+import nd.esp.service.lifecycle.models.icrs2.v06.TeacherOutputResource;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
 public interface IcrsServiceV06 {
@@ -48,7 +42,5 @@ public interface IcrsServiceV06 {
 	 * @return List<Map<String,Object>>
 	 * @throws
 	 */
-	public List<Map<String, Object>> queryResourcePerHourOutput(String schoolId,String resType,String queryDate );
-	
-	
+	public List<HourDataModel> queryResourcePerHourOutput(String schoolId,String resType,String queryDate );
 }

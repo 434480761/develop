@@ -41,11 +41,16 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 		final List<ResourceTotalModel> totalList = new ArrayList<ResourceTotalModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		
-		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
-			querySql += " and create_date between :fromDate  and :toDate";
+		if (StringUtils.hasText(fromDate)) {
+			querySql += " and create_date >= :fromDate";
 			params.put("fromDate", fromDate);
-			params.put("toDate", toDate);
 		} 
+		
+		if (StringUtils.hasText(toDate)) {
+			querySql += " and create_date <= :toDate";
+			params.put("toDate", toDate);
+		}
+		
 		querySql += " group by res_type";
 		params.put("schoolId", schoolId);
 		
@@ -71,20 +76,23 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	public List<DailyDataModel> getResourceStatisticsByDay(String schoolId,
 			String resType, String fromDate, String toDate) {
 		String sql = "select DATE(create_date) as date,count(create_date) as data from icrs_resource where  school_id=:schoolId and";
+		
 		final List<DailyDataModel> dailyList = new ArrayList<DailyDataModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (resType == null) {
-			sql=sql+" create_date between :fromDate  and :toDate  group by date";
+			sql += " create_date between :fromDate and :toDate group by date";
 			
 		} else {
-			sql=sql+" res_type=:resType and create_date between :fromDate  and :toDate  group by date";
+			sql +=" res_type=:resType and create_date between :fromDate and :toDate group by date";
 			params.put("resType", resType);
 		}
 		params.put("schoolId", schoolId);
 		params.put("fromDate", fromDate);
 		params.put("toDate", toDate);
+		
 		LOG.info("查询的SQL语句：" + sql.toString());
 		LOG.info("查询的SQL参数:" + ObjectUtils.toJson(params));
+		
 		NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(
 				defaultJdbcTemplate);
 		namedJdbcTemplate.query(sql, params, new RowMapper<String>() {
@@ -103,18 +111,22 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	@Override
 	public List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType) {
-		String querySql = "SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource AS ndr INNER JOIN icrs_resource AS icrs ON "
-				+ "ndr.identifier=icrs.teachmaterial_uuid WHERE ndr.primary_category='teachingmaterials' AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
+		String querySql = "SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource ndr INNER JOIN icrs_resource icrs ON "
+				+ "ndr.identifier=icrs.teachmaterial_uuid WHERE ndr.primary_category='teachingmaterials' "
+				+ "AND ndr.enable=1 AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId";
+		
 		final List<TextbookModel> resourceList = new ArrayList<TextbookModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (StringUtils.hasText(resType)) {		
-			querySql=querySql+" AND  icrs.res_type=:resType";
+			querySql=querySql+" AND icrs.res_type=:resType";
 			params.put("resType", resType);			
 		} 
 		params.put("schoolId", schoolId);
 		params.put("teacherId", teacherId);
+		
 		LOG.info("查询的SQL语句：" + querySql.toString());
 		LOG.info("查询的SQL参数:" + ObjectUtils.toJson(params));
+		
 		NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(
 				defaultJdbcTemplate);
 		namedJdbcTemplate.query(querySql, params, new RowMapper<String>() {
@@ -127,6 +139,7 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 				return null;
 			}
 		});
+		
 		return resourceList;
 	}
 }

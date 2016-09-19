@@ -2,13 +2,14 @@ package nd.esp.service.lifecycle.controllers.icrs2.v06;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
 
-import nd.esp.service.lifecycle.models.TeacherOutputResource;
+import nd.esp.service.lifecycle.models.icrs2.v06.HourDataModel;
+import nd.esp.service.lifecycle.models.icrs2.v06.TeacherOutputResource;
 import nd.esp.service.lifecycle.services.icrs2.v06.impls.IcrsServiceV06imple;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.icrs.IcrsResourceType;
+import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
@@ -26,18 +27,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v0.6/icrs/{school_id}")
 public class Icrs2Controller {
 
-	
 	@Autowired
 	@Qualifier("icrsServiceV06")
 	private IcrsServiceV06imple icrsService;
-	
+
 	/**
 	 * 查询本校教师的资源产出数据
+	 * 
 	 * @author xm
-	 * @version 
+	 * @version
 	 * @date 2016年9月14日 下午6:12:04
 	 * @method getTeacherResourceOutput
-	 * @see 
+	 * @see
 	 * @param schoolId
 	 * @param resType
 	 * @param fromDate
@@ -49,32 +50,40 @@ public class Icrs2Controller {
 	 * @return ListViewModel<TeacherOutputResource>
 	 * @throws
 	 */
-	@RequestMapping(value = "/statistics/query", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE },params = { "limit"})
-	 public ListViewModel<TeacherOutputResource> getTeacherResourceOutput(
-	            @PathVariable(value="school_id") String schoolId,
-	            @RequestParam(required=false,value="res_type") String resType,
-	            @RequestParam(required=false,value="from_date") String fromDate,
-	            @RequestParam(required=false,value="to_date") String toDate,
-	            @RequestParam(required=false,value="grade") String grade,
-	            @RequestParam(required=false,value="subject") String subject,
-	            @RequestParam(required=false,value="order") String order,
-	            @RequestParam String limit)  {
+	@RequestMapping(value = "/statistics/query", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = { "limit" })
+	public ListViewModel<TeacherOutputResource> getTeacherResourceOutput(
+			@PathVariable(value = "school_id") String schoolId,
+			@RequestParam(required = false, value = "res_type") String resType,
+			@RequestParam(required = false, value = "from_date") String fromDate,
+			@RequestParam(required = false, value = "to_date") String toDate,
+			@RequestParam(required = false, value = "grade") String grade,
+			@RequestParam(required = false, value = "subject") String subject,
+			@RequestParam(required = false, value = "order") String order,
+			@RequestParam String limit) {
 		
-		//入参检验
-		isValidInput(schoolId,resType,fromDate,toDate,null,order);
-		//转为数据库中reyType类型
+		//limit校验
+		ParamCheckUtil.checkLimit(limit);
+		
+		// 入参检验
+		isValidInput(schoolId, resType, fromDate, toDate, null, order);
+		// 转为数据库中reyType类型
 		resType = IcrsResourceType.getCorrespondingType(resType);
-		ListViewModel<TeacherOutputResource> returnList= icrsService.queryTeacherResourceOutput(schoolId, resType, fromDate, toDate, grade, subject, order, limit);
-		return returnList;
-	    }
 		
+		ListViewModel<TeacherOutputResource> returnList = icrsService
+				.queryTeacherResourceOutput(schoolId, resType, fromDate,
+						toDate, grade, subject, order, limit);
+		
+		return returnList;
+	}
+
 	/**
 	 * 查询本校资源一天内各时段的产出数量
+	 * 
 	 * @author xm
-	 * @version 
+	 * @version
 	 * @date 2016年9月14日 下午6:13:01
 	 * @method getRecourcesPerHour
-	 * @see 
+	 * @see
 	 * @param schoolId
 	 * @param resType
 	 * @param queryDate
@@ -82,27 +91,28 @@ public class Icrs2Controller {
 	 * @throws
 	 */
 	@RequestMapping(value = "/statistics/hour", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	 public List<Map<String, Object>> getRecourcesPerHour(
-			 	@PathVariable(value="school_id") String schoolId,
-	            @RequestParam(required=false,value="res_type") String resType,
-	            @RequestParam(required=true,value="query_date") String queryDate
-	            ) throws java.lang.Exception {
-		
-		//入参检验
+	public List<HourDataModel> getRecourcesPerHour(
+			@PathVariable(value = "school_id") String schoolId,
+			@RequestParam(required = false, value = "res_type") String resType,
+			@RequestParam(required = true, value = "query_date") String queryDate)
+			throws java.lang.Exception {
+
+		// 入参检验
 		isValidInput(schoolId, resType, null, null, queryDate, null);
 		resType = IcrsResourceType.getCorrespondingType(resType);
-		List<Map<String, Object>> returnList= icrsService.queryResourcePerHourOutput(schoolId, resType, queryDate);
-		return returnList;
-	    }
-	
+		
+		return icrsService
+				.queryResourcePerHourOutput(schoolId, resType, queryDate);
+	}
 
 	/**
 	 * 对查询入参检验
+	 * 
 	 * @author xm
-	 * @version 
+	 * @version
 	 * @date 2016年9月14日 下午6:14:08
 	 * @method isValidInput
-	 * @see 
+	 * @see
 	 * @param schoolId
 	 * @param resType
 	 * @param fromDate
@@ -112,21 +122,26 @@ public class Icrs2Controller {
 	 * @return void
 	 * @throws
 	 */
-	public void isValidInput(String schoolId,String resType,String fromDate,String toDate,String queryDate,String order){
-		      
-		if (!StringUtils.hasText(schoolId)) { 
-			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());			
-			}
-		if (StringUtils.hasText(resType)) {			
+	public void isValidInput(String schoolId, String resType, String fromDate,
+			String toDate, String queryDate, String order) {
+
+		if (!StringUtils.hasText(schoolId)) {
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CheckIcrsParamValidFail);
+		}
+		if (StringUtils.hasText(resType)) {
 			if (!IcrsResourceType.validType(resType)) {
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckIcrsParamValidFail);
 			}
 		}
-		if (StringUtils.hasText(order)) {	
-			if (!order.equalsIgnoreCase("desc")&&!order.equalsIgnoreCase("asc")) {
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
+		if (StringUtils.hasText(order)) {
+			if (!order.equalsIgnoreCase("desc")
+					&& !order.equalsIgnoreCase("asc")) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckIcrsParamValidFail);
 			}
-		}				
+		}
 		if (StringUtils.hasText(fromDate)) {
 			isValidDate(fromDate);
 		}
@@ -137,32 +152,31 @@ public class Icrs2Controller {
 			isValidDate(queryDate);
 		}
 	}
-	
-	
+
 	/**
 	 * 对Date类型进行校验，看是否满足yyyy-MM-dd类型
+	 * 
 	 * @author xm
-	 * @version 
+	 * @version
 	 * @date 2016年9月14日 下午6:47:18
 	 * @method isValidDate
-	 * @see 
+	 * @see
 	 * @param date
 	 * @return void
 	 * @throws
 	 */
-	public void isValidDate(String date){
+	public void isValidDate(String date) {
 		if (StringUtils.hasText(date)) {
 			try {
 				String formDateString = date;
-			    SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd");  
-			    format.setLenient(false);  
-			    format.parse(formDateString);  
-			} catch (Exception e) {	
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				format.setLenient(false);
+				format.parse(formDateString);
+			} catch (Exception e) {
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-						LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), 
-						e.getMessage());
+						LifeCircleErrorMessageMapper.CheckIcrsParamValidFail
+								.getCode(), e.getMessage());
 			}
 		}
 	}
 }
-
