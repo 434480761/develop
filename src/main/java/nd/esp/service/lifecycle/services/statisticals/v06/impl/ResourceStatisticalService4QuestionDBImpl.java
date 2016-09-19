@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
      * @param resType 资源类型
      * @param id 资源ID
      * */
+    @TitanTransaction
     public List<ResourceStatisticalModel> addStatistical(List<ResourceStatisticalModel> sms, String resType, String id) {
     	checkResourceExist(resType, id);
     	
@@ -117,6 +119,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
     }
     
     @Override
+    @TitanTransaction
 	public List<ResourceStatisticalModel> addStatisticalByCumulative(List<ResourceStatisticalModel> sms, 
 			String resType, String id) {
     	
@@ -305,6 +308,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
     }
     
     @Override
+    @TitanTransaction
 	public void addDownloadStatistical(String bsyskey, String resType, String id) {
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		List<ResourceStatistical> rsList = resourceStatisticalsDao.getAllRsByReousrceId(id);
@@ -364,6 +368,7 @@ public class ResourceStatisticalService4QuestionDBImpl implements ResourceStatis
 	}
 
 	@Override
+    @TitanTransaction
 	public void resourceTop(String resType, String uuid, boolean effect) {
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
         /**
