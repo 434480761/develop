@@ -23,8 +23,8 @@ public class TitanResourceStatisticalEdge extends TitanModel{
     @TitanField(name = "sta_key_value")
     private Double keyValue;
 
-//    @TitanField(name = "sta_update_time")
-//    private Timestamp updateTime;
+    @TitanField(name = "sta_update_time")
+    private Timestamp updateTime;
 
     @TitanField(name = "sta_data_from")
     private String dataFrom;
@@ -69,13 +69,13 @@ public class TitanResourceStatisticalEdge extends TitanModel{
         this.keyValue = keyValue;
     }
 
-//    public Timestamp getUpdateTime() {
-//        return updateTime;
-//    }
-//
-//    public void setUpdateTime(Timestamp updateTime) {
-//        this.updateTime = updateTime;
-//    }
+    public Timestamp getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Timestamp updateTime) {
+        this.updateTime = updateTime;
+    }
 
     public String getDataFrom() {
         return dataFrom;
