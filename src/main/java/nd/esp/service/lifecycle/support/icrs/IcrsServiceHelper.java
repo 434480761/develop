@@ -22,6 +22,7 @@ import nd.esp.service.lifecycle.repository.model.icrs.IcrsResource;
 import nd.esp.service.lifecycle.repository.model.icrs.IcrsSyncErrorRecord;
 import nd.esp.service.lifecycle.repository.sdk.icrs.IcrsResourceRepository;
 import nd.esp.service.lifecycle.repository.sdk.icrs.IcrsSyncErrorRecordRepository;
+import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
@@ -33,14 +34,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
+
 /**
  * 智慧教室-课堂数据统计平台 帮助类
+ * 
  * @author xiezy
  * @date 2016年9月18日
  */
 public class IcrsServiceHelper {
-	private static final Logger LOG = LoggerFactory.getLogger(IcrsServiceHelper.class);
-	
+	private static final Logger LOG = LoggerFactory
+			.getLogger(IcrsServiceHelper.class);
+
 	@Autowired
 	private IcrsResourceRepository icrsResourceRepository;
 	@Autowired
@@ -63,12 +67,14 @@ public class IcrsServiceHelper {
 			querySql += " inner join resource_categories rc on ndr.identifier=rc.resource ";
 		}
 
-		querySql += " where "
-				+ (isInit ? "ndr.enable=1 and " : "")
-				+ "ndr.primary_category='"
-				+ resType
-				+ "' "
-				+ "and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
+		querySql += " where " + (isInit ? "ndr.enable=1 and " : "")
+				+ "ndr.primary_category='" + resType + "' ";
+		
+		if(!resType.equals(IndexSourceType.AssetType.getName())){
+			querySql += " and ndr.estatus != '" + LifecycleStatus.CREATING.getCode() + "' ";
+		}
+		
+		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
 				+ resType + "' ";
 		if (resType.equals(IndexSourceType.AssetType.getName())) {// assets
 			querySql += " and rc.primary_category='" + resType
@@ -282,7 +288,7 @@ public class IcrsServiceHelper {
 						errorRecord.setCreateTime(new BigDecimal(createTime));
 						errorRecord.setTarget(target);
 						errorRecord.setErrorMessage(e.getMessage());
-						
+
 						try {
 							icrsSyncErrorRecordRepository.add(errorRecord);
 						} catch (EspStoreException e1) {
