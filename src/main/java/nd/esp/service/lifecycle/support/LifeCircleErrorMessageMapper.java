@@ -501,6 +501,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	
 	//icrs
 	DateFormatFail("LC/DateFormatError",getPropertyValue("icrsController.getResourceTotal.dataFormat.fail")),
+	ResourceTypeNotFound("ResourceTypeNotFound",getPropertyValue("icrsServiceImpl.getResourceByDay.ResourceTypeNotFound")),
     
 	CheckIcrsParamValidFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("icrsController.check.input.param.fail")),
 	
