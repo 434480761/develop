@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.utils.titan.script.model;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
+import nd.esp.service.lifecycle.utils.titan.script.model.education.TitanAssets;
 
 /**
  * Created by Administrator on 2016/9/14.

@@ -1,9 +1,10 @@
-package nd.esp.service.lifecycle.utils.titan.script.model;
+package nd.esp.service.lifecycle.utils.titan.script.model.education;
 
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
+import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 
 import java.math.BigDecimal;
 import java.util.List;
