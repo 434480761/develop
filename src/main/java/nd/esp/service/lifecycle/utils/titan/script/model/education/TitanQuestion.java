@@ -8,7 +8,7 @@ import nd.esp.service.lifecycle.utils.titan.script.model.education.TitanEducatio
  * Created by Administrator on 2016/8/24.
  */
 @TitanVertex(label = "questions")
-public class TitanQuestions extends TitanEducation {
+public class TitanQuestion extends TitanEducation {
 
     @TitanField(name = "preview")
     private String dbpreview;
