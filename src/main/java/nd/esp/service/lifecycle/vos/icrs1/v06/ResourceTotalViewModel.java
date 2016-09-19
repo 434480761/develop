@@ -10,6 +10,7 @@ public class ResourceTotalViewModel {
 	private int totalBasicQuestion;
 	//coursewareobjects
 	private int totalFunnyQuestion;
+	
 	public int getTotalCourseware() {
 		return totalCourseware;
 	}
@@ -34,8 +35,4 @@ public class ResourceTotalViewModel {
 	public void setTotalFunnyQuestion(int totalFunnyQuestion) {
 		this.totalFunnyQuestion = totalFunnyQuestion;
 	}
-
-	
-
-
 }

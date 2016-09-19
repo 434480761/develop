@@ -16,6 +16,4 @@ public class ResourceTotalModel {
 	public void setResTotal(int resTotal) {
 		this.resTotal = resTotal;
 	}
-
-
 }

@@ -1,31 +1,17 @@
 package nd.esp.service.lifecycle.controllers.icrs2.v06;
 
-import java.net.URLDecoder;
-import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import javax.annotation.Nullable;
-
-import nd.esp.service.lifecycle.educommon.support.QueryType;
-import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.models.TeacherOutputResource;
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
 import nd.esp.service.lifecycle.services.icrs2.v06.impls.IcrsServiceV06imple;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.busi.CommonHelper;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.support.icrs.IcrsResourceType;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
-import org.apache.xmlbeans.impl.jam.internal.javadoc.JavadocClassloadingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -35,11 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
-import com.sun.tools.javah.resources.l10n;
-
 
 @RestController
 @RequestMapping("/v0.6/icrs/{school_id}")
@@ -82,7 +63,7 @@ public class Icrs2Controller {
 		//入参检验
 		isValidInput(schoolId,resType,fromDate,toDate,null,order);
 		//转为数据库中reyType类型
-		resType=changeResType(resType);
+		resType = IcrsResourceType.getCorrespondingType(resType);
 		ListViewModel<TeacherOutputResource> returnList= icrsService.queryTeacherResourceOutput(schoolId, resType, fromDate, toDate, grade, subject, order, limit);
 		return returnList;
 	    }
@@ -109,7 +90,7 @@ public class Icrs2Controller {
 		
 		//入参检验
 		isValidInput(schoolId, resType, null, null, queryDate, null);
-		resType=changeResType(resType);
+		resType = IcrsResourceType.getCorrespondingType(resType);
 		List<Map<String, Object>> returnList= icrsService.queryResourcePerHourOutput(schoolId, resType, queryDate);
 		return returnList;
 	    }
@@ -137,11 +118,8 @@ public class Icrs2Controller {
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());			
 			}
 		if (StringUtils.hasText(resType)) {			
-			if (!resType.equals("courseware")
-							&&!resType.equals("multimedia")
-							&&!resType.equals("basic_question")
-							&&!resType.equals("funny_question")) {
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
+			if (!IcrsResourceType.validType(resType)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail);
 			}
 		}
 		if (StringUtils.hasText(order)) {	
@@ -178,41 +156,13 @@ public class Icrs2Controller {
 				String formDateString = date;
 			    SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd");  
 			    format.setLenient(false);  
-			    Date formateDate =   format.parse(formDateString);  
+			    format.parse(formDateString);  
 			} catch (Exception e) {	
-				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), 
+						e.getMessage());
 			}
-			
 		}
-		
 	}
-	
-	/**
-	 * 将resType转换为数据库中对应的值
-	 * @author xm
-	 * @version 
-	 * @date 2016年9月18日 下午9:14:27
-	 * @method changeResType
-	 * @see 
-	 * @param resType
-	 * @return
-	 * String
-	 * @throws
-	 */
-	public String changeResType(String resType){
-		
-		if (resType.equals("courseware")) {
-			resType = IndexSourceType.SourceCourseWareType.getName();  //coursewares
-		}else if(resType.equals("multimedia")){
-			resType=IndexSourceType.AssetType.getName();               //assets
-		}else if(resType.equals("basic_question")){
-			resType=IndexSourceType.QuestionType.getName();             //questions
-		}else if(resType.equals("funny_question")){
-			resType=IndexSourceType.SourceCourseWareObjectType.getName();       //coursewareobject
-		}
-		
-		return resType;
-	}
-	
 }
 

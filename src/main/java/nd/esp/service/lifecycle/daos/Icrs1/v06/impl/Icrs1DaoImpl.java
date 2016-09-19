@@ -37,18 +37,21 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	public List<ResourceTotalModel> getResourceTotal(String schoolId,
 			String fromDate, String toDate) {
 		String querySql =  "select res_type as resType ,count(*) as resTotal  from icrs_resource  where school_id=:schoolId";
+		
 		final List<ResourceTotalModel> totalList = new ArrayList<ResourceTotalModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
+		
 		if (StringUtils.hasText(fromDate) && StringUtils.hasText(toDate)) {
-			querySql=querySql+" and create_date between :fromDate  and :toDate group by res_type";
+			querySql += " and create_date between :fromDate  and :toDate";
 			params.put("fromDate", fromDate);
 			params.put("toDate", toDate);
-		} else {
-			querySql = querySql+" group by res_type";
-		}
+		} 
+		querySql += " group by res_type";
 		params.put("schoolId", schoolId);
+		
 		LOG.info("查询的SQL语句：" + querySql.toString());
 		LOG.info("查询的SQL参数:" + ObjectUtils.toJson(params));
+		
 		NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(
 				defaultJdbcTemplate);
 		namedJdbcTemplate.query(querySql, params, new RowMapper<String>() {
@@ -101,7 +104,7 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 	public List<TextbookModel> getTeacherResource(String schoolId, String teacherId,
 			String resType) {
 		String querySql = "SELECT ndr.identifier AS uuid,ndr.title AS title FROM ndresource AS ndr INNER JOIN icrs_resource AS icrs ON "
-				+ "ndr.identifier=icrs.res_uuid WHERE icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
+				+ "ndr.identifier=icrs.teachmaterial_uuid WHERE ndr.primary_category='teachingmaterials' AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId AND ndr.enable=1";
 		final List<TextbookModel> resourceList = new ArrayList<TextbookModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (StringUtils.hasText(resType)) {		
@@ -126,5 +129,4 @@ public class Icrs1DaoImpl implements Icrs1Dao {
 		});
 		return resourceList;
 	}
-
 }

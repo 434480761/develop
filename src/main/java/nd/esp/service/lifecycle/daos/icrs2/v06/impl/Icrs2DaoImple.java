@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.daos.icrs2.v06.impl;
 
-import java.util.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -10,29 +9,18 @@ import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
-import org.apache.poi.ss.formula.functions.T;
-import org.joda.time.Hours;
+import nd.esp.service.lifecycle.daos.icrs2.v06.Icrs2Dao;
+import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
+import nd.esp.service.lifecycle.utils.ParamCheckUtil;
+import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-
-import com.mysql.fabric.xmlrpc.base.Data;
-
-import nd.esp.service.lifecycle.daos.Icrs1.v06.impl.Icrs1DaoImpl;
-import nd.esp.service.lifecycle.daos.icrs2.v06.Icrs2Dao;
-import nd.esp.service.lifecycle.models.TeacherOutputResource;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.Asset;
-import nd.esp.service.lifecycle.repository.model.CategoryData;
-import nd.esp.service.lifecycle.repository.model.Icrs;
-import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
-import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.vos.ListViewModel;
 
 @Repository
 public class Icrs2DaoImple implements Icrs2Dao{
@@ -95,7 +83,8 @@ public class Icrs2DaoImple implements Icrs2Dao{
 			
 		
 		if (StringUtils.hasText(limit)) {
-			sqlStringBuffer.append("  limit 0,").append(limit);
+			Integer result[] = ParamCheckUtil.checkLimit(limit);
+			sqlStringBuffer.append("  limit ").append(result[0]).append(",").append(result[1]);
 		}
 				
 		//sql查询并把查询结果给list
@@ -117,8 +106,6 @@ public class Icrs2DaoImple implements Icrs2Dao{
 	            }
 	        });
 		return resultList;
-		
-	
 	}
 	
 
@@ -168,20 +155,5 @@ public class Icrs2DaoImple implements Icrs2Dao{
 	        });
 
 		return resultList;
-		
-		
 	}
-	
-   
-
-   
-
-	
-
-	
-
-	
-	
-	
-
 }

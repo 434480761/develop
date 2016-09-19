@@ -9,6 +9,7 @@ import nd.esp.service.lifecycle.models.icrs1.v06.TextbookModel;
 import nd.esp.service.lifecycle.services.icrs1.v06.Icrs1Service;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.icrs.IcrsResourceType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.vos.icrs1.v06.DailyDataViewModel;
 import nd.esp.service.lifecycle.vos.icrs1.v06.ResourceTotalViewModel;
@@ -77,13 +78,22 @@ public class Icrs1Controller {
 			@RequestParam(required = false, value = "res_type") String resType,
 			@RequestParam String from_date, @RequestParam String to_date) {
 
-		List<DailyDataModel> ddmList = new ArrayList<DailyDataModel>();
 		// 校验日期是否合法
-		if (isValidDate(from_date) && isValidDate(to_date)) {
-
-			ddmList = icrsService.getResourceStatisticsByDay(schoolId,
-					resType, from_date, to_date);
+		isValidDate(from_date);
+		isValidDate(to_date);
+		
+		//校验resType和获取对应NDR资源类型
+		if(StringUtils.hasText(resType)){
+			if(!IcrsResourceType.validType(resType)){
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.ResourceTypeNotFound);
+			}
+			
+			resType = IcrsResourceType.getCorrespondingType(resType);
 		}
+
+		List<DailyDataModel> ddmList = icrsService.getResourceStatisticsByDay(schoolId,
+					resType, from_date, to_date);
 		
 		List<DailyDataViewModel> ddvmList = new ArrayList<DailyDataViewModel>();
 		if (CollectionUtils.isNotEmpty(ddmList)) {
@@ -112,7 +122,17 @@ public class Icrs1Controller {
 			@PathVariable(value = "school_id") String schoolId,
 			@PathVariable(value = "teacher_id") String teacherId,
 			@RequestParam(required = false, value = "res_type") String resType) {
+		
+		// 校验resType和获取对应NDR资源类型
+		if (StringUtils.hasText(resType)) {
+			if (!IcrsResourceType.validType(resType)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.ResourceTypeNotFound);
+			}
 
+			resType = IcrsResourceType.getCorrespondingType(resType);
+		}
+		
 		List<TextbookModel> list = icrsService.getTeacherResource(schoolId,
 				teacherId, resType);
 		List<TextbookViewModel> tvmlist = new ArrayList<TextbookViewModel>();
@@ -145,8 +165,7 @@ public class Icrs1Controller {
 		} catch (java.text.ParseException e) {
 
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-					LifeCircleErrorMessageMapper.DateFormatFail.getCode(),
-					LifeCircleErrorMessageMapper.DateFormatFail.getMessage());
+					LifeCircleErrorMessageMapper.DateFormatFail);
 		}
 		return convertSuccess;
 	}
@@ -167,25 +186,24 @@ public class Icrs1Controller {
 			for (ResourceTotalModel model : rtm) {
 				switch (model.getResType()) {
 				case "assets":
-					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					total = model.getResTotal();
 					rtvm.setTotalMultimedia(total);
 					break;
 				case "cousewares":
-					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					total = model.getResTotal();
 					rtvm.setTotalCourseware(total);
 					break;
 				case "questions":
-					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
+					total = model.getResTotal();
 					rtvm.setTotalBasicQuestion(total);
 					break;
 				default:
-					total = model.getResTotal() == 0 ? 0 : model.getResTotal();
-					rtvm.setTotalBasicQuestion(total);
+					total = model.getResTotal();
+					rtvm.setTotalFunnyQuestion(total);
 					break;
 				}
 			}
 		}
 		return rtvm;
 	}
-
 }

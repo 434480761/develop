@@ -15,6 +15,4 @@ public class DailyDataViewModel {
 	public void setData(Integer data) {
 		this.data = data;
 	}
-	
-
 }
