@@ -90,6 +90,7 @@ public class CoverageService4QuestionDBImpl implements CoverageService{
     }
 
     @Override
+    @TitanTransaction
     public List<CoverageViewModel> batchCreateCoverage(List<CoverageModel> coverageModels,boolean isCreateWithResource) {
         
         for(CoverageModel cm : coverageModels){
@@ -241,6 +242,7 @@ public class CoverageService4QuestionDBImpl implements CoverageService{
     }
     
     @Override
+    @TitanTransaction
     public boolean deleteCoverage(String rcid) {
         try {
             resCoverageRepository.del(rcid);
@@ -256,6 +258,7 @@ public class CoverageService4QuestionDBImpl implements CoverageService{
     }
 
     @Override
+    @TitanTransaction
     public boolean batchDeleteCoverage(List<String> rcids) {
         try {
             resCoverageRepository.batchDel(rcids);
@@ -271,6 +274,7 @@ public class CoverageService4QuestionDBImpl implements CoverageService{
     }
     
     @Override
+    @TitanTransaction
     public boolean batchDeleteCoverageByCondition(String resType, String resourceId, 
             String target, String targetType, String strategy) {
         //用于存放需要删除的资源关系id
