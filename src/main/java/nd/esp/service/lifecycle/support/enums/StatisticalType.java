@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import nd.esp.service.lifecycle.utils.CollectionUtils;
+
 import com.google.common.collect.Maps;
 
 public enum StatisticalType {
@@ -33,22 +35,27 @@ public enum StatisticalType {
     public static Map<String, String> mapping(Map<String, String> map){
     	// 排序字段top,scores,votes,views,statisticals被映射为 key_value
     	HashMap<String, String> newMap = Maps.newLinkedHashMap();
-    	for (Entry<String, String> entry : map.entrySet()) {
-    		String key = mapping(entry.getKey());
-    		String value = entry.getValue();
-    		newMap.put(key, value);
+    	if (CollectionUtils.isNotEmpty(map)) {
+    		for (Entry<String, String> entry : map.entrySet()) {
+				String key = mapping(entry.getKey());
+				String value = entry.getValue();
+				newMap.put(key, value);
+    		}
 		}
+    	
 		return newMap;
     }
     
-    public static String getStatisticsType(Map<String, String> map){
+    public static String getStatisticsType(Map<String, String> map, String type){
     	// 排序字段top,scores,votes,views,statisticals 一次有且仅有一个排序值，取第一个出现的排序字段
-    	for (Entry<String, String> entry : map.entrySet()) {
-    		if (mapValue.equals(mapping(entry.getKey()))) {
-				return entry.getKey();
-			}
+    	if (CollectionUtils.isNotEmpty(map)) {
+	    	for (Entry<String, String> entry : map.entrySet()) {
+	    		if (sta.containsKey(entry.getKey())) {
+	    			return entry.getKey();
+				}
+	    	}
     	}
-    	return statisticsType;
+    	return type;
     }
     
     public static void main(String[] args) {
@@ -68,8 +75,7 @@ public enum StatisticalType {
     	orders.put("1", "desc");
     	orders.put("2", "desc");
     	orders.put("5", "desc");
-//    	System.out.println(StatisticalType.mapping(orders));
+    	System.out.println(StatisticalType.mapping(orders));
     	
-    	System.out.println(getStatisticsType(orders));
 	}
 }
