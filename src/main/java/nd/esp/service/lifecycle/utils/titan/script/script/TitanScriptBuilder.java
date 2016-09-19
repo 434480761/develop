@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
+import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
 
@@ -162,6 +163,21 @@ public class TitanScriptBuilder {
         return this;
     }
 
+    public TitanScriptBuilder deleteNullProperty(TitanModel model){
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
+        if (titanScriptModel == null){
+            return this;
+        }
+        Variable variable = createVariable(titanScriptModel.getType());
+        StringBuilder script = new StringBuilder() ;
+        Map<String, Object> param = new HashMap<>();
+        deleteNodeNullProperty(titanScriptModel,variable,script,param);
+
+        dealScriptAndParam(script, param);
+
+        return this;
+    }
+
     /**
      * 整个脚本结束，组合脚本中的方法，边和点通用
      * */
@@ -186,6 +202,8 @@ public class TitanScriptBuilder {
         return null;
     }
 
+
+
     /**
      * 为脚本添加方法头不合尾部
      * @param script 脚本
@@ -198,6 +216,27 @@ public class TitanScriptBuilder {
         this.script.append(script).append(";");
         this.param.putAll(param);
         this.firstIndex ++ ;
+    }
+
+    private void deleteNodeNullProperty(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
+        uniqueVertexOrNode(titanScriptModel, variable, script, param);
+        List<String> dropValues = new ArrayList<>();
+        for (String key : titanScriptModel.getFieldMap().keySet()){
+            Object obj = titanScriptModel.getFieldMap().get(key);
+            if (obj == null){
+                dropValues.add(key);
+            }
+        }
+
+        dropValues.add(TitanKeyWords.search_code.toString());
+        dropValues.add(TitanKeyWords.search_coverage.toString());
+        dropValues.add(TitanKeyWords.search_path.toString());
+        dropValues.add(TitanKeyWords.search_code_string.toString());
+        dropValues.add(TitanKeyWords.search_coverage_string.toString());
+        dropValues.add(TitanKeyWords.search_path_string.toString());
+
+        appendProperties(dropValues,script);
+        appendDrop(script);
     }
 
     private void delete(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){

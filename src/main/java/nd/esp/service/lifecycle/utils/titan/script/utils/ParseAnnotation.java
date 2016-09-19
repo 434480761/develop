@@ -1,7 +1,8 @@
 package nd.esp.service.lifecycle.utils.titan.script.utils;
 
+import nd.esp.service.lifecycle.utils.BigDecimalUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
-import nd.esp.service.lifecycle.utils.titan.script.model.TitanQuestions;
+import nd.esp.service.lifecycle.utils.titan.script.model.education.TitanQuestion;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageEdge;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
@@ -12,6 +13,7 @@ import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelVertex
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -155,14 +157,12 @@ public class ParseAnnotation {
             if (annotation instanceof TitanField) {
                 field.setAccessible(true);
                 TitanField titanField = (TitanField) annotation;
-                try {
-                    if (titanField.name() == null || "".equals(titanField.name())) {
-                        fieldMap.put(field.getName(), field.get(model));
-                    }else{
-                        fieldMap.put(titanField.name(),field.get(model));
-                    }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                Object value = titanFieldFilter(field, model);
+
+                if (titanField.name() == null || "".equals(titanField.name())) {
+                    fieldMap.put(field.getName(), value);
+                }else{
+                    fieldMap.put(titanField.name(),value);
                 }
                 break;
             }
@@ -215,9 +215,38 @@ public class ParseAnnotation {
         return fieldMap;
     }
 
+    /**
+     * 对titan字段类型进行转换，已经长度过长的进行过滤
+     * */
+    private static Object titanFieldFilter(Field field, TitanModel model){
+        Object value = null;
+        try {
+            value = field.get(model);
+        } catch (IllegalAccessException e) {
+            return null;
+        }
+        //BigDecimal进行转换
+        if (value instanceof BigDecimal) {
+            value = BigDecimalUtils.toString(value);
+        }
+        //把时间类型转换成Long类型
+        if(value instanceof Date){
+            value = ((Date)value).getTime();
+        }
+
+        if(value instanceof String){
+            String str = (String) value;
+            if(str.length() > 10000){
+                return null;
+            }
+        }
+
+        return value;
+    }
+
 
     public static void main(String[] args) {
-        TitanQuestions qustions = new TitanQuestions();
+        TitanQuestion qustions = new TitanQuestion();
         qustions.setDbpreview("123");
         qustions.setIdentifier(UUID.randomUUID().toString());
         createScriptModel(qustions);
