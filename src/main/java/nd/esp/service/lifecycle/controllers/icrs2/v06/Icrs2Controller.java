@@ -41,9 +41,6 @@ import com.google.common.collect.Collections2;
 import com.sun.tools.javah.resources.l10n;
 
 
-
-
-
 @RestController
 @RequestMapping("/v0.6/icrs/{school_id}")
 public class Icrs2Controller {
@@ -84,6 +81,8 @@ public class Icrs2Controller {
 		
 		//入参检验
 		isValidInput(schoolId,resType,fromDate,toDate,null,order);
+		//转为数据库中reyType类型
+		resType=changeResType(resType);
 		ListViewModel<TeacherOutputResource> returnList= icrsService.queryTeacherResourceOutput(schoolId, resType, fromDate, toDate, grade, subject, order, limit);
 		return returnList;
 	    }
@@ -110,6 +109,7 @@ public class Icrs2Controller {
 		
 		//入参检验
 		isValidInput(schoolId, resType, null, null, queryDate, null);
+		resType=changeResType(resType);
 		List<Map<String, Object>> returnList= icrsService.queryResourcePerHourOutput(schoolId, resType, queryDate);
 		return returnList;
 	    }
@@ -132,36 +132,32 @@ public class Icrs2Controller {
 	 * @throws
 	 */
 	public void isValidInput(String schoolId,String resType,String fromDate,String toDate,String queryDate,String order){
-		      //对schoolid进行验证，不为空
-				if (!StringUtils.hasText(schoolId)) {
-					//抛出异常，最好是throw new LifeCircleException
-					throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());			
-				}
-				//对res_type做检验,只能为这四个课件 courseware / 多媒体 multimedia / 基础习题 basic_question / 趣味题型 funny_question
-				if (StringUtils.hasText(resType)) {			
-					if (!resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())
-							&&!resType.equals(IndexSourceType.AssetType.getName())
-							&&!resType.equals(IndexSourceType.QuestionType.getName())
-							&&!resType.equals(IndexSourceType.SourceCourseWareType.getName())) {
-						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
-					}
-				}
-				//对order最检验
-				if (StringUtils.hasText(order)) {	
-					if (!order.equalsIgnoreCase("desc")&&!order.equalsIgnoreCase("asc")) {
-						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
-					}
-				}				
-				//对日期格式进行判断
-				if (StringUtils.hasText(fromDate)) {
-					isValidDate(fromDate);
-				}
-				if (StringUtils.hasText(toDate)) {
-					isValidDate(toDate);
-				}
-				if (StringUtils.hasText(queryDate)) {
-					isValidDate(queryDate);
-				}
+		      
+		if (!StringUtils.hasText(schoolId)) { 
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());			
+			}
+		if (StringUtils.hasText(resType)) {			
+			if (!resType.equals("courseware")
+							&&!resType.equals("multimedia")
+							&&!resType.equals("basic_question")
+							&&!resType.equals("funny_question")) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
+			}
+		}
+		if (StringUtils.hasText(order)) {	
+			if (!order.equalsIgnoreCase("desc")&&!order.equalsIgnoreCase("asc")) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
+			}
+		}				
+		if (StringUtils.hasText(fromDate)) {
+			isValidDate(fromDate);
+		}
+		if (StringUtils.hasText(toDate)) {
+			isValidDate(toDate);
+		}
+		if (StringUtils.hasText(queryDate)) {
+			isValidDate(queryDate);
+		}
 	}
 	
 	
@@ -186,8 +182,36 @@ public class Icrs2Controller {
 			} catch (Exception e) {	
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getCode(), LifeCircleErrorMessageMapper.CheckIcrsParamValidFail.getMessage());
 			}
+			
 		}
 		
+	}
+	
+	/**
+	 * 将resType转换为数据库中对应的值
+	 * @author xm
+	 * @version 
+	 * @date 2016年9月18日 下午9:14:27
+	 * @method changeResType
+	 * @see 
+	 * @param resType
+	 * @return
+	 * String
+	 * @throws
+	 */
+	public String changeResType(String resType){
+		
+		if (resType.equals("courseware")) {
+			resType = IndexSourceType.SourceCourseWareType.getName();  //coursewares
+		}else if(resType.equals("multimedia")){
+			resType=IndexSourceType.AssetType.getName();               //assets
+		}else if(resType.equals("basic_question")){
+			resType=IndexSourceType.QuestionType.getName();             //questions
+		}else if(resType.equals("funny_question")){
+			resType=IndexSourceType.SourceCourseWareObjectType.getName();       //coursewareobject
+		}
+		
+		return resType;
 	}
 	
 }
