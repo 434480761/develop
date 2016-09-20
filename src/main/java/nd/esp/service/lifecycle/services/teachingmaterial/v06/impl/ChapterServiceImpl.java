@@ -337,6 +337,7 @@ public class ChapterServiceImpl implements ChapterService{
     }
 
     @Override
+    @TitanTransaction
     public void moveChapter(String resourceType,String mid, String cid, ChapterModel chapterModel) {
         
         TreeDirection treeDirection = TreeDirection.fromString(chapterModel.getDirection());

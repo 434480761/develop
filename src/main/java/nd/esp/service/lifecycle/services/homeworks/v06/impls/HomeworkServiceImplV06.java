@@ -4,6 +4,7 @@ import nd.esp.service.lifecycle.educommon.services.NDResourceService;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.HomeworkModel;
 import nd.esp.service.lifecycle.services.homeworks.v06.HomeworkServiceV06;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,16 +22,19 @@ public class HomeworkServiceImplV06 implements HomeworkServiceV06 {
 	private NDResourceService ndResourceService;
 	
 	@Override
+	@TitanTransaction
 	public HomeworkModel createHomework(HomeworkModel hm) {
 		return (HomeworkModel)ndResourceService.create(ResourceNdCode.homeworks.toString(), hm);
 	}
 
 	@Override
+	@TitanTransaction
 	public HomeworkModel updateHomework(HomeworkModel hm) {
 		return (HomeworkModel)ndResourceService.update(ResourceNdCode.homeworks.toString(), hm);
 	}
 
 	@Override
+	@TitanTransaction
 	public HomeworkModel patchHomework(HomeworkModel hm) {
 		return (HomeworkModel)ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm);
 	}

@@ -219,7 +219,15 @@ public class TitanScriptBuilder {
     }
 
     private void deleteNodeNullProperty(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
-        uniqueVertexOrNode(titanScriptModel, variable, script, param);
+        script.append("g");
+        if (titanScriptModel instanceof TitanScriptModelVertex){
+            script.append(".V()");
+        }
+        if (titanScriptModel instanceof TitanScriptModelEdge){
+            script.append(".E()");
+        }
+        appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
+
         List<String> dropValues = new ArrayList<>();
         for (String key : titanScriptModel.getFieldMap().keySet()){
             Object obj = titanScriptModel.getFieldMap().get(key);
@@ -420,7 +428,7 @@ public class TitanScriptBuilder {
     }
     private void ifElseScript(StringBuilder script, String conditionScript,String ifRunScript, String elseRunScript){
         ifScript(script, conditionScript, ifRunScript);
-        script.append("else{").append(elseRunScript).append("}");
+        script.append("else{").append(elseRunScript).append(";").append("}");
     }
 
     private void appendDrop(StringBuilder script){
