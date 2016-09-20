@@ -1,11 +1,14 @@
 package nd.esp.service.lifecycle.utils.titan.script.utils;
 
+import nd.esp.service.lifecycle.repository.model.Asset;
+import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
 import nd.esp.service.lifecycle.utils.BigDecimalUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
-import nd.esp.service.lifecycle.utils.titan.script.model.education.TitanQuestion;
+import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageEdge;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanResCoverageVertex;
+import nd.esp.service.lifecycle.utils.titan.script.model.education.TitanAsset;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModel;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelEdge;
@@ -14,7 +17,13 @@ import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptModelVertex
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.*;
+
+import org.apache.tinkerpop.gremlin.driver.Client;
+import org.apache.tinkerpop.gremlin.driver.Cluster;
+import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
+import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
 
 /**
  * Created by Administrator on 2016/8/24.
@@ -245,12 +254,51 @@ public class ParseAnnotation {
     }
 
 
-    public static void main(String[] args) {
-        TitanQuestion qustions = new TitanQuestion();
-        qustions.setDbpreview("123");
-        qustions.setIdentifier(UUID.randomUUID().toString());
-        createScriptModel(qustions);
+    private Client client;
 
+    public void init() {
+        Cluster cluster = null;
+        // TODO get from config
+        String address = "172.24.133.94";
+        int port = 8182;
+        GryoMessageSerializerV1d0 serializerClass = null;
+        Builder clusterBuilder = null;
+        Map<String, Object> configMap = null;
+
+        // This is required so that the result vertex can be serialized to
+        // string
+        serializerClass = new GryoMessageSerializerV1d0();
+        configMap = new HashMap<String, Object>();
+        configMap.put("serializeResultToString", "true");
+        configMap.put("bufferSize", "819200");
+        serializerClass.configure(configMap, null);
+
+        // build cluster configuration
+        clusterBuilder = Cluster.build(address);
+        clusterBuilder.port(port);
+        clusterBuilder.serializer(serializerClass);
+
+        clusterBuilder.resultIterationBatchSize(20);
+        clusterBuilder.maxContentLength(655360);
+
+        // create a cluster instance
+        cluster = clusterBuilder.create();
+        client = cluster.connect();
+
+        // client = Cluster.build("192.168.19.128").create().connect();
+    }
+
+    /**
+     * 提供连接客户对象（单例）
+     * @return
+     */
+    public Client getGremlinClient() {
+        return client;
+    }
+
+
+
+    public static void main(String[] args) {
         TitanResCoverageVertex resCoverageVertex = new TitanResCoverageVertex();
         resCoverageVertex.setStrategy("User");
         resCoverageVertex.setTarget("123");
@@ -258,18 +306,32 @@ public class ParseAnnotation {
         createScriptModel(resCoverageVertex);
 
         TitanResCoverageEdge edge = new TitanResCoverageEdge();
-        edge.setIdentifier(UUID.randomUUID().toString());
         edge.setResource(UUID.randomUUID().toString());
-        edge.setResType("assets");
-        edge.setStrategy("1234");
         edge.setTarget("7897978");
         edge.setTargetType("User");
 
-        createScriptModel(edge);
+        Asset asset = new Asset();
+        asset.setIdentifier("0919127b-5536-454c-98f4-35c773d92061");
+        asset.setPrimaryCategory("assets");
+        asset.setTitle("liuran_789");
+        asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
+
+//        createScriptModel(edge);
+
+        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
 
         TitanScriptBuilder builder = new TitanScriptBuilder();
-        builder.update(edge);
+        builder.add(titanAsset);
+        builder.scriptEnd();
+        builder.getScript();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        long time1 = System.currentTimeMillis();
+        client.submit(builder.getScript().toString(), builder.getParam());
+        System.out.println(System.currentTimeMillis() - time1);
 
     }
 }

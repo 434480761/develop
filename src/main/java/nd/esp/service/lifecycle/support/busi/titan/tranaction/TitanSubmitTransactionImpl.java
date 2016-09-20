@@ -76,64 +76,67 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             TitanOperationType type = operation.getOperationType();
             switch (type) {
                 case add: case update:
-                    if (operation.getEntity() instanceof ResCoverage) {
-                        educationIds.put(((ResCoverage) operation.getEntity()).getResource(),
-                                ((ResCoverage) operation.getEntity()).getResType());
-                        deleteEdge.add(operation.getEntity().getIdentifier());
-
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if(operation.getEntity() instanceof ResourceCategory){
-                        educationIds.put(((ResourceCategory) operation.getEntity()).getResource(),
-                                ((ResourceCategory) operation.getEntity()).getPrimaryCategory());
-                        deleteEdge.add(operation.getEntity().getIdentifier());
-
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if(operation.getEntity() instanceof  TechInfo){
-                        deleteEdge.add(operation.getEntity().getIdentifier());
-                        deleteVertex.add(operation.getEntity().getIdentifier());
-
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    }else if (operation.getEntity() instanceof ResourceStatistical){
-                        deleteEdge.add(operation.getEntity().getIdentifier());
-                        deleteVertex.add(operation.getEntity().getIdentifier());
-
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if (operation.getEntity() instanceof ResourceRelation){
-                        deleteEdge.add(operation.getEntity().getIdentifier());
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if (operation.getEntity() instanceof Education){
-
-                        TitanScriptBuilder checkTsb = new TitanScriptBuilder();
-                        checkTsb.get(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-
-                        String eduId = null;
-                        try {
-                            long t1 = System.currentTimeMillis();
-                            eduId = titanCommonRepository.executeScriptUniqueString(checkTsb.getScript().toString(), checkTsb.getParam());
-                            System.out.println("time_for_1:"+(System.currentTimeMillis() - t1));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                        if (eduId != null) {
-                            isAddResource.put(operation.getEntity().getIdentifier(), false);
-                            educationIds.put(operation.getEntity().getIdentifier(), ((Education) operation.getEntity()).getPrimaryCategory());
-                            //删除冗余字段和null的属性
-                            TitanScriptBuilder tsb = new TitanScriptBuilder();
-                            tsb.deleteNullProperty(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                            tsbList.add(tsb);
-                            TitanScriptBuilder educationBuilder = new TitanScriptBuilder();
-                            educationBuilder.update(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                            tsbEducations.add(educationBuilder);
-                        } else {
-                            isAddResource.put(operation.getEntity().getIdentifier(), true);
-                            builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        }
+                    if (operation.getEntity() instanceof Education){
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
                     }
+//                    if (operation.getEntity() instanceof ResCoverage) {
+//                        educationIds.put(((ResCoverage) operation.getEntity()).getResource(),
+//                                ((ResCoverage) operation.getEntity()).getResType());
+//                        deleteEdge.add(operation.getEntity().getIdentifier());
+//
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+//                    } else if(operation.getEntity() instanceof ResourceCategory){
+//                        educationIds.put(((ResourceCategory) operation.getEntity()).getResource(),
+//                                ((ResourceCategory) operation.getEntity()).getPrimaryCategory());
+//                        deleteEdge.add(operation.getEntity().getIdentifier());
+//
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+//                    } else if(operation.getEntity() instanceof  TechInfo){
+//                        deleteEdge.add(operation.getEntity().getIdentifier());
+//                        deleteVertex.add(operation.getEntity().getIdentifier());
+//
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+//                    }else if (operation.getEntity() instanceof ResourceStatistical){
+//                        deleteEdge.add(operation.getEntity().getIdentifier());
+//                        deleteVertex.add(operation.getEntity().getIdentifier());
+//
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+//                    } else if (operation.getEntity() instanceof ResourceRelation){
+//                        deleteEdge.add(operation.getEntity().getIdentifier());
+//                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+//                    } else if (operation.getEntity() instanceof Education){
+//
+//                        TitanScriptBuilder checkTsb = new TitanScriptBuilder();
+//                        checkTsb.get(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//
+//                        String eduId = null;
+//                        try {
+//                            long t1 = System.currentTimeMillis();
+//                            eduId = titanCommonRepository.executeScriptUniqueString(checkTsb.getScript().toString(), checkTsb.getParam());
+//                            System.out.println("查询资源是否存在:"+(System.currentTimeMillis() - t1));
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                        if (eduId != null) {
+//                            isAddResource.put(operation.getEntity().getIdentifier(), false);
+//                            educationIds.put(operation.getEntity().getIdentifier(), ((Education) operation.getEntity()).getPrimaryCategory());
+//                            //删除冗余字段和null的属性
+//                            TitanScriptBuilder tsb = new TitanScriptBuilder();
+//                            tsb.deleteNullProperty(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                            tsbList.add(tsb);
+//                            TitanScriptBuilder educationBuilder = new TitanScriptBuilder();
+//                            educationBuilder.update(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                            tsbEducations.add(educationBuilder);
+//                        } else {
+//                            isAddResource.put(operation.getEntity().getIdentifier(), true);
+//                            builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
+//                        }
+//                    }
                     break;
                 case delete:
                     titanRepository.delete(operation.getEntity().getIdentifier());
@@ -144,6 +147,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
 
         System.out.println("time_for:"+(System.currentTimeMillis() - time1));
+        builder.scriptEnd();
 
         Map<String, Object> param = builder.getParam();
         StringBuilder script = builder.getScript();
@@ -155,28 +159,26 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 for (TitanScriptBuilder tsb : tsbList){
 //                    titanCommonRepository.executeScript(tsb.getScript().toString(), tsb.getParam());
                 }
-                System.out.println("time1:"+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
 
                 for (TitanScriptBuilder tsb : tsbEducations){
                     titanCommonRepository.executeScriptUniqueString(tsb.getScript().toString(),tsb.getParam());
                 }
 
-                System.out.println("time2:"+(System.currentTimeMillis() - time));
+                System.out.println("更新资源:"+(System.currentTimeMillis() - time));
                 time = System.currentTimeMillis();
                 //删除边和节点
                 if (deleteEdge.size() != 0) {
                     batchDelete(deleteEdge, "edge");
                 }
 
-                System.out.println("time3:"+(System.currentTimeMillis() - time));
+                System.out.println("删除边:"+(System.currentTimeMillis() - time));
                 time = System.currentTimeMillis();
 
                 if (deleteVertex.size() != 0){
                     batchDelete(deleteVertex,"vertex");
                 }
 
-                System.out.println("time4:"+(System.currentTimeMillis() - time));
+                System.out.println("删除节点:"+(System.currentTimeMillis() - time));
                 time = System.currentTimeMillis();
 
                 //创建
@@ -193,7 +195,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
                 id = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
 
-                System.out.println("time6:"+(System.currentTimeMillis() - time));
+                System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
                 time = System.currentTimeMillis();
 
                 //测试用临时使用的更新办法
@@ -202,7 +204,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         updateEducation(educationIds.get(identifier), identifier);
                 }
 
-                System.out.println("time7:"+(System.currentTimeMillis() - time));
+                System.out.println("更新冗余字段:"+(System.currentTimeMillis() - time));
                 time = System.currentTimeMillis();
 
             } catch (Exception e) {
