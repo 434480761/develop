@@ -61,31 +61,47 @@ public class IcrsServiceHelper {
 		String querySql = "select distinct ndr.identifier as id,ndr.enable as ndren,ndr.create_time as ct,rv.target as target "
 				+ "from ndresource ndr inner join res_coverages rv "
 				+ "on ndr.identifier=rv.resource ";
+		
+		// 需要过滤维度
 		if (resType.equals(IndexSourceType.AssetType.getName())
-				|| resType.equals(IndexSourceType.SourceCourseWareObjectType
-						.getName())) {// assets,coursewareobjects
+				|| resType.equals(IndexSourceType.SourceCourseWareType.getName())
+				|| resType.equals(IndexSourceType.QuestionType.getName())) {
 			querySql += " inner join resource_categories rc on ndr.identifier=rc.resource ";
 		}
 
 		querySql += " where " + (isInit ? "ndr.enable=1 and " : "")
 				+ "ndr.primary_category='" + resType + "' ";
 		
-		if(!resType.equals(IndexSourceType.AssetType.getName())){
+		if(resType.equals(IndexSourceType.QuestionType.getName()) ||
+				resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())){
 			querySql += " and ndr.estatus != '" + LifecycleStatus.CREATING.getCode() + "' ";
 		}
 		
-		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
-				+ resType + "' ";
+		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='" + resType + "' ";
+		
 		if (resType.equals(IndexSourceType.AssetType.getName())) {// assets
 			querySql += " and rc.primary_category='" + resType
 					+ "' and rc.taxOnCode in "
 					+ "('$RA0101','$RA0102','$RA0103','$RA0104')";
 		}
-		if (resType
-				.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {// coursewareobjects
+		
+		if (resType.equals(IndexSourceType.SourceCourseWareType.getName())) {// coursewares
 			querySql += " and rc.primary_category='" + resType
-					+ "' and rc.taxOnCode like '$RE04%'";
+					+ "' and rc.taxOnCode in "
+					+ "('$F010003','$F060005','$F010004')";
 		}
+		
+		if (resType.equals(IndexSourceType.QuestionType.getName())) {// questions
+			querySql += " and rc.primary_category='" + resType
+					+ "' and rc.taxOnCode not in "
+					+ "('$RE0211','$RE0206')";
+		}
+		
+//		if (resType
+//				.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {// coursewareobjects
+//			querySql += " and rc.primary_category='" + resType
+//					+ "' and rc.taxOnCode like '$RE04%'";
+//		}
 
 		if (!isInit) {// 获取当前时间前一小时的数据有变动的数据
 			querySql += " and ndr.last_update > " + getOneHourAgoTime();
