@@ -88,7 +88,6 @@ import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
 
 /**
  * @title 业务通用帮助类
- * @Desc TODO
  * @author liuwx
  * @version 1.0
  * @create 2015年3月19日 上午10:45:40
@@ -506,16 +505,36 @@ public class CommonHelper {
 	 * @return
 	 */
 	public static Map<String,? extends ResTechInfoViewModel> list2Map4TechInfo(List<? extends ResTechInfoModel> list){
+	    
+	    return list2Map4TechInfo(list, null);
+	}
+	
+	/**
+	 * list2Map4TechInfo扩展 -- 根据终端信息过滤
+	 * @author xiezy
+	 * @date 2016年9月20日
+	 * @param list
+	 * @param terminal
+	 * @return
+	 */
+	public static Map<String,? extends ResTechInfoViewModel> list2Map4TechInfo(List<? extends ResTechInfoModel> list, String terminal){
 	    Map<String,ResTechInfoViewModel> resultMap = new HashMap<String, ResTechInfoViewModel>();
 	    
 	    for(ResTechInfoModel rtm : list){
 	        ResTechInfoViewModel resTechInfoViewModel = BeanMapperUtils.beanMapper(rtm, ResTechInfoViewModel.class);
-	        resultMap.put(rtm.getTitle(), resTechInfoViewModel);
+	        
+	        if(StringUtils.hasText(terminal)){
+	        	if(rtm.getTitle().equals(HREF) || rtm.getTitle().equals(SOURCE) 
+	        			|| rtm.getTitle().startsWith(terminal)){
+	        		resultMap.put(rtm.getTitle(), resTechInfoViewModel);
+	        	}
+	        }else{
+	        	resultMap.put(rtm.getTitle(), resTechInfoViewModel);
+	        }
 	    }
 	    
 	    return resultMap;
 	}
-	
 	
 	/**
 	 * 将业务模型转为数据模型（基本信息）
@@ -1106,7 +1125,6 @@ public class CommonHelper {
         return afterDeal;
     }
 
-
 	/**
 	 * 将model转为view
 	 *
@@ -1117,7 +1135,19 @@ public class CommonHelper {
 	 * @update by liuwx at 201510.22
 	 * @updateContent 从 NDResourceController类迁移过来,解决多处对两种资源类型的判断
 	 */
-	public  static  ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes,CommonServiceHelper commonServiceHelper) {
+	public static ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes,CommonServiceHelper commonServiceHelper) {
+
+		return changeToView(model, resourceType, includes, commonServiceHelper, null);
+	}
+
+	/**
+	 * changeToView扩展 -- 根据终端信息过滤TI
+	 * @author xiezy
+	 * @date 2016年9月20日
+	 * @param terminal
+	 * @return
+	 */
+	public static ResourceViewModel changeToView(ResourceModel model, String resourceType,List<String> includes,CommonServiceHelper commonServiceHelper, String terminal) {
 		if (model == null) {
 			return null;
 		}
@@ -1132,16 +1162,11 @@ public class CommonHelper {
 					changeResourceTypeToCategoryKey(resourceType)));
 		}
 		if (model.getTechInfoList()!=null) {
-			view.setTechInfo(CommonHelper.list2Map4TechInfo(model.getTechInfoList()));
+			view.setTechInfo(CommonHelper.list2Map4TechInfo(model.getTechInfoList(), terminal));
 		}
 		if(StringUtils.isNotEmpty(model.getCustomProperties())){
 			view.setCustomProperties(ObjectUtils.fromJson(model.getCustomProperties(), Map.class));
 		}
-
-//        // 在resourceViewModel中设置了默认值，当不存在LC时，去除这些值
-//        if (CollectionUtils.isEmpty(includes) || !includes.contains(IncludesConstant.INCLUDE_LC)) {
-//            view.setLifeCycle(null);
-//        }
 
 		// 统一处理所有的附加属性：
 		if (includes == null) {
@@ -1193,22 +1218,8 @@ public class CommonHelper {
 			view.setTechInfo(null);
 		}
 		
-		
         // ask by cst 2015.11.27 sort preview by key (String asc)
         if (CollectionUtils.isNotEmpty(view.getPreview())) {
-          /*  Map<String, String> treeMap = new TreeMap<String, String>(new Comparator<String>() {
-
-                @Override
-                public int compare(String firstKey, String secondKey) {
-                    // NullPointerException if the specified key is null
-                    // and this map uses natural ordering, or its comparator
-                    // does not permit null keys
-                    if (firstKey == null) {
-                        return -1;
-                    }
-                    return firstKey.compareTo(secondKey);
-                }
-            });*/
 			Map<String, String> treeMap = new TreeMap<String, String>(RESOURCE_PREIVEW_PREFIX_COMPARATOR);
             treeMap.putAll(view.getPreview());
             view.setPreview(treeMap);
@@ -1216,8 +1227,6 @@ public class CommonHelper {
 
 		return view;
 	}
-
-
 
 	/**
 	 * @param resourceType
