@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.educommon.controllers.titanV07;
 
 import com.nd.gaea.rest.security.authens.UserInfo;
+
 import nd.esp.service.lifecycle.educommon.models.ResourceModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.educommon.services.titanV07.NDResourceTitanService;
@@ -14,8 +15,10 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.terminal.TerminalTypeEnum;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,7 @@ import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
@@ -40,7 +44,9 @@ public class NDResourceTitanController {
     @Autowired
     private CommonServiceHelper commonServiceHelper;
 
-
+    @Autowired
+    private HttpServletRequest httpServletRequest;
+    
     @Autowired
     @Qualifier(value = "StatisticalServiceImpl")
     private ResourceStatisticalService statisticalService;
@@ -65,7 +71,12 @@ public class NDResourceTitanController {
                                 @PathVariable("uuid") String uuid,
                                 @RequestParam(value = "include", required = false, defaultValue = "") String includeString,
                                 @RequestParam(value = "isAll", required = false, defaultValue = "false") Boolean isAll) {
-        if (!CommonHelper.checkUuidPattern(uuid)) {
+        
+    	//获取终端类型
+    	String terminal = httpServletRequest.getHeader(Constant.TERMINAL);
+    	terminal = TerminalTypeEnum.getTerminalType(terminal);
+    	
+    	if (!CommonHelper.checkUuidPattern(uuid)) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
                     LifeCircleErrorMessageMapper.CheckIdentifierFail.getMessage());
@@ -76,7 +87,7 @@ public class NDResourceTitanController {
 
         ResourceModel resourceModel = ndResourceTitanService.getDetail(resourceType,uuid,includeList,isAll);
 
-        return CommonHelper.changeToView(resourceModel,resourceType,includeList,commonServiceHelper);
+        return CommonHelper.changeToView(resourceModel,resourceType,includeList,commonServiceHelper,terminal);
     }
 
     @RequestMapping(value = "/list", params = { "rid" }, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -84,7 +95,11 @@ public class NDResourceTitanController {
                                                @RequestParam(value = "rid", required = true) Set<String> uuidSet,
                                                @RequestParam(value = "include", required = false, defaultValue = "") String includeString) {
 
-        // UUID校验
+    	//获取终端类型
+    	String terminal = httpServletRequest.getHeader(Constant.TERMINAL);
+    	terminal = TerminalTypeEnum.getTerminalType(terminal);
+    	
+    	// UUID校验
         for (String uuid : uuidSet) {
             if (!CommonHelper.checkUuidPattern(uuid)) {
                 throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -102,7 +117,8 @@ public class NDResourceTitanController {
         if (!CollectionUtils.isEmpty(modelListResult)) {
             for (ResourceModel model : modelListResult) {
                 if (model != null) {
-                    viewMapResult.put(model.getIdentifier(), CommonHelper.changeToView(model, resourceType,includeList,commonServiceHelper));
+                    viewMapResult.put(model.getIdentifier(), 
+                    		CommonHelper.changeToView(model, resourceType,includeList,commonServiceHelper,terminal));
                 }
             }
         }
