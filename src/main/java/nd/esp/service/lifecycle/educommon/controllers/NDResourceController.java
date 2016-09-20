@@ -86,6 +86,7 @@ import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.support.enums.StatisticalType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -1119,6 +1120,8 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
+        statisticsType = StatisticalType.getStatisticsType(orderMapForDb,statisticsType);
+        orderMapForDb = StatisticalType.mapping(orderMapForDb);
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
@@ -2414,6 +2417,21 @@ public class NDResourceController {
     @RequestMapping(value="/{uuid}/previews", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public Map<String,Object> getResPreviewUrls(@PathVariable(value="res_type") String resType,@PathVariable String uuid){
         return ndResourceService.getResPreviewUrls(resType, uuid);
+    }
+
+    /**
+     * 获取资源预览图的列表
+     *
+     * @author:qil
+     * @date:2016年9月8日
+     * @param res_type
+     * @param uuid
+     * @return
+     */
+    @RequestMapping(value="/{uuid}/transcode", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String,Object> triggerResourceTranscode(@PathVariable(value="res_type") String resType,@PathVariable String uuid,
+                                                       @RequestParam(value = "status_backup", required = false, defaultValue = "false") boolean bStatusBackup){
+        return ndResourceService.triggerTranscode(resType, uuid, bStatusBackup);
     }
 
     /**

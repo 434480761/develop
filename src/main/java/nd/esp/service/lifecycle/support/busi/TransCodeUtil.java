@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
-import nd.esp.service.lifecycle.app.LifeCycleEspStoreConfig;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
 import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
@@ -22,6 +21,11 @@ import nd.esp.service.lifecycle.educommon.vos.ResourceViewModel;
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.entity.TransCodeParam;
 import nd.esp.service.lifecycle.entity.WorkerParam;
+import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
+import nd.esp.service.lifecycle.repository.model.TechInfo;
+import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.services.task.v06.impls.TaskServiceImpl;
@@ -41,20 +45,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.mysema.commons.lang.URLEncoder;
-
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
-import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
-import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
 
 public class TransCodeUtil {
 
@@ -75,8 +71,6 @@ public class TransCodeUtil {
     
     @Autowired
     private TechInfoRepository techInfoRepository;
-
-
 
     /**转码优先级相关配置信息*/
     public final static String TRANSCODE_INFO = LifeCircleApplicationInitializer.worker_properties.getProperty("transcode_info");
@@ -217,15 +211,13 @@ public class TransCodeUtil {
      * @author: liuwx
      */
     public static boolean specialConverse(String resType, String status) {
-        //if (IndexSourceType.LessonPlansType.getName().equals(resType)||IndexSourceType.SourceCourseWareType.getName().equals(resType))
-
-            for (LifecycleStatus s : LifecycleStatus.getSpecialConverseStatus()) {
-                if (s.getCode().equals(status)) {
-                    return true;
-                }
-
-            }
-        return false;
+		//if (IndexSourceType.LessonPlansType.getName().equals(resType)||IndexSourceType.SourceCourseWareType.getName().equals(resType))
+		for (LifecycleStatus s : LifecycleStatus.getSpecialConverseStatus()) {
+			if (s.getCode().equals(status)) {
+				return true;
+			}
+		}
+		return false;
     }
 
     /**
@@ -1206,5 +1198,4 @@ public class TransCodeUtil {
     public static void main(String[] args) {
         System.out.println(getCoverNum(ConvertRuleSet.getConvertRuleSet().productScript("ts")));
     }
-
 }

@@ -463,6 +463,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	ConvertCallbackSuccess("LC/CONVERT_CALLBACK_SUCCESS","TransCodeController.convertCallback.success"),
 	
 	StoreSdkFail("LC/STORE_SDK_FAIL",getPropertyValue("store.sdk.fail")),
+	CSSdkFail("CS/CS_SDK_FAIL",getPropertyValue("cs.sdk.fail")),
 	InvokingCSFail("CS/INVOKING_CS_FAIL",getPropertyValue("invoking.cs.fail")),
 	InvokingUCFail("UC/INVOKING_UC_FAIL",getPropertyValue("invoking.uc.fail")),
 	
@@ -496,7 +497,14 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	
 	//copy
 	CopyFail("LC/COPY_FAIL","DuplicateControllerV06.copy.fail"),
-
+	
+	
+	//icrs
+	DateFormatFail("LC/DateFormatError",getPropertyValue("icrsController.getResourceTotal.dataFormat.fail")),
+	ResourceTypeNotFound("ResourceTypeNotFound",getPropertyValue("icrsServiceImpl.getResourceByDay.ResourceTypeNotFound")),
+    
+	CheckIcrsParamValidFail("LC/CHECK_PARAM_VALID_FAIL",getPropertyValue("icrsController.check.input.param.fail")),
+	
 	//说明 add by @author lanyl
 	//数据加密相关错误配置
 	//====Start=====

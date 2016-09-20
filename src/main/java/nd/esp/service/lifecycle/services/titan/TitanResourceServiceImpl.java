@@ -435,7 +435,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         List<Item<? extends Object>> items = new ArrayList<>();
 
         Item<String> resourceTypeItem = new Item<String>();
-        resourceTypeItem.setKey("primaryCategory");
+        resourceTypeItem.setKey("type");
         resourceTypeItem.setComparsionOperator(ComparsionOperator.EQ);
         resourceTypeItem.setLogicalOperator(LogicalOperator.AND);
         resourceTypeItem.setValue(ValueUtils.newValue("RELATION"));
@@ -454,27 +454,26 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 if (entitylist == null) {
                     continue;
                 }
-                List<String> relationIds = new ArrayList<>();
+                Map<String, Set<String>> sourceMap = new HashMap<>();
                 for (Object object : entitylist) {
                     TitanSync st = (TitanSync) object;
-                    relationIds.add(st.getResource());
+                    Set<String> sourceList = sourceMap.get(st.getPrimaryCategory());
+                    if (sourceList == null){
+                        sourceList = new HashSet<>();
+                        sourceMap.put(st.getPrimaryCategory(), sourceList);
+                    }
+                    sourceList.add(st.getResource());
                 }
                 if (entitylist.size() == 0) {
                     continue;
                 }
-                //TODO check
-                List<ResourceRelation> rr1 = resourceRelationRepository.getAll(relationIds);
-                List<ResourceRelation> rr2 = resourceRelation4QuestionDBRepository.getAll(relationIds);
-                List<ResourceRelation> resourceRelationList = new ArrayList<>();
-                resourceRelationList.addAll(rr1);
-                resourceRelationList.addAll(rr2);
-                for (ResourceRelation resourceRelation : resourceRelationList) {
-                    ResourceRelation result = titanRelationRepository.add(resourceRelation);
-                    if (result != null) {
-                        titanRepositoryUtils.titanSync4MysqlDeleteAll("RELATION", resourceRelation.getIdentifier());
-                    }
-                }
 
+                for (String primaryCategory : sourceMap.keySet()){
+                    List<ResourceRelation> resourceRelations = educationRelationdao
+                            .batchGetRelationByResourceSourceOrTarget(primaryCategory, sourceMap.get(primaryCategory));
+                    titanImportRepository.batchImportRelation(resourceRelations);
+                    LOG.info("");
+                }
                 LOG.info("import relation:totalPage:{}  page:{}", resourcePage.getTotalPages(), page);
             } catch (Exception e) {
                 LOG.error(e.getMessage());

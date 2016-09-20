@@ -78,7 +78,9 @@ public class DeleteDirtyDataTask {
 			"coursewareobjects", "chapters", "coursewareobjecttemplates",
 			"ebooks", "homeworks", "instructionalobjectives", "knowledges",
 			"learningplans", "lessonplans", "lessons", "questions","tools",
-			"teachingmaterials", "guidancebooks","teachingactivities","examinationpapers","metacurriculums" };
+			"teachingmaterials", "guidancebooks", "teachingactivities",
+			"examinationpapers", "metacurriculums", "exercisesset",
+			"subInstruction" };
 	/**
 	 * 执行定时任务
 	 * @param createTime

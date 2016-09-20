@@ -287,6 +287,14 @@ public class CommonServiceHelper {
                                                                                      true,
                                                                                      true));
         
+        // 习题集
+        repositoryAndModelMap.put("exercisesset", new RepositoryAndModelAndView(examinationPaperRepository,
+                                                                                     ExaminationPaperModel.class,
+                                                                                     ExaminationPaperViewModel.class,
+                                                                                     ExaminationPaper.class,
+                                                                                     true,
+                                                                                     true));
+        
         
         // 课时
         repositoryAndModelMap.put("lessons", new RepositoryAndModelAndView(lessonRepository,
