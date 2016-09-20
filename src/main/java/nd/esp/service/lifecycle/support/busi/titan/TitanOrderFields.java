@@ -76,6 +76,7 @@ public enum TitanOrderFields {
             case lc_create_time:
             case lc_last_update:
             case lc_status:
+            case lc_version:
                 order.setOrderByField(this.toString());
                 break;
             case sta_key_value:
