@@ -20,7 +20,7 @@ public class TitanEducation extends TitanModel {
     @TitanField(name = "m_identifier")
     private String mIdentifier;
 
-    @TitanCompositeKey
+//    @TitanCompositeKey
     @TitanField(name = "primary_category")
     private String primaryCategory;
 
