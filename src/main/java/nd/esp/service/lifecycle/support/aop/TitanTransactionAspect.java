@@ -17,6 +17,7 @@ import java.util.UUID;
 
 /**
  * Created by Administrator on 2016/9/12.
+ * 切面的执行顺序必须在@Transaction之后
  */
 @Aspect
 @Component
@@ -56,6 +57,12 @@ public class TitanTransactionAspect {
         titanTransactionCollection.deleteTransaction(TransactionSynchronizationManager.getCurrentTransactionName());
     }
 
+    /**
+     * 事务名由三部分组成
+     * 1、方法名（包括类名和包名），用防止嵌套的titan_transaction错误提交
+     * 2、UUID，唯一判断一个事务
+     * 3、_titan标记该事务被titan事务管理
+     * */
     private void initTitanTransaction(){
         String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
         if (oldName != null &&  oldName.endsWith("_titan")){
@@ -63,7 +70,6 @@ public class TitanTransactionAspect {
             LOG.info("有内嵌titan事务 {}",oldName);
             return;
         }
-        //事务名要保留类名，防止嵌套的TitanTransaction错误提交
         String name = TransactionSynchronizationManager.getCurrentTransactionName()
                 + UUID.randomUUID().toString()+"_titan";
 
