@@ -1,5 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class TitanTransactionCollection {
     private static ConcurrentHashMap<String, TitanTransaction> transactionMap = new ConcurrentHashMap<>();
-
+    private static final Logger LOG = LoggerFactory
+            .getLogger(TitanTransactionCollection.class);
     @Autowired
     private TitanSubmitTransaction titanSubmitTransaction;
 
@@ -20,6 +23,9 @@ public class TitanTransactionCollection {
      * */
     public void initOneTransaction(String transactionName){
         transactionMap.put(transactionName, new TitanTransaction());
+        if (transactionMap.size() > 1000){
+            LOG.warn("titan transaction容器不正常，容器累积事务数:{}",transactionMap.size());
+        }
     }
 
     /**
