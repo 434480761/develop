@@ -126,7 +126,7 @@ public class EducationToTitanBeanUtils {
             return BeanMapperUtils.beanMapper(education,TitanTool.class);
         }
         if (ResourceNdCode.metacurriculums.equals(ResourceNdCode.fromString(primaryCategory))){
-            return BeanMapperUtils.beanMapper(education,TitanTool.class);
+            return BeanMapperUtils.beanMapper(education,TitanMetacurriculum.class);
         }
         return null;
     }

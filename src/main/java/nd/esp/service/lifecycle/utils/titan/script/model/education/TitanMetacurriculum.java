@@ -8,7 +8,7 @@ import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
  * Created by Administrator on 2016/9/19.
  */
 @TitanVertex(label = "metacurriculums")
-public class TitanMetacurriculum extends Education{
+public class TitanMetacurriculum extends TitanEducation{
     @TitanField(name = "ext_isbn")
     private String isbn;
     @TitanField(name = "ext_attachments")
