@@ -38,7 +38,7 @@ public class TitanScriptBuilder {
     }
 
     private class Variable{
-        String variable;
+        String variable ="";
         String suffix;
         int secondIndex =0;
 
@@ -48,7 +48,7 @@ public class TitanScriptBuilder {
         }
 
         public Variable(String variable, String suffix) {
-            this.variable = variable;
+//            this.variable = variable;
             this.suffix = suffix;
         }
 
@@ -164,19 +164,21 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public TitanScriptBuilder deleteNullProperty(TitanModel model){
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        if (titanScriptModel == null){
-            return this;
-        }
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-        deleteNodeNullProperty(titanScriptModel,variable,script,param);
+    public static String deleteRedProperty(String identifier){
 
+        StringBuilder script = new StringBuilder("ele=g.V().has('identifier',identifier).next();");
+
+        List<String> dropValues = new ArrayList<>();
+        dropValues.add(TitanKeyWords.search_code.toString());
+        dropValues.add(TitanKeyWords.search_coverage.toString());
+        dropValues.add(TitanKeyWords.search_path.toString());
+        dropValues.add(TitanKeyWords.search_code_string.toString());
+        dropValues.add(TitanKeyWords.search_coverage_string.toString());
+        dropValues.add(TitanKeyWords.search_path_string.toString());
+        appendRemoveAllProperty("ele",dropValues,script);
+
+        return script.toString();
 //        dealScriptAndParam(script, param);
-
-        return this;
     }
 
     /**
@@ -217,7 +219,7 @@ public class TitanScriptBuilder {
         String method = "method" + firstIndex;
         methodNames.add(method);
         this.script.append("public ").append(returnType).append(" ").append(method).append("(){").append(scriptAndParam.getScript()).append(" ").append("}").append(";");
-//        this.script.append(script).append(";");
+//        this.script.append(scriptAndParam.getScript()).append(";");
         this.param.putAll(scriptAndParam.getParam());
         this.firstIndex ++ ;
     }
@@ -311,13 +313,16 @@ public class TitanScriptBuilder {
         Map<String, Object> param = new HashMap<>();
         StringBuilder ifConditionScript = new StringBuilder("!");
         uniqueVertexOrNode(titanScriptModel,variable, ifConditionScript, param);
-        appendIterator(ifConditionScript);
         appendHasNext(ifConditionScript);
 
         ScriptAndParam ifScriptAndParam = add(titanScriptModel,variable);
         param.putAll(ifScriptAndParam.getParam());
 
-        ifScript(script, ifConditionScript.toString(), ifScriptAndParam.getScript().toString());
+        StringBuilder elseScript = new StringBuilder("return ");
+        uniqueVertexOrNode(titanScriptModel,variable, elseScript, param);
+        appendNext(elseScript);
+
+        ifElseScript(script, ifConditionScript.toString(),"return " + ifScriptAndParam.getScript().toString(),elseScript.toString());
 
         return new ScriptAndParam(script, param);
     }
@@ -333,7 +338,7 @@ public class TitanScriptBuilder {
         StringBuilder script = new StringBuilder();
         Map<String, Object> param = new HashMap<>();
         if (titanScriptModel instanceof TitanScriptModelVertex){
-            script.append(variable.getVariable()).append("=graph");
+            script.append(variable.getVariable()).append("graph");
             appendAddVertex(titanScriptModel.getFieldMap(),titanScriptModel.getLabel(),variable,script,param);
         }
         if (titanScriptModel instanceof TitanScriptModelEdge){
@@ -406,7 +411,6 @@ public class TitanScriptBuilder {
             script.append(".E()");
         }
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
-        appendId(script);
     }
 
 
@@ -424,13 +428,13 @@ public class TitanScriptBuilder {
         return variable;
     }
 
-    private void appendRemoveAllProperty(String element,List<String> list , StringBuilder script){
+    private static void appendRemoveAllProperty(String element,List<String> list , StringBuilder script){
         for (String field : list){
             appendRemoveProperty4Next(element, script, field);
         }
     }
 
-    private void appendRemoveProperty4Next(String element,StringBuilder script, String field){
+    private static void appendRemoveProperty4Next(String element,StringBuilder script, String field){
         script.append(";");
         script.append(element);
         appendProperty(script, field);
@@ -482,35 +486,35 @@ public class TitanScriptBuilder {
         script.append("else{").append(elseRunScript).append(";").append("}");
     }
 
-    private void whileScript(StringBuilder script, String conditionScript,String whileRunScript){
+    private static void whileScript(StringBuilder script, String conditionScript,String whileRunScript){
         script.append("while(").append(conditionScript).append("){").append(whileRunScript).append(";").append("}");
     }
 
-    private void appendReturn(StringBuilder script ,String element){
+    private static void appendReturn(StringBuilder script ,String element){
         script.append(";return ").append(element).append(";");
     }
 
-    private void appendRemove(StringBuilder script){
+    private static void appendRemove(StringBuilder script){
         script.append(".remove()");
     }
 
-    private void appendProperty(StringBuilder script, String field){
+    private static void appendProperty(StringBuilder script, String field){
         script.append(".property('").append(field).append("')");
     }
 
-    private void appendDrop(StringBuilder script){
+    private static void appendDrop(StringBuilder script){
         script.append(".drop()");
     }
 
-    private void appendIterator(StringBuilder script){
+    private static void appendIterator(StringBuilder script){
         script.append(".iterator()");
     }
 
-    private void appendHasNext(StringBuilder script){
+    private static void appendHasNext(StringBuilder script){
         script.append(".hasNext()");
     }
 
-    private void appendAddVertex(Map<String, Object> values,String label , Variable variable, StringBuilder script , Map<String, Object> param){
+    private static void appendAddVertex(Map<String, Object> values,String label , Variable variable, StringBuilder script , Map<String, Object> param){
         String labelName = "nodeLabel"+variable.getSuffix();
         script.append(".addVertex(T.label,").append(labelName);
         param.put(labelName, label);
@@ -526,7 +530,7 @@ public class TitanScriptBuilder {
         script.append(")");
     }
 
-    private void appendAddEdge(Map<String, Object> values ,String label,String innerScript , Variable variable, StringBuilder script , Map<String, Object> param){
+    private static void appendAddEdge(Map<String, Object> values ,String label,String innerScript , Variable variable, StringBuilder script , Map<String, Object> param){
         String labelName = "edgeLabel"+variable.getSuffix();
         script.append(".addEdge(").append(labelName).append(",").append(innerScript);
         for (String key : values.keySet()){
@@ -541,7 +545,7 @@ public class TitanScriptBuilder {
         script.append(")");
     }
 
-    private void appendNext(StringBuilder script){
+    private static void appendNext(StringBuilder script){
         script.append(".next()");
     }
 
