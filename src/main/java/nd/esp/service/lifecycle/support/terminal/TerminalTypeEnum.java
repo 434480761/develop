@@ -10,7 +10,8 @@ public enum TerminalTypeEnum {
 	PC("pc"),
 	IOS("ios"),
 	ANDROID("android"),
-	WEB("web")
+	WEB("web"),
+	PACKAGE("package")
 	;
 	
 	/**
