@@ -40,3 +40,9 @@
 14、index status (mixed_ndresource,identifier)
 
 :> mgmt = graph.openManagement();pro= mgmt.getPropertyKey("identifier");mgmt.getGraphIndex("mixed_ndresource").getIndexStatus(pro)
+
+//新增索引  
+comp_identifier_type
+:> int size = graph.getOpenTransactions().size();for(i=0;i<size;i++) {graph.getOpenTransactions().getAt(0).rollback()};mgmt = graph.openManagement();primary_category = mgmt.getPropertyKey('primary_category');identifier = mgmt.getPropertyKey('identifier');mgmt.buildIndex('comp_identifier_type', Vertex.class).addKey(primary_category).addKey(identifier).buildCompositeIndex();mgmt.commit();
+:> mgmt = graph.openManagement();index = mgmt.getGraphIndex("comp_identifier_type");mgmt.updateIndex(index, SchemaAction.REINDEX).get();mgmt.commit();
+:> mgmt = graph.openManagement();primary_category = mgmt.getPropertyKey('primary_category');mgmt.getGraphIndex('comp_identifier_type').getIndexStatus(primary_category)

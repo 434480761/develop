@@ -106,6 +106,11 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
         }
+        
+        LOG.info("----统计成功:" + resType + "---" + id);
+        for (ResourceStatistical statistical : statisticalsList) {
+        	LOG.info("统计详情" + statistical.getKeyTitle() + "---" + statistical.getKeyValue());
+        }
 
         // 模型转出
         List<ResourceStatisticalModel> returnList = new ArrayList<ResourceStatisticalModel>();
@@ -166,6 +171,11 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.StoreSdkFail.getCode(), e.getLocalizedMessage());
+        }
+        
+        LOG.info("----统计累加成功:" + resType + "---" + id);
+        for (ResourceStatistical statistical : statisticalsList) {
+        	LOG.info("统计详情" + statistical.getKeyTitle() + "---" + statistical.getKeyValue());
         }
 
         // 模型转出

@@ -519,6 +519,7 @@ public class TestKnowledgeController extends SimpleJunitTest4ResourceImpl {
                                                                  knowledgeSource,
                                                                  knowledgeTarget,
                                                                  haveCategories);
+        viewModel.setTitle(UUID.randomUUID().toString());
         String uri = "/v0.6/knowledges";
         Map<String,Object>  result = null;
         try {
