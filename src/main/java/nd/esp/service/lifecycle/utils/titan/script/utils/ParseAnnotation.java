@@ -319,19 +319,25 @@ public class ParseAnnotation {
 
 //        createScriptModel(edge);
 
-        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
+        String s1 = "g.V().has('primary_category','assets').has('identifier','0919127b-5536-454c-98f4-35c773d92061')";
+//
 
-        TitanScriptBuilder builder = new TitanScriptBuilder();
-        builder.add(titanAsset);
-        builder.scriptEnd();
-        builder.getScript();
-
+        String script = TitanScriptBuilder.deleteRedProperty("0921127b-5536-454c-98f4-35c773d99003");
+        Map<String, Object> param = new HashMap<>();
+        param.put("identifier", "0921127b-5536-454c-98f4-35c773d99003");
+//        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
+//
+//        TitanScriptBuilder builder = new TitanScriptBuilder();
+//        builder.addBeforeCheckExist(titanAsset);
+//        builder.scriptEnd();
+//        builder.getScript();
+//
         ParseAnnotation parseAnnotation = new ParseAnnotation();
         parseAnnotation.init();
         Client client = parseAnnotation.getGremlinClient();
-        long time1 = System.currentTimeMillis();
-        client.submit(builder.getScript().toString(), builder.getParam());
-        System.out.println(System.currentTimeMillis() - time1);
+
+        client.submit(script, param);
+
 
     }
 }
