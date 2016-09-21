@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.education.*;
+import org.springframework.context.annotation.Bean;
 
 import javax.tools.Tool;
 
@@ -59,6 +60,9 @@ public class EducationToTitanBeanUtils {
             model = BeanMapperUtils.beanMapper(entity, TitanResourceStatisticalEdge.class);
         }
 
+        if (entity instanceof KnowledgeRelation){
+            model = BeanMapperUtils.beanMapper(entity, TitanKnowledgeRelation.class);
+        }
         return model;
     }
 
