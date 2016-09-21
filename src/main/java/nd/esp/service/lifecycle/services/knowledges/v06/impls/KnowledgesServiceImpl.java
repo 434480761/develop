@@ -303,6 +303,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public KnowledgeRelationsModel addKnowledgeRelation(KnowledgeRelationsModel knowledgeRelation) {
         try {
             Chapter knowledge = knowledgeRepository.get(knowledgeRelation.getSource());

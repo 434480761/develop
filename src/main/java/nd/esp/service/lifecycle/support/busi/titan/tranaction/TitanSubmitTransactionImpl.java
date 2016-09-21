@@ -2,7 +2,6 @@ package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanResourceRepository;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
@@ -61,34 +60,37 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
         for (TitanRepositoryOperation operation : repositoryOperations) {
             TitanOperationType type = operation.getOperationType();
+            EspEntity entity = operation.getEntity();
             switch (type) {
                 case add: case update:
-                    if (operation.getEntity() instanceof Education){
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                    }
-                    if (operation.getEntity() instanceof ResCoverage) {
-                        educationIds.put(((ResCoverage) operation.getEntity()).getResource(),
-                                ((ResCoverage) operation.getEntity()).getResType());
+                    if (entity instanceof Education){
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
+                    } else if (entity instanceof ResCoverage) {
+                        educationIds.put(((ResCoverage) entity).getResource(),
+                                ((ResCoverage)entity).getResType());
                         //删除边
-                        builder.delete(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if(operation.getEntity() instanceof ResourceCategory){
-                        educationIds.put(((ResourceCategory) operation.getEntity()).getResource(),
-                                ((ResourceCategory) operation.getEntity()).getPrimaryCategory());
+                        builder.delete(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                    } else if(entity instanceof ResourceCategory){
+                        educationIds.put(((ResourceCategory) entity).getResource(),
+                                ((ResourceCategory) entity).getPrimaryCategory());
                         //删除边
-                        builder.delete(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if(operation.getEntity() instanceof  TechInfo){
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    }else if (operation.getEntity() instanceof ResourceStatistical){
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(operation.getEntity()));
-                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                    } else if (operation.getEntity() instanceof ResourceRelation){
-                        builder.delete(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(operation.getEntity()));
+                        builder.delete(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                    } else if(entity instanceof  TechInfo){
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(entity));
+                    }else if (entity instanceof ResourceStatistical){
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
+                        builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(entity));
+                    } else if (entity instanceof ResourceRelation){
+                        builder.delete(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                    } else if (entity instanceof KnowledgeRelation){
+                        builder.delete(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
                     }
                     break;
                 case delete:
@@ -127,65 +129,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
 
         return true;
-    }
-
-
-    private boolean batchDelete(List<String> identifierList, String type){
-        String titanType;
-        if ("edge".equals(type)){
-            titanType = "E";
-        } else {
-            titanType = "V";
-        }
-        StringBuilder scriptBuilder = new StringBuilder(
-                "g."+titanType+"().has('identifier',");
-        StringBuilder withInScript = new StringBuilder("within(");
-
-        Map<String, Object> params = new HashMap<>();
-        for (int i=0; i <identifierList.size() ;i ++){
-            String indentifierName = "identifier"+i;
-            if(i == 0){
-                withInScript.append(indentifierName);
-            } else {
-                withInScript.append(",").append(indentifierName);
-            }
-            params.put(indentifierName, identifierList.get(i));
-        }
-        withInScript.append(")");
-        scriptBuilder.append(withInScript).append(")").append(".drop()");
-
-        try {
-            titanCommonRepository.executeScript(scriptBuilder.toString(), params);
-        } catch (Exception e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private Map<String, Object>  getUpdateEducation(List<TitanRepositoryOperation> operationList , String identifier){
-        List<ResourceCategory> categoryList = new ArrayList<>();
-        List<ResCoverage> coverageList = new ArrayList<>();
-        String status = null;
-        String primaryCategory = null;
-        for (TitanRepositoryOperation operation : operationList){
-            EspEntity entity = operation.getEntity();
-            if (entity instanceof Education && identifier.equals(entity.getIdentifier())){
-                status = ((Education) entity).getStatus();
-                primaryCategory = ((Education) entity).getPrimaryCategory();
-            }
-
-            if (entity instanceof ResourceCategory && identifier.equals(((ResourceCategory) entity).getResource())){
-                categoryList.add((ResourceCategory) entity);
-            }
-
-            if (entity instanceof ResCoverage && identifier.equals(((ResCoverage) entity).getResource())){
-                coverageList.add((ResCoverage) entity);
-            }
-
-        }
-
-        return updateEducation(primaryCategory,identifier,categoryList,coverageList,status);
     }
 
     private boolean updateEducation(String primaryCategory, String identifier){
