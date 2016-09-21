@@ -34,7 +34,7 @@ public class TitanTransactionAspect {
     }
 
     @Before("performanceAnnon()")
-    public void beforeExecuteAnnon(JoinPoint point) {
+    public void beforeExecuteAnnon() {
         initTitanTransaction();
     }
 
@@ -45,7 +45,7 @@ public class TitanTransactionAspect {
         String className = methodSignature.getMethod().getDeclaringClass().getPackage().getName();
         String method =  methodSignature.getMethod().getName();
         String currentTransactionName = TransactionSynchronizationManager.getCurrentTransactionName();
-        //防止被方法中的其它titan事务提交
+        //防止被方法中的其它titanTransaction事务提交
         if (currentTransactionName.contains(className) && currentTransactionName.contains(method)) {
             titanTransactionCollection.commit(TransactionSynchronizationManager.getCurrentTransactionName());
         }
@@ -59,9 +59,11 @@ public class TitanTransactionAspect {
     private void initTitanTransaction(){
         String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
         if (oldName != null &&  oldName.endsWith("_titan")){
+            //TODO 稳定去掉日志
             LOG.info("有内嵌titan事务 {}",oldName);
             return;
         }
+        //事务名要保留类名，防止嵌套的TitanTransaction错误提交
         String name = TransactionSynchronizationManager.getCurrentTransactionName()
                 + UUID.randomUUID().toString()+"_titan";
 
