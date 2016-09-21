@@ -50,7 +50,6 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 
 	@TitanTransaction
 	public AssetModel createAsset(AssetModel am) {
-		String name = TransactionSynchronizationManager.getCurrentTransactionName() ;
 		if("auto_increment".equals(am.getTitle())){
 			Pattern suitePattern = Pattern.compile("^套件[0-9]*$");
 			Pattern subSuitePattern = Pattern.compile("^套件[0-9.]*$");
