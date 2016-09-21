@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.models.icrs2.v06;
+package nd.esp.service.lifecycle.models.icrs.v06;
 
 public class HourDataModel {
 	private String hour;

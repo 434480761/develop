@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.vos.icrs1.v06;
+package nd.esp.service.lifecycle.vos.icrs.v06;
 
 public class ResourceTotalViewModel {
 	

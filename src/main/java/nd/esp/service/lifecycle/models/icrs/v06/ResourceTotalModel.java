@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.models.icrs1.v06;
+package nd.esp.service.lifecycle.models.icrs.v06;
 
 public class ResourceTotalModel {
 	

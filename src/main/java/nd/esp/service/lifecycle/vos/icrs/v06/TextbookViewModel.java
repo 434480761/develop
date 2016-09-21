@@ -1,6 +1,6 @@
-package nd.esp.service.lifecycle.models.icrs1.v06;
+package nd.esp.service.lifecycle.vos.icrs.v06;
 
-public class TextbookModel {
+public class TextbookViewModel {
 	
 	private String uuid;
 	private String title;
