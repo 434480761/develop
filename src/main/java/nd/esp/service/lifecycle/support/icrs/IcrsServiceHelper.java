@@ -64,8 +64,7 @@ public class IcrsServiceHelper {
 		
 		// 需要过滤维度
 		if (resType.equals(IndexSourceType.AssetType.getName())
-				|| resType.equals(IndexSourceType.SourceCourseWareType.getName())
-				|| resType.equals(IndexSourceType.QuestionType.getName())) {
+				|| resType.equals(IndexSourceType.SourceCourseWareType.getName())) {
 			querySql += " inner join resource_categories rc on ndr.identifier=rc.resource ";
 		}
 
@@ -92,9 +91,8 @@ public class IcrsServiceHelper {
 		}
 		
 		if (resType.equals(IndexSourceType.QuestionType.getName())) {// questions
-			querySql += " and rc.primary_category='" + resType
-					+ "' and rc.taxOnCode not in "
-					+ "('$RE0211','$RE0206')";
+			querySql += " and ndr.identifier not in "
+					+ "(SELECT ex.resource FROM resource_categories ex WHERE ex.taxOnCode IN ('$RE0211','$RE0206'))";
 		}
 		
 //		if (resType
