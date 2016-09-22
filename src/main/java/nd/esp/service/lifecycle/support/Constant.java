@@ -262,6 +262,8 @@ public class Constant {
 
     public static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
 
+    public static String WORKER_DOCUMENT_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_document_transcode_service");
+
     /**
      * 后门API开关
      * @see nd.esp.service.lifecycle.controllers.v06.BackDoorController

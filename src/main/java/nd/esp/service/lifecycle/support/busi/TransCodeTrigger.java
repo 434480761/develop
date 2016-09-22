@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.support.busi;
 
 import java.util.concurrent.ExecutorService;
 
+import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.entity.TransCodeParam;
 import nd.esp.service.lifecycle.entity.cs.CsSession;
 import nd.esp.service.lifecycle.services.ContentService;
@@ -32,6 +33,9 @@ public class TransCodeTrigger {
     
     @Autowired
     private TransCodeUtil transCodeUtil;
+
+    @Autowired
+    private ResLifecycleDao resLifecycleDao;
     
     @Autowired
     @Qualifier("lifecycleServiceV06")
@@ -56,6 +60,10 @@ public class TransCodeTrigger {
 
     public void triggerImage(TransCodeParam codeParam ){
         executorService.execute(new ImageTranscodeThread(codeParam));
+    }
+
+    public void triggerDocument(TransCodeParam codeParam ){
+        executorService.execute(new DocTranscodeThread(codeParam));
     }
     
     /**
@@ -102,7 +110,8 @@ public class TransCodeTrigger {
                 lifecycleService.addLifecycleStep(codeParam.getResType(),
                                                   codeParam.getResId(),
                                                   false,
-                                                  "创建转码任务失败: " + e.getMessage());  
+                                                  "创建转码任务失败: " + e.getMessage());
+                resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
             }
         }
         
@@ -126,15 +135,14 @@ public class TransCodeTrigger {
                 CsSession csSession2=contentService.getAssignSession(templateInstanceInfo.getPath(), templateInstanceInfo.getServiceId());
                 String templateSession=csSession2.getSession();
                 String templatePath= TransCodeUtil.getFullTranscodeTemplatePath(codeParam.getResType(),templateSession);
-                //暂时不使用两个配置
-                //String taskUrl= TransCodeUtil.getTransCodeTaskUrl(instanceKey);
                 
-                transCodeUtil.TriggerTransCode(codeParam, session, priority, templatePath);
+                transCodeUtil.triggerTransCode(codeParam, session, priority, templatePath);
                    
             } catch (Exception e) {
                 LOG.warn("创建转码任务失败:",e);
                        
                 lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+                resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
             }
             
         }
@@ -154,19 +162,42 @@ public class TransCodeTrigger {
                 String domain=TransCodeUtil.getDomain(codeParam.getReferer());
                 int priority=TransCodeUtil.getTranscodePriority(  domain);
 
-                //暂时不使用两个配置
-                //String taskUrl= TransCodeUtil.getTransCodeTaskUrl(instanceKey);
-
-                transCodeUtil.TriggerImageTransCode(codeParam, session, priority);
+                transCodeUtil.triggerImageTransCode(codeParam, session, priority);
 
             } catch (Exception e) {
                 LOG.warn("创建转码任务失败:",e);
 
                 lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+                resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
             }
 
         }
     }
 
+    class DocTranscodeThread extends Thread{
+        private TransCodeParam codeParam;
+        public DocTranscodeThread (TransCodeParam codeParam){
+            this.codeParam = codeParam;
+        }
+        public void run(){
+            try {
+                LOG.info("href对应的实例键值:{}",codeParam.getInstanceKey());//${ref-path}/edu
+                Constant.CSInstanceInfo instanceInfo=  Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey());
+                String session= SessionUtil.createSession(instanceInfo);
+                LOG.info("href实例对应的sessionID:{}",session);
+                String domain=TransCodeUtil.getDomain(codeParam.getReferer());
+                int priority=TransCodeUtil.getTranscodePriority(  domain);
+
+                transCodeUtil.triggerDocumentTransCode(codeParam, session, priority);
+
+            } catch (Exception e) {
+                LOG.warn("创建转码任务失败:",e);
+
+                lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+                resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
+            }
+
+        }
+    }
 
 }
