@@ -25,10 +25,10 @@ public class InitIcrsResource {
 	 */
 	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void init(){
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), true);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), true);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), true);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), true);
+		icrsServiceHelper.initIcrsByType(IndexSourceType.AssetType.getName());
+		icrsServiceHelper.initIcrsByType(IndexSourceType.SourceCourseWareType.getName());
+		icrsServiceHelper.initIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName());
+		icrsServiceHelper.initIcrsByType(IndexSourceType.QuestionType.getName());
 	}
 	
 	/**
@@ -38,9 +38,9 @@ public class InitIcrsResource {
 	 */
 	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void realTimeFresh(){
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), false);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName());
 	}
 }
