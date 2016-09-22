@@ -14,6 +14,7 @@ import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service("questionServiceV06")
 @Transactional(value="questionTransactionManager")
@@ -28,6 +29,7 @@ public class QuestionServiceImplV06 implements QuestionServiceV06 {
     @Override
     @TitanTransaction
     public QuestionModel createQuestion(QuestionModel questionModel) {
+        String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
         QuestionModel rtQuestionModel = (QuestionModel) ndResourceService.create(ResourceNdCode.questions.toString(), questionModel,DbName.QUESTION);
         return rtQuestionModel;
     }

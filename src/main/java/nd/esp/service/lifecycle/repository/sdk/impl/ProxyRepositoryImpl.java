@@ -53,6 +53,7 @@ import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.ReflectionUtils.FieldCallback;
@@ -125,6 +126,8 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 
 	@Override
 	public T add(T bean) throws EspStoreException {
+
+		String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
 		converterIn(bean);
 		T result = save(bean);
 
@@ -454,6 +457,7 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 
 	@Override
 	public List<T> batchAdd(List<T> bean) throws EspStoreException {
+		String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
 		batchConverterIn(bean);
 		List<T> result = this.save(bean);
 		
