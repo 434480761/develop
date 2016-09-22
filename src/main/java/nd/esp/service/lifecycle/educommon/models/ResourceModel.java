@@ -59,6 +59,11 @@ public class ResourceModel {
 	private Double statisticsNum;
 	
 	/**
+	 * 统计数量Map
+	 */
+	private Map<String, Double> statisticsItems;
+	
+	/**
 	 * 资源关系
 	 */
 	private String relationId;
@@ -253,6 +258,14 @@ public class ResourceModel {
 
 	public void setStatisticsNum(Double statisticsNum) {
 		this.statisticsNum = statisticsNum;
+	}
+
+	public Map<String, Double> getStatisticsItems() {
+		return statisticsItems;
+	}
+
+	public void setStatisticsItems(Map<String, Double> statisticsItems) {
+		this.statisticsItems = statisticsItems;
 	}
 
 

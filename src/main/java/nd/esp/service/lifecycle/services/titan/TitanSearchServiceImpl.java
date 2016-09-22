@@ -125,21 +125,21 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
 
     @Override
-    public ListViewModel<ResourceModel> searchUseES(String resType, List<String> fields,
+    public ListViewModel<ResourceModel> searchUseES(Set<String> resTypeSet, List<String> fields,
                                                     List<String> includes,
                                                     Map<String, Map<String, List<String>>> params,
                                                     Map<String, String> orderMap, int from, int size, boolean reverse, String words) {
         // 1、构建查询脚本
         EsIndexQueryBuilder builder = new EsIndexQueryBuilder();
-        builder.setWords(words).setParams(params).setResType(resType).setRange(from, size).setIncludes(includes).setFields(fields);
+        builder.setWords(words).setParams(params).setResTypeSet(resTypeSet).setRange(from, size).setIncludes(includes).setFields(fields);
         List<TitanOrder> orders = dealWithOrder4EsIndexQuery(orderMap,StringUtils.isNotEmpty(words));
         builder.setOrders(orders);
-        String script = builder.generateScriptAfterEsUpdateOrderBy();
+        String script = builder.generateScript();
         LOG.info("script:" + script);
         // 2、查询
         ResultSet resultSet = titanResourceRepository.search(script, null);
         // 3、解析
-        return getListViewModelResourceModel(resultSet, resType,includes);
+        return getListViewModelResourceModel(resultSet, resTypeSet,includes);
     }
 
     @Override

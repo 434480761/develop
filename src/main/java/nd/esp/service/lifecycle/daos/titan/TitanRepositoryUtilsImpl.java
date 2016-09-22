@@ -18,10 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by liuran on 2016/7/4.
@@ -43,7 +40,7 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         example.setPrimaryCategory(primaryCategory);
         example.setResource(source);
         List<TitanSync> titanSyncList = null;
-        TitanSync titanSync = null;
+
         try {
             titanSyncList = titanSyncRepository.getAllByExample(example);
         } catch (EspStoreException e) {
@@ -54,18 +51,19 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
         /**
          * 获取Sync数据同步条件，如果新增加的真删除资源，则清空其它的数据同步条件
          * */
+        List<TitanSync> titanSyncUpdate = new ArrayList<>();
         if(titanSyncList != null && titanSyncList.size() > 0){
             for(TitanSync ts : titanSyncList){
                 if(TitanSyncType.value(ts.getType()).equals(errorType)){
-                    titanSync = ts;
+                    titanSyncUpdate.add(ts);
                 } else if(TitanSyncType.DROP_RESOURCE_ERROR.equals(errorType)){
                     titanSyncRepository.delete(ts);
                 }
             }
         }
 
-        if(titanSync == null){
-            titanSync = new TitanSync();
+        if(titanSyncUpdate.size() == 0){
+            TitanSync  titanSync = new TitanSync();
             titanSync.setResource(source);
             titanSync.setPrimaryCategory(primaryCategory);
             titanSync.setIdentifier(UUID.randomUUID().toString());
@@ -81,10 +79,12 @@ public class TitanRepositoryUtilsImpl implements TitanRepositoryUtils{
                 LOG.error("titan数据同步,add异常数据到mysql失败 primaryCategory：{}  errorType:{}  source:{}",primaryCategory,errorType,source);
             }
         } else {
-            titanSync.setExecuteTimes(titanSync.getExecuteTimes() + 1);
-            titanSync.setCreateTime(System.currentTimeMillis());
+            for (TitanSync titanSync : titanSyncUpdate){
+                titanSync.setExecuteTimes(titanSync.getExecuteTimes() + 1);
+                titanSync.setCreateTime(System.currentTimeMillis());
+            }
             try {
-                titanSyncRepository.update(titanSync);
+                titanSyncRepository.batchAdd(titanSyncUpdate);
             } catch (EspStoreException e) {
                 LOG.error("titan数据同步,update异常数据到mysql失败 primaryCategory：{}  errorType:{}  source:{}",primaryCategory,errorType,source);
 

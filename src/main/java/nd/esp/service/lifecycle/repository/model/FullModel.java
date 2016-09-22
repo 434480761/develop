@@ -25,13 +25,11 @@ public class FullModel {
     private String code;
     private String relationId;
     private Double statistics_num;
+    private Double top_num;
+    private Double score_num;
+    private Double vote_num;
+    private Double view_num;
     
-    public String getRelationId() {
-		return relationId;
-	}
-	public void setRelationId(String relationId) {
-		this.relationId = relationId;
-	}
 	//**********************LC(生命周期)**********************\\
     private String lifeCycle_version;
     private String lifeCycle_status;
@@ -286,5 +284,35 @@ public class FullModel {
 	}
 	public void setCopyRight_rightEndDate(String copyRight_rightEndDate) {
 		this.copyRight_rightEndDate = copyRight_rightEndDate;
+	}
+	public String getRelationId() {
+		return relationId;
+	}
+	public void setRelationId(String relationId) {
+		this.relationId = relationId;
+	}
+	public Double getTop_num() {
+		return top_num;
+	}
+	public void setTop_num(Double top_num) {
+		this.top_num = top_num;
+	}
+	public Double getScore_num() {
+		return score_num;
+	}
+	public void setScore_num(Double score_num) {
+		this.score_num = score_num;
+	}
+	public Double getVote_num() {
+		return vote_num;
+	}
+	public void setVote_num(Double vote_num) {
+		this.vote_num = vote_num;
+	}
+	public Double getView_num() {
+		return view_num;
+	}
+	public void setView_num(Double view_num) {
+		this.view_num = view_num;
 	}
 }

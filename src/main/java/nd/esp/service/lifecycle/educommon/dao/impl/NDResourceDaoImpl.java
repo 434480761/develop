@@ -63,6 +63,7 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.enums.StatisticalType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.EduRedisTemplate;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -230,7 +231,12 @@ public class NDResourceDaoImpl implements NDResourceDao{
         boolean isNeedPreview = isNeedPreview(resType);
         commonSelect = "ndr.identifier AS identifier,ndr.m_identifier AS mIdentifier,ndr.title AS title,ndr.description AS description,ndr.elanguage AS language,"
                 + (isNeedPreview ? "ndr.preview AS preview," : "null AS preview,") + "ndr.tags AS tags,ndr.keywords AS keywords,ndr.custom_properties as customProperties,"
-                + "ndr.code as code,"+ (haveSortNum ? "rer.identifier AS relationId," : "null AS relationId,") + (haveSumSort ? "rs.key_value AS statistics_num" : "null AS statistics_num");
+                + "ndr.code as code,"+ (haveSortNum ? "rer.identifier AS relationId," : "null AS relationId,") 
+                + (haveSumSort ? "rs.key_value AS statistics_num," : "null AS statistics_num,")
+        		+ (haveTopSort ? "rs1.key_value AS top_num," : "null AS top_num,")
+        		+ (haveScoreSort ? "rs2.key_value AS score_num," : "null AS score_num,")
+		        + (haveVoteSort ? "rs3.key_value AS vote_num," : "null AS vote_num,")
+		        + (haveViewSort ? "rs4.key_value AS view_num" : "null AS view_num");
         //LC
         String lifeCycleSelect = "ndr.version AS lifeCycle_version,ndr.estatus AS lifeCycle_status,ndr.enable AS lifeCycle_enable,ndr.creator AS lifeCycle_creator,ndr.publisher AS lifeCycle_publisher,ndr.provider AS lifeCycle_provider,ndr.provider_source AS lifeCycle_providerSource,ndr.provider_mode AS lifeCycle_providerMode,ndr.create_time AS lifeCycle_createTime,ndr.last_update AS lifeCycle_lastUpdate";
         String lifeCycleSelect4Null = "null AS lifeCycle_version,null AS lifeCycle_status,null AS lifeCycle_enable,null AS lifeCycle_creator,null AS lifeCycle_publisher,null AS lifeCycle_provider,null AS lifeCycle_providerSource,null AS lifeCycle_providerMode,null AS lifeCycle_createTime,null AS lifeCycle_lastUpdate";
@@ -433,6 +439,31 @@ public class NDResourceDaoImpl implements NDResourceDao{
             	resourceModel.setStatisticsNum(fullModel.getStatistics_num()==null ? 0D : fullModel.getStatistics_num());
             }else{
             	resourceModel.setStatisticsNum(null);
+            }
+            
+            if(haveTopSort || haveScoreSort || haveVoteSort || haveViewSort){
+            	Map<String, Double> statisticsItems = new HashMap<String, Double>();
+            	
+            	if(haveTopSort){
+            		statisticsItems.put(StatisticalType.top.toString(), 
+            				fullModel.getTop_num()==null ? 0D : fullModel.getTop_num());
+            	}
+            	if(haveScoreSort){
+            		statisticsItems.put(StatisticalType.scores.toString(), 
+            				fullModel.getScore_num()==null ? 0D : fullModel.getScore_num());
+            	}
+            	if(haveVoteSort){
+            		statisticsItems.put(StatisticalType.votes.toString(), 
+            				fullModel.getVote_num()==null ? 0D : fullModel.getVote_num());
+            	}
+            	if(haveViewSort){
+            		statisticsItems.put(StatisticalType.views.toString(), 
+            				fullModel.getView_num()==null ? 0D : fullModel.getView_num());
+            	}
+            	
+            	resourceModel.setStatisticsItems(statisticsItems);
+            }else{
+            	resourceModel.setStatisticsItems(null);
             }
             
             //EDU,LC,CR
