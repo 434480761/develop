@@ -5,6 +5,6 @@ import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
 /**
  * Created by Administrator on 2016/9/19.
  */
-@TitanVertex(label = "learningplans")
+@TitanVertex(label = "lessonplans")
 public class TitanLessonPlan extends TitanEducation{
 }

@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.utils.titan.script.model;
 
+import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
@@ -101,8 +102,8 @@ public class EducationToTitanBeanUtils {
         if (ResourceNdCode.coursewareobjecttemplates.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanCoursewareObjectTemplate.class);
         }
-        if (ResourceNdCode.learningplans.equals(ResourceNdCode.fromString(primaryCategory))){
-            return BeanMapperUtils.beanMapper(education,TitanLearningPlan.class);
+        if (ResourceNdCode.lessonplans.equals(ResourceNdCode.fromString(primaryCategory))){
+            return BeanMapperUtils.beanMapper(education,TitanLessonPlan.class);
         }
         if (ResourceNdCode.ebooks.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanEbook.class);
@@ -113,20 +114,23 @@ public class EducationToTitanBeanUtils {
         if (ResourceNdCode.knowledges.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanKnowledge.class);
         }
+        if (ResourceNdCode.homeworks.equals(ResourceNdCode.fromString(primaryCategory))){
+            return BeanMapperUtils.beanMapper(education, TitanHomeWork.class);
+        }
         if (ResourceNdCode.questions.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanQuestion.class);
         }
         if (ResourceNdCode.examinationpapers.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanExaminationPaper.class);
         }
+        if (ResourceNdCode.metacurriculums.equals(ResourceNdCode.fromString(primaryCategory))){
+            return BeanMapperUtils.beanMapper(education,TitanMetacurriculum.class);
+        }
         if (ResourceNdCode.learningplans.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanLearningPlan.class);
         }
         if (ResourceNdCode.tools.equals(ResourceNdCode.fromString(primaryCategory))){
             return BeanMapperUtils.beanMapper(education,TitanTool.class);
-        }
-        if (ResourceNdCode.metacurriculums.equals(ResourceNdCode.fromString(primaryCategory))){
-            return BeanMapperUtils.beanMapper(education,TitanMetacurriculum.class);
         }
         return null;
     }

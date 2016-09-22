@@ -1,13 +1,10 @@
 package nd.esp.service.lifecycle.utils.titan.script.model.education;
 
-import nd.esp.service.lifecycle.utils.BeanMapperUtils;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanCompositeKey;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanField;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Created by Administrator on 2016/8/24.
@@ -20,7 +17,7 @@ public class TitanEducation extends TitanModel {
     @TitanField(name = "m_identifier")
     private String mIdentifier;
 
-//    @TitanCompositeKey
+    @TitanCompositeKey
     @TitanField(name = "primary_category")
     private String primaryCategory;
 

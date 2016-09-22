@@ -7,4 +7,5 @@ import nd.esp.service.lifecycle.utils.titan.script.annotation.TitanVertex;
  */
 @TitanVertex(label = "tools")
 public class TitanTool extends TitanEducation{
+
 }

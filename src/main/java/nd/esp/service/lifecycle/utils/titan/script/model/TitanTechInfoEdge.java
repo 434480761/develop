@@ -46,7 +46,7 @@ public class TitanTechInfoEdge extends TitanModel{
     @TitanEdgeResourceKey(source = "identifier")
     private String resource;
 
-//    @TitanEdgeResourceKey(source = "primary_category")
+    @TitanEdgeResourceKey(source = "primary_category")
     private String resType;
 
     public String getIdentifier() {

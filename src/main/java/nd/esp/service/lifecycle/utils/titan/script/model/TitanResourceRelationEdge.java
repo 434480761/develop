@@ -30,7 +30,7 @@ public class TitanResourceRelationEdge extends TitanModel{
     @TitanField(name = "sort_num")
     private Float sortNum;
 
-//    @TitanEdgeResourceKey(source = "primary_category")
+    @TitanEdgeResourceKey(source = "primary_category")
     @TitanField(name = "res_type")
     private String resType;
 
@@ -41,7 +41,7 @@ public class TitanResourceRelationEdge extends TitanModel{
     @TitanField(name = "tags")
     private String dbtags;
 
-//    @TitanEdgeTargetKey(target = "primary_category")
+    @TitanEdgeTargetKey(target = "primary_category")
     @TitanField(name = "resource_target_type")
     private String resourceTargetType;
 
