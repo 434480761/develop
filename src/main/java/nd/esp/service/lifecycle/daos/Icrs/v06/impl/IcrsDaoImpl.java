@@ -91,7 +91,7 @@ public class IcrsDaoImpl implements IcrsDao {
 
 		final List<DailyDataModel> dailyList = new ArrayList<DailyDataModel>();
 		Map<String, Object> params = new HashMap<String, Object>();
-		if (resType == null) {
+		if (!StringUtils.hasText(resType)) {
 			sql += " create_date between :fromDate and :toDate group by date";
 
 		} else {
