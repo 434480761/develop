@@ -29,7 +29,7 @@ public class TitanResourceCategoryEdge extends TitanModel{
     @TitanField(name = "cg_taxonpath")
     private String taxonpath;
 
-    @TitanEdgeResourceKey(source="primary_category")
+//    @TitanEdgeResourceKey(source="primary_category")
     private String primaryCategory;
 
     @TitanEdgeResourceKey(source="identifier")

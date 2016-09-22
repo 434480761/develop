@@ -29,7 +29,6 @@ public class QuestionServiceImplV06 implements QuestionServiceV06 {
     @Override
     @TitanTransaction
     public QuestionModel createQuestion(QuestionModel questionModel) {
-        String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
         QuestionModel rtQuestionModel = (QuestionModel) ndResourceService.create(ResourceNdCode.questions.toString(), questionModel,DbName.QUESTION);
         return rtQuestionModel;
     }

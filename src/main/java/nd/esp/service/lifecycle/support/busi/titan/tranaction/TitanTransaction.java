@@ -12,7 +12,9 @@ public class TitanTransaction {
     private LinkedList<TitanRepositoryOperation> repositoryOperations;
     private int retryTimes ;
     private long crateTime;
-    public TitanTransaction(){
+    private String methodName;
+    public TitanTransaction(String methodName){
+        this.methodName = methodName;
         repositoryOperations = new LinkedList<>();
         retryTimes = 0;
         crateTime = System.currentTimeMillis();
@@ -28,6 +30,10 @@ public class TitanTransaction {
 
     public LinkedList<TitanRepositoryOperation> getAllStep(){
         return repositoryOperations;
+    }
+
+    public String getMethodName() {
+        return methodName;
     }
 
     public void addRetryTimes(){

@@ -21,8 +21,11 @@ public class TitanTransactionCollection {
     /**
      * 对事务进行初始化
      * */
-    public void initOneTransaction(String transactionName){
-        transactionMap.put(transactionName, new TitanTransaction());
+    public void initOneTransaction(String transactionName,String methodName){
+        if (transactionMap.get(transactionName)!=null){
+            return;
+        }
+        transactionMap.put(transactionName, new TitanTransaction(methodName));
         if (transactionMap.size() > 1000){
             LOG.warn("titan transaction容器不正常，容器累积事务数:{}",transactionMap.size());
         }
@@ -33,6 +36,10 @@ public class TitanTransactionCollection {
      * */
     public void addOneStep(String transactionName, TitanRepositoryOperation repositoryOperation){
         TitanTransaction transaction = transactionMap.get(transactionName);
+        if (transaction == null){
+            LOG.info("titan transaction可能没有初始化");
+            return;
+        }
         transaction.addNextStep(repositoryOperation);
     }
 
@@ -56,6 +63,10 @@ public class TitanTransactionCollection {
      * */
     public void deleteTransaction(String transactionName){
         transactionMap.remove(transactionName);
+    }
+
+    public TitanTransaction getTransaction(String transactionName){
+        return transactionMap.get(transactionName);
     }
 
     /**

@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.support.aop;
 
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransactionCollection;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
@@ -35,26 +36,24 @@ public class TitanTransactionAspect {
     }
 
     @Before("performanceAnnon()")
-    public void beforeExecuteAnnon() {
-        initTitanTransaction();
+    public void beforeExecuteAnnon(JoinPoint point) {
+        initTitanTransaction(point);
     }
 
     @AfterReturning("performanceAnnon()")
     public void afterReturnExecuteAnnon(JoinPoint point){
-        Signature signature = point.getSignature();
-        MethodSignature methodSignature = (MethodSignature) signature;
-        String className = methodSignature.getMethod().getDeclaringClass().getPackage().getName();
-        String method =  methodSignature.getMethod().getName();
-        String currentTransactionName = TransactionSynchronizationManager.getCurrentTransactionName();
-        //防止被方法中的其它titanTransaction事务提交
-        if (currentTransactionName.contains(className) && currentTransactionName.contains(method)) {
-            titanTransactionCollection.commit(TransactionSynchronizationManager.getCurrentTransactionName());
+        String methodName = getMetodName(point);
+        String threadName = Thread.currentThread().getName();
+        TitanTransaction titanTransaction = titanTransactionCollection.getTransaction(threadName);
+        if (methodName.equals(titanTransaction.getMethodName())) {
+            titanTransactionCollection.commit(Thread.currentThread().getName());
         }
     }
 
     @AfterThrowing("performanceAnnon()")
     public void exceptionExecuteAnnon(){
-        titanTransactionCollection.deleteTransaction(TransactionSynchronizationManager.getCurrentTransactionName());
+        String threadName = Thread.currentThread().getName();
+        titanTransactionCollection.deleteTransaction(threadName);
     }
 
     /**
@@ -63,17 +62,20 @@ public class TitanTransactionAspect {
      * 2、UUID，唯一判断一个事务
      * 3、_titan标记该事务被titan事务管理
      * */
-    private void initTitanTransaction(){
-        String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
-        if (oldName != null &&  oldName.endsWith("_titan")){
-            //TODO 稳定去掉日志
-            LOG.info("有内嵌titan事务 {}",oldName);
-            return;
-        }
-        String name = TransactionSynchronizationManager.getCurrentTransactionName()
-                + UUID.randomUUID().toString()+"_titan";
+    private void initTitanTransaction(JoinPoint point){
+        String transactionName = Thread.currentThread().getName();
+        String method = getMetodName(point);
 
-        TransactionSynchronizationManager.setCurrentTransactionName(name);
-        titanTransactionCollection.initOneTransaction(name);
+        titanTransactionCollection.initOneTransaction(transactionName, method);
     }
+
+    private String getMetodName(JoinPoint point){
+        Signature signature = point.getSignature();
+        MethodSignature methodSignature = (MethodSignature) signature;
+        String className = methodSignature.getMethod().getDeclaringClass().getPackage().getName();
+        String method =  methodSignature.getMethod().getName();
+
+        return className+"."+method;
+    }
+
 }

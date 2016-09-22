@@ -33,7 +33,7 @@ public class TitanResourceStatisticalEdge extends TitanModel{
     @TitanField(name="sta_resource")
     private String resource;
 
-    @TitanEdgeResourceKey(source = "primary_category")
+//    @TitanEdgeResourceKey(source = "primary_category")
     @TitanField(name = "sta_res_type")
     private String resType;
 
