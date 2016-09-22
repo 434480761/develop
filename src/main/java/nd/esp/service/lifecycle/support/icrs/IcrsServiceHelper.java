@@ -22,6 +22,7 @@ import nd.esp.service.lifecycle.repository.model.icrs.IcrsResource;
 import nd.esp.service.lifecycle.repository.model.icrs.IcrsSyncErrorRecord;
 import nd.esp.service.lifecycle.repository.sdk.icrs.IcrsResourceRepository;
 import nd.esp.service.lifecycle.repository.sdk.icrs.IcrsSyncErrorRecordRepository;
+import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
@@ -33,14 +34,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.nd.gaea.client.http.WafSecurityHttpClient;
+
 /**
  * 智慧教室-课堂数据统计平台 帮助类
+ * 
  * @author xiezy
  * @date 2016年9月18日
  */
 public class IcrsServiceHelper {
-	private static final Logger LOG = LoggerFactory.getLogger(IcrsServiceHelper.class);
-	
+	private static final Logger LOG = LoggerFactory
+			.getLogger(IcrsServiceHelper.class);
+
 	@Autowired
 	private IcrsResourceRepository icrsResourceRepository;
 	@Autowired
@@ -57,29 +61,45 @@ public class IcrsServiceHelper {
 		String querySql = "select distinct ndr.identifier as id,ndr.enable as ndren,ndr.create_time as ct,rv.target as target "
 				+ "from ndresource ndr inner join res_coverages rv "
 				+ "on ndr.identifier=rv.resource ";
+		
+		// 需要过滤维度
 		if (resType.equals(IndexSourceType.AssetType.getName())
-				|| resType.equals(IndexSourceType.SourceCourseWareObjectType
-						.getName())) {// assets,coursewareobjects
+				|| resType.equals(IndexSourceType.SourceCourseWareType.getName())) {
 			querySql += " inner join resource_categories rc on ndr.identifier=rc.resource ";
 		}
 
-		querySql += " where "
-				+ (isInit ? "ndr.enable=1 and " : "")
-				+ "ndr.primary_category='"
-				+ resType
-				+ "' "
-				+ "and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
-				+ resType + "' ";
+		querySql += " where " + (isInit ? "ndr.enable=1 and " : "")
+				+ "ndr.primary_category='" + resType + "' ";
+		
+		if(resType.equals(IndexSourceType.QuestionType.getName()) ||
+				resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())){
+			querySql += " and ndr.estatus != '" + LifecycleStatus.CREATING.getCode() + "' ";
+		}
+		
+		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='" + resType + "' ";
+		
 		if (resType.equals(IndexSourceType.AssetType.getName())) {// assets
 			querySql += " and rc.primary_category='" + resType
 					+ "' and rc.taxOnCode in "
 					+ "('$RA0101','$RA0102','$RA0103','$RA0104')";
 		}
-		if (resType
-				.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {// coursewareobjects
+		
+		if (resType.equals(IndexSourceType.SourceCourseWareType.getName())) {// coursewares
 			querySql += " and rc.primary_category='" + resType
-					+ "' and rc.taxOnCode like '$RE04%'";
+					+ "' and rc.taxOnCode in "
+					+ "('$F010003','$F060005','$F010004')";
 		}
+		
+		if (resType.equals(IndexSourceType.QuestionType.getName())) {// questions
+			querySql += " and ndr.identifier not in "
+					+ "(SELECT ex.resource FROM resource_categories ex WHERE ex.taxOnCode IN ('$RE0211','$RE0206'))";
+		}
+		
+//		if (resType
+//				.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {// coursewareobjects
+//			querySql += " and rc.primary_category='" + resType
+//					+ "' and rc.taxOnCode like '$RE04%'";
+//		}
 
 		if (!isInit) {// 获取当前时间前一小时的数据有变动的数据
 			querySql += " and ndr.last_update > " + getOneHourAgoTime();
@@ -282,7 +302,7 @@ public class IcrsServiceHelper {
 						errorRecord.setCreateTime(new BigDecimal(createTime));
 						errorRecord.setTarget(target);
 						errorRecord.setErrorMessage(e.getMessage());
-						
+
 						try {
 							icrsSyncErrorRecordRepository.add(errorRecord);
 						} catch (EspStoreException e1) {

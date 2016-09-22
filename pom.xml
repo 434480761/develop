@@ -287,14 +287,14 @@
 			<artifactId>gremlin-driver</artifactId>
 			<version>3.0.2-incubating</version>
 		</dependency>
-		
+
 		<!-- JAVA_CS_SDK -->
 		<dependency>
-		  <groupId>com.nd.component.java</groupId>
-		  <artifactId>sdpcs_java_sdk</artifactId>
-		  <version>3.0.0</version>
+			<groupId>com.nd.component.java</groupId>
+			<artifactId>sdpcs_java_sdk</artifactId>
+			<version>3.0.0</version>
 		</dependency>
-		
+
 		<!-- Rabbit MQ -->
 		<dependency>
 			<groupId>com.lcmq.component</groupId>
@@ -363,7 +363,11 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.4</version>
 			</plugin>
-
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.0</version>
+			</plugin>
 
 		</plugins>
 		<defaultGoal>compile</defaultGoal>
