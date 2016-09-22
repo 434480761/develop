@@ -28,7 +28,7 @@ public class IcrsSyncDataTask {
 	 * 执行定时任务 -- 50分钟跑一次,同步一个小时前更新的数据
 	 * @param createTime
 	 */
-	@Scheduled(fixedRate=3000000)
+//	@Scheduled(fixedRate=3000000)
 	public void runTask(){
 		if(commonServiceHelper.queryAndUpdateSynVariable(SynVariable.icrsSyncTask.getValue()) == 0){
 			return;

@@ -23,7 +23,7 @@ public class InitIcrsResource {
 	 * @author xiezy
 	 * @date 2016年9月12日
 	 */
-	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void init(){
 		icrsServiceHelper.initIcrsByType(IndexSourceType.AssetType.getName());
 		icrsServiceHelper.initIcrsByType(IndexSourceType.SourceCourseWareType.getName());
@@ -36,7 +36,7 @@ public class InitIcrsResource {
 	 * @author xiezy
 	 * @date 2016年9月12日
 	 */
-	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void realTimeFresh(){
 		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName());
 		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName());
