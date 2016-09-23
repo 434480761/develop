@@ -33,10 +33,9 @@ public class ContentServiceUtils {
         String name = localFile.getName();
 
         Dentry request = new Dentry();
-        request.setPath(csPath);						//父目录项路径，支持自动创建目录，（path 和 parent_id 二选一）
-        request.setName(name);						//文件名，包括后缀名 必选
 
         ExtendUploadData requestData = new ExtendUploadData();
+        requestData.setFilePath(csPath+"/"+name);
         LOG.info("cs upload " + localFile.getAbsolutePath());
 
         Dentry upload = request.upload(getServiceName(csPath), localFile.getAbsoluteFile(),

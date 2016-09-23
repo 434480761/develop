@@ -386,7 +386,8 @@ public class TranscodeServiceImpl implements TranscodeService {
         StringBuffer errMsg = new StringBuffer();
         logMsg.append("  Download path:"+param.getLocation()+"&session="+param.getSession()+System.getProperty("line.separator"));
         LOG.info("Download path:"+param.getLocation()+"&session="+param.getSession());
-        if(!DownloadFile(param.getLocation(), srcDir+File.separator+srcFileName, errMsg, param.getSession())) {
+        String srcFilePath = srcDir + File.separator + srcFileName;
+        if(!DownloadFile(param.getLocation(), srcFilePath, errMsg, param.getSession())) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "LC/DOCUMENT_TRANSCODE_FAIL",errMsg.toString());
         }
@@ -398,19 +399,25 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,String> targetsMap = new HashMap<String,String>();
         Map<String,String> targetsMetadata = new HashMap<String,String>();
         if(!srcFileName.endsWith(".txt")) {
+            String pdfFilePath = destDir + File.separator + "pdf.pdf";
             if(!srcFileName.endsWith(".pdf")) {
-                Office2pdfUtil.transferOffice2Pdf(srcDir + File.separator + srcFileName, destDir+File.separator+"pdf.pdf");
+                Office2pdfUtil.transferOffice2Pdf(srcFilePath, pdfFilePath);
             } else {
-                FileUtils.copyFile(new File(srcDir + File.separator + srcFileName), new File(destDir+File.separator+"pdf.pdf"));
+                FileUtils.copyFile(new File(srcFilePath), new File(pdfFilePath));
             }
             targetsMap.put("pdf", param.getTarget_location()+"/transcode/pdf.pdf");
-            Pdf2htmlUtil.transferPdf2Html(destDir+File.separator+"pdf.pdf", htmlDir);
+            targetsMetadata.put("pdf", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "pdf"));
+            Pdf2htmlUtil.transferPdf2Html(pdfFilePath, htmlDir);
             targetsMap.put("html", param.getTarget_location()+"/transcode/html");
-            Pdf2imageUtil.transferPdf2Image(destDir+File.separator+"pdf.pdf", imageDir);
+            targetsMetadata.put("html", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "html"));
+            Pdf2imageUtil.transferPdf2Image(pdfFilePath, imageDir);
             targetsMap.put("image", param.getTarget_location()+"/transcode/image");
+            targetsMetadata.put("image", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg"));
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
+            targetsMap.put("thumbnail", param.getTarget_location()+"/transcode/thumbnail");
+            targetsMetadata.put("image", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg"));
         } else {
-            Txt2htmlUtil.transferTxt2Html(srcDir + File.separator + srcFileName, htmlDir);
+            Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
             targetsMap.put("html", param.getTarget_location()+"/transcode/html");
         }
 
@@ -420,7 +427,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
         result.setStatus(1);
         result.setLocations(targetsMap);
-        result.setLocations(targetsMetadata);
+        result.setMetadata(targetsMetadata);
         
         return result;
     }
@@ -577,7 +584,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 //    }
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/videoCallback\",\"session\":\"92f5935e-54ef-4016-b0e9-fc12eb61c34d\",\"task_execute_env\":\"integration\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/d785d889-59f2-4c10-9fa3-d96243aebfca.pkg/test8.swf\",\"ext_param\":{\"subtype\":\"video\",\"coverNum\":\"16\",\"targetFmt\":\"mp4\"},\"target_location\":\"/prepub_content_edu_product/esp/assets/d785d889-59f2-4c10-9fa3-d96243aebfca.pkg\",\"commands\":[\"floatPlayer.exe \\\"#src#\\\" -s\",\"move \\\"#srcDir#\\\\#fileNameNoEx#.jpg\\\" \\\"#targetPreview#\\\\frame1.jpg\\\" /y\"],\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"5bedae0e-abf6-4467-9904-ef33bb955204\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu/esp/test/a.xls\",\"target_location\":\"/qa_content_edu/esp/test\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
@@ -592,9 +599,12 @@ public class TranscodeServiceImpl implements TranscodeService {
             e.printStackTrace();
         }
 
-        System.out.println("CallbackUrl: "+param.getCallback_api() + "?identifier=7243c66c-059c-4074-bcd2-5d463118778b" + "&status=1");
+        System.out.println("CallbackUrl: "+param.getCallback_api() + "?identifier=d5714fd6-0d09-4cb5-9d4b-9627a67f5efe&status=1");
 
         System.out.println(ObjectUtils.toJson(result));
+
+        String s="";
+
 
     }
 }

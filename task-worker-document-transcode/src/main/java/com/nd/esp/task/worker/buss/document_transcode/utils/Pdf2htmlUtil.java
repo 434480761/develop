@@ -7,6 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +40,26 @@ public class Pdf2htmlUtil {
     private static final String RegexLtIE9 = "<!--\\[if lt IE 9\\]>([\\s\\S]*)</script><!\\[endif\\]-->";
     private static final String RegexFormData ="<!-- Begin Form Data -->([\\s\\S]*)<!-- End Form Data -->";
 
+    private static FileFilter fileFilter = new FileFilter() {
+        @Override
+        public boolean accept(File pathname) {
+            if(pathname.isFile()) {
+                return true;
+            }
+            return false;
+        }
+    };
+
+    private static FileFilter dirFilter = new FileFilter() {
+        @Override
+        public boolean accept(File pathname) {
+            if(pathname.isDirectory()) {
+                return true;
+            }
+            return false;
+        }
+    };
+
     public static void transferPdf2Html(String inputFilePath, String outDirPath) throws Exception {
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
@@ -52,16 +75,10 @@ public class Pdf2htmlUtil {
         LOG.info("Convert to Html End.");
 
         LOG.info("Deal Html Begin.");
-        File[] htmlFiles = outDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                if(pathname.isFile()) {
-                    return true;
-                }
-                return false;
-            }
-        });
-        for(File file : htmlFiles) {
+        File htmlResultDir = new File(outDirPath+File.separator+"pdf");
+        FileUtils.copyDirectory(htmlResultDir, outDir);
+        FileUtils.deleteQuietly(htmlResultDir);
+        for(File file : outDir.listFiles(fileFilter)) {
             String filename = getFileNameNoEx(file.getName());
             String content = FileUtils.readFileToString(file, "utf-8");
 
@@ -72,13 +89,14 @@ public class Pdf2htmlUtil {
             content = content.replaceAll(RegexSharedJS, "");
 
             boolean isDefaultCss = false;
+            String shareCssContent = null;
             Matcher rangeMatch = RegexSharedCSS.matcher(content);
             if (rangeMatch.find())
             {
                 rangeMatch = RegexSharedCSSContent.matcher(rangeMatch.group(0));
                 if (rangeMatch.find())
                 {
-                    String shareCssContent = rangeMatch.group(1);
+                    shareCssContent = rangeMatch.group(1);
                     isDefaultCss = shareCssContent == DefaultCss;
                 }
                 content = content.replaceAll(RegexSharedCSS.pattern(), isDefaultCss ? "" : ReplaceSharedCSS);
@@ -89,8 +107,80 @@ public class Pdf2htmlUtil {
             content = content.replaceAll(RegexLtIE9, "");
 
             content = content.replaceAll(RegexFormData, "");
+
+            FileUtils.writeStringToFile(file, content, "utf-8");
+
+            LOG.info("Deal Html Font、Css Begin.");
+            if (!isDefaultCss && StringUtils.isNotEmpty(shareCssContent))
+            {
+                File destShareCssDircetory = new File(outDir, ShareCssDircetoryName);
+                FileUtils.forceMkdir(destShareCssDircetory);
+                FileUtils.writeStringToFile(new File(destShareCssDircetory, ShareCssFileName), shareCssContent);
+            }
+
+            File destFontDircetory = new File(outDir, FontsDircetoryName);
+            for (File dir : outDir.listFiles(dirFilter))  //循环子目录
+            {
+                copyFontFiles(dir, destFontDircetory);
+            }
+
+            int index = 0;
+            for (File fontFile : destFontDircetory.listFiles())
+            {
+                String name = fontFile.getName();
+                String newName = name.equals(name.getBytes("ASCII").toString()) ? name.toLowerCase() : getNewName(fontFile.getName(), index++);
+                for (File htmlFile : outDir.listFiles(fileFilter))
+                {
+                    String fileContent = FileUtils.readFileToString(htmlFile, "utf-8");
+                    if(fileContent.contains(name)) {
+                        fileContent = fileContent.replace(name, newName);
+                    }
+                    FileUtils.writeStringToFile(htmlFile, fileContent, "utf-8");
+                }
+                fontFile.renameTo(new File(destFontDircetory, newName));
+            }
+
+            LOG.info("Deal Html Font、Css End.");
         }
         LOG.info("Deal Html End.");
+    }
+
+    private static String getNewName(String filename, int index)
+    {
+        String extension = null;
+        if (StringUtils.isNotEmpty(filename)) {
+            int dot = filename.lastIndexOf('.');
+            if ((dot >-1) && (dot < (filename.length()))) {
+                extension = filename.substring(dot);
+            }
+        }
+
+        String name = String.format("%s%d%s", "abcdee-font", index, extension);
+        return name;
+    }
+
+    private static void copyFontFiles(File sourceDircetory, File destFontDircetory) throws IOException {
+        if (sourceDircetory.getAbsolutePath().equals(destFontDircetory.getAbsolutePath()))
+        {
+            return;
+        }
+        if (sourceDircetory.getName().equals(FontsDircetoryName))
+        {
+            for (File file : sourceDircetory.listFiles(fileFilter))       //循环文件
+            {
+                File destFile = new File(destFontDircetory, file.getName());
+                if (!destFile.exists())
+                {
+                    FileUtils.copyFile(file, destFile);
+                }
+            }
+            FileUtils.deleteQuietly(sourceDircetory);
+            return;
+        }
+        for (File dir : sourceDircetory.listFiles(dirFilter))  //循环子目录
+        {
+            copyFontFiles(dir, destFontDircetory);
+        }
     }
 
     public static String getFileNameNoEx(String filename) {
@@ -102,4 +192,6 @@ public class Pdf2htmlUtil {
         }
         return filename;
     }
+
+
 }

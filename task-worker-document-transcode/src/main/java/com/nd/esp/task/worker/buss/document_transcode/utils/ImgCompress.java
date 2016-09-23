@@ -1,11 +1,16 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import java.io.*;
-import java.util.Date;
-import java.awt.*;
-import java.awt.image.*;
+
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGImageEncoder;
+
 import javax.imageio.ImageIO;
-import com.sun.image.codec.jpeg.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  * 图片压缩处理
  */

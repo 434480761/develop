@@ -208,16 +208,15 @@ public class TranscodeCallbackController {
      */
     @RequestMapping(value = "/document_callback", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     @ResponseBody
-    Map<String, String> documnetTranscodeCallback(@RequestBody String requestBody,
-                                               @PathVariable String version,
-                                               @PathVariable String res_type,
-                                               @RequestParam(value = "identifier", required = true) String id) throws IOException {
+    Map<String, String> documnetTranscodeCallback(@PathVariable String version,
+                                                  @PathVariable String res_type,
+                                                  @RequestParam(value = "identifier", required = true) String id,
+                                                  @RequestBody Map<String,Object> body) throws IOException {
 
         String taskId = null;
-        Map<String,Object> m=BeanMapperUtils.mapperOnString(requestBody, Map.class);
-        if(m.get("executionId") != null){
-            LOG.info("回调的map中executionId的值:"+m.get("executionId"));
-            taskId = String.valueOf(m.get("executionId"));
+        if(body.get("executionId") != null){
+            LOG.info("回调的map中executionId的值:"+body.get("executionId"));
+            taskId = String.valueOf(body.get("executionId"));
         }
 
         Query query = taskRepository.getEntityManager().createNamedQuery("queryByTaskId");
@@ -229,8 +228,9 @@ public class TranscodeCallbackController {
             return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
         }
 
-        if(StringUtils.isNotEmpty(requestBody)) {
-            taskService.FinishTask(taskId, new HashMap<String,String>(), requestBody);
+        String argument = String.valueOf(body.get("argument"));
+        if(StringUtils.isNotEmpty(argument)) {
+            taskService.FinishTask(taskId, new HashMap<String,String>(), argument);
 
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);

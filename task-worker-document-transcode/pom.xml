@@ -3,7 +3,7 @@
 	<artifactId>task-worker-txt-transcode</artifactId>
 	<packaging>war</packaging>
 	<version>0.0.1-SNAPSHOT</version>
- 	 <name>lifecycle-txt-transcode</name>
+ 	 <name>lifecycle-document-transcode</name>
  	 <parent>
     <groupId>com.nd.sdp</groupId>
     <artifactId>sdp-web-parent</artifactId>
@@ -238,7 +238,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>lifecycle-media-transcode</finalName>
+		<finalName>lifecycle-document-transcode</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
