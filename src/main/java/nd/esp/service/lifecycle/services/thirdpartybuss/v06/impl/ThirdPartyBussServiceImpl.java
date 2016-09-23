@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.services.thirdpartybuss.v06.impl;
 
-
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,9 +40,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
     private static final Logger LOG = LoggerFactory.getLogger(ThirdPartyBussServiceImpl.class);
     
-    /**
-     * SDK注入
-     */
     @Autowired
     private ThirdPartyBsysRepository bsysRepository;
     
@@ -54,7 +50,7 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
     private StaticDataService staticDataService;
 
     @Override
-    public ThirdPartyBsysModle registerService(ThirdPartyBsysModle bsysModle) {
+    public ThirdPartyBsysModle registerService(ThirdPartyBsysModle bsysModle, boolean isAuto) {
       //生成SDK的入参对象,并进行model转换
         ThirdPartyBsys service = new ThirdPartyBsys();
         service = BeanMapperUtils.beanMapper(bsysModle, ThirdPartyBsys.class);
@@ -64,6 +60,9 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
         service.setUpdateTime(ts);
         service.setIdentifier(UUID.randomUUID().toString());
         service.setBsyskey(service.getIdentifier());
+        if(isAuto){
+        	service.setTitle("E-Learning auto registry");
+        }
         
         ThirdPartyBsys rtService = null;
         try {
@@ -74,7 +73,6 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CreateBsysFail);
         }
-        
         
         //如果返回null,则抛出异常
         if (null == rtService) {
@@ -184,7 +182,6 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
                     LifeCircleErrorMessageMapper.UpdateBsysFail);
         }
         
-        
         //如果返回null,则抛出异常
         if (null == rtBsys) {
             LOG.error("修改第三方业务系统失败");
@@ -234,5 +231,4 @@ public class ThirdPartyBussServiceImpl implements ThirdPartyBussService {
         
         return apiList;
     }
-
 }

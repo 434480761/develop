@@ -5,9 +5,11 @@ import java.util.Map;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 public class ThirdPartyBsysModle {
     
-
     private String identifier;
     
     @NotBlank(message="{thirdPartyBsysModle.bsysname.notBlank.validmsg}")
@@ -18,12 +20,13 @@ public class ThirdPartyBsysModle {
     @Length(max=250,message="{thirdPartyBsysModle.bsysadmin.maxlength.validmsg}")
     private String bsysadmin;
     
+    @JsonInclude(Include.NON_NULL)
     private String userid;
     
     private String bsyskey;
     
+    @JsonInclude(Include.NON_NULL)
     private Map<String,Object> bsysivcconfig;
-    
     
     public String getIdentifier() {
         return identifier;
@@ -72,5 +75,4 @@ public class ThirdPartyBsysModle {
     public void setBsysivcconfig(Map<String,Object> bsysivcconfig) {
         this.bsysivcconfig = bsysivcconfig;
     }
-    
 }
