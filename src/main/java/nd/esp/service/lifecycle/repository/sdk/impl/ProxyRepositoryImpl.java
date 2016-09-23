@@ -126,8 +126,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 
 	@Override
 	public T add(T bean) throws EspStoreException {
-
-		String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
 		converterIn(bean);
 		T result = save(bean);
 
@@ -457,7 +455,6 @@ public class ProxyRepositoryImpl<T extends EspEntity, ID> extends
 
 	@Override
 	public List<T> batchAdd(List<T> bean) throws EspStoreException {
-		String oldName = TransactionSynchronizationManager.getCurrentTransactionName();
 		batchConverterIn(bean);
 		List<T> result = this.save(bean);
 		
