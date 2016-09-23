@@ -14,6 +14,7 @@ import nd.esp.service.lifecycle.services.task.v06.TaskService;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
+import nd.esp.service.lifecycle.support.enums.TaskBussType;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.UrlParamParseUtil;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
@@ -73,7 +74,7 @@ public class QueryTaskServiceImpl implements QueryTaskService {
                             LOG.error("处理超时任务失败：",e);
                         }
                     } else if(info.getTaskId() != null && !"NULL".equals(info.getTaskId())) {
-                        if(TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(info.getBussType())) {
+                        if(TaskBussType.IMAGE_TRANSCODE.getValue().equals(info.getBussType())) {
                             imageTranscodeTaskIds.add(info.getTaskId());
                         }
                         if(!bFirst) {
