@@ -319,7 +319,8 @@ public class TitanResultParse {
             Map<String, String> resource = new HashMap<>();
             List<Map<String, String>> category = new ArrayList<>();
             List<Map<String, String>> techInfo = new ArrayList<>();
-            Map<String, String> statistics = new HashMap<>();
+            //Map<String, String> statistics = new HashMap<>();
+            List<Map<String, String>> statisticsList=new ArrayList<>();
             int size = singleItemMaps.size();
             for (int i = 0; i < size; i++) {
                 Map<String, String> map = singleItemMaps.get(i);
@@ -352,7 +353,8 @@ public class TitanResultParse {
                         }
                     }
                 } else if (TitanKeyWords.has_resource_statistical.toString().equals(label)) {
-                    statistics.putAll(map);
+                    statisticsList.add(map);
+                    //statistics.putAll(map);
                 } else {
                     LOG.warn("未能识别");
                 }
@@ -360,7 +362,8 @@ public class TitanResultParse {
             item.setResource(resource);
             item.setCategory(category);
             item.setTechInfo(techInfo);
-            item.setStatisticsValues(statistics);
+            //item.setStatisticsValues(statistics);
+            item.setStatisticsValuesList(statisticsList);
         }
 
         return item;
@@ -620,10 +623,19 @@ public class TitanResultParse {
         item.setTechInfoList(techInfoList);
         item.setCategoryList(categoryList);
         // 处理统计数据
-        Map<String, String> statistics = titanItem.getStatisticsValues();
-        if (CollectionUtils.isNotEmpty(statistics)) {
-            String value = statistics.get("sta_key_value");
-            if (StringUtils.isNotEmpty(value)) item.setStatisticsNum(Double.parseDouble(value));
+        //Map<String, String> statistics = titanItem.getStatisticsValues();
+        List<Map<String, String>> statisticsValuesList = titanItem.getStatisticsValuesList();
+        if (CollectionUtils.isNotEmpty(statisticsValuesList)) {
+            Map<String, Double> statisticsItems = new HashMap<>();
+            for (Map<String, String> statistics : statisticsValuesList) {
+                String value = statistics.get("sta_key_value");
+                String title = statistics.get("sta_key_title");
+                if (StringUtils.isNotEmpty(value)){
+                    item.setStatisticsNum(Double.parseDouble(value));
+                    statisticsItems.put(title,Double.parseDouble(value));
+                }
+            }
+            item.setStatisticsItems(statisticsItems);
         }
 
     }

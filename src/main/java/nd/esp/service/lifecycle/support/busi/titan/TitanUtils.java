@@ -257,7 +257,9 @@ public class TitanUtils {
 	public static String generateScriptForInclude(List<String> includes, String resType, boolean relationQuery, boolean needStatistics, String statisticsScript) {
 		Set<String> resTypeSet = new HashSet<>();
 		resTypeSet.add(resType);
-		return generateScriptForInclude(includes, resTypeSet, relationQuery, needStatistics, statisticsScript);
+		Set<String> statisticsScriptSet = new HashSet<>();
+		statisticsScriptSet.add(statisticsScript);
+		return generateScriptForInclude(includes, resTypeSet, relationQuery, needStatistics, statisticsScriptSet);
 	}
 
 	/**
@@ -266,10 +268,10 @@ public class TitanUtils {
 	 * @param resTypeSet
 	 * @param relationQuery （queryListByResType、batchQueryResources）
 	 * @param needStatistics 需要统计数据
-	 * @param statisticsScript 统计数据脚本
+	 * @param statisticsScriptSet 统计数据脚本
      * @return
      */
-	public static String generateScriptForInclude(List<String> includes, Set<String> resTypeSet, boolean relationQuery, boolean needStatistics, String statisticsScript) {
+	public static String generateScriptForInclude(List<String> includes, Set<String> resTypeSet, boolean relationQuery, boolean needStatistics, Set<String> statisticsScriptSet) {
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
 		String end = ")";
@@ -300,7 +302,9 @@ public class TitanUtils {
 		}
 
 		if (needStatistics) {
-			scriptBuffer.append(statisticsScript);
+			for (String statisticsScript : statisticsScriptSet) {
+				scriptBuffer.append(statisticsScript);
+			}
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;

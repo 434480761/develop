@@ -60,16 +60,6 @@ public enum StatisticalType {
     
     public static void main(String[] args) {
     	Map<String, String> orders = new LinkedHashMap<String, String>();
-//    	orders.put("top", "desc");
-//    	orders.put("scores", "desc");
-//    	orders.put("votes", "desc");
-//    	orders.put("views", "desc");
-//    	orders.put("statisticals", "desc");
-//    	orders.put("top", "desc");
-//    	orders.put("scores", "desc");
-//    	orders.put("votes", "desc");
-//    	orders.put("views", "desc");
-//    	orders.put("statisticals", "desc");
     	orders.put("3", "desc");
     	orders.put("4", "desc");
     	orders.put("1", "desc");
