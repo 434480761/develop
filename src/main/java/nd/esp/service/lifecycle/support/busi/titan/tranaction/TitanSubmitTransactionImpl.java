@@ -5,16 +5,8 @@ import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
-import nd.esp.service.lifecycle.services.titan.TitanResultParse;
-import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
-import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
-import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.utils.TitanScritpUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
-import org.apache.tinkerpop.gremlin.driver.Result;
-import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,21 +56,26 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             switch (type) {
                 case add: case update:
                     if (entity instanceof Education){
+                        //需要更新冗余字段
+                        educationIds.put(entity.getIdentifier(),
+                                ((Education) entity).getPrimaryCategory());
                         builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
                     } else if (entity instanceof ResCoverage) {
+                        //需要更新冗余字段
                         educationIds.put(((ResCoverage) entity).getResource(),
                                 ((ResCoverage)entity).getResType());
                         //删除边
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
                         builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(entity));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.add(EducationToTitanBeanUtils.toEdge(entity));
                     } else if(entity instanceof ResourceCategory){
+                        //需要更新冗余字段
                         educationIds.put(((ResourceCategory) entity).getResource(),
                                 ((ResourceCategory) entity).getPrimaryCategory());
                         //删除边
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
                         builder.addBeforeCheckExist(EducationToTitanBeanUtils.toVertex(entity));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.add(EducationToTitanBeanUtils.toEdge(entity));
                     } else if(entity instanceof  TechInfo){
                         builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
                         builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(entity));
@@ -87,20 +84,45 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         builder.addOrUpdate(EducationToTitanBeanUtils.toEdge(entity));
                     } else if (entity instanceof ResourceRelation){
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.add(EducationToTitanBeanUtils.toEdge(entity));
                     } else if (entity instanceof KnowledgeRelation){
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
-                        builder.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                        builder.add(EducationToTitanBeanUtils.toEdge(entity));
                     }
                     break;
                 case delete:
-                    titanRepository.delete(operation.getEntity().getIdentifier());
+                    String getResource = "g.E().hasLabel('has_coverage','has_category_code')" +
+                            ".has('identifier',identifier).outV().values('identifier')";
+                    Map<String, Object> param = new HashMap<>();
+                    param.put("identifier",entity.getIdentifier());
+                    String resourceId = null;
+                    try {
+                        resourceId = titanCommonRepository.executeScriptUniqueString(getResource, param);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (resourceId!=null && resourceId.length() > 10){
+                        educationIds.put(resourceId,"delete");
+                    }
+
+                    builder.deleteEdgeById(entity.getIdentifier());
                     break;
                 default:
                     LOG.info("没有对应的处理方法");
             }
         }
-
+        /**
+         * 冗余字段更新策略：
+         * 1、只有delete操作，冗余字段更新放在delete操作之前
+         * 2、有delete操作，同时有update、add操作
+         *      update、add中有包括对资源、覆盖范围、维度数据等的操作
+         *      不包含对应的操作
+         * 3、只有update、add操作，更新冗余字段放在更新之后
+         * */
+        for (String identifier : educationIds.keySet()){
+            builder.updateEducationRedProperty(identifier);
+            LOG.info("更新冗余字段："+educationIds.size());
+        }
         System.out.println("time_for:"+(System.currentTimeMillis() - time1));
         builder.scriptEnd();
 
@@ -111,135 +133,15 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             try {
                 long time = System.currentTimeMillis();
                 //创建
+
                 id = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
 
                 System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
-
-                //测试用临时使用的更新办法
-                for (String identifier : educationIds.keySet()){
-                    updateEducation(educationIds.get(identifier), identifier);
-                }
-                System.out.println("更新冗余字段:"+(System.currentTimeMillis() - time));
-
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;
             }
         }
-
         return true;
     }
-
-    private boolean updateEducation(String primaryCategory, String identifier){
-        String script = "other=g.V().has(primaryCategory,'identifier',identifier)" +
-                ".as('x').union(outE('has_coverage','has_category_code')).valueMap(true);" +
-                "status=g.V().has(primaryCategory,'identifier',identifier).valueMap('lc_status');" +
-                "List<Object> otherList=other.toList();List<Object> enableList=status.toList();otherList << enableList[0];";
-
-        Map<String, Object> param = new HashMap<>();
-        param.put("identifier",identifier);
-        param.put("primaryCategory",primaryCategory);
-        List<Map<String, String>>  resultMap = new LinkedList<>();
-        try {
-            ResultSet resultSet = titanCommonRepository.executeScriptResultSet(script, param);
-            List<String> reslutList = new ArrayList<>();
-            Iterator<Result> iterator = resultSet.iterator();
-            while (iterator.hasNext()) {
-                reslutList.add(iterator.next().getString());
-            }
-
-            resultMap = TitanResultParse.changeStrToKeyValue(reslutList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        String status = "";
-        List<ResourceCategory> resourceCategoryList = new ArrayList<>();
-        List<ResCoverage> resCoverageList = new ArrayList<>();
-        for (Map<String, String> map : resultMap){
-            if (map.containsKey("lc_status")){
-                status = map.get("lc_status");
-            }
-
-            if (TitanKeyWords.has_category_code.toString().equals(map.get("label"))){
-                ResourceCategory resourceCategory = new ResourceCategory();
-                resourceCategory.setTaxoncode(map.get("cg_taxoncode"));
-                resourceCategory.setTaxonpath(map.get("cg_taxonpath"));
-                resourceCategoryList.add(resourceCategory);
-            }
-
-            if (TitanKeyWords.has_coverage.toString().equals(map.get("label"))){
-                ResCoverage resCoverage = new ResCoverage();
-                resCoverage.setTargetType(map.get("target_type"));
-                resCoverage.setStrategy(map.get("strategy"));
-                resCoverage.setTarget(map.get("target"));
-                resCoverageList.add(resCoverage);
-            }
-
-        }
-
-        Map<String,Object> result = updateEducation(primaryCategory,identifier,resourceCategoryList,resCoverageList,status);
-        StringBuffer scriptResult = (StringBuffer) result.get("script");
-        Map<String, Object> paramResult = (Map<String, Object>) result.get("param");
-
-        String dropScript = "g.V().has(primaryCategory,'identifier',identifier)." +
-                "properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string').drop()";
-        Map<String, Object> dropParam = new HashMap<>();
-        dropParam.put("primaryCategory", primaryCategory);
-        dropParam.put("identifier", identifier);
-
-        try {
-            titanCommonRepository.executeScript(dropScript, dropParam);
-            titanCommonRepository.executeScript(scriptResult.toString(), paramResult);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private Map<String,Object> updateEducation(String primaryCategory, String identifier ,List<ResourceCategory> categoryList,
-                                    List<ResCoverage> coverageList, String status){
-        Set<String> resCoverages = new HashSet<>();
-        for (ResCoverage resCoverage : coverageList) {
-            resCoverages.addAll(TitanScritpUtils.getAllResourceCoverage(resCoverage, status));
-        }
-
-        Set<String> paths = new HashSet<>(TitanResourceUtils.distinctCategoryPath(categoryList));
-        Set<String> categoryCodes = new HashSet<>(TitanResourceUtils.distinctCategoryCode(categoryList));
-
-        StringBuffer script = new StringBuffer("g.V().has(primaryCategory,'identifier',identifier).property('primary_category',primaryCategory)");
-        Map<String, Object> param = new HashMap<>();
-        param.put("primaryCategory", primaryCategory);
-        param.put("identifier", identifier);
-
-        TitanScritpUtils.getSetScriptAndParam(script,param, TitanKeyWords.search_code.toString(),categoryCodes);
-        TitanScritpUtils.getSetScriptAndParam(script,param, TitanKeyWords.search_coverage.toString(),resCoverages);
-        TitanScritpUtils.getSetScriptAndParam(script,param, TitanKeyWords.search_path.toString(),paths);
-
-        if (CollectionUtils.isNotEmpty(paths)) {
-            String searchPathString = StringUtils.join(paths, ",").toLowerCase();
-            script.append(".property('search_path_string',searchPathString)");
-            param.put("searchPathString", searchPathString);
-
-        }
-
-        if (CollectionUtils.isNotEmpty(categoryCodes)) {
-            String searchCodeString = StringUtils.join(categoryCodes, ",").toLowerCase();
-            script.append(".property('search_code_string',searchCodeString)");
-            param.put("searchCodeString", searchCodeString);
-        }
-
-        if (CollectionUtils.isNotEmpty(resCoverages)) {
-            String searchCoverageString = StringUtils.join(resCoverages, ",").toLowerCase();
-            script.append(".property('search_coverage_string',searchCoverageString)");
-            param.put("searchCoverageString", searchCoverageString);
-        }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("script",script);
-        result.put("param", param);
-        return result;
-    }
-
 }
