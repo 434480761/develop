@@ -24,6 +24,7 @@ import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
 import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
+import org.junit.Test;
 
 /**
  * Created by Administrator on 2016/8/24.
@@ -321,10 +322,6 @@ public class ParseAnnotation {
 
         String s1 = "g.V().has('primary_category','assets').has('identifier','0919127b-5536-454c-98f4-35c773d92061')";
 //
-
-        String script = TitanScriptBuilder.deleteRedProperty("0921127b-5536-454c-98f4-35c773d99003");
-        Map<String, Object> param = new HashMap<>();
-        param.put("identifier", "0921127b-5536-454c-98f4-35c773d99003");
 //        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
 //
 //        TitanScriptBuilder builder = new TitanScriptBuilder();
@@ -335,9 +332,113 @@ public class ParseAnnotation {
         ParseAnnotation parseAnnotation = new ParseAnnotation();
         parseAnnotation.init();
         Client client = parseAnnotation.getGremlinClient();
-
-        client.submit(script, param);
-
-
     }
+
+    @Test
+    public void test(){
+        String s= script.replace("\n","").replace("\t","");
+        System.out.println(s);
+    }
+
+    public static String script = "public Vertex updateEducation(String identifier){\n" +
+            "\tVertex redv=null;\n" +
+            "\tDefaultGraphTraversal dgt_v=g.V().has('identifier',identifier);\n" +
+            "\tDefaultGraphTraversal dgt_e=g.E().hasLabel('has_coverage','has_category_code').has('identifier',identifier).outV();\n" +
+            "\tif(dgt_v.hasNext()){\n" +
+            "\t\tredv=dgt_v.next();\n" +
+            "\t}else if(dgt_e.hasNext()){\n" +
+            "\t\tredv=dgt_e.next();\n" +
+            "\t};\n" +
+            "\tif(redv==null||'tech_info'==redv.label()||'statistical'==redv.label()){return;};\n" +
+            "\tIterator redvit=redv.properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string');\n" +
+            "\twhile(redvit.hasNext()){redvit.next().remove();};\n" +
+            "\tString status=getStatus(redv);\n" +
+            "\tIterator<Edge> it=g.V(redv).outE();\n" +
+            "\tHashSet<String> coverageSet=new HashSet<String>();\n" +
+            "\tHashSet<String> codeSet=new HashSet<String>();\n" +
+            "\tHashSet<String> pathSet=new HashSet<String>();\n" +
+            "\twhile(it.hasNext()){\n" +
+            "\t\tEdge e=it.next();\n" +
+            "\t\tif(e.label().equals('has_coverage')){\n" +
+            "\t\t\tString value1=getCoverageProperty(e,'target_type')+\"/\"+getCoverageProperty(e,'target')+\"/\"+getCoverageProperty(e,'strategy')+\"/\"+status;\n" +
+            "\t\t\tString value2=getCoverageProperty(e,'target_type')+\"/\"+getCoverageProperty(e,'target')+\"//\"+status;\n" +
+            "\t\t\tString value3=getCoverageProperty(e,'target_type')+\"/\"+getCoverageProperty(e,'target')+\"/\"+getCoverageProperty(e,'strategy')+\"/\";\n" +
+            "\t\t\tString value4=getCoverageProperty(e,'target_type')+\"/\"+getCoverageProperty(e,'target')+\"//\";\n" +
+            "\t\t\tcoverageSet.add(value1);\n" +
+            "\t\t\tcoverageSet.add(value2);\n" +
+            "\t\t\tcoverageSet.add(value3);\n" +
+            "\t\t\tcoverageSet.add(value4);\n" +
+            "\t\t};\n" +
+            "\t\tif(e.label().equals('has_category_code')){\n" +
+            "\t\t\tString path=getEdgeProperty(e,'cg_taxonpath');\n" +
+            "\t\t\tif(path!=null){\n" +
+            "\t\t\t\tpathSet.add(path);\n" +
+            "\t\t\t};\n" +
+            "\t\t\tString code=getEdgeProperty(e,'cg_taxoncode');\n" +
+            "\t\t\tif(code!=null){\n" +
+            "\t\t\t\tcodeSet.add(code);\n" +
+            "\t\t\t}\n" +
+            "\t\t}\n" +
+            "\t};\n" +
+            "\tString string_coverage='';\n" +
+            "\tString string_code='';\n" +
+            "\tString string_path='';\n" +
+            "\tint index=0;\n" +
+            "\tfor(String str:coverageSet){\n" +
+            "\t\tredv.property('search_coverage',str);\n" +
+            "\t\tif(index==0){\n" +
+            "\t\t\tstring_coverage=string_coverage+str;\n" +
+            "\t\t}else{\n" +
+            "\t\t\tstring_coverage=string_coverage+','+str;\n" +
+            "\t\t};\n" +
+            "\t\tindex++;\n" +
+            "\t};\n" +
+            "\tredv.property('search_coverage_string',string_coverage.toLowerCase());\n" +
+            "\tindex=0;\n" +
+            "\tfor(String str:codeSet){\n" +
+            "\t\tredv.property('search_code',str);\n" +
+            "\t\tif(index==0){\n" +
+            "\t\t\tstring_code=string_code+str;\n" +
+            "\t\t}else{\n" +
+            "\t\t\tstring_code=string_code+\",\"+str;\n" +
+            "\t\t};\n" +
+            "\t\tindex++;\n" +
+            "\t};\n" +
+            "\tredv.property('search_code_string',string_code.toLowerCase());\n" +
+            "\tindex=0;\n" +
+            "\tfor(String str:pathSet){\n" +
+            "\t\tredv.property('search_path',str);\n" +
+            "\t\tstring_path=string_path+str+',';\n" +
+            "\t\tif(index==0){\n" +
+            "\t\t\tstring_code=string_code+str;\n" +
+            "\t\t}else{\n" +
+            "\t\t\tstring_code=string_code+','+str;\n" +
+            "\t\t};\n" +
+            "\t\tindex++;\n" +
+            "\t};\n" +
+            "\tredv.property('search_path_string',string_path.toLowerCase());\n" +
+            "\tredv;\n" +
+            "};\n" +
+            "public String getCoverageProperty(Edge e,String name){\n" +
+            "\tString pro=getEdgeProperty(e,name);\n" +
+            "\tif(pro==null){\n" +
+            "\t\treturn \"\";\n" +
+            "\t}else{\n" +
+            "\t\treturn pro;\n" +
+            "\t}\n" +
+            "};\n" +
+            "public String getEdgeProperty(Edge e,String name){\n" +
+            "\tif(e.properties(name).hasNext()){\n" +
+            "\t\treturn e.property(name).value();\n" +
+            "\t}else{\n" +
+            "\t\treturn null;\n" +
+            "\t}\n" +
+            "};\n" +
+            "public String getStatus(Vertex v){\n" +
+            "\tif(v.properties('lc_status').hasNext()){\n" +
+            "\t\treturn v.property('lc_status').value();\n" +
+            "\t}else{\n" +
+            "\t\treturn '';\n" +
+            "\t}\n" +
+            "};";
 }

@@ -1,9 +1,10 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
-import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -13,6 +14,99 @@ public class TitanScriptBuilder {
     private StringBuilder script = new StringBuilder();
     private Map<String, Object> param = new HashMap<>();
     private List<String> methodNames = new ArrayList<>();
+    private HashSet<ScriptMethod> scriptMethodSet = new HashSet<>();
+
+    enum  ScriptMethod{
+        DELETE_VERTEX_BY_IDENTIFIER("void", "deleteVertexByIdentifier"),
+        DELETE_EDGE_BY_IDENTIFIER("void","deleteEdgeByIdentifier"),
+        UPDATE_EDUCATION_RED_PROPERTY("void","updateEducationRedProperty");
+        final static String RESULT_PRE = "result";
+        private static int methodIndex = 0;
+
+        private String methodName;
+        private String script;
+        private String resultType;
+        private String resultName;
+        private String invokeMethod;
+
+        private ScriptMethod(String resultType,String methodName){
+            this.resultType = resultType;
+            this.methodName = methodName;
+            this.script = loadScript(methodName);
+        }
+
+        public String invokeMethod() {
+            return invokeMethod;
+        }
+
+        public String resultName() {
+            return resultName;
+        }
+
+        public static void clean(){
+            methodIndex = 0;
+        }
+        private static String loadScript(String fileName){
+            String name = "/config/props/titanscript/"+fileName+".script";
+            BufferedReader reader = null;
+            StringBuilder script = new StringBuilder();
+            try {
+                reader = new BufferedReader(new InputStreamReader(ScriptMethod.class.getResourceAsStream(name)));
+                String line;
+                while ((line = reader.readLine())!=null){
+                    if (StringUtils.isNotEmpty(line)){
+                        script.append(line.trim());
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (reader != null){
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            if (!script.toString().contains(fileName)){
+                try {
+                    throw new Exception("文件titan脚本加载不正确");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return script.toString().replace("\n","").replace("\t","");
+        }
+
+        public static ScriptMethod deleteVertexByIdentifier(String identifier){
+            DELETE_VERTEX_BY_IDENTIFIER.resultName = null;
+            DELETE_VERTEX_BY_IDENTIFIER.invokeMethod = DELETE_VERTEX_BY_IDENTIFIER.methodName +"("+identifier+")";
+            return DELETE_VERTEX_BY_IDENTIFIER;
+        }
+
+        public static ScriptMethod deleteEdgeByIdentifier(String identifier){
+            DELETE_EDGE_BY_IDENTIFIER.resultName = null;
+            DELETE_EDGE_BY_IDENTIFIER.invokeMethod = DELETE_EDGE_BY_IDENTIFIER.methodName +"("+identifier+")";
+            return DELETE_EDGE_BY_IDENTIFIER;
+        }
+        public static ScriptMethod updateEducationRedProperty(String identifier){
+            methodIndex ++;
+            UPDATE_EDUCATION_RED_PROPERTY.resultName = ScriptMethod.RESULT_PRE + methodIndex;
+            UPDATE_EDUCATION_RED_PROPERTY.invokeMethod =
+//                    UPDATE_EDUCATION_RED_PROPERTY.resultType +" "
+//                    + UPDATE_EDUCATION_RED_PROPERTY.resultName +"=" +
+                            UPDATE_EDUCATION_RED_PROPERTY.methodName +"("+identifier+")";
+            return UPDATE_EDUCATION_RED_PROPERTY;
+        }
+
+    }
+    private static void test(){
+
+    }
+
     private enum KeyWords {
         node,edge,source,target,addVertex,has,next,id,addEdge,property
     }
@@ -62,7 +156,7 @@ public class TitanScriptBuilder {
         }
     }
 
-    private class ScriptAndParam{
+    public class ScriptAndParam{
         public ScriptAndParam(StringBuilder script, Map<String, Object> param){
             this.script = script;
             this.param = param;
@@ -164,21 +258,24 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public static String deleteRedProperty(String identifier){
+    public TitanScriptBuilder deleteEdgeById(String identifier){
+        Variable variable = createVariable(TitanScriptModel.Type.E);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramName = "redIdentifier" + variable.getSuffix();
+        ScriptMethod scriptMethod = ScriptMethod.deleteEdgeByIdentifier(paramName);
+        param.put(paramName,identifier);
+        if (!scriptMethodSet.contains(scriptMethod)){
+            scriptMethodSet.add(scriptMethod);
+            this.script.append(scriptMethod.script);
+        }
+        this.param.putAll(param);
+        this.methodNames.add(scriptMethod.invokeMethod);
+        this.firstIndex ++;
+        return this;
+    }
 
-        StringBuilder script = new StringBuilder("ele=g.V().has('identifier',identifier).next();");
-
-        List<String> dropValues = new ArrayList<>();
-        dropValues.add(TitanKeyWords.search_code.toString());
-        dropValues.add(TitanKeyWords.search_coverage.toString());
-        dropValues.add(TitanKeyWords.search_path.toString());
-        dropValues.add(TitanKeyWords.search_code_string.toString());
-        dropValues.add(TitanKeyWords.search_coverage_string.toString());
-        dropValues.add(TitanKeyWords.search_path_string.toString());
-        appendRemoveAllProperty("ele",dropValues,script);
-
-        return script.toString();
-//        dealScriptAndParam(script, param);
+    public TitanScriptBuilder deleteVertexById(String identifier){
+        return this;
     }
 
     /**
@@ -186,22 +283,33 @@ public class TitanScriptBuilder {
      * */
     public TitanScriptBuilder scriptEnd(){
         for (String methodName : methodNames){
-            script.append(methodName).append("();");
+            script.append(methodName).append(";");
         }
 
         return null;
     }
 
-    /**
-     * 删除节点，必须是一个单独节点
-     * */
+    public TitanScriptBuilder updateEducationRedProperty(String identifier){
 
+//        ScriptMethod deleteEdgeByIdentifier = ScriptMethod.deleteEdgeByIdentifier(identifier);
+//        ScriptMethod deleteVertexByIdentifier = ScriptMethod.deleteVertexByIdentifier(identifier);
+        System.out.println("");
 
+        Variable variable = createVariable(TitanScriptModel.Type.V);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramName = "redIdentifier" + variable.getSuffix();
+        ScriptMethod updateEducationRedProperty = ScriptMethod.updateEducationRedProperty(paramName);
 
-    public TitanScriptBuilder methodEnd(){
-        return null;
+        param.put(paramName,identifier);
+        if (!scriptMethodSet.contains(updateEducationRedProperty)){
+            scriptMethodSet.add(updateEducationRedProperty);
+            this.script.append(updateEducationRedProperty.script);
+        }
+        this.param.putAll(param);
+        this.methodNames.add(updateEducationRedProperty.invokeMethod);
+        this.firstIndex ++ ;
+        return this;
     }
-
 
 
     /**
@@ -216,41 +324,12 @@ public class TitanScriptBuilder {
         } else if (type instanceof TitanScriptModelVertex){
             returnType = "Vertex";
         }
-        String method = "method" + firstIndex;
+        String method = "method" + firstIndex +"()";
         methodNames.add(method);
-        this.script.append("public ").append(returnType).append(" ").append(method).append("(){").append(scriptAndParam.getScript()).append(" ").append("}").append(";");
+        this.script.append("public ").append(returnType).append(" ").append(method).append("{").append(scriptAndParam.getScript()).append(" ").append("}").append(";");
 //        this.script.append(scriptAndParam.getScript()).append(";");
         this.param.putAll(scriptAndParam.getParam());
         this.firstIndex ++ ;
-    }
-
-    private void deleteNodeNullProperty(TitanScriptModel titanScriptModel, Variable variable, StringBuilder script , Map<String, Object> param){
-        script.append("g");
-        if (titanScriptModel instanceof TitanScriptModelVertex){
-            script.append(".V()");
-        }
-        if (titanScriptModel instanceof TitanScriptModelEdge){
-            script.append(".E()");
-        }
-        appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
-
-        List<String> dropValues = new ArrayList<>();
-        for (String key : titanScriptModel.getFieldMap().keySet()){
-            Object obj = titanScriptModel.getFieldMap().get(key);
-            if (obj == null){
-                dropValues.add(key);
-            }
-        }
-
-        dropValues.add(TitanKeyWords.search_code.toString());
-        dropValues.add(TitanKeyWords.search_coverage.toString());
-        dropValues.add(TitanKeyWords.search_path.toString());
-        dropValues.add(TitanKeyWords.search_code_string.toString());
-        dropValues.add(TitanKeyWords.search_coverage_string.toString());
-        dropValues.add(TitanKeyWords.search_path_string.toString());
-
-        appendProperties(dropValues,script);
-        appendDrop(script);
     }
 
     private ScriptAndParam delete(TitanScriptModel titanScriptModel, Variable variable){
