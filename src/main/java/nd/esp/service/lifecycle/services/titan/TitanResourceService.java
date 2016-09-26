@@ -46,4 +46,6 @@ public interface TitanResourceService {
 
 	public void detailErrorRelation();
 
+	public void updateRelationRedRelation(Integer page);
+
 }
