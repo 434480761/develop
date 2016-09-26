@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 /**
  * 智慧教室-课堂数据统计平台  Controller层
@@ -37,10 +38,10 @@ public class InitIcrsResource {
 	 * @date 2016年9月12日
 	 */
 	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public void realTimeFresh(){
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName());
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName());
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName());
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName());
+	public void realTimeFresh(@RequestParam(required=false,value="start_time") String startTime){
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), startTime);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), startTime);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), startTime);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), startTime);
 	}
 }

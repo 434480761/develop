@@ -56,15 +56,16 @@ public class IcrsServiceHelper {
 	@Qualifier(value = "questionJdbcTemplate")
 	@Autowired
 	private JdbcTemplate questionJdbcTemplate;
-	
+
 	/**
 	 * icrs_resource初始化
+	 * 
 	 * @author xiezy
 	 * @date 2016年9月22日
 	 * @param resType
 	 */
 	public void initIcrsByType(String resType) {
-		//根据资源类型获取查询语句
+		// 根据资源类型获取查询语句
 		String querySql = getMatchConditionSqlByType(resType, null);
 
 		// 分页参数
@@ -126,14 +127,16 @@ public class IcrsServiceHelper {
 						if (model.getEnable() == 0) {
 							continue;
 						}
-						
-						List<IcrsResource> tempList = getIcrsResources(resType, model);
-						if(CollectionUtils.isNotEmpty(tempList)){
+
+						List<IcrsResource> tempList = getIcrsResources(resType,
+								model);
+						if (CollectionUtils.isNotEmpty(tempList)) {
 							syncList.addAll(tempList);
 						}
 					} catch (Exception e) {
-						
-						icrsSyncErrorRecord(resType, resId, createTime, target, e.getMessage());
+
+						icrsSyncErrorRecord(resType, resId, createTime, target,
+								e.getMessage());
 						continue;
 					}
 				}
@@ -142,7 +145,8 @@ public class IcrsServiceHelper {
 					try {
 						icrsResourceRepository.batchAdd(syncList);
 					} catch (EspStoreException e) {
-						icrsSyncErrorRecord(resType, resId, createTime, target, e.getMessage());
+						icrsSyncErrorRecord(resType, resId, createTime, target,
+								e.getMessage());
 					}
 				}
 			} else {
@@ -154,18 +158,29 @@ public class IcrsServiceHelper {
 			offset += pageSize;
 		}
 	}
-	
+
 	/**
 	 * 同步当前系统前一个小时的记录
+	 * 
 	 * @author xiezy
 	 * @date 2016年9月22日
 	 * @param resType
 	 */
-	public void syncIcrsByType(String resType){
-		//分页查询全部当前系统时间前一个小时更新过的数据,基于last_update
-		String querySql = "select ndr.identifier as id,ndr.enable as ndren from ndresource ndr where ndr.primary_category='" + resType + "'"
-				+ " and ndr.last_update > " + getOneHourAgoTime();
+	public void syncIcrsByType(String resType) {
+		syncIcrsByType(resType, null);
+	}
+
+	public void syncIcrsByType(String resType, String startTime) {
 		
+		long time = getOneHourAgoTime();
+		if(StringUtils.hasText(startTime)){
+			time = Long.parseLong(startTime);
+		}
+		
+		// 分页查询全部当前系统时间前一个小时更新过的数据,基于last_update
+		String querySql = "select ndr.identifier as id,ndr.enable as ndren from ndresource ndr where ndr.primary_category='"
+				+ resType + "'" + " and ndr.last_update > " + time;
+
 		// 分页参数
 		int offset = 0;
 		int pageSize = 50;
@@ -174,7 +189,7 @@ public class IcrsServiceHelper {
 			querySql += "  limit " + offset + "," + pageSize;
 
 			System.out.println("ICRS查询SQL:" + querySql);
-			
+
 			final List<SyncIcrsModel> updatedResourceList = new ArrayList<SyncIcrsModel>();
 			getJdbcTemplate(resType).query(querySql, new RowMapper<String>() {
 				@Override
@@ -187,22 +202,22 @@ public class IcrsServiceHelper {
 					return null;
 				}
 			});
-			
+
 			// 方便错误信息记录
 			String resId = "";
 			Long createTime = 0L;
 			String target = "";
-			
-			if(CollectionUtils.isNotEmpty(updatedResourceList)){
-				//记录有可能需要同步的资源id,在后面进行进一步过滤
+
+			if (CollectionUtils.isNotEmpty(updatedResourceList)) {
+				// 记录有可能需要同步的资源id,在后面进行进一步过滤
 				List<String> syncResourceList = new ArrayList<String>();
-				
-				//1.根据资源id,先删除icrs_resource中的记录
-				for(SyncIcrsModel model : updatedResourceList){
+
+				// 1.根据资源id,先删除icrs_resource中的记录
+				for (SyncIcrsModel model : updatedResourceList) {
 					resId = model.getIdentifier();
 					createTime = model.getCreateTime();
 					target = model.getTarget();
-					
+
 					// 先查询是否同步过
 					IcrsResource searchExample = new IcrsResource();
 					searchExample.setResUuid(model.getIdentifier());
@@ -211,7 +226,8 @@ public class IcrsServiceHelper {
 						existList = icrsResourceRepository
 								.getAllByExample(searchExample);
 					} catch (EspStoreException e) {
-						icrsSyncErrorRecord(resType, resId, createTime, target, "1-" + e.getMessage());
+						icrsSyncErrorRecord(resType, resId, createTime, target,
+								"1-" + e.getMessage());
 						continue;
 					}
 
@@ -226,149 +242,167 @@ public class IcrsServiceHelper {
 							try {
 								icrsResourceRepository.batchDel(deleteIds);
 							} catch (EspStoreException e) {
-								icrsSyncErrorRecord(resType, resId, createTime, target, "2-" + e.getMessage());
+								icrsSyncErrorRecord(resType, resId, createTime,
+										target, "2-" + e.getMessage());
 								continue;
 							}
 						}
 					}
-					
-					//记录需要同步的资源id
-					if(model.getEnable() ==1){
+
+					// 记录需要同步的资源id
+					if (model.getEnable() == 1) {
 						syncResourceList.add(model.getIdentifier());
 					}
 				}
-				
-				if(CollectionUtils.isNotEmpty(syncResourceList)){
-					String syncQuerySql = getMatchConditionSqlByType(resType, syncResourceList);
-					
-					System.out.println("ICRS同步查询SQL:" + syncQuerySql);
-					
-					final List<SyncIcrsModel> list = new ArrayList<SyncIcrsModel>();
-					getJdbcTemplate(resType).query(syncQuerySql, new RowMapper<String>() {
-						@Override
-						public String mapRow(ResultSet rs, int rowNum)
-								throws SQLException {
-							SyncIcrsModel sim = new SyncIcrsModel();
-							sim.setIdentifier(rs.getString("id"));
-							sim.setEnable(rs.getInt("ndren"));
-							sim.setCreateTime(rs.getLong("ct"));
-							sim.setTarget(rs.getString("target"));
-							list.add(sim);
 
-							return null;
-						}
-					});
-					
-					if(CollectionUtils.isNotEmpty(list)){
+				if (CollectionUtils.isNotEmpty(syncResourceList)) {
+					String syncQuerySql = getMatchConditionSqlByType(resType,
+							syncResourceList);
+
+					System.out.println("ICRS同步查询SQL:" + syncQuerySql);
+
+					final List<SyncIcrsModel> list = new ArrayList<SyncIcrsModel>();
+					getJdbcTemplate(resType).query(syncQuerySql,
+							new RowMapper<String>() {
+								@Override
+								public String mapRow(ResultSet rs, int rowNum)
+										throws SQLException {
+									SyncIcrsModel sim = new SyncIcrsModel();
+									sim.setIdentifier(rs.getString("id"));
+									sim.setEnable(rs.getInt("ndren"));
+									sim.setCreateTime(rs.getLong("ct"));
+									sim.setTarget(rs.getString("target"));
+									list.add(sim);
+
+									return null;
+								}
+							});
+
+					if (CollectionUtils.isNotEmpty(list)) {
 						List<IcrsResource> syncList = new ArrayList<IcrsResource>();
-						for(SyncIcrsModel model : list){
+						for (SyncIcrsModel model : list) {
 							resId = model.getIdentifier();
 							createTime = model.getCreateTime();
 							target = model.getTarget();
-							
-							List<IcrsResource> tempList = new ArrayList<IcrsResource>();;
+
+							List<IcrsResource> tempList = new ArrayList<IcrsResource>();
+							;
 							try {
 								tempList = getIcrsResources(resType, model);
 							} catch (Exception e) {
-								icrsSyncErrorRecord(resType, resId, createTime, target, "3-" + e.getMessage());
+								icrsSyncErrorRecord(resType, resId, createTime,
+										target, "3-" + e.getMessage());
 								continue;
 							}
-							if(CollectionUtils.isNotEmpty(tempList)){
+							if (CollectionUtils.isNotEmpty(tempList)) {
 								syncList.addAll(tempList);
 							}
 						}
-						
+
 						if (CollectionUtils.isNotEmpty(syncList)) {
 							try {
 								icrsResourceRepository.batchAdd(syncList);
 							} catch (EspStoreException e) {
-								icrsSyncErrorRecord(resType, resId, createTime, target, "4-" + e.getMessage());
+								icrsSyncErrorRecord(resType, resId, createTime,
+										target, "4-" + e.getMessage());
 								continue;
 							}
 						}
 					}
 				}
-			}else{
+			} else {
 				break;
 			}
-			
+
 			// 处理分页
 			querySql = querySql.substring(0, querySql.lastIndexOf("limit"));
 			offset += pageSize;
 		}
 	}
-	
+
 	/**
 	 * 根据资源类型获取查询SQL语句
+	 * 
 	 * @author xiezy
 	 * @date 2016年9月22日
 	 * @param resType
 	 * @param resourceIds
 	 * @return
 	 */
-	private String getMatchConditionSqlByType(String resType, List<String> resourceIds){
+	private String getMatchConditionSqlByType(String resType,
+			List<String> resourceIds) {
 		String querySql = "select distinct ndr.identifier as id,ndr.enable as ndren,ndr.create_time as ct,rv.target as target "
 				+ "from ndresource ndr inner join res_coverages rv "
 				+ "on ndr.identifier=rv.resource ";
-		
+
 		// 需要过滤维度
 		if (resType.equals(IndexSourceType.AssetType.getName())
-				|| resType.equals(IndexSourceType.SourceCourseWareType.getName())) {
+				|| resType.equals(IndexSourceType.SourceCourseWareType
+						.getName())) {
 			querySql += " inner join resource_categories rc on ndr.identifier=rc.resource ";
 		}
 
-		querySql += " where ndr.enable=1 and "
-				+ "ndr.primary_category='" + resType + "' ";
-		
-		if(resType.equals(IndexSourceType.QuestionType.getName()) ||
-				resType.equals(IndexSourceType.SourceCourseWareObjectType.getName())){
-			querySql += " and ndr.estatus != '" + LifecycleStatus.CREATING.getCode() + "' ";
+		querySql += " where ndr.enable=1 and " + "ndr.primary_category='"
+				+ resType + "' ";
+
+		if (resType.equals(IndexSourceType.QuestionType.getName())
+				|| resType.equals(IndexSourceType.SourceCourseWareObjectType
+						.getName())) {
+			querySql += " and ndr.estatus != '"
+					+ LifecycleStatus.CREATING.getCode() + "' ";
 		}
-		
-//		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='" + resType + "' ";
-		querySql += " and rv.target_type='User' and rv.res_type='" + resType + "' ";
-		
+
+		// querySql +=
+		// " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
+		// + resType + "' ";
+		querySql += " and rv.target_type='User' and rv.res_type='" + resType
+				+ "' ";
+
 		if (resType.equals(IndexSourceType.AssetType.getName())) {// assets
 			querySql += " and rc.primary_category='" + resType
 					+ "' and rc.taxOnCode in "
 					+ "('$RA0101','$RA0102','$RA0103','$RA0104')";
 		}
-		
+
 		if (resType.equals(IndexSourceType.SourceCourseWareType.getName())) {// coursewares
 			querySql += " and rc.primary_category='" + resType
 					+ "' and rc.taxOnCode in "
 					+ "('$F010003','$F060005','$F010004')";
 		}
-		
+
 		if (resType.equals(IndexSourceType.QuestionType.getName())) {// questions
 			querySql += " and ndr.identifier not in "
 					+ "(SELECT ex.resource FROM resource_categories ex WHERE ex.taxOnCode IN ('$RE0211','$RE0206'))";
 		}
-		
-//		if (resType
-//				.equals(IndexSourceType.SourceCourseWareObjectType.getName())) {// coursewareobjects
-//			querySql += " and rc.primary_category='" + resType
-//					+ "' and rc.taxOnCode like '$RE04%'";
-//		}
+
+		// if (resType
+		// .equals(IndexSourceType.SourceCourseWareObjectType.getName())) {//
+		// coursewareobjects
+		// querySql += " and rc.primary_category='" + resType
+		// + "' and rc.taxOnCode like '$RE04%'";
+		// }
 
 		if (CollectionUtils.isNotEmpty(resourceIds)) {
-			querySql += " and ndr.identifier in ('" + StringUtils.join(resourceIds, "','") + "') ";
+			querySql += " and ndr.identifier in ('"
+					+ StringUtils.join(resourceIds, "','") + "') ";
 		}
-		
+
 		return querySql;
 	}
-	
+
 	/**
 	 * 获取需要插入的记录模型
+	 * 
 	 * @author xiezy
 	 * @date 2016年9月22日
 	 * @param resType
 	 * @param model
 	 * @return
 	 */
-	private List<IcrsResource> getIcrsResources(String resType, SyncIcrsModel model) throws Exception{
+	private List<IcrsResource> getIcrsResources(String resType,
+			SyncIcrsModel model) throws Exception {
 		List<IcrsResource> syncList = new ArrayList<IcrsResource>();
-		
+
 		// 新增同步记录
 		// 1.查询用户姓名,调用UC接口
 		String userName = getUserName(model.getTarget());
@@ -377,8 +411,7 @@ public class IcrsServiceHelper {
 		// 3.获取创建日期
 		String createDate = getCreateDate(model.getCreateTime());
 		// 4.获取创建时段
-		Integer createHour = getCreateHour(model
-				.getCreateTime());
+		Integer createHour = getCreateHour(model.getCreateTime());
 		// 5.获取相关联的章节和教材id
 		Map<String, String> chapterAndTmInfo = getChapterAndTeachingmaterialInfo(
 				resType, model.getIdentifier());
@@ -391,35 +424,28 @@ public class IcrsServiceHelper {
 				icrs.setSchoolId(schoolId);
 				icrs.setTeacherId(model.getTarget());
 				icrs.setTeacherName(userName);
-				icrs.setCreateTime(new Timestamp(model
-						.getCreateTime()));
+				icrs.setCreateTime(new Timestamp(model.getCreateTime()));
 				icrs.setCreateDate(createDate);
 				icrs.setCreateHour(createHour);
 
 				icrs.setChapterUuid(chapterId);
-				icrs.setTeachmaterialUuid(chapterAndTmInfo
-						.get(chapterId));
+				icrs.setTeachmaterialUuid(chapterAndTmInfo.get(chapterId));
 
 				// 获取教材的年级和学科维度
 				Map<String, List<String>> gradeAndSubjectMap = getGradeAndSubjectCode(
-						IndexSourceType.TeachingMaterialType
-								.getName(),
+						IndexSourceType.TeachingMaterialType.getName(),
 						chapterAndTmInfo.get(chapterId));
 
 				// 教材认为只有一个年级和学科维度
-				if (CollectionUtils
-						.isNotEmpty(gradeAndSubjectMap
-								.get("grade"))) {
-					icrs.setGradeCode(gradeAndSubjectMap.get(
-							"grade").get(0));
+				if (CollectionUtils.isNotEmpty(gradeAndSubjectMap.get("grade"))) {
+					icrs.setGradeCode(gradeAndSubjectMap.get("grade").get(0));
 				} else {
 					icrs.setGradeCode("");
 				}
-				if (CollectionUtils
-						.isNotEmpty(gradeAndSubjectMap
-								.get("subject"))) {
-					icrs.setSubjectCode(gradeAndSubjectMap.get(
-							"subject").get(0));
+				if (CollectionUtils.isNotEmpty(gradeAndSubjectMap
+						.get("subject"))) {
+					icrs.setSubjectCode(gradeAndSubjectMap.get("subject")
+							.get(0));
 				} else {
 					icrs.setSubjectCode("");
 				}
@@ -430,29 +456,24 @@ public class IcrsServiceHelper {
 			// 获取资源本身的年级和学科维度
 			Map<String, List<String>> gradeAndSubjectMap = getGradeAndSubjectCode(
 					resType, model.getIdentifier());
-			if (CollectionUtils.isNotEmpty(gradeAndSubjectMap
-					.get("grade"))) {
-				for (int i = 0; i < gradeAndSubjectMap.get(
-						"grade").size(); i++) {
+			if (CollectionUtils.isNotEmpty(gradeAndSubjectMap.get("grade"))) {
+				for (int i = 0; i < gradeAndSubjectMap.get("grade").size(); i++) {
 					IcrsResource icrs = new IcrsResource();
-					icrs.setIdentifier(UUID.randomUUID()
-							.toString());
+					icrs.setIdentifier(UUID.randomUUID().toString());
 					icrs.setResType(resType);
 					icrs.setResUuid(model.getIdentifier());
 					icrs.setSchoolId(schoolId);
 					icrs.setTeacherId(model.getTarget());
 					icrs.setTeacherName(userName);
-					icrs.setCreateTime(new Timestamp(model
-							.getCreateTime()));
+					icrs.setCreateTime(new Timestamp(model.getCreateTime()));
 					icrs.setCreateDate(createDate);
 					icrs.setCreateHour(createHour);
 
 					icrs.setChapterUuid("");
 					icrs.setTeachmaterialUuid("");
-					icrs.setGradeCode(gradeAndSubjectMap.get(
-							"grade").get(i));
-					icrs.setSubjectCode(gradeAndSubjectMap.get(
-							"subject").get(i));
+					icrs.setGradeCode(gradeAndSubjectMap.get("grade").get(i));
+					icrs.setSubjectCode(gradeAndSubjectMap.get("subject")
+							.get(i));
 
 					syncList.add(icrs);
 				}
@@ -464,8 +485,7 @@ public class IcrsServiceHelper {
 				icrs.setSchoolId(schoolId);
 				icrs.setTeacherId(model.getTarget());
 				icrs.setTeacherName(userName);
-				icrs.setCreateTime(new Timestamp(model
-						.getCreateTime()));
+				icrs.setCreateTime(new Timestamp(model.getCreateTime()));
 				icrs.setCreateDate(createDate);
 				icrs.setCreateHour(createHour);
 
@@ -477,12 +497,13 @@ public class IcrsServiceHelper {
 				syncList.add(icrs);
 			}
 		}
-		
-		return syncList;	
+
+		return syncList;
 	}
-	
+
 	/**
 	 * 记录同步出错的记录
+	 * 
 	 * @author xiezy
 	 * @date 2016年9月22日
 	 * @param resType
@@ -491,7 +512,8 @@ public class IcrsServiceHelper {
 	 * @param target
 	 * @param errorMessage
 	 */
-	private void icrsSyncErrorRecord(String resType, String resId, Long createTime, String target, String errorMessage){
+	private void icrsSyncErrorRecord(String resType, String resId,
+			Long createTime, String target, String errorMessage) {
 		IcrsSyncErrorRecord errorRecord = new IcrsSyncErrorRecord();
 		errorRecord.setIdentifier(UUID.randomUUID().toString());
 		errorRecord.setResType(resType);
