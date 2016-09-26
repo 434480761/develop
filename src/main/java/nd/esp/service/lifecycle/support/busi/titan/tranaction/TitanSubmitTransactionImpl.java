@@ -99,7 +99,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     try {
                         resourceId = titanCommonRepository.executeScriptUniqueString(getResource, param);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOG.error("获取资源ID失败");
                     }
                     if (resourceId!=null && resourceId.length() > 10){
                         educationIds.put(resourceId,"delete");
