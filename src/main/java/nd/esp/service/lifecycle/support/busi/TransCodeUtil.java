@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
+import nd.esp.service.lifecycle.daos.ResLifecycle.v06.ResLifecycleDao;
 import nd.esp.service.lifecycle.educommon.models.ResClassificationModel;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
 import nd.esp.service.lifecycle.educommon.models.ResTechInfoModel;
@@ -24,15 +25,14 @@ import nd.esp.service.lifecycle.entity.WorkerParam;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
-import nd.esp.service.lifecycle.repository.model.TechInfo;
 import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
-import nd.esp.service.lifecycle.services.task.v06.impls.TaskServiceImpl;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.transcode.WorkerManager;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
+import nd.esp.service.lifecycle.support.enums.TaskBussType;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -61,6 +61,9 @@ public class TransCodeUtil {
 
     @Autowired
     private TransCodeTrigger transCodeTrigger;
+
+    @Autowired
+    private ResLifecycleDao resLifecycleDao;
 
     @Autowired
     private NDResourceService ndResourceService;
@@ -300,19 +303,69 @@ public class TransCodeUtil {
         return getTranscodePriority(domain);
     }
 
+    /**
+     * <p>Description:   转码触发方法(使用默认的转码任务地址)           </p>
+     * <p> 额外新添加优先级参数          </p>
+     * <p>Create Time: 2015年6月10日   </p>
+     * <p>Create author: qiling   </p>
+     *
+     * @param codeParam
+     * @param session
+     * @param priority
+     */
+    public void triggerDocumentTransCode(TransCodeParam codeParam, String session, int priority) {
+        String url = Constant.TASK_SUBMIT_URL;
+        String uuid = codeParam.getResId();
+        codeParam.buildResId(uuid+"_doc");
+
+        String location = Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey()).getUrl() + "/download?path="
+                + URLEncoder.encodeURL(codeParam.getSourceFileId());
+
+        Map<String, Object> arg = new HashMap<>();
+        arg.put("location", location);
+        arg.put("session", session);
+        String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType()
+                + "/transcode/document_callback";
+        arg.put("callback_api", callBackUrl);
+
+        LOG.info("trigger document transcode, callback_api:" + callBackUrl);
+
+        arg.put("cs_api_url", Constant.CS_API_URL);
+
+        // 文档转码结果与source 放在同一个目录 (./transcode)
+        String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
+
+        LOG.info("转码后目标目录：" + targetPath);
+
+        arg.put("target_location", targetPath);
+        String argument = ObjectUtils.toJson(arg);
+        WorkerParam param = WorkerParam.createDocumentTranscodeParam();
+
+        param.setIdentifier(codeParam.getResId());
+        param.setPriority(priority);
+        param.setArgument(argument);
+
+        try {
+            buildTask(codeParam, priority, url, param, TaskBussType.DOCUMENTS_TRANSCODE);
+        } catch (Exception e) {
+            LOG.error("发送转码任务失败", e);
+            lifecycleService.addLifecycleStep(codeParam.getResType(), uuid, false, e.getMessage());
+            resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), uuid, TransCodeUtil.getTransErrStatus(true));
+        }
+    }
+
 
     /**
      * <p>Description:   转码触发方法(使用默认的转码任务地址)           </p>
      * <p> 额外新添加优先级参数          </p>
      * <p>Create Time: 2015年6月10日   </p>
      * <p>Create author: qiling   </p>
-     * <p>Update author: liuwx   </p>
      *
      * @param codeParam
      * @param session
      * @param priority
      */
-    public void TriggerImageTransCode(TransCodeParam codeParam, String session, int priority) {
+    public void triggerImageTransCode(TransCodeParam codeParam, String session, int priority) {
         String url = Constant.TASK_SUBMIT_URL;
         String sourcePath = codeParam.getSourceFileId();
         String location = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
@@ -332,7 +385,6 @@ public class TransCodeUtil {
                     + "/upload?session=" + session;
             arg.put("upload_api", uploadUrl);
             String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
-//            String callBackUrl = "http://192.168.253.17:8080/v0.6/" + codeParam.getResType() + "/transcode/image_callback?identifier="+codeParam.getResId();
             arg.put("callback", callBackUrl);
 
             String argument = ObjectUtils.toJson(arg);
@@ -342,32 +394,12 @@ public class TransCodeUtil {
             param.setPriority(priority);
             param.setArgument(argument);
 
-            //HttpClientUtils.httpPost(url, parameters);
-            RestTemplate restTemplate = new RestTemplate();
-            //ResponseEntity<String> rt =  restTemplate.postForEntity(url, parameters, String.class);
-            ResponseEntity<String> rt = restTemplate.postForEntity(url, param, String.class);
-
-            LOG.info("创建转码任务返回的任务ID:" + rt.getBody());
-
-            String taskId = null;
-            if (!StringUtils.isEmpty(rt.getBody())) {
-                Map<String, Object> rtMap = BeanMapperUtils.mapperOnString(rt.getBody(), Map.class);
-                if (rtMap.get("executionId") != null) {
-                    taskId = String.valueOf(rtMap.get("executionId"));
-                }
-            }
-            TaskStatusInfo taskInfo = new TaskStatusInfo();
-            taskInfo.setResType(codeParam.getResType());
-            taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_IMAGE_TRANSCODE);
-            taskInfo.setBussId(codeParam.getResId());
-            taskInfo.setTaskId(taskId);
-            taskInfo.setDescription(codeParam.getStatusBackup());
-            taskInfo.setPriority(-priority);
-            taskService.CreateOrRestartTask(taskInfo);
+            buildTask(codeParam, priority, url, param, TaskBussType.IMAGE_TRANSCODE);
 
         } catch (Exception e) {
             LOG.error("发送转码任务失败", e);
             lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+            resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
         }
     }
 
@@ -384,11 +416,11 @@ public class TransCodeUtil {
      * @param templatePath
      * @param priority
      */
-    public void TriggerTransCode(TransCodeParam codeParam, String session, int priority,
+    public void triggerTransCode(TransCodeParam codeParam, String session, int priority,
                                  String templatePath) {
         String url = Constant.TASK_SUBMIT_URL;
         LOG.error("转码发送的url地址:" + url);
-        TriggerTransCode(url, codeParam, session, priority, templatePath);
+        triggerTransCode(url, codeParam, session, priority, templatePath);
 
     }
 
@@ -404,8 +436,8 @@ public class TransCodeUtil {
      * @param priority
      * @param templatePath
      */
-    public void TriggerTransCode(String taskUrl, TransCodeParam codeParam, String session, int priority,
-                   String templatePath) {
+    public void triggerTransCode(String taskUrl, TransCodeParam codeParam, String session, int priority,
+                                 String templatePath) {
         //实例目录名 eg edu、edu_product ect..
         String csInstanceName=codeParam.getInstanceKey().substring(codeParam.getInstanceKey().indexOf("/")+1);
         Assert.assertNotNull("转码模板地址不能为空", templatePath);
@@ -459,32 +491,12 @@ public class TransCodeUtil {
             param.setPriority(priority);
             param.setArgument(argument);
 
-            //HttpClientUtils.httpPost(url, parameters);
-            RestTemplate restTemplate = new RestTemplate();
-            //ResponseEntity<String> rt =  restTemplate.postForEntity(url, parameters, String.class);
-            ResponseEntity<String> rt = restTemplate.postForEntity(url, param, String.class);
-
-            LOG.info("创建转码任务返回的任务ID:" + rt.getBody());
-
-            String taskId = null;
-            if (!StringUtils.isEmpty(rt.getBody())) {
-                Map<String, Object> rtMap = BeanMapperUtils.mapperOnString(rt.getBody(), Map.class);
-                if (rtMap.get("executionId") != null) {
-                    taskId = String.valueOf(rtMap.get("executionId"));
-                }
-            }
-            TaskStatusInfo taskInfo = new TaskStatusInfo();
-            taskInfo.setResType(codeParam.getResType());
-            taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_TRANSCODE);
-            taskInfo.setBussId(codeParam.getResId());
-            taskInfo.setTaskId(taskId);
-            taskInfo.setDescription(codeParam.getStatusBackup());
-            taskInfo.setPriority(-priority);
-            taskService.CreateOrRestartTask(taskInfo);
+            buildTask(codeParam, priority, url, param, TaskBussType.TRANSCODE);
 
         } catch (Exception e) {
             LOG.error("发送转码任务失败", e);
             lifecycleService.addLifecycleStep(codeParam.getResType(), codeParam.getResId(), false, e.getMessage());
+            resLifecycleDao.updateLifecycleStatus(codeParam.getResType(), codeParam.getResId(), TransCodeUtil.getTransErrStatus(true));
         }
     }
 
@@ -600,127 +612,98 @@ public class TransCodeUtil {
     }
     
     public void triggerTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
-        if (isVideoTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
-        } else if(Constant.AUDIO_TRANSCODE && isAudioTransCode(resourceModel, resType)) {
-            triggerVideoTransCode(resourceModel, resType, statusBackup, bOnlyOgv);
+        TransCodeParam codeParam = buildCodeParam(resourceModel, resType, statusBackup, bOnlyOgv);
+        if(null == codeParam) {
+            return;
+        }
+
+        if (isVideoTransCode(resourceModel, resType) || isAudioTransCode(resourceModel, resType)) {
+            transCodeTrigger.triggerVideo(codeParam);
         } else if(isImageTransCode(resourceModel,resType)) {
-            triggerImageTransCode(resourceModel, resType, statusBackup);
+            transCodeTrigger.triggerImage(codeParam);
+        } else if(isDocumentTransCode(resourceModel, resType)) {
+            transCodeTrigger.triggerDocument(codeParam);
+            if(isPowerPoint(resourceModel)) {
+                transCodeTrigger.trigger(codeParam);
+            }
         } else {
-            triggerWordOrPptTransCode(resourceModel, resType, statusBackup);
+            transCodeTrigger.trigger(codeParam);
         }
     }
-    
 
-    /**
-     * @author linsm
-     * @param resourceModel
-     * @param resType
-     * @since
-     */
-    private void triggerVideoTransCode(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
+
+    private TransCodeParam buildCodeParam(ResourceModel resourceModel, String resType, String statusBackup, boolean bOnlyOgv) {
+        String referer="";
+        try{
+
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                    .getRequest();
+            referer= request.getHeader("Referer");
+        }catch (Exception e){
+            LOG.warn("资源{} 获取referer失败:",resType,e.getCause());
+        }
+
         List<ResTechInfoModel> techInfos = resourceModel.getTechInfoList();
         boolean isSourcePathExist = false;
         boolean isHrefExist = false;
         String sourceLocation = "";
         String hrefLocation = "";
-        ResTechInfoModel hrefTechInfo = null;
         for (ResTechInfoModel techInfo : techInfos) {
             if (techInfo.getTitle().equals(TransCodeUtil.CONVERT_SOURCE_KEY)) {
                 sourceLocation = techInfo.getLocation();//${ref-path}/edu/esp/lessonplans/2558b42d-ae05-42fc-b62b-797fe554867d.pkg/xxx.ppt
-                isSourcePathExist = true;
+                isHrefExist = true;
+                break;
             }
             if(techInfo.getTitle().equals(TransCodeUtil.CONVERT_STOREINFO_KEY)) {
                 hrefLocation = techInfo.getLocation();
-                hrefTechInfo = techInfo;
                 isHrefExist = true;
             }
             if(isSourcePathExist && isHrefExist) {
                 break;
             }
         }
-        
-        if(!isSourcePathExist && hrefTechInfo!=null && StringUtils.isNotEmpty(hrefLocation)) {
-            sourceLocation = hrefLocation;
-            isSourcePathExist = true;
-            hrefTechInfo.setTitle(TransCodeUtil.CONVERT_SOURCE_KEY);
-            TechInfo ti = BeanMapperUtils.beanMapper(hrefTechInfo, TechInfo.class);
-            ti.setResource(resourceModel.getIdentifier());
-            ti.setResType(resType);
-            ti.setRequirements(ObjectUtils.toJson(hrefTechInfo.getRequirements()));
-            try {
-                techInfoRepository.update(ti);
-            } catch (EspStoreException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        
+
         if(bOnlyOgv && isVideoTransCode(resourceModel, resType) && isHrefExist) {
             sourceLocation = hrefLocation;
         }
-        
+
         ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();
-        if (!isSourcePathExist) {
 
-            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source未上传");
-
-            // FIXME 这个只能返回给调用方，没有写到数据库中
-            lifeCycle = resourceModel.getLifeCycle();
-            lifeCycle.setStatus(TransCodeUtil.getTransErrStatus(true));
-            resourceModel.setLifeCycle(lifeCycle);
-//            // 更新数据库中的状态
-//            CommonHelper.updateStatusInDB(resType, resourceModel.getIdentifier(), TransCodeUtil.getTransErrStatus(true));
-            lifecycleService.addLifecycleStep(resType,
-                                              resourceModel.getIdentifier(),
-                                              false,
-                                              "转码资源[" + resourceModel.getIdentifier() + "]source未上传");
-            return;
-        } else {
-            
+        if (isHrefExist) {
             LOG.info("source对应的值:" + sourceLocation);
-            
             String instanceKey = SessionUtil.getHrefInstanceKey(sourceLocation);
-            
             LOG.info("source对应的实例键值:" + instanceKey);//${ref-path}/edu
-            
             if (Constant.CS_INSTANCE_MAP.get(instanceKey) == null) {
-                
                 LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source地址格式错误");
-                
-                lifeCycle = resourceModel.getLifeCycle();
-                lifeCycle.setStatus(TransCodeUtil.getTransErrStatus(true));
-                resourceModel.setLifeCycle(lifeCycle);
-                // 更新数据库中的状态
-//                CommonHelper.updateStatusInDB(resType,
-//                                              resourceModel.getIdentifier(),
-                // TransCodeUtil.getTransErrStatus(true));
                 lifecycleService.addLifecycleStep(resType, resourceModel.getIdentifier(), false, "转码资源["
                         + resourceModel.getIdentifier() + "]source地址格式错误");
-                return;
+                resLifecycleDao.updateLifecycleStatus(resType, resourceModel.getIdentifier(), TransCodeUtil.getTransErrStatus(true));
+                return null;
             }
             String path = sourceLocation.replace(TransCodeUtil.REF_PATH, "");
-            
             TransCodeParam codeParam = TransCodeParam.build();
             codeParam.buildInstanceKey(instanceKey);
             codeParam.buildResType(resType);
             codeParam.buildResId(resourceModel.getIdentifier());
             codeParam.buildSourceFileId(path);
-            codeParam.buildReferer(getReferer());
+            codeParam.buildReferer(referer);
             codeParam.buildStatusBackup(statusBackup);
             codeParam.setbOnlyOgv(bOnlyOgv);
             if(isAudioTransCode(resourceModel, resType)) {
                 codeParam.setSubType(SUBTYPE_AUDIO);
-            } else {
+            } else if(isVideoTransCode(resourceModel, resType)) {
                 codeParam.setSubType(SUBTYPE_VIDEO);
             }
-            transCodeTrigger.triggerVideo(codeParam);
-            /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
-                    lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
+            return codeParam;
+        } else {
+            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source未上传");
+            lifecycleService.addLifecycleStep(resType,
+                    resourceModel.getIdentifier(),
+                    false,
+                    "转码资源[" + resourceModel.getIdentifier() + "]source未上传");
+            resLifecycleDao.updateLifecycleStatus(resType, resourceModel.getIdentifier(), TransCodeUtil.getTransErrStatus(true));
+            return null;
         }
-        
-        
-
     }
     
 
@@ -761,7 +744,6 @@ public class TransCodeUtil {
                 if (category != null) {
                     String ndCode = category.getTaxoncode();
                     if (StringUtils.isNotEmpty(ndCode)) {
-                        // 媒体类型:视频
                         if ("$RT0402".equals(ndCode)) {
                             return true;
                         }
@@ -772,7 +754,16 @@ public class TransCodeUtil {
         return false;
     }
 
-    public boolean isNdpxTransCode(ResourceModel resourceModel, String resType) {
+    /**
+     * 判断是否进行文档转码（检查资源类型:$RA0108）
+     *
+     * @param resourceModel
+     * @param resType
+     * @author ql
+     * @return
+     * @since
+     */
+    public boolean isDocumentTransCode(ResourceModel resourceModel, String resType) {
         if (!IndexSourceType.AssetType.getName().equals(resType)) {
             return false;
         }
@@ -783,11 +774,22 @@ public class TransCodeUtil {
                     String ndCode = category.getTaxoncode();
                     if (StringUtils.isNotEmpty(ndCode)) {
                         // 媒体类型:视频
-                        if ("$F060005".equals(ndCode)) {
+                        if ("$RA0108".equals(ndCode)) {
                             return true;
                         }
                     }
                 }
+            }
+        }
+        return false;
+    }
+
+    public boolean isPowerPoint(ResourceModel resourceModel) {
+        List<ResTechInfoModel> techInfoList = resourceModel.getTechInfoList();
+        for(ResTechInfoModel techInfo : techInfoList) {
+            if(CONVERT_SOURCE_KEY.equals(techInfo.getTitle()) && techInfo.getLocation().contains(".ppt")
+                    && techInfo.getLocation().lastIndexOf(".ppt")>=techInfo.getLocation().length()-5) {
+                return  true;
             }
         }
         return false;
@@ -853,137 +855,6 @@ public class TransCodeUtil {
         return false;
     }
 
-    /**
-     * @param resourceModel
-     * @desc:触发转码任务
-     * @createtime: 2015年8月18日
-     * @author: qil
-     * @author linsm  为了兼容视频转码，修改了方法的名称
-     */
-    private void triggerImageTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
-        String referer="";
-        try{
-
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                    .getRequest();
-            referer= request.getHeader("Referer");
-        }catch (Exception e){
-            LOG.warn("资源{} 获取referer失败:",resType,e.getCause());
-        }
-
-        List<ResTechInfoModel> techInfos = resourceModel.getTechInfoList();
-        boolean isHrefExist = false;
-        String sourceLocation = "";
-        String hrefLocation = "";
-        for (ResTechInfoModel techInfo : techInfos) {
-            if (techInfo.getTitle().equals(TransCodeUtil.CONVERT_SOURCE_KEY)) {
-                sourceLocation = techInfo.getLocation();//${ref-path}/edu/esp/lessonplans/2558b42d-ae05-42fc-b62b-797fe554867d.pkg/xxx.ppt
-                isHrefExist = true;
-                break;
-            }
-            if(techInfo.getTitle().equals(TransCodeUtil.CONVERT_STOREINFO_KEY)) {
-                hrefLocation = techInfo.getLocation();
-            }
-        }
-
-        if (!isHrefExist && StringUtils.isNotEmpty(hrefLocation)) {
-            sourceLocation = hrefLocation;
-        }
-
-        LOG.info("source对应的值:" + sourceLocation);
-        String instanceKey = SessionUtil.getHrefInstanceKey(sourceLocation);
-        LOG.info("source对应的实例键值:" + instanceKey);//${ref-path}/edu
-        if (Constant.CS_INSTANCE_MAP.get(instanceKey) == null) {
-            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source地址格式错误");
-            ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();
-            lifeCycle.setStatus(TransCodeUtil.CONVERT_STATUS_CONVERT_ERR);
-            resourceModel.setLifeCycle(lifeCycle);
-        }
-        String path = sourceLocation.replace(TransCodeUtil.REF_PATH, "");
-        TransCodeParam codeParam = TransCodeParam.build();
-        codeParam.buildInstanceKey(instanceKey);
-        codeParam.buildResType(resType);
-        codeParam.buildResId(resourceModel.getIdentifier());
-        codeParam.buildSourceFileId(path);
-        codeParam.buildReferer(referer);
-        codeParam.buildStatusBackup(statusBackup);
-        transCodeTrigger.triggerImage(codeParam);
-        /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
-                lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
-    }
-
-    /**
-     * @param resourceModel
-     * @desc:触发转码任务
-     * @createtime: 2015年8月18日
-     * @author: liuwx
-     * @author linsm  为了兼容视频转码，修改了方法的名称
-     */
-    private void triggerWordOrPptTransCode(ResourceModel resourceModel, String resType, String statusBackup) {
-        String referer="";
-        try{
-
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                    .getRequest();
-            referer= request.getHeader("Referer");
-        }catch (Exception e){
-            LOG.warn("资源{} 获取referer失败:",resType,e.getCause());
-        }
-
-        List<ResTechInfoModel> techInfos = resourceModel.getTechInfoList();
-        boolean isHrefExist = false;
-        String sourceLocation = "";
-        String hrefLocation = "";
-        ResTechInfoModel hrefTechInfo = null;
-        for (ResTechInfoModel techInfo : techInfos) {
-            if (techInfo.getTitle().equals(TransCodeUtil.CONVERT_SOURCE_KEY)) {
-                sourceLocation = techInfo.getLocation();//${ref-path}/edu/esp/lessonplans/2558b42d-ae05-42fc-b62b-797fe554867d.pkg/xxx.ppt
-                isHrefExist = true;
-                break;
-            }
-            if(techInfo.getTitle().equals(TransCodeUtil.CONVERT_STOREINFO_KEY)) {
-                hrefLocation = techInfo.getLocation();
-                hrefTechInfo = techInfo;
-            }
-        }
-        
-//        if(!isHrefExist && resType.equals(IndexSourceType.LessonPlansType.getName()) 
-//                && StringUtils.isNotEmpty(hrefLocation) && (hrefLocation.endsWith(".doc")||hrefLocation.endsWith(".docx"))) {
-//            sourceLocation = hrefLocation;
-//            isHrefExist = true;
-//            hrefTechInfo.setTitle(TransCodeUtil.CONVERT_SOURCE_KEY);
-//        }
-        
-        ResLifeCycleModel lifeCycle = resourceModel.getLifeCycle();
-        if (!isHrefExist) {
-            LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source未上传");
-            lifeCycle = resourceModel.getLifeCycle();
-            lifeCycle.setStatus(TransCodeUtil.getTransErrStatus(true));
-            resourceModel.setLifeCycle(lifeCycle);
-        } else {
-            LOG.info("source对应的值:" + sourceLocation);
-            String instanceKey = SessionUtil.getHrefInstanceKey(sourceLocation);
-            LOG.info("source对应的实例键值:" + instanceKey);//${ref-path}/edu
-            if (Constant.CS_INSTANCE_MAP.get(instanceKey) == null) {
-                LOG.error("转码资源[" + resourceModel.getIdentifier() + "]source地址格式错误");
-                lifeCycle = resourceModel.getLifeCycle();
-                lifeCycle.setStatus(TransCodeUtil.CONVERT_STATUS_CONVERT_ERR);
-                resourceModel.setLifeCycle(lifeCycle);
-            }
-            String path = sourceLocation.replace(TransCodeUtil.REF_PATH, "");
-            TransCodeParam codeParam = TransCodeParam.build();
-            codeParam.buildInstanceKey(instanceKey);
-            codeParam.buildResType(resType);
-            codeParam.buildResId(resourceModel.getIdentifier());
-            codeParam.buildSourceFileId(path);
-            codeParam.buildReferer(referer);
-            codeParam.buildStatusBackup(statusBackup);
-            transCodeTrigger.trigger(codeParam);
-            /*new TranscodeThread(instanceKey,IndexSourceType.LessonPlansType.getName(),
-                    lessonPlansModel.getIdentifier(),path,request.getHeader("Referer")).start();*/
-        }
-    }
-
 
     private static class TranscodePriority {
         private String referer;
@@ -1028,101 +899,104 @@ public class TransCodeUtil {
         String location = Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey()).getUrl() + "/download?path="
                 + URLEncoder.encodeURL(codeParam.getSourceFileId());
 
-            Map<String, Object> arg = new HashMap<>();
+        Map<String, Object> arg = new HashMap<>();
 
-            arg.put("location", location);
+        arg.put("location", location);
 
-            LOG.info("location:" + location);
+        LOG.info("location:" + location);
 
-            arg.put("session", session);
+        arg.put("session", session);
 
-            LOG.info("session:" + session);
+        LOG.info("session:" + session);
 
-            // 通过路径不同，走向视频转码回调
-            String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType()
-                    + "/transcode/videoCallback";
+        // 通过路径不同，走向视频转码回调
+        String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType()
+                + "/transcode/videoCallback";
 
-            arg.put("callback_api", callBackUrl);
+        arg.put("callback_api", callBackUrl);
 
-            LOG.info("callback_api:" + callBackUrl);
+        LOG.info("callback_api:" + callBackUrl);
 
-            arg.put("cs_api_url", Constant.CS_API_URL);
-            arg.put("task_execute_env", TASK_EXECUTE_ENV);
-            
-            // 视频转码所独有的参数：
-            String fileType = codeParam.getSourceFileId().substring(codeParam.getSourceFileId().lastIndexOf('.') + 1);
+        arg.put("cs_api_url", Constant.CS_API_URL);
+        arg.put("task_execute_env", TASK_EXECUTE_ENV);
 
-            LOG.info("视频格式:" + fileType);
+        // 视频转码所独有的参数：
+        String fileType = codeParam.getSourceFileId().substring(codeParam.getSourceFileId().lastIndexOf('.') + 1);
 
-            List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
-            
-            // 暂时与source 放在同一个目录
-            String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
+        LOG.info("视频格式:" + fileType);
 
-            List<String> commands = new ArrayList<>();
-            if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
-                targetPath = targetPath.substring(0, targetPath.lastIndexOf(".pkg")+4);
-                for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
-                    String cmd = iter.next();
-                    if(cmd.startsWith("ffmpeg2theora")) {
-                        commands.add("ffmpeg2theora \"#src#\" "+cmd.substring(cmd.indexOf("--")));
-                    }
-                }
-            } else {
-                commands = scripts;
-            }
+        List<String> scripts = ConvertRuleSet.getConvertRuleSet().productScript(fileType);
 
-            LOG.info("视频转码脚本:" + commands);
+        // 暂时与source 放在同一个目录
+        String targetPath = codeParam.getSourceFileId().substring(0, codeParam.getSourceFileId().lastIndexOf('/'));
 
-            arg.put("commands", commands);
-
-            LOG.info("视频转码后目标目录：" + targetPath);
-
-            arg.put("target_location", targetPath);
-
-            Map<String, String> extParam = new HashMap<String, String>();
-            if(SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
-                extParam.put("targetFmt", "mp4");
-                extParam.put("subtype", SUBTYPE_VIDEO);
-            } else if(SUBTYPE_AUDIO.equals(codeParam.getSubType())) {
-                extParam.put("targetFmt", "mp3");
-                extParam.put("subtype", SUBTYPE_AUDIO);
-            }
-            extParam.put("coverNum", String.valueOf(getCoverNum(scripts)));
-            
-            LOG.info("coverNum：" + extParam.get("coverNum"));
-            
-            arg.put("ext_param", extParam);
-
-            String argument = ObjectUtils.toJson(arg);
-            WorkerParam param = WorkerParam.createVideoTranscodeParam();
-
-            param.setIdentifier(codeParam.getResId());
-            param.setPriority(priority);
-            param.setArgument(argument);
-
-
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<String> rt = restTemplate.postForEntity(url, param, String.class);
-
-            LOG.info("创建转码任务返回的任务ID:" + rt.getBody());
-
-            String taskId = null;
-            if (!StringUtils.isEmpty(rt.getBody())) {
-                Map<String, Object> rtMap = BeanMapperUtils.mapperOnString(rt.getBody(), Map.class);
-                if (rtMap.get("executionId") != null) {
-                    taskId = String.valueOf(rtMap.get("executionId"));
+        List<String> commands = new ArrayList<>();
+        if(codeParam.isbOnlyOgv() && SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
+            targetPath = targetPath.substring(0, targetPath.lastIndexOf(".pkg")+4);
+            for(Iterator<String> iter=scripts.iterator(); iter.hasNext(); ) {
+                String cmd = iter.next();
+                if(cmd.startsWith("ffmpeg2theora")) {
+                    commands.add("ffmpeg2theora \"#src#\" "+cmd.substring(cmd.indexOf("--")));
                 }
             }
-            TaskStatusInfo taskInfo = new TaskStatusInfo();
-            taskInfo.setResType(codeParam.getResType());
-            taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_TRANSCODE);
-            taskInfo.setBussId(codeParam.getResId());
-            taskInfo.setTaskId(taskId);
-            taskInfo.setDescription(codeParam.getStatusBackup());
-            taskInfo.setPriority(-priority);
-            taskService.CreateOrRestartTask(taskInfo);
+        } else {
+            commands = scripts;
+        }
+
+        LOG.info("视频转码脚本:" + commands);
+
+        arg.put("commands", commands);
+
+        LOG.info("视频转码后目标目录：" + targetPath);
+
+        arg.put("target_location", targetPath);
+
+        Map<String, String> extParam = new HashMap<String, String>();
+        if(SUBTYPE_VIDEO.equals(codeParam.getSubType())) {
+            extParam.put("targetFmt", "mp4");
+            extParam.put("subtype", SUBTYPE_VIDEO);
+        } else if(SUBTYPE_AUDIO.equals(codeParam.getSubType())) {
+            extParam.put("targetFmt", "mp3");
+            extParam.put("subtype", SUBTYPE_AUDIO);
+        }
+        extParam.put("coverNum", String.valueOf(getCoverNum(scripts)));
+
+        LOG.info("coverNum：" + extParam.get("coverNum"));
+
+        arg.put("ext_param", extParam);
+
+        String argument = ObjectUtils.toJson(arg);
+        WorkerParam param = WorkerParam.createVideoTranscodeParam();
+
+        param.setIdentifier(codeParam.getResId());
+        param.setPriority(priority);
+        param.setArgument(argument);
+
+        buildTask(codeParam, priority, url, param, TaskBussType.TRANSCODE);
             
+    }
+
+    private void buildTask(TransCodeParam codeParam, int priority, String url, WorkerParam param, TaskBussType bussType) throws IOException {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> rt = restTemplate.postForEntity(url, param, String.class);
+
+        LOG.info("创建转码任务返回的任务ID:" + rt.getBody());
+
+        String taskId = null;
+        if (!StringUtils.isEmpty(rt.getBody())) {
+            Map<String, Object> rtMap = BeanMapperUtils.mapperOnString(rt.getBody(), Map.class);
+            if (rtMap.get("executionId") != null) {
+                taskId = String.valueOf(rtMap.get("executionId"));
+            }
+        }
+        TaskStatusInfo taskInfo = new TaskStatusInfo();
+        taskInfo.setResType(codeParam.getResType());
+        taskInfo.setBussType(bussType.getValue());
+        taskInfo.setBussId(codeParam.getResId());
+        taskInfo.setTaskId(taskId);
+        taskInfo.setDescription(codeParam.getStatusBackup());
+        taskInfo.setPriority(-priority);
+        taskService.CreateOrRestartTask(taskInfo);
     }
 
     /**

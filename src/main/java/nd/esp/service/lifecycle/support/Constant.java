@@ -262,6 +262,8 @@ public class Constant {
 
     public static String WORKER_IMAGE_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_image_transcode_service");
 
+    public static String WORKER_DOCUMENT_TRANSCODE_SERVICE = LifeCircleApplicationInitializer.worker_properties.getProperty("worker_document_transcode_service");
+
     /**
      * 后门API开关
      * @see nd.esp.service.lifecycle.controllers.v06.BackDoorController
@@ -337,6 +339,8 @@ public class Constant {
     
     //资源门户业务方ID
     public static final String BSYSKEY_PORTAL = "bb22f321-5b83-4190-941b-a5ae080040c5";
+    //E-Learning业务方ID
+    public static final String BSYSKEY_ELEARNING = "f4bfd12b-e9bb-4665-8745-7e7dd42c8b66";
     
     //bsyskey
     public static final String BSYSKEY = "bsyskey";
