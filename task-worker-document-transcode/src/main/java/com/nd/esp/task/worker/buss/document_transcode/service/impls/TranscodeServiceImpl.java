@@ -4,11 +4,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -398,6 +394,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
         Map<String,String> targetsMap = new HashMap<String,String>();
         Map<String,String> targetsMetadata = new HashMap<String,String>();
+        List<String> previews = new ArrayList<String>();
         if(!srcFileName.endsWith(".txt")) {
             String pdfFilePath = destDir + File.separator + "pdf.pdf";
             if(!srcFileName.endsWith(".pdf")) {
@@ -414,8 +411,16 @@ public class TranscodeServiceImpl implements TranscodeService {
             targetsMap.put("image", param.getTarget_location()+"/transcode/image");
             targetsMetadata.put("image", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg"));
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
-            targetsMap.put("thumbnail", param.getTarget_location()+"/transcode/thumbnail");
-            targetsMetadata.put("image", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg"));
+            File[] thumbFiles = new File(thumbDir).listFiles();
+            Arrays.sort(thumbFiles, new Comparator<File>(){
+                @Override
+                public int compare(File o1,File o2) {
+                    return Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o1.getName()))-Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o2.getName()));
+                }
+            });
+            for(File thumbFile:thumbFiles) {
+                previews.add(param.getTarget_location()+"/transcode/thumbnail/"+thumbFile.getName());
+            }
         } else {
             Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
             targetsMap.put("html", param.getTarget_location()+"/transcode/html");
@@ -428,6 +433,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         result.setStatus(1);
         result.setLocations(targetsMap);
         result.setMetadata(targetsMetadata);
+        result.setPreviews(previews);
         
         return result;
     }
