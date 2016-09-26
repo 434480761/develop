@@ -2,9 +2,11 @@ package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
+import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
+import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
 import org.slf4j.Logger;
@@ -21,11 +23,12 @@ import java.util.*;
 public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanSubmitTransactionImpl.class);
-    @Autowired
-    private TitanRepository titanRepository;
 
     @Autowired
     private TitanCommonRepository titanCommonRepository;
+
+    @Autowired
+    private TitanRepositoryUtils titanRepositoryUtils;
 
     @Override
     public boolean submit(TitanTransaction transaction) {
@@ -35,7 +38,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         long t1 =  System.currentTimeMillis();
         submit(repositoryOperations);
         long t2 =  System.currentTimeMillis();
-        System.out.println(t2 - t1);
+//        System.out.println(t2 - t1);
 
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
         if (!success){
@@ -107,6 +110,26 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
                     builder.deleteEdgeById(entity.getIdentifier());
                     break;
+                //更新关系冗余字段
+                case update_relation_red_property:
+                    if (entity instanceof ResourceRelation){
+                        TitanScriptBuilder addAndUpdate = new TitanScriptBuilder();
+                        addAndUpdate.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+                        addAndUpdate.updateRelationRedProperty(entity.getIdentifier());
+                        addAndUpdate.scriptEnd();
+                        String relationId = null;
+                        try {
+                            relationId = titanCommonRepository.executeScriptUniqueString(
+                                    addAndUpdate.getScript().toString(), addAndUpdate.getParam());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        if (relationId == null || relationId.equals("null")){
+                            titanSync((ResourceRelation) entity);
+                        }
+                    }
+                    break;
                 default:
                     LOG.info("没有对应的处理方法");
             }
@@ -121,9 +144,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
          * */
         for (String identifier : educationIds.keySet()){
             builder.updateEducationRedProperty(identifier);
-            LOG.info("更新冗余字段："+educationIds.size());
         }
-        System.out.println("time_for:"+(System.currentTimeMillis() - time1));
         builder.scriptEnd();
 
         Map<String, Object> param = builder.getParam();
@@ -143,5 +164,11 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
         }
         return true;
+    }
+
+    private void titanSync(ResourceRelation relation){
+        if(titanRepositoryUtils.checkRelationExistInMysql(relation)){
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, relation);
+        }
     }
 }

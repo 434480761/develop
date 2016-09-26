@@ -19,7 +19,8 @@ public class TitanScriptBuilder {
     enum  ScriptMethod{
         DELETE_VERTEX_BY_IDENTIFIER("void", "deleteVertexByIdentifier"),
         DELETE_EDGE_BY_IDENTIFIER("void","deleteEdgeByIdentifier"),
-        UPDATE_EDUCATION_RED_PROPERTY("void","updateEducationRedProperty");
+        UPDATE_EDUCATION_RED_PROPERTY("void","updateEducationRedProperty"),
+        UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty");
         final static String RESULT_PRE = "result";
         private static int methodIndex = 0;
 
@@ -100,6 +101,16 @@ public class TitanScriptBuilder {
 //                    + UPDATE_EDUCATION_RED_PROPERTY.resultName +"=" +
                             UPDATE_EDUCATION_RED_PROPERTY.methodName +"("+identifier+")";
             return UPDATE_EDUCATION_RED_PROPERTY;
+        }
+
+        public static ScriptMethod updateRelationRedProperty(String identifier){
+            methodIndex ++;
+            UPDATE_RELATION_RED_PROPERTY.resultName = ScriptMethod.RESULT_PRE + methodIndex;
+            UPDATE_RELATION_RED_PROPERTY.invokeMethod =
+                    UPDATE_RELATION_RED_PROPERTY.resultType +" "
+                    + UPDATE_RELATION_RED_PROPERTY.resultName +"=" +
+                    UPDATE_RELATION_RED_PROPERTY.methodName +"("+identifier+")";
+            return UPDATE_RELATION_RED_PROPERTY;
         }
 
     }
@@ -285,7 +296,7 @@ public class TitanScriptBuilder {
         for (String methodName : methodNames){
             script.append(methodName).append(";");
         }
-
+        ScriptMethod.clean();
         return null;
     }
 
@@ -293,12 +304,28 @@ public class TitanScriptBuilder {
 
 //        ScriptMethod deleteEdgeByIdentifier = ScriptMethod.deleteEdgeByIdentifier(identifier);
 //        ScriptMethod deleteVertexByIdentifier = ScriptMethod.deleteVertexByIdentifier(identifier);
-        System.out.println("");
 
         Variable variable = createVariable(TitanScriptModel.Type.V);
         HashMap<String,Object> param = new HashMap<>();
         String paramName = "redIdentifier" + variable.getSuffix();
         ScriptMethod updateEducationRedProperty = ScriptMethod.updateEducationRedProperty(paramName);
+
+        param.put(paramName,identifier);
+        if (!scriptMethodSet.contains(updateEducationRedProperty)){
+            scriptMethodSet.add(updateEducationRedProperty);
+            this.script.append(updateEducationRedProperty.script);
+        }
+        this.param.putAll(param);
+        this.methodNames.add(updateEducationRedProperty.invokeMethod);
+        this.firstIndex ++ ;
+        return this;
+    }
+
+    public TitanScriptBuilder updateRelationRedProperty(String identifier){
+        Variable variable = createVariable(TitanScriptModel.Type.E);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramName = "redIdentifier" + variable.getSuffix();
+        ScriptMethod updateEducationRedProperty = ScriptMethod.updateRelationRedProperty(paramName);
 
         param.put(paramName,identifier);
         if (!scriptMethodSet.contains(updateEducationRedProperty)){

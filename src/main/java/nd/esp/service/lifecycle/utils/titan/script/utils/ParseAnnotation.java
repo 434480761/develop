@@ -335,6 +335,12 @@ public class ParseAnnotation {
     }
 
     @Test
+    public void testUpdateReationRedProperty(){
+        TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
+        scriptBuilder.updateRelationRedProperty("798798");
+    }
+
+    @Test
     public void test(){
         String s= script.replace("\n","").replace("\t","");
         System.out.println(s);
