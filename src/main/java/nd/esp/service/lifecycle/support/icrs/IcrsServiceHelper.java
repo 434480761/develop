@@ -352,11 +352,8 @@ public class IcrsServiceHelper {
 					+ LifecycleStatus.CREATING.getCode() + "' ";
 		}
 
-		// querySql +=
-		// " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='"
-		// + resType + "' ";
-		querySql += " and rv.target_type='User' and rv.res_type='" + resType
-				+ "' ";
+		querySql += " and rv.target_type='User' and rv.strategy='OWNER' and rv.res_type='" + resType + "' ";
+//		querySql += " and rv.target_type='User' and rv.res_type='" + resType + "' ";
 
 		if (resType.equals(IndexSourceType.AssetType.getName())) {// assets
 			querySql += " and rc.primary_category='" + resType
