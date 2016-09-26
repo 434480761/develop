@@ -45,6 +45,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String TRANSCODE_CUT_PREFIX="transcodeCut_";
     private static final String TRANSCODE_FRAME1_PREFIX="frame1";
     private static final String TRANSCODE_COVER_KEY="cover";
+    private static final String DOC_TRANSCODE_PAGE_KEY="page";
     
     private static final String TECH_INFO_SOURCE_KEY="source";
     private static final String TECH_INFO_HREF_KEY="href";
@@ -185,7 +186,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             if (1 == status) {
                 updateDocumentTechInfos(resource, argument, resType);
                 try {
-                    updateNormalPreview(resource, argument, resType);
+                    updateDocPreview(resource, argument, resType);
                 } catch (Exception e) {
                     LOG.info("updateNormalPreview：",e);
                     LOG.error("updateNormalPreview：",e);
@@ -560,27 +561,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             resLifecycleDao.updatePreview(resType, resource.getIdentifier(), resource.getPreview());
         }
     }
-    
-//    private void addLifecycleStep(String resType, ResourceModel resource, int status, String message) {
-//        ResContributeModel contributeModel = new ResContributeModel();
-//        if(1 == status) {
-//            contributeModel.setLifecycleStatus(TransCodeUtil.getTransEdStatus(true));
-//            contributeModel.setMessage("转码成功");
-//            contributeModel.setProcess(100.0f);
-//        } else {
-//            contributeModel.setLifecycleStatus(TransCodeUtil.getTransErrStatus(true));
-//            contributeModel.setMessage("转码失败："+message);
-//            contributeModel.setProcess(0.0f);
-//        }
-//
-//        if(!contributeModel.getLifecycleStatus().equals(resource.getLifeCycle().getStatus())) {
-//            contributeModel.setTargetId("777");
-//            contributeModel.setTargetName("LCMS");
-//            contributeModel.setTargetType("USER");
-//            lifecycleService.addLifecycleStep(resType, resource.getIdentifier(), contributeModel, false);
-//        }
-//
-//    }
+
 
 
     private void updateDocumentTechInfos(ResourceModel resource, TransCodeCallBackParam argument, String resType) {
@@ -656,6 +637,27 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             techInfoRepository.batchAdd(tiList);
         } catch (Exception e1) {
             LOG.error("更新tech_info数据失败:"+e1.getMessage());
+        }
+    }
+
+    private void updateDocPreview(ResourceModel resource, TransCodeCallBackParam argument, String resType) {
+        //视频转码
+        //preview;add transcodeCut and cover
+        if(CollectionUtils.isNotEmpty(argument.getPreviews())||StringUtils.isNotEmpty(argument.getCover())){
+
+            if(CollectionUtils.isEmpty(resource.getPreview())){
+                resource.setPreview(new HashMap<String, String>());
+            }
+            // transcodeCut
+            List<String> previewList = argument.getPreviews();
+            if (CollectionUtils.isNotEmpty(argument.getPreviews())) {
+                for (int i = 0; i < previewList.size(); i++) {
+                    resource.getPreview().put(DOC_TRANSCODE_PAGE_KEY + String.valueOf(i + 1),
+                            "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
+                }
+            }
+
+            resLifecycleDao.updatePreview(resType, resource.getIdentifier(), resource.getPreview());
         }
     }
 
