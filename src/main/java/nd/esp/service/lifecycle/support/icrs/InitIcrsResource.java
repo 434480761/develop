@@ -30,4 +30,17 @@ public class InitIcrsResource {
 		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), true);
 		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), true);
 	}
+	
+	/**
+	 * 实时刷新 icrs_resource
+	 * @author xiezy
+	 * @date 2016年9月12日
+	 */
+	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public void realTimeFresh(){
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), false);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), false);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), false);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), false);
+	}
 }

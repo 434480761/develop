@@ -48,7 +48,7 @@ import java.util.*;
  * @date 2016/8/29
  */
 public class TestEsIndexQueryBuilder  extends BaseControllerConfig {
-
+/*
     private static Logger logger = LoggerFactory.getLogger(TestEsIndexQueryBuilder.class);
     @Autowired
     private TitanResourceRepository<Education> titanResourceRepository;
@@ -93,6 +93,6 @@ public class TestEsIndexQueryBuilder  extends BaseControllerConfig {
         logger.info("data:" + resultStr.size());
 
 
-    }
+    }*/
 
 }

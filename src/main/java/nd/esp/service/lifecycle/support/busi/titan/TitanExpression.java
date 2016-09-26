@@ -23,6 +23,7 @@ public class TitanExpression implements TitanScriptGenerator {
     private List<TitanOrder> orderList;
     private boolean needStatistics = false;
     private String statisticsScript;
+    private Set<String> statisticsScriptSet = new HashSet<>();
     private boolean needPrintable = false;
     private String printableScript;
     private boolean needShowSubVersion = false;
@@ -47,6 +48,7 @@ public class TitanExpression implements TitanScriptGenerator {
     public void setStatistics(boolean needStatistics, String statisticsScript) {
         this.needStatistics = needStatistics;
         this.statisticsScript = statisticsScript;
+        this.statisticsScriptSet.add(statisticsScript);
     }
 
     public void setPrintable(boolean needPrintable, String printableScript) {
@@ -196,7 +198,7 @@ public class TitanExpression implements TitanScriptGenerator {
         }
         scriptBuffer = new StringBuffer(TitanKeyWords.RESULT.toString()).append("=").append(scriptBuffer);
         // 拼接include
-        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resTypeSet,this.relationQueryOrderBy,this.needStatistics,this.statisticsScript));
+        scriptBuffer.append(TitanUtils.generateScriptForInclude(this.includes,this.resTypeSet,this.relationQueryOrderBy,this.needStatistics,this.statisticsScriptSet));
         //scriptBuffer.append(".valueMap();");
         return scriptBuffer.toString();
 

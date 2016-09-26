@@ -86,7 +86,7 @@ import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
-import nd.esp.service.lifecycle.support.enums.StatisticalType;
+import nd.esp.service.lifecycle.support.terminal.TerminalTypeEnum;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -225,7 +225,11 @@ public class NDResourceController {
                                                      @RequestParam(value = "include", required = false, defaultValue = "") String includeString,
                                                      @RequestParam(value = "isAll", required = false, defaultValue = "false") Boolean isAll) {
 
-        // UUID校验
+        //获取终端类型
+    	String terminal = httpServletRequest.getHeader(Constant.TERMINAL);
+    	terminal = TerminalTypeEnum.getTerminalType(terminal);
+    	
+    	// UUID校验
         if (!CommonHelper.checkUuidPattern(uuid)) {
             throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
                     LifeCircleErrorMessageMapper.CheckIdentifierFail.getCode(),
@@ -240,8 +244,9 @@ public class NDResourceController {
             Map.Entry<String, String> idWithTitle = new HashMap.SimpleEntry<>(modelResult.getIdentifier(), modelResult.getTitle());
             modelResult.setTitle(instructionalObjectiveService.getInstructionalObjectiveTitle(idWithTitle));
         }
+        
         // model出参转换
-        return changeToView(modelResult, resourceType,includeList);
+        return CommonHelper.changeToView(modelResult, resourceType, includeList, commonServiceHelper, terminal);
     }
 
     /**
@@ -257,7 +262,11 @@ public class NDResourceController {
     public @ResponseBody Map<String, ResourceViewModel> batchDetail(@PathVariable("res_type") String resourceType,
                                                                     @RequestParam(value = "rid", required = true) Set<String> uuidSet,
                                                                     @RequestParam(value = "include", required = false, defaultValue = "") String includeString) {
-
+    	
+    	//获取终端类型
+    	String terminal = httpServletRequest.getHeader(Constant.TERMINAL);
+    	terminal = TerminalTypeEnum.getTerminalType(terminal);
+    	
         // UUID校验
         for (String uuid : uuidSet) {
             if (!CommonHelper.checkUuidPattern(uuid)) {
@@ -276,7 +285,8 @@ public class NDResourceController {
         if (!CollectionUtils.isEmpty(modelListResult)) {
             for (ResourceModel model : modelListResult) {
                 if (model != null) {
-                    viewMapResult.put(model.getIdentifier(), changeToView(model, resourceType,includeList));
+                    viewMapResult.put(model.getIdentifier(), 
+                    		CommonHelper.changeToView(model, resourceType, includeList, commonServiceHelper, terminal));
                 }
             }
         }
@@ -632,7 +642,8 @@ public class NDResourceController {
     	if(CollectionUtils.isNotEmpty(props)){
     		List<String> newProps = new ArrayList<String>();
             for (String p : props) {
-    			String s = URLDecoder.decode(p);
+    			@SuppressWarnings("deprecation")
+				String s = URLDecoder.decode(p);
     			newProps.add(s);
     		}
             resourceViewModelListViewModel = requestQuering(resType,null, resCodes, includes, categories, categoryExclude, relations,relationsExclude, coverages, newProps, orderBy, words, limit, QueryType.DB, false, reverse, printable, printableKey, statisticsType, statisticsPlatform, false, tags,showVersion,firstKnLevel);
@@ -1120,8 +1131,6 @@ public class NDResourceController {
         // 假定数据库中满足要求的记录条数为moreOffset，始终检索(0,moreOffset)
         String limitForDb = new StringBuffer().append("(0,").append(moreOffset).append(")").toString();
         
-        statisticsType = StatisticalType.getStatisticsType(orderMapForDb,statisticsType);
-        orderMapForDb = StatisticalType.mapping(orderMapForDb);
         Future<ListViewModel<ResourceModel>> dbFuture = getDBFuture(resType, includesList, categories, categoryExclude,
                 relations, coverages, orderMapForDb, words, limitForDb, isNotManagement, reverse, printable, printableKey,
                 propsMapForDB, excetorService,statisticsType, statisticsPlatform,forceStatus,tags,showVersion);

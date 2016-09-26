@@ -124,31 +124,64 @@ public enum OrderField {
     sta_key_value {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel);
+        	// 请求参数：orderby=statisticals desc&statistics_type=votes&statistics_platform=all
+            return compareStatisticsNum(firstModel.getStatisticsNum(), secondModel.getStatisticsNum());
         }
     },
     top {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel);
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("top");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("top");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     scores {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel);
+			Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("scores");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("scores");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     votes {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel);
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("votes");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("votes");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     views {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel);
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("views");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("views");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     m_identifier {
@@ -187,18 +220,21 @@ public enum OrderField {
         // 默认什么都不做
     }
 
-    public int compareStatisticsNum(ResourceModel firstModel, ResourceModel secondModel) {
-    	if (firstModel.getStatisticsNum() == null) {
-			firstModel.setStatisticsNum(new Double(0L));
+    public int compareStatisticsNum(Double first, Double second) {
+    	if (first != null & second == null) {
+			return 1;
 		}
-    	
-    	if (secondModel.getStatisticsNum() == null) {
-    		secondModel.setStatisticsNum(new Double(0L));
+		
+		if (first == null & second != null) {
+			return -1;	
 		}
-    	
-        return firstModel.getStatisticsNum().compareTo(secondModel.getStatisticsNum());
+		
+		if (first == null & second == null) {
+			return 0;
+		}
+		return first.compareTo(second);
     }
-
+    
     /**
      * 对 ResourceModel进行排序
      * 
