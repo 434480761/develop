@@ -52,8 +52,11 @@ public class TitanTransactionCollection {
          * TODO 在提交脚本前先解析出对应的资源类型和资源ID，解析策略，再资源；在techInfo、coverage等；最后通过删除资源的ID确定
          * 是否会出现在同一个事务中包含有对多个资源进行操作的
          * */
-
-        titanSubmitTransaction.submit(titanTransaction);
+        try{
+            titanSubmitTransaction.submit(titanTransaction);
+        } catch (Exception e){
+            LOG.error("titan transaction submit error");
+        }
 
         deleteTransaction(transactionName);
     }
