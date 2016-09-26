@@ -23,6 +23,7 @@ public class ImageUtil {
      */
 
     public static void cut(String srcPath, int numPerEdge) throws IOException {
+        File srcFile = new File(srcPath);
         FileInputStream is = null;
         ImageInputStream iis = null;
         try {
@@ -55,7 +56,7 @@ public class ImageUtil {
                 BufferedImage bi = reader.read(0, param);
 
                 // 保存新图片
-                ImageIO.write(bi, "jpg", new File(srcPath+File.separator+"thumb"+(i+1)+".jpg"));
+                ImageIO.write(bi, "jpg", new File(srcFile.getParent(), "thumb"+(i+1)+".jpg"));
             }
         } finally {
             if (is != null)
