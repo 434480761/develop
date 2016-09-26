@@ -1,0 +1,1 @@
+public String getResourceIdByEdgeId(String identifier){return g.E().hasLabel('has_coverage','has_category_code').has('identifier',identifier).outV().values('identifier')};String identifier=getResourceIdByEdgeId()
