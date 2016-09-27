@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.services.impls;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,14 +40,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
-import com.nd.gaea.client.http.BearerAuthorizationProvider;
+import com.nd.gaea.client.auth.ServerAuthorizationProvider;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
 
 @Service("contentService")
 public class ContentServiceImpl implements ContentService {
 	private static final Logger LOG = LoggerFactory.getLogger(ContentServiceImpl.class);
-	private BearerAuthorizationProvider authorProvider = new DeliverBearerAuthorizationProvider();
+	private ServerAuthorizationProvider authorProvider = new DeliverBearerAuthorizationProvider();
 	private static CloseableHttpClient httpClient = ConnectionPoolUtil.getHttpClient();
 	
 	/**
@@ -68,7 +69,7 @@ public class ContentServiceImpl implements ContentService {
             HttpPost httpPost = new HttpPost(url);
             httpPost.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
             httpPost.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-            httpPost.addHeader("Authorization", authorProvider.getAuthorization());
+            httpPost.addHeader("Authorization", authorProvider.getAuthorization(new URI(url),HttpMethod.POST));
             EntityBuilder builder = EntityBuilder.create();
             builder.setText(ObjectUtils.toJson(req));
             builder.setContentType(ContentType.APPLICATION_JSON);
@@ -181,7 +182,7 @@ public class ContentServiceImpl implements ContentService {
             HttpPatch httpPatch = new HttpPatch(url);
             httpPatch.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
             httpPatch.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-            httpPatch.addHeader("Authorization", authorProvider.getAuthorization());
+            httpPatch.addHeader("Authorization", authorProvider.getAuthorization(new URI(url),HttpMethod.PATCH));
             EntityBuilder builder = EntityBuilder.create();
             builder.setText(ObjectUtils.toJson(requestBody));
             builder.setContentType(ContentType.APPLICATION_JSON);
