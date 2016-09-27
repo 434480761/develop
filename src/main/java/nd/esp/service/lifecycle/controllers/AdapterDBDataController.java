@@ -488,6 +488,31 @@ public class AdapterDBDataController {
         
         return message;
     }
+    
+    /**
+     * 通用查询查询习题库时优先走ES查询的开关
+     * <p>Create Time: 2016年4月5日   </p>
+     * <p>Create author: xiezy   </p>
+     * @param open
+     */
+    @RequestMapping(value = "/questiondb/query/first/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String changeQuestionDbQueryEsFirstSwitch(@RequestParam String open){
+        String message = "";
+        
+        if(open.equals("false") && StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST){
+            message = "关闭通用查询查询习题库时优先走ES查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUESTION_DB_QUERY_BY_ES_FIRST",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST = false;
+        }else if(open.equals("true") && !StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST){
+            message = "开启通用查询查询习题库时优先走ES查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUESTION_DB_QUERY_BY_ES_FIRST",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST = true;
+        }
+        
+        return message;
+    }
 
     @RequestMapping(value = "/titan/first/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public String changeTitanFirstSwitch(@RequestParam String open){

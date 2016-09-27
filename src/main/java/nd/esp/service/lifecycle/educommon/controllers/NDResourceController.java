@@ -856,8 +856,11 @@ public class NDResourceController {
         switch (queryType) {
             case DB:
                 if (StaticDatas.QUERY_BY_ES_FIRST
-                        && canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
-                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel)) {// 数据库走ES查询判断
+                        && (canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
+                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel)
+                        || (StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST && !isNotManagement 
+                        		&& CommonServiceHelper.isQuestionDb(resType)
+                        		&& CollectionUtils.isNotEmpty(categories) && categories.size() > 5))) {// 数据库走ES查询判断
                     try {
                         Map<String, Object> changeMap = changeKey(propsMap,
                                 orderMap, false);
