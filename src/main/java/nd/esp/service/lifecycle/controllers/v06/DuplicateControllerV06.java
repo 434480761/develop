@@ -1,6 +1,11 @@
 package nd.esp.service.lifecycle.controllers.v06;
 
-import com.nd.gaea.rest.security.authens.UserInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import nd.esp.service.lifecycle.controllers.ResourceController;
 import nd.esp.service.lifecycle.educommon.models.ResLifeCycleModel;
@@ -21,7 +26,12 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.busi.*;
+import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.busi.CopyHelper;
+import nd.esp.service.lifecycle.support.busi.ModelPropertiesUtil;
+import nd.esp.service.lifecycle.support.busi.ResourceTypesUtil;
+import nd.esp.service.lifecycle.support.busi.SessionUtil;
+import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
@@ -29,15 +39,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @title 资源拷贝
@@ -87,7 +93,7 @@ public class DuplicateControllerV06 {
                                            @RequestParam(value = "to", required = false, defaultValue = "") String to,
                                            @RequestParam(value = "isAll", required = false, defaultValue = "false") boolean isAll,
                                            @RequestParam(value = "creator", required = false) String creator,
-                                           @AuthenticationPrincipal UserInfo userInfo) {
+                                           @RequestParam(value = "isComplete", required = false, defaultValue = "false") boolean isComplete) {
     	
     	long startTime = System.currentTimeMillis();
         //校验资源类型 不仅仅局限于教案,课件,素材,课件颗粒
@@ -100,14 +106,13 @@ public class DuplicateControllerV06 {
         List<ResCoverageViewModel> coverages = new ArrayList<>();
 
         /**
-         *
          * 获取源资源,并进行相关前置判断
          * condition 1：生命周期
          * condition 2：生命周期对应的状态范围
          * condition 3：实例是否合法，为拷贝做判断(也可以放在拷贝那边去做处理)
          * */
         ResourceModel resourceModel = ndResourceService.getDetail(resType, id, availableIncludes, isAll);
-
+        //ndResourceService.getDetail中如果资源不存在会抛出异常,因此resourceModel不会为null,不会出现空指针异常
         ResLifeCycleModel cycleModel = resourceModel.getLifeCycle();
         //判断对象的生命周期属性,如果为空,不允许发起拷贝
         if (null == cycleModel || StringUtils.isEmpty(cycleModel.getStatus())) {
@@ -233,7 +238,17 @@ public class DuplicateControllerV06 {
                 String key = entry.getKey();
                 ResTechInfoViewModel value = entry.getValue();
                 if (value != null) {
-                    if ((isAssets_pic && TI_KEY_SOURCE.equals(key) || !TI_KEY_SOURCE.equals(key))) {
+                	if(isComplete){
+                		String location = value.getLocation();
+                        if (StringUtils.hasText(location)) {
+                            value.setLocation(location.replace(id, resourceViewModel.getIdentifier()));
+
+                        }
+                        String entryStr = value.getEntry();
+                        if (StringUtils.hasText(entryStr)) {
+                            value.setEntry(entryStr.replace(id, resourceViewModel.getIdentifier()));
+                        }
+                	}else if ((isAssets_pic && TI_KEY_SOURCE.equals(key) || !TI_KEY_SOURCE.equals(key))) {
                         String location = value.getLocation();
                         if (StringUtils.hasText(location)) {
                             value.setLocation(location.replace(id, resourceViewModel.getIdentifier()));
@@ -249,6 +264,26 @@ public class DuplicateControllerV06 {
             }
         }
         resourceViewModel.setTechInfo(new_tech);
+        
+		// 对preview中的路径进行修改
+		if (isComplete) {
+			Map<String, String> oldPreview = resourceViewModel.getPreview();
+			Map<String, String> newPreview = new HashMap<String, String>();
+			if (CollectionUtils.isNotEmpty(oldPreview)) {
+				for (Map.Entry<String, String> entry : oldPreview.entrySet()) {
+					String key = entry.getKey();
+					String value = entry.getValue();
+					if (StringUtils.hasText(value)) {
+						value = value.replace(resType + "/" + id, resType + "/" + resourceViewModel.getIdentifier());
+							
+						newPreview.put(key, value);
+					}
+				}
+			}
+			
+			resourceViewModel.setPreview(newPreview);
+		}
+        
         //校验to的合法性
         if (null != resCoverageViewModel) {
             String title = resourceViewModel.getTitle();

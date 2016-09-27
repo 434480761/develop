@@ -13,7 +13,7 @@ public interface ThirdPartyBussService {
      * 
      * @param service
      */
-    ThirdPartyBsysModle registerService(ThirdPartyBsysModle service);
+    ThirdPartyBsysModle registerService(ThirdPartyBsysModle service, boolean isAuto);
     
     /**
      * 查询第三方服务。

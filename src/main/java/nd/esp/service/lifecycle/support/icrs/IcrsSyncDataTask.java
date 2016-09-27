@@ -35,10 +35,10 @@ public class IcrsSyncDataTask {
 		}
 		LOG.info("ICRS同步数据开始...");
 		
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName(), false);
-		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName(), false);
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.AssetType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.SourceCourseWareObjectType.getName());
+		icrsServiceHelper.syncIcrsByType(IndexSourceType.QuestionType.getName());
 		
 		LOG.info("ICRS同步数据结束...");
 		commonServiceHelper.initSynVariable(SynVariable.icrsSyncTask.getValue());

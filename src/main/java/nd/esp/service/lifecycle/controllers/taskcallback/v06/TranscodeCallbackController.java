@@ -115,7 +115,7 @@ public class TranscodeCallbackController {
     }
 
     /**
-     * 视频转码回调接口,更新lcms task 表， 资源元数据
+     * 图片转码回调接口,更新lcms task 表， 资源元数据
      *
      * @author qil
      * @return
@@ -190,6 +190,48 @@ public class TranscodeCallbackController {
         if(StringUtils.isNotEmpty(argument)) {
             taskService.FinishTask(taskId, new HashMap<String,String>(), argument);
             
+            //异步过程：同步元数据
+            offlineService.writeToCsAsync(res_type, id);
+            esResourceOperation.asynAdd(new Resource(res_type, id));
+            titanSyncService.syncEducation(res_type,id);
+        }
+
+        return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
+    }
+
+    /**
+     * 图片转码回调接口,更新lcms task 表， 资源元数据
+     *
+     * @author qil
+     * @return
+     * @since
+     */
+    @RequestMapping(value = "/document_callback", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
+    @ResponseBody
+    Map<String, String> documnetTranscodeCallback(@PathVariable String version,
+                                                  @PathVariable String res_type,
+                                                  @RequestParam(value = "identifier", required = true) String id,
+                                                  @RequestBody Map<String,Object> body) throws IOException {
+
+        String taskId = null;
+        if(body.get("executionId") != null){
+            LOG.info("回调的map中executionId的值:"+body.get("executionId"));
+            taskId = String.valueOf(body.get("executionId"));
+        }
+
+        Query query = taskRepository.getEntityManager().createNamedQuery("queryByTaskId");
+        query.setParameter("taskid", taskId);
+        TaskStatusInfo taskInfo = (TaskStatusInfo) query.getSingleResult();
+
+        if(null == taskInfo) {
+            LOG.info("回调的任务："+taskId+"已取消或不在任务表");
+            return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
+        }
+
+        String argument = String.valueOf(body.get("argument"));
+        if(StringUtils.isNotEmpty(argument)) {
+            taskService.FinishTask(taskId, new HashMap<String,String>(), argument);
+
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));

@@ -38,6 +38,7 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.ConnectionPoolUtil;
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.SessionUtil;
+import nd.esp.service.lifecycle.support.enums.TaskBussType;
 import nd.esp.service.lifecycle.utils.ArrayUtils;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.JDomUtils;
@@ -224,7 +225,7 @@ public class PackageServiceImpl implements PackageService {
             taskInfo = new TaskStatusInfo();
         }
         taskInfo.setResType(resType);
-        taskInfo.setBussType(TaskServiceImpl.TASK_BUSS_TYPE_PACK);
+        taskInfo.setBussType(TaskBussType.PACKAGING.getValue());
         taskInfo.setBussId(openID);
         taskInfo.setTaskId(taskId);
         taskInfo.setPriority(-workerParam.getPriority());

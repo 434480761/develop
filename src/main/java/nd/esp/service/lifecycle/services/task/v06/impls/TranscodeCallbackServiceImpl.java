@@ -45,6 +45,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String TRANSCODE_CUT_PREFIX="transcodeCut_";
     private static final String TRANSCODE_FRAME1_PREFIX="frame1";
     private static final String TRANSCODE_COVER_KEY="cover";
+    private static final String DOC_TRANSCODE_PAGE_KEY="page";
     
     private static final String TECH_INFO_SOURCE_KEY="source";
     private static final String TECH_INFO_HREF_KEY="href";
@@ -153,6 +154,50 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 taskInfo.setErrMsg(argument.getErrMsg());
             }
 
+        } catch (Exception e) {
+            LOG.error("转码任务回调失败", e);
+        }
+    }
+
+    @Override
+    public void documentTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException {
+        String resType = taskInfo.getResType();
+        String id = taskInfo.getUuid();
+
+        ResourceModel resource = null;
+        try {
+            resource = ndResourceService.getDetail(resType, id,
+                    IncludesConstant.getValidIncludes(IncludesConstant.INCLUDE_TI+","+IncludesConstant.INCLUDE_LC));
+        } catch (LifeCircleException e) { // 资源不存在时会抛出异常
+
+            LOG.error("转码完成的资源已删除", e);
+
+        }
+        if (resource == null) {
+
+            LOG.error("转码完成的资源已删除");
+
+            taskInfo.setStatus("resourse_deleted");
+            return ;
+        }
+        try {
+            int status = UpdateResouceStatus(argument, taskInfo, resType, id, resource);
+
+            if (1 == status) {
+                updateDocumentTechInfos(resource, argument, resType);
+                try {
+                    updateDocPreview(resource, argument, resType);
+                } catch (Exception e) {
+                    LOG.info("updateNormalPreview：",e);
+                    LOG.error("updateNormalPreview：",e);
+                }
+
+                taskInfo.setStatus(PackageUtil.PackStatus.READY.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            } else {
+                taskInfo.setStatus(PackageUtil.PackStatus.ERROR.getStatus());
+                taskInfo.setErrMsg(argument.getErrMsg());
+            }
         } catch (Exception e) {
             LOG.error("转码任务回调失败", e);
         }
@@ -516,26 +561,104 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             resLifecycleDao.updatePreview(resType, resource.getIdentifier(), resource.getPreview());
         }
     }
-    
-    private void addLifecycleStep(String resType, ResourceModel resource, int status, String message) {
-        ResContributeModel contributeModel = new ResContributeModel();
-        if(1 == status) {
-            contributeModel.setLifecycleStatus(TransCodeUtil.getTransEdStatus(true));
-            contributeModel.setMessage("转码成功");
-            contributeModel.setProcess(100.0f);
-        } else {
-            contributeModel.setLifecycleStatus(TransCodeUtil.getTransErrStatus(true));
-            contributeModel.setMessage("转码失败："+message);
-            contributeModel.setProcess(0.0f);
+
+
+
+    private void updateDocumentTechInfos(ResourceModel resource, TransCodeCallBackParam argument, String resType) {
+        List<ResTechInfoModel> techInfos = resource.getTechInfoList();
+        if(techInfos == null){
+            techInfos = new ArrayList<ResTechInfoModel>();
+            resource.setTechInfoList(techInfos);
         }
-        
-        if(!contributeModel.getLifecycleStatus().equals(resource.getLifeCycle().getStatus())) {
-            contributeModel.setTargetId("777");
-            contributeModel.setTargetName("LCMS");
-            contributeModel.setTargetType("USER");
-            lifecycleService.addLifecycleStep(resType, resource.getIdentifier(), contributeModel, false);
+
+        Map<String, String> metadataMap = argument.getMetadata();
+        ResTechInfoModel sourceTechInfo = null;
+        Map<String,ResTechInfoModel> newTechInfos = new HashMap<String,ResTechInfoModel>();
+        if(metadataMap != null && StringUtils.isNotEmpty(metadataMap.get(TECH_INFO_SOURCE_KEY))){
+            for(ResTechInfoModel resTechInfoModel:techInfos){
+                if(resTechInfoModel!= null && TECH_INFO_SOURCE_KEY.equals(resTechInfoModel.getTitle())){
+                    //update requirement
+                    addRequirement(resTechInfoModel, metadataMap.get(TECH_INFO_SOURCE_KEY));
+                    sourceTechInfo = resTechInfoModel;
+                }
+
+                if(resTechInfoModel!= null && TECH_INFO_HREF_KEYS.contains(resTechInfoModel.getTitle())){
+                    //newTechInfo = resTechInfoModel;
+                    newTechInfos.put(resTechInfoModel.getTitle(), resTechInfoModel);
+                }
+            }
         }
-            
+
+        //techInfo add
+        Map<String,String> locations = argument.getLocations();
+        for(String key : locations.keySet()) {
+
+            ResTechInfoModel newTechInfo = newTechInfos.get(key);
+            if(newTechInfo == null) {
+                newTechInfo = new ResTechInfoModel();
+                newTechInfos.put(key, newTechInfo);
+                newTechInfo.setTitle(key);
+                newTechInfo.setIdentifier(UUID.randomUUID().toString());
+                newTechInfo.setRequirements(new ArrayList<TechnologyRequirementModel>());
+            }
+            newTechInfo.setLocation(locations.get(key));
+            String targetMetadata = null;
+            targetMetadata = metadataMap.get(key);
+            Map<String,Object> targetMetadataMap = ObjectUtils.fromJson(targetMetadata, Map.class);
+            long size=0;
+            if(targetMetadataMap!=null && targetMetadataMap.get("FileSize")!=null) {
+                BigDecimal bigDecimal=new BigDecimal(String.valueOf(targetMetadataMap.get("FileSize")));
+                size = bigDecimal.longValue();
+            }
+            newTechInfo.setSize(size);
+            newTechInfo.setFormat(key);
+            if(metadataMap != null){
+                if(StringUtils.isNotEmpty(metadataMap.get(key))) {
+                    addRequirement(newTechInfo,metadataMap.get(key));
+                }
+            }
+        }
+        try {
+            List<TechInfo> tiList = new ArrayList<TechInfo>();
+            for(String key : newTechInfos.keySet()) {
+                TechInfo ti = BeanMapperUtils.beanMapper(newTechInfos.get(key), TechInfo.class);
+                ti.setResource(resource.getIdentifier());
+                ti.setResType(resType);
+                ti.setRequirements(ObjectUtils.toJson(newTechInfos.get(key).getRequirements()));
+                tiList.add(ti);
+            }
+            if(sourceTechInfo!=null) {
+                TechInfo srcTi = BeanMapperUtils.beanMapper(sourceTechInfo, TechInfo.class);
+                srcTi.setResource(resource.getIdentifier());
+                srcTi.setResType(resType);
+                srcTi.setRequirements(ObjectUtils.toJson(sourceTechInfo.getRequirements()));
+                tiList.add(srcTi);
+            }
+            techInfoRepository.batchAdd(tiList);
+        } catch (Exception e1) {
+            LOG.error("更新tech_info数据失败:"+e1.getMessage());
+        }
+    }
+
+    private void updateDocPreview(ResourceModel resource, TransCodeCallBackParam argument, String resType) {
+        //视频转码
+        //preview;add transcodeCut and cover
+        if(CollectionUtils.isNotEmpty(argument.getPreviews())||StringUtils.isNotEmpty(argument.getCover())){
+
+            if(CollectionUtils.isEmpty(resource.getPreview())){
+                resource.setPreview(new HashMap<String, String>());
+            }
+            // transcodeCut
+            List<String> previewList = argument.getPreviews();
+            if (CollectionUtils.isNotEmpty(argument.getPreviews())) {
+                for (int i = 0; i < previewList.size(); i++) {
+                    resource.getPreview().put(DOC_TRANSCODE_PAGE_KEY + String.valueOf(i + 1),
+                            "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
+                }
+            }
+
+            resLifecycleDao.updatePreview(resType, resource.getIdentifier(), resource.getPreview());
+        }
     }
 
 }

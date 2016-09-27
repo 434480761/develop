@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
 
+import nd.esp.service.lifecycle.support.enums.TaskBussType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,11 +43,11 @@ public class TaskServiceImpl implements TaskService {
     
     private final Logger LOG = LoggerFactory.getLogger(TaskServiceImpl.class);
     
-    public static final String TASK_BUSS_TYPE_PACK = "packaging";
-    
-    public static final String TASK_BUSS_TYPE_TRANSCODE = "transcode";
-
-    public static final String TASK_BUSS_TYPE_IMAGE_TRANSCODE = "image_transcode";
+//    public static final String TASK_BUSS_TYPE_PACK = "packaging";
+//
+//    public static final String TASK_BUSS_TYPE_TRANSCODE = "transcode";
+//
+//    public static final String TASK_BUSS_TYPE_IMAGE_TRANSCODE = "image_transcode";
     
     public static final String TASK_STATUS_FIELD="status";
     
@@ -149,7 +150,7 @@ public class TaskServiceImpl implements TaskService {
         
         if(null != taskInfo) {
 
-            if(TASK_BUSS_TYPE_PACK.equals(taskInfo.getBussType())) {
+            if(TaskBussType.PACKAGING.getValue().equals(taskInfo.getBussType())) {
                 if(CollectionUtils.isNotEmpty(uriParams)) {
                     try {
                         packCallbackService.packCallback(uriParams, taskInfo);
@@ -161,7 +162,7 @@ public class TaskServiceImpl implements TaskService {
                     taskInfo.setStatus("error");
                 }
                 
-            } else if(TASK_BUSS_TYPE_TRANSCODE.equals(taskInfo.getBussType())) {
+            } else if(TaskBussType.TRANSCODE.getValue().equals(taskInfo.getBussType())) {
                 try {
                     TransCodeCallBackParam transCodeCallBackParam = null;
                     if(StringUtils.isNotEmpty(argument)) {
@@ -183,7 +184,7 @@ public class TaskServiceImpl implements TaskService {
                 } catch (Exception e) {
                     LOG.error("转码任务回调失败:",e);
                 }
-            } else if(TASK_BUSS_TYPE_IMAGE_TRANSCODE.equals(taskInfo.getBussType())) {
+            } else if(TaskBussType.IMAGE_TRANSCODE.getValue().equals(taskInfo.getBussType())) {
                 try {
                     TransCodeCallBackParam transCodeCallBackParam = null;
                     if (StringUtils.isNotEmpty(argument)) {
@@ -193,6 +194,17 @@ public class TaskServiceImpl implements TaskService {
                     }
                 } catch (Exception e) {
                     LOG.error("图片转码任务回调失败:",e);
+                }
+            } else if(TaskBussType.DOCUMENTS_TRANSCODE.getValue().equals(taskInfo.getBussType())) {
+                try {
+                    TransCodeCallBackParam transCodeCallBackParam = null;
+                    if (StringUtils.isNotEmpty(argument)) {
+                        transCodeCallBackParam = ObjectUtils.fromJson(argument,
+                                TransCodeCallBackParam.class);
+                        transcodeCallbackService.documentTranscodeCallback(transCodeCallBackParam, taskInfo);
+                    }
+                } catch (Exception e) {
+                    LOG.error("文档转码任务回调失败:",e);
                 }
             }
             UpdateTaskInfo(taskInfo);
@@ -228,7 +240,7 @@ public class TaskServiceImpl implements TaskService {
 
             taskInfo.setStatus(status);
             taskInfo.setErrMsg(errMsg);
-            if(TASK_BUSS_TYPE_TRANSCODE.equals(taskInfo.getBussType())) {
+            if(taskInfo.getBussType().contains("transcode")) {
                 TransCodeCallBackParam transCodeCallBackParam = new TransCodeCallBackParam();
                 transCodeCallBackParam.setStatus(0);
                 transCodeCallBackParam.setErrMsg(errMsg);
