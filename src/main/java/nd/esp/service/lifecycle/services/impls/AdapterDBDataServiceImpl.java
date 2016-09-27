@@ -481,7 +481,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
                         MDC.put("resource", id);
                         MDC.put("res_type", resType);
                         MDC.put("operation_type", "转码");
-                        MDC.put("remark", "历史视频触发");
+                        MDC.put("remark", "历史触发转码");
                         
                         String statusBackup = null;
                         if(!(cm.getLifeCycle().getStatus()!=null && cm.getLifeCycle().getStatus().contains("TRANSCOD"))) {
@@ -492,7 +492,7 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
                         contributeModel.setTargetId("777");
                         contributeModel.setTargetName("LCMS");
                         contributeModel.setTargetType("USER");
-                        contributeModel.setMessage("历史视频触发转码");
+                        contributeModel.setMessage("历史触发转码");
                         contributeModel.setLifecycleStatus(TransCodeUtil.getTransIngStatus(true));
                         contributeModel.setProcess(0.0f);
                         lifecycleService.addLifecycleStep(resType, cm.getIdentifier(), contributeModel, false);

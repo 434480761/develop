@@ -11,4 +11,6 @@ public interface TranscodeCallbackService {
     void transcodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException;
 
     void imageTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException;
+
+    void documentTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException;
 }

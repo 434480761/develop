@@ -3,7 +3,6 @@ package nd.esp.service.lifecycle.vos.educationrelation.v06;
 import java.util.List;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import nd.esp.service.lifecycle.vos.valid.CreateEducationRelationDefault;
 import nd.esp.service.lifecycle.vos.valid.UpdateEducationRelationDefault;

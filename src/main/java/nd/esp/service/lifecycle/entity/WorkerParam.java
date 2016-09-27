@@ -149,7 +149,7 @@ public class WorkerParam {
 
     /**
      * 获取视频转码worker参数：设置group, service
-     * @author linsm
+     * @author qil
      * @return WorkerParam
      * @since
      */
@@ -158,6 +158,20 @@ public class WorkerParam {
         WorkerParam param = new WorkerParam();
         param.setServiceId(Constant.WORKER_IMAGE_TRANSCODE_SERVICE);
         // FIXME 暂时只布了一台， group 先写死
+        param.setGroupId(Constant.WORKER_DEFAULT_GROUP_ID);
+        return param;
+
+    }
+
+    /**
+     * 获取视频转码worker参数：设置group, service
+     * @author qil
+     * @return WorkerParam
+     * @since
+     */
+    public static WorkerParam createDocumentTranscodeParam() {
+        WorkerParam param = new WorkerParam();
+        param.setServiceId(Constant.WORKER_DOCUMENT_TRANSCODE_SERVICE);
         param.setGroupId(Constant.WORKER_DEFAULT_GROUP_ID);
         return param;
 
