@@ -114,7 +114,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 case update_relation_red_property:
                     if (entity instanceof ResourceRelation){
                         TitanScriptBuilder addAndUpdate = new TitanScriptBuilder();
-                        addAndUpdate.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
+//                        addAndUpdate.addBeforeCheckExist(EducationToTitanBeanUtils.toEdge(entity));
                         addAndUpdate.updateRelationRedProperty(entity.getIdentifier());
                         addAndUpdate.scriptEnd();
                         String relationId = null;
