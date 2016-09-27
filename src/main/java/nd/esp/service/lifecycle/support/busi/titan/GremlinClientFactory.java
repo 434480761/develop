@@ -18,8 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * @author linsm
  */
 @Component
-public class GremlinClientFactory implements ApplicationContextAware {
+public class GremlinClientFactory{
 	private final static Logger LOG = LoggerFactory
 			.getLogger(GremlinClientFactory.class);
 
@@ -62,7 +62,25 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		searchClient = client;
 	}
 
-	@Override
+	@Scheduled(fixedDelay = 1000 * 60 *2)
+	public void titanConnectTimeTask(){
+		try {
+			connect(ClientType.search);
+			connect(ClientType.single);
+		} catch (Exception e){
+			LOG.error("重连发生异常");
+		}
+
+	}
+
+	private boolean connect(ClientType clientType) {
+		if (clientType.isConnection()) {
+			return true;
+		} else {
+			return clientType.reConnectServer();
+		}
+	}
+
 	public void setApplicationContext(ApplicationContext applicationContext)
 			throws BeansException {
 		Thread thread = new Thread(new Runnable() {
