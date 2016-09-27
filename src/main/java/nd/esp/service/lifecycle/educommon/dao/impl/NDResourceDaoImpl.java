@@ -97,7 +97,7 @@ public class NDResourceDaoImpl implements NDResourceDao{
     private static ConcurrentMap<String, String> threadNameMap = new ConcurrentHashMap<String, String>();
     
     //使用IN 或者 EXISTS 的临界值
-    private final static int CRITICAL_VALUE = 800;
+    public static int CRITICAL_VALUE = 800;
     
     @Autowired
     private ResourceRelationRepository repository;
