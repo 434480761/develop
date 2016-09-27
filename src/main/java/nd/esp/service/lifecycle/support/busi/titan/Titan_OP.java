@@ -64,7 +64,7 @@ public enum Titan_OP {
 	}
     ;
 
-    private final String matchAllCharacters = ".*";
+    private final String matchAllCharacters = "[\\S\\s]*";
     private final String or = "|";
     private final String matchBeforeCharacterNoneOrMany = "*";
     // private static final Logger LOG =
