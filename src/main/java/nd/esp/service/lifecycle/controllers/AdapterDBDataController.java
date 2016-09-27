@@ -1,11 +1,13 @@
 package nd.esp.service.lifecycle.controllers;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.titan.TitanSyncTimerTask;
+import nd.esp.service.lifecycle.educommon.dao.impl.NDResourceDaoImpl;
 import nd.esp.service.lifecycle.entity.lifecycle.AdapterTaskResult;
 import nd.esp.service.lifecycle.services.AdapterDBDataService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
@@ -540,4 +542,18 @@ public class AdapterDBDataController {
     }
 
     /*******************************静态变量开关相关接口--end************************************/
+    
+    /**
+     * 修改通用查询使用in与exist查询的临界数字
+     * @param value
+     * @return
+     */
+    @RequestMapping(value = "/query/critical/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public Map<String,Integer> changeQueryCriticalValue(@RequestParam Integer value){
+    	Map<String,Integer> map = new HashMap<String, Integer>();
+    	map.put("before", NDResourceDaoImpl.CRITICAL_VALUE);
+    	NDResourceDaoImpl.CRITICAL_VALUE = value;
+    	map.put("after", NDResourceDaoImpl.CRITICAL_VALUE);
+    	return map;
+    }
 }

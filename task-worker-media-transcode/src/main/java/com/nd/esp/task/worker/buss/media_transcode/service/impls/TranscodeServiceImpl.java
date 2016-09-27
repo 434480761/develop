@@ -6,25 +6,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.Charsets;
+import com.nd.esp.task.worker.buss.media_transcode.utils.httpclient.ImageUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -41,29 +34,15 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.reflect.TypeToken;
-import com.mysema.commons.lang.URLEncoder;
-import com.nd.esp.task.worker.buss.media_transcode.Constant;
-import com.nd.esp.task.worker.buss.media_transcode.Constant.CSInstanceInfo;
-import com.nd.esp.task.worker.buss.media_transcode.model.MediaInfo;
 import com.nd.esp.task.worker.buss.media_transcode.model.TranscodeParam;
 import com.nd.esp.task.worker.buss.media_transcode.model.TranscodeResult;
 import com.nd.esp.task.worker.buss.media_transcode.service.TranscodeService;
 import com.nd.esp.task.worker.buss.media_transcode.support.LifeCircleException;
-import com.nd.esp.task.worker.buss.media_transcode.utils.ArrayUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.CollectionUtils;
-import com.nd.esp.task.worker.buss.media_transcode.utils.HttpClientUtils;
-import com.nd.esp.task.worker.buss.media_transcode.utils.PackageUtil;
-import com.nd.esp.task.worker.buss.media_transcode.utils.SessionUtil;
 import com.nd.esp.task.worker.buss.media_transcode.utils.StringUtils;
 import com.nd.esp.task.worker.buss.media_transcode.utils.gson.ObjectUtils;
 import com.nd.esp.task.worker.container.ext.TaskTraceResult;
@@ -712,6 +691,13 @@ public class TranscodeServiceImpl implements TranscodeService {
         }
         File coverImage = new File(coverDir+File.separator+"1.jpg");
         if(coverImage.exists()) {
+            ImageUtil.cut(coverImage.getAbsolutePath(), 4);
+            for(int i=1; i<=16; ++i) {
+                File thumbFile = new File(coverDir+File.separator+"thumb"+i+".jpg");
+                UploadFileToCS(thumbFile, param.getTarget_location()+"/transcode/previews", thumbFile.getName(), param.getSession(),
+                        param.getCs_api_url(), logMsg);
+                previewList.add(param.getTarget_location()+"/transcode/previews/thumb"+i+".jpg");
+            }
             UploadFileToCS(coverImage, param.getTarget_location()+"/transcode/previews", "cover.jpg", param.getSession(),
                     param.getCs_api_url(), logMsg);
             result.setCover(param.getTarget_location()+"/transcode/previews/cover.jpg");
