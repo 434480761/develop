@@ -117,12 +117,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
 
         if(reportSuccess){
-            titanRepositoryUtils.titanSyncUpdateErrorType(titanSyncType,primaryCategory,identifier, TitanSyncType.RELATION);
             if (TitanSyncType.VERSION_SYNC.equals(titanSyncType)){
+                titanRepositoryUtils.titanSyncUpdateErrorType(titanSyncType,primaryCategory,identifier, TitanSyncType.RELATION);
             } else {
                 titanRepositoryUtils.titanSync4MysqlDeleteAll(primaryCategory,identifier);
             }
-
         } else {
             titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
         }
