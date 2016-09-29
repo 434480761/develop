@@ -6,8 +6,9 @@ import java.util.Map;
 
 import javax.persistence.Query;
 
-import nd.esp.service.lifecycle.entity.TransCodeCallBackParam;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
+import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
+import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
@@ -17,7 +18,6 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
-import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +30,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
-import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 
 /* @author qil
 *  @version 1.0
