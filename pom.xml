@@ -20,7 +20,7 @@
 		<commons-codec.version>1.9</commons-codec.version>
 		<compilerArgument>-Xlint:unchecked</compilerArgument>
 		<httpclent-version>4.3.3</httpclent-version>
-		<waf-version>0.10.2</waf-version>
+		<waf-version>0.15.0</waf-version>
 		<!-- reference to pre -->
 		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 		<war.version>${maven.build.timestamp}</war.version>

@@ -51,7 +51,7 @@ import com.nd.gaea.client.http.WafSecurityHttpClient;
  * @created 24-3月-2015 12:06:06
  */
 @SuppressWarnings("unchecked")
-@Service("mediaTranscodeService")
+@Service("documentTranscodeService")
 public class TranscodeServiceImpl implements TranscodeService {
 
     private final static Logger LOG = LoggerFactory

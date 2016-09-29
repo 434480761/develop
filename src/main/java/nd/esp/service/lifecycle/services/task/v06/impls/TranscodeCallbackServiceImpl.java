@@ -544,7 +544,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                                 "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
                     } else {
                         resource.getPreview().put(TRANSCODE_CUT_PREFIX+i,
-                                              "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
+                                "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
                     }
                 }
             }

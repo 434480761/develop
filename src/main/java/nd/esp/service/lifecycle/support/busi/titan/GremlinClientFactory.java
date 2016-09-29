@@ -6,7 +6,6 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
@@ -16,10 +15,8 @@ import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
 import org.apache.tinkerpop.shaded.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +26,7 @@ import org.springframework.stereotype.Component;
  * @author linsm
  */
 @Component
-public class GremlinClientFactory implements ApplicationContextAware {
+public class GremlinClientFactory{
 	private final static Logger LOG = LoggerFactory
 			.getLogger(GremlinClientFactory.class);
 
@@ -62,41 +59,59 @@ public class GremlinClientFactory implements ApplicationContextAware {
 		searchClient = client;
 	}
 
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext)
-			throws BeansException {
-		Thread thread = new Thread(new Runnable() {
-			int sleepTime = 300000;
+	@Scheduled(fixedDelay = 1000 * 60 *2)
+	public void titanConnectTimeTask(){
+		try {
+			connect(ClientType.search);
+			connect(ClientType.single);
+		} catch (Exception e){
+			LOG.error("重连发生异常");
+		}
 
-			@Override
-			public void run() {
-				while (true) {
-					//优先保证查询 （search and then single) (add by lsm)
-					boolean ClientAllConnectSuccess = connect(ClientType.search)
-							&& connect(ClientType.single);
-					if (ClientAllConnectSuccess) {
-						sleepTime = 1000 * 60 * 5;
-					} else {
-						sleepTime = 1000 * 60;
-					}
-					try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						LOG.error(e.getLocalizedMessage());
-					}
-				}
-			}
-
-			private boolean connect(ClientType clientType) {
-				if (clientType.isConnection()) {
-					return true;
-				} else {
-					return clientType.reConnectServer();
-				}
-			}
-		});
-		thread.start();
 	}
+
+	private boolean connect(ClientType clientType) {
+		if (clientType.isConnection()) {
+			return true;
+		} else {
+			return clientType.reConnectServer();
+		}
+	}
+
+//	public void setApplicationContext(ApplicationContext applicationContext)
+//			throws BeansException {
+//		Thread thread = new Thread(new Runnable() {
+//			int sleepTime = 300000;
+//
+//			@Override
+//			public void run() {
+//				while (true) {
+//					//优先保证查询 （search and then single) (add by lsm)
+//					boolean ClientAllConnectSuccess = connect(ClientType.search)
+//							&& connect(ClientType.single);
+//					if (ClientAllConnectSuccess) {
+//						sleepTime = 1000 * 60 * 5;
+//					} else {
+//						sleepTime = 1000 * 60;
+//					}
+//					try {
+//						Thread.sleep(sleepTime);
+//					} catch (InterruptedException e) {
+//						LOG.error(e.getLocalizedMessage());
+//					}
+//				}
+//			}
+//
+//			private boolean connect(ClientType clientType) {
+//				if (clientType.isConnection()) {
+//					return true;
+//				} else {
+//					return clientType.reConnectServer();
+//				}
+//			}
+//		});
+//		thread.start();
+//	}
 
 	/**
 	 * 客户端类型
