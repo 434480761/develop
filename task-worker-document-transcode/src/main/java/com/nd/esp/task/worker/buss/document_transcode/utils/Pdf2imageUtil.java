@@ -21,7 +21,7 @@ public class Pdf2imageUtil {
     public static final int DEFAULT_THUMB_WIDTH = 200;
     public static final int DEFAULT_THUMB_HEIGHT = 200;
 
-    public static void transferPdf2Image(String inputFilePath, String outDirPath) throws Exception {
+    public static void transferPdf2Image(String inputFilePath, String outDirPath, StringBuffer logMsg) throws Exception {
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
             FileUtils.forceMkdir(outDir);

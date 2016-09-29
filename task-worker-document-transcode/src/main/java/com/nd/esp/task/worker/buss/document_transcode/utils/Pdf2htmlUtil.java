@@ -60,7 +60,7 @@ public class Pdf2htmlUtil {
         }
     };
 
-    public static void transferPdf2Html(String inputFilePath, String outDirPath) throws Exception {
+    public static void transferPdf2Html(String inputFilePath, String outDirPath, StringBuffer logMsg) throws Exception {
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
             FileUtils.forceMkdir(outDir);
@@ -68,13 +68,15 @@ public class Pdf2htmlUtil {
         FileUtils.cleanDirectory(outDir);
 
         LOG.info("Convert to Html Begin.");
+        logMsg.append("Convert to Html Begin.");
         String command = "java -jar jpdf2html.jar " + inputFilePath + " " + outDirPath;
         StringBuffer output = new StringBuffer();
-        StringBuffer logMsg = new StringBuffer();
-        CommandlineUtil.RunCommand(command, output, logMsg);
+        CommandlineUtil.runCommand(command, output, logMsg);
         LOG.info("Convert to Html End.");
+        logMsg.append("Convert to Html End.");
 
         LOG.info("Deal Html Begin.");
+        logMsg.append("Deal Html Begin.");
         File htmlResultDir = new File(outDirPath+File.separator+"pdf");
         FileUtils.copyDirectory(htmlResultDir, outDir);
         FileUtils.deleteQuietly(htmlResultDir);
@@ -141,8 +143,10 @@ public class Pdf2htmlUtil {
             }
 
             LOG.info("Deal Html Font、Css End.");
+            logMsg.append("Deal Html Font、Css End.");
         }
         LOG.info("Deal Html End.");
+        logMsg.append("Deal Html End.");
     }
 
     private static String getNewName(String filename, int index)
