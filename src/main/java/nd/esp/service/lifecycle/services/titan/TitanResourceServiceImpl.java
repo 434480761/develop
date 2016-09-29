@@ -13,6 +13,7 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
+import nd.esp.service.lifecycle.daos.titan.TitanSyncTimerTask;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
@@ -488,12 +489,16 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 }
 
                 for (String primaryCategory : sourceMap.keySet()){
+                    if (!TitanSyncTimerTask.TITAN_SYNC_SWITCH){
+                        return;
+                    }
                     List<ResourceRelation> resourceRelations = educationRelationdao
                             .batchGetRelationByResourceSourceOrTarget(primaryCategory, sourceMap.get(primaryCategory));
                     titanImportRepository.batchImportRelation(resourceRelations);
-                    LOG.info("");
+
                 }
                 LOG.info("import relation:totalPage:{}  page:{}", resourcePage.getTotalPages(), page);
+                setStatisticParam("relation",resourcePage.getTotalPages(), page);
             } catch (Exception e) {
                 LOG.error(e.getMessage());
             }
