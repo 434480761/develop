@@ -37,7 +37,7 @@ public class TitanTransactionCollection {
     public void addOneStep(String transactionName, TitanRepositoryOperation repositoryOperation){
         TitanTransaction transaction = transactionMap.get(transactionName);
         if (transaction == null){
-            LOG.info("titan transaction可能没有初始化");
+//            LOG.info("titan transaction可能没有初始化");
             return;
         }
         transaction.addNextStep(repositoryOperation);
