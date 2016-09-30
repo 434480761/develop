@@ -1,11 +1,15 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils.gson;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.nd.esp.task.worker.buss.document_transcode.utils.CollectionUtils;
+import com.nd.esp.task.worker.buss.document_transcode.utils.StringUtils;
+import com.nd.esp.task.worker.buss.document_transcode.utils.collection.MapExecutor;
+import com.rits.cloning.Cloner;
+
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,14 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.nd.esp.task.worker.buss.document_transcode.utils.CollectionUtils;
-import com.nd.esp.task.worker.buss.document_transcode.utils.StringUtils;
-import com.nd.esp.task.worker.buss.document_transcode.utils.collection.MapExecutor;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.rits.cloning.Cloner;
 
 /**
  * 对象操作的工具类

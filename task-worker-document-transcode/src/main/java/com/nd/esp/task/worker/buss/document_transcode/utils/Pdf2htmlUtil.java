@@ -1,6 +1,5 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import com.nd.esp.task.worker.buss.document_transcode.utils.CommandlineUtil;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

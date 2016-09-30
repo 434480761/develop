@@ -1,12 +1,13 @@
 package com.nd.esp.task.worker.buss.document_transcode.service.impls;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.*;
-
-import com.nd.esp.task.worker.buss.document_transcode.service.*;
+import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeParam;
+import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeResult;
+import com.nd.esp.task.worker.buss.document_transcode.service.TranscodeService;
+import com.nd.esp.task.worker.buss.document_transcode.support.LifeCircleException;
 import com.nd.esp.task.worker.buss.document_transcode.utils.*;
+import com.nd.esp.task.worker.buss.document_transcode.utils.gson.ObjectUtils;
+import com.nd.esp.task.worker.container.ext.TaskTraceResult;
+import com.nd.esp.task.worker.container.service.task.ExtFunService;
 import com.nd.sdp.cs.common.CsConfig;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -14,12 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeParam;
-import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeResult;
-import com.nd.esp.task.worker.buss.document_transcode.support.LifeCircleException;
-import com.nd.esp.task.worker.buss.document_transcode.utils.gson.ObjectUtils;
-import com.nd.esp.task.worker.container.ext.TaskTraceResult;
-import com.nd.esp.task.worker.container.service.task.ExtFunService;
+import java.io.File;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
 
 
 
@@ -125,6 +127,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,String> targetsMetadata = new HashMap<String,String>();
         List<String> previews = new ArrayList<String>();
         if(!srcFileName.endsWith(".txt")) {
+            LOG.info("Office转pdf开始");
             String pdfFilePath = destDir + File.separator + "pdf.pdf";
             if(!srcFileName.endsWith(".pdf")) {
                 Office2pdfUtil.convert2PDF(srcFilePath, pdfFilePath);
@@ -216,7 +219,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         
         try {
             result = transcode(id, transcodeParam, logMsg);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             FileUtils.deleteQuietly(new File(zipFileTempDir+File.separator+id));
             taskResult.setExitCode("转码失败");
             StringWriter out = new StringWriter();

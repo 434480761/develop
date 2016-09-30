@@ -1,17 +1,15 @@
 package com.nd.esp.task.worker.buss.document_transcode.config;
 
-import java.io.IOException;
-import java.util.Properties;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-
+import com.nd.esp.task.worker.container.springcfg.AppConfig;
+import com.nd.gaea.rest.AbstractWafWebApplicationInitializer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
-import com.nd.esp.task.worker.container.springcfg.AppConfig;
-import com.nd.gaea.rest.AbstractWafWebApplicationInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  *

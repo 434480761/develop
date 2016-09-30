@@ -1,31 +1,12 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import com.nd.esp.task.worker.buss.document_transcode.utils.CommandlineUtil;
 
 import java.io.File;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Created by Administrator on 2016/9/18 0018.
- */
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.PdfWriter;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.ComFailException;
 import com.jacob.com.ComThread;
 import com.jacob.com.Dispatch;
-import com.jacob.com.Variant;
-import org.apache.commons.io.FileUtils;
 
 public class Office2pdfUtil {
     private static final int wdFormatPDF = 17;
@@ -144,7 +125,7 @@ public class Office2pdfUtil {
         try {
             ComThread.InitSTA();
             app = new ActiveXComponent("PowerPoint.Application");
-            //app.setProperty("Visible", false);
+            app.setProperty("Visible", true);
             Dispatch ppts = app.getProperty("Presentations").toDispatch();
             ppt = Dispatch.call(ppts,
                     "Open",

@@ -1,14 +1,15 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
 import com.nd.esp.task.worker.buss.document_transcode.support.LifeCircleException;
-import org.apache.commons.exec.*;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DaemonExecutor;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.Scanner;
