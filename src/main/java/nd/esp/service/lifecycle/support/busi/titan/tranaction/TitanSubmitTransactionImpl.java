@@ -34,15 +34,16 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     public boolean submit(TitanTransaction transaction) {
         //TODO 可以做事务的重试
         LinkedList<TitanRepositoryOperation> repositoryOperations = transaction.getAllStep();
-        boolean success = true;
         long t1 =  System.currentTimeMillis();
-        submit(repositoryOperations);
+        boolean success = submit(repositoryOperations);
         long t2 =  System.currentTimeMillis();
 //        System.out.println(t2 - t1);
 
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
         if (!success){
-//            titanRepositoryUtils.titanSync4MysqlAdd();
+            LOG.info("失败");
+        } else {
+            LOG.info("成功");
         }
 
         return true;
@@ -149,13 +150,13 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
         Map<String, Object> param = builder.getParam();
         StringBuilder script = builder.getScript();
+        String result = null;
         if (param != null && param.size() > 0) {
-            String id = null;
             try {
                 long time = System.currentTimeMillis();
                 //创建
 
-                id = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
+                result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
 
                 System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
             } catch (Exception e) {
@@ -163,7 +164,12 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 return false;
             }
         }
-        return true;
+
+        if ("2".equals(result)){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void titanSync(ResourceRelation relation){

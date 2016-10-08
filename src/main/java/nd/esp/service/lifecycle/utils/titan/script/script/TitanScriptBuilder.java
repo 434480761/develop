@@ -285,10 +285,6 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public TitanScriptBuilder deleteVertexById(String identifier){
-        return this;
-    }
-
     /**
      * 整个脚本结束，组合脚本中的方法，边和点通用
      * */
@@ -296,6 +292,7 @@ public class TitanScriptBuilder {
         for (String methodName : methodNames){
             script.append(methodName).append(";");
         }
+        script.append("1+1");
         ScriptMethod.clean();
         return null;
     }
