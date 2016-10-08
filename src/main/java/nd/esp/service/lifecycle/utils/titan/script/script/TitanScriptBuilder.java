@@ -300,6 +300,9 @@ public class TitanScriptBuilder {
         String paramName = "redIdentifier" + variable.getSuffix();
         ScriptMethod scriptMethod = ScriptMethod.deleteEdgeByIdentifier(paramName);
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(scriptMethod)){
             scriptMethodSet.add(scriptMethod);
             this.script.append(scriptMethod.script);
@@ -330,6 +333,9 @@ public class TitanScriptBuilder {
         ScriptMethod updateEducationRedProperty = ScriptMethod.updateEducationRedProperty(paramName);
 
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);
@@ -351,9 +357,16 @@ public class TitanScriptBuilder {
         param.put(paramIdentifier,identifier);
         param.put(paramPrimaryCategory, primaryCategory);
 
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);
+            if (!scriptMethodSet.contains(ScriptMethod.UPDATE_RELATION_RED_PROPERTY)){
+                this.script.append(ScriptMethod.UPDATE_RELATION_RED_PROPERTY.script);
+                scriptMethodSet.add(ScriptMethod.UPDATE_RELATION_RED_PROPERTY);
+            }
         }
         this.param.putAll(param);
         this.methodNames.add(updateEducationRedProperty.invokeMethod);
@@ -368,6 +381,9 @@ public class TitanScriptBuilder {
         ScriptMethod updateEducationRedProperty = ScriptMethod.updateRelationRedProperty(paramName);
 
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);
