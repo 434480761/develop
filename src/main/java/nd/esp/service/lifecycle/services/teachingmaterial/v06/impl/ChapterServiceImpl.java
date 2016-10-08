@@ -23,6 +23,7 @@ import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
@@ -68,6 +69,7 @@ public class ChapterServiceImpl implements ChapterService{
     private ResourceRelationApiService resourceRelationService;
     
     @Override
+    @TitanTransaction
     public ChapterModel createChapter(String resourceType,String mid, ChapterModel chapterModel) {
         
         TreeModel current = null;
@@ -194,6 +196,7 @@ public class ChapterServiceImpl implements ChapterService{
     }
 
     @Override
+    @TitanTransaction
     public ChapterModel updateChapter(String resourceType,String mid, String cid, ChapterModel chapterModel) {
         //判断教材是否存在
         if(!isTeachingMaterialExist(resourceType,mid)){
@@ -296,6 +299,7 @@ public class ChapterServiceImpl implements ChapterService{
     }
 
     @Override
+    @TitanTransaction
     public boolean deleteChapter(String resourceType,String mid, String cid) {
         //1.判断教材是否存在
         if(!isTeachingMaterialExist(resourceType,mid)){
@@ -333,6 +337,7 @@ public class ChapterServiceImpl implements ChapterService{
     }
 
     @Override
+    @TitanTransaction
     public void moveChapter(String resourceType,String mid, String cid, ChapterModel chapterModel) {
         
         TreeDirection treeDirection = TreeDirection.fromString(chapterModel.getDirection());
@@ -495,6 +500,7 @@ public class ChapterServiceImpl implements ChapterService{
      * java.lang.String, java.lang.String)
      */
     @Override
+    @TitanTransaction
     public boolean deleteChapterNotReally(String resourceType, String mid, String cid) {
         // 1.判断教材是否存在
         if (!isTeachingMaterialExist(resourceType, mid)) {

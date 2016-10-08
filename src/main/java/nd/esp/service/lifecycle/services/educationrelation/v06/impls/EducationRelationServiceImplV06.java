@@ -42,6 +42,7 @@ import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -115,6 +116,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     private JdbcTemplate jt;
     
     @Override
+    @TitanTransaction
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
                                                        boolean isCreateWithResource) {
     	boolean notifyFlag = true;
@@ -404,6 +406,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     }
 
     @Override
+    @TitanTransaction
     public EducationRelationModel updateRelation(String resType,
                                                  String sourceUuid,
                                                  String rid,
@@ -553,6 +556,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     }
     
     @Override
+    @TitanTransaction
     public boolean deleteRelation(String rid, String sourceUuid, String resType) {
         // 判断源资源是否存在,不存在将抛出not found的异常
         CommonHelper.resourceExist(resType, sourceUuid, ResourceType.RESOURCE_SOURCE);
@@ -589,6 +593,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     }
 
     @Override
+    @TitanTransaction
     public boolean deleteRelationByTarget(String resType,
                                           String sourceUuid,
                                           List<String> target,
@@ -695,6 +700,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     }
 
     @Override
+    @TitanTransaction
     public boolean deleteRelationByTargetType(String resType,
                                               String sourceUuid,
                                               List<String> targetType,
@@ -1053,6 +1059,7 @@ public class EducationRelationServiceImplV06 implements EducationRelationService
     }
 
     @Override
+    @TitanTransaction
     public void batchAdjustRelationOrder(String resType,
                                          String sourceUuid,
                                          List<BatchAdjustRelationOrderModel> batchAdjustRelationOrderModels) {

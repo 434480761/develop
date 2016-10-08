@@ -179,7 +179,12 @@ public class TitanKnowledgeRelationRepositoryImpl implements TitanKnowledgeRelat
 
     @Override
     public boolean delete(String id) {
-        return false;
+        try {
+            titanCommonRepository.deleteEdgeById(id);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     @Override

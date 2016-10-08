@@ -5,6 +5,7 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.courseware.v06.CoursewareModel;
 import nd.esp.service.lifecycle.services.coursewares.v06.CoursewareServiceV06;
 
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,19 @@ public class CoursewareServiceImplV06 implements CoursewareServiceV06 {
 	private NDResourceService ndResourceService;
 
 	@Override
+	@TitanTransaction
 	public CoursewareModel createCourseware(String resType,CoursewareModel cm) {
 		return (CoursewareModel)ndResourceService.create(resType, cm);
 	}
 
 	@Override
+	@TitanTransaction
 	public CoursewareModel updateCourseware(String resType,CoursewareModel cm) {
 		return (CoursewareModel)ndResourceService.update(resType, cm);
 	}
 
 	@Override
+	@TitanTransaction
 	public CoursewareModel patchCourseware(String resType, CoursewareModel cm) {
 		return (CoursewareModel)ndResourceService.patch(resType, cm);
 	}

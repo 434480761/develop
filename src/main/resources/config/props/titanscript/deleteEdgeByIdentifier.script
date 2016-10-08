@@ -1,0 +1,3 @@
+public void deleteEdgeByIdentifier(String identifier){
+	g.E().has('identifier',identifier).next().remove();
+};

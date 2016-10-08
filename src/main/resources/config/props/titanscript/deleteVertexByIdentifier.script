@@ -1,0 +1,3 @@
+public void deleteVertexByIdentifier(String identifier){
+    g.V().has('identifier',identifier).next().remove();
+};
