@@ -510,6 +510,11 @@ public class EsIndexQueryBuilder {
                 String codeKey = entry.getKey();
                 if (CollectionUtils.isEmpty(values)) continue;
                 for (String value : values) {
+                    if (TitanKeyWords.search_coverage.toString().equals(property)) {
+                        if (value.split("/").length == 3) {
+                            value = value + "/";
+                        }
+                    }
                     if (value.contains("$")) {
                         value = value.replace("$", "\\$");
                     }
