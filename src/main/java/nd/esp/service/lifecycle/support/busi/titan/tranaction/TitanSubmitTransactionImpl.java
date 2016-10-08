@@ -34,11 +34,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     public boolean submit(TitanTransaction transaction) {
         //TODO 可以做事务的重试
         LinkedList<TitanRepositoryOperation> repositoryOperations = transaction.getAllStep();
-        long t1 =  System.currentTimeMillis();
         boolean success = submit(repositoryOperations);
-        long t2 =  System.currentTimeMillis();
-//        System.out.println(t2 - t1);
-
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
         if (!success){
             LOG.info("失败");
@@ -52,8 +48,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     private boolean submit(LinkedList<TitanRepositoryOperation> repositoryOperations){
         TitanScriptBuilder  builder = new TitanScriptBuilder();
         Map<String, String> educationIds = new HashMap<>();
-        long time1 = System.currentTimeMillis();
-
         for (TitanRepositoryOperation operation : repositoryOperations) {
             TitanOperationType type = operation.getOperationType();
             EspEntity entity = operation.getEntity();
@@ -157,10 +151,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         if (param != null && param.size() > 0) {
             try {
                 long time = System.currentTimeMillis();
-                //创建
-
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
-
                 System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
             } catch (Exception e) {
                 e.printStackTrace();
