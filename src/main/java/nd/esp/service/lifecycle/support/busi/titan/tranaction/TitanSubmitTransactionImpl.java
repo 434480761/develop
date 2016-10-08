@@ -89,6 +89,8 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     } else if (entity instanceof ResourceRelation){
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
                         builder.add(EducationToTitanBeanUtils.toEdge(entity));
+                        //更新关系冗余字段
+                        builder.updateRelationRedProperty(entity.getIdentifier());
                     } else if (entity instanceof KnowledgeRelation){
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
                         builder.add(EducationToTitanBeanUtils.toEdge(entity));
