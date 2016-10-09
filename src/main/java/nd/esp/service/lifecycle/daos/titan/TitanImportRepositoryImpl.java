@@ -122,10 +122,10 @@ public class TitanImportRepositoryImpl implements TitanImportRepository{
         }
 
         if(count == null || count == 0){
-
-            titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
+            LOG.info("数据不存在{}",education.getIdentifier());
+//            titanSync(TitanSyncType.CHECK_NOT_EXIST,education.getPrimaryCategory(),education.getIdentifier());
         } else if(count > 1){
-            titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
+//            titanSync(TitanSyncType.CHECK_REPEAT,education.getPrimaryCategory(),education.getIdentifier());
         } else {
             return true;
         }
