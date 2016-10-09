@@ -82,16 +82,23 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         // for now only deal with code
-        dealWithSearchCode(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxoncode.toString()));
+        Map<String, List<String>> taxoncode,taxonpath,coverages = null;
+        if (iSMutiRelations) {
+            taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
+            taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
+            coverages = params.get(ES_SearchField.coverages.toString());
+        } else {
+            taxoncode = changeToLike(params.get(ES_SearchField.cg_taxoncode.toString()));
+            taxonpath = changeToLike(params.get(ES_SearchField.cg_taxonpath.toString()));
+            coverages = changeToLike(params.get(ES_SearchField.coverages.toString()));
+        }
+        dealWithSearchCode(resourceQueryVertex, taxoncode);
         params.remove(ES_SearchField.cg_taxoncode.toString());
 
-        dealWithSearchPath(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxonpath.toString()));
+        dealWithSearchPath(resourceQueryVertex,taxonpath);
         params.remove(ES_SearchField.cg_taxonpath.toString());
 
-        dealWithSearchCoverage(resourceVertexPropertyMap,
-                params.get(ES_SearchField.coverages.toString()));
+        dealWithSearchCoverage(resourceVertexPropertyMap,coverages);
         params.remove(ES_SearchField.coverages.toString());
         // TODO　处理tags tag之间存在顺序问题需要修改逻辑
         dealTags4Statistics(resourceVertexPropertyMap,tags);
@@ -108,8 +115,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
         // TODO 优化多个关系的查询脚本
-        if(iSMutiRelations){
+        if (iSMutiRelations) {
             scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
+        } else {
+            scriptForResultAndCount = TitanUtils.optimizeMoveConditionsToEdge(scriptForResultAndCount, reverse, scriptParamMap);
         }
 
         System.out.println(scriptForResultAndCount);
@@ -121,6 +130,38 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         return getListViewModelResourceModel(resultSet,resTypeSet,includes);// FIXME
 
     }
+
+    Map<String, List<String>> changeToLike(Map<String, List<String>> map) {
+        Map<String, List<String>> re = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(map)) {
+            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+                List<String> list = entry.getValue();
+                String key = entry.getKey();
+                List<String> value = new ArrayList<>();
+                for (String k : list) {
+                    value.add("*" + k.toLowerCase() + "*");
+                }
+                re.put(key, value);
+            }
+        }
+        return re;
+    }
+
+/*    Map<String, List<String>> changeToLike4Coverage(Map<String, List<String>> map) {
+        Map<String, List<String>> re = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(map)) {
+            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+                List<String> list = entry.getValue();
+                String key = entry.getKey();
+                List<String> value = new ArrayList<>();
+                for (String k : list) {
+                    value.add("[\\S\\s]*" + k.toLowerCase() + "[\\S\\s]*");
+                }
+                re.put(key, value);
+            }
+        }
+        return re;
+    }*/
 
 
 
@@ -432,7 +473,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     } else {
                         continue;
                     }
-
                     if (ES_OP.in.toString().equals(entry.getKey())) {
                         inCoverage.add(coverage);
                     } else if (ES_OP.ne.toString().equals(entry.getKey())) {
