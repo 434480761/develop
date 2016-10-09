@@ -20,6 +20,7 @@ import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelation
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.tool.v06.ToolServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
@@ -74,6 +75,7 @@ public class ToolController {
 	 * @throws Exception 
 	 */
 	@SuppressWarnings("unchecked")
+	@TitanTransaction
 	@RequestMapping(value="/reuse/actions/checkdatas",method=RequestMethod.POST,produces={MediaType.APPLICATION_JSON_VALUE})
 	public Map<String,Object> dealData(@RequestBody ChapterReuseViewModel crvm,@AuthenticationPrincipal UserInfo userInfo) throws Exception{
 		Timestamp ts = new Timestamp(System.currentTimeMillis());

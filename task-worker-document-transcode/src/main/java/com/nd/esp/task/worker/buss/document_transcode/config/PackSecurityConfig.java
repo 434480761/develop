@@ -1,12 +1,11 @@
 package com.nd.esp.task.worker.buss.document_transcode.config;
 
+import com.nd.gaea.rest.config.WafWebSecurityConfigurerAdapter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.servlet.configuration.EnableWebMvcSecurity;
-
-import com.nd.gaea.rest.config.WafWebSecurityConfigurerAdapter;
 
 @Configuration()
 @EnableWebMvcSecurity

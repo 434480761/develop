@@ -1,10 +1,6 @@
 package com.nd.esp.task.worker.buss.document_transcode.model;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @title 资源模型

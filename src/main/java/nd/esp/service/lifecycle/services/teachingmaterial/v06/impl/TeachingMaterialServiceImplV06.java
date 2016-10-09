@@ -18,6 +18,7 @@ import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -45,6 +46,7 @@ public class TeachingMaterialServiceImplV06 implements
 	private TeachingMaterialRepository teachingMaterialRepository;
 	
 	@Override
+	@TitanTransaction
 	public TeachingMaterialModel createTeachingMaterial(String resType,
 			TeachingMaterialModel tmm) {
 		//1、校验是否已存在相同的教材
@@ -56,6 +58,7 @@ public class TeachingMaterialServiceImplV06 implements
 	}
 
 	@Override
+	@TitanTransaction
 	public TeachingMaterialModel updateTeachingMaterial(String resType,
 			TeachingMaterialModel tmm) {
 		//1、校验资源是否存在
@@ -67,6 +70,7 @@ public class TeachingMaterialServiceImplV06 implements
 	}
 
 	@Override
+	@TitanTransaction
 	public TeachingMaterialModel patchTeachingMaterial(String resType,
 													   TeachingMaterialModel tmm) {
 		//1、校验资源是否存在

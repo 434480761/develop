@@ -1,10 +1,10 @@
 package com.nd.esp.task.worker.buss.document_transcode;
 
 
+import com.nd.esp.task.worker.buss.document_transcode.config.PackApplicationInitializer;
+
 import java.nio.charset.Charset;
 import java.util.TimeZone;
-
-import com.nd.esp.task.worker.buss.document_transcode.config.PackApplicationInitializer;
 
 
 /**
