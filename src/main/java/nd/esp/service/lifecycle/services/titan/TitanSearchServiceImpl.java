@@ -115,6 +115,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
         // TODO 优化多个关系的查询脚本
+        System.out.println(scriptForResultAndCount);
         if (iSMutiRelations) {
             scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
         } else {

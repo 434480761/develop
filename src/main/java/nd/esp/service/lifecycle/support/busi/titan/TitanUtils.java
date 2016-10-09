@@ -30,21 +30,17 @@ public class TitanUtils {
 	public static String optimizeMoveConditionsToEdge(String script, boolean reverse,Map<String, Object> scriptParamMap) {
 		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
 		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
-		String totalCountBase, totalCountEdge, totalCountV, prefix = null;
+		String vConditions, prefix = null;
 		if (reverse) {
-			prefix = "target_s_";
-			totalCountBase = totalCount.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".inE(has_relation0)"));
-			totalCountEdge = totalCount.substring(script.indexOf(".inE(has_relation0)"), script.indexOf(".as('e')"));
-			totalCountV = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+			prefix = "source_r_";
+			vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
 		} else {
 			prefix = "target_r_";
-			totalCountBase = totalCount.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".outE(has_relation0)"));
-			totalCountEdge = totalCount.substring(script.indexOf(".outE(has_relation0)"), script.indexOf(".as('e')"));
-			totalCountV = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+			vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
 		}
-		String move = moveConditionsToEdge(totalCountV, prefix,scriptParamMap);
-		script = script.replace(totalCount, totalCountBase + totalCountEdge + move + ".as('x').select('x')");
-		script = script.replace(result, result.replace(".as('e')"+totalCountV,move));
+		String move = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
+		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, move));
+		script = script.replace(result, result.replace(".as('e')" + vConditions, move));
 		return script;
 	}
 
@@ -53,19 +49,19 @@ public class TitanUtils {
 	 * @param totalCountV
 	 * @return
      */
-	private static String moveConditionsToEdge(String totalCountV, String prefix,Map<String, Object> scriptParamMap) {
+	private static String moveConditionsToEdge(String totalCountV, String prefix, Map<String, Object> scriptParamMap) {
 		String[] conditions = totalCountV.split("\\.");
-		Map<String, String> optimizeConditions = optimizeConditions(conditions,scriptParamMap);
+		Map<String, String> optimizeConditions = optimizeConditions(conditions, scriptParamMap);
 		StringBuffer scriptBuffer = new StringBuffer();
-		Set<String> fields = new HashSet<>();
-		CollectionUtils.addAll(fields, MOVE_FILEDS);
+		//Set<String> fields = new HashSet<>();CollectionUtils.addAll(fields, MOVE_FILEDS);
 		for (String c : conditions) {
-			for (String f : fields) {
+			for (String f : MOVE_FILEDS) {
 				if (c.contains(f)) {
-					String suffix="";
-					if ("search_code".equals(f) || "search_path".equals(f) || "search_coverage".equals(f)) suffix = "_string";
+					String suffix = "";
+					if ("search_code".equals(f) || "search_path".equals(f) || "search_coverage".equals(f))
+						suffix = "_string";
 					totalCountV = totalCountV.replace("." + c, "");
-					scriptBuffer.append(".").append(optimizeConditions.get(c).replace("'" + f + "'", "'" + prefix + f + suffix+ "'"));
+					scriptBuffer.append(".").append(optimizeConditions.get(c).replace("'" + f + "'", "'" + prefix + f + suffix + "'"));
 					//fields.remove(f);
 				}
 			}
@@ -73,6 +69,12 @@ public class TitanUtils {
 		return scriptBuffer.append(".as('e')").append(totalCountV).toString();
 	}
 
+	/**
+	 *
+	 * @param tmpConditions
+	 * @param scriptParamMap
+     * @return
+     */
 	private static Map<String,String> optimizeConditions(String[] tmpConditions,Map<String, Object> scriptParamMap) {
 		Map<String,String> conditions = new HashMap<>();
 		for (String c : tmpConditions) {
@@ -89,7 +91,6 @@ public class TitanUtils {
 
 				} else if (c.contains("'search_coverage'")) {
 					int size = CommonHelper.getSubStrAppearTimes(c, "search_coverage") - 1;
-					// FIXME 暂时放在这里
 					//coverage = "[\\S\\s]*" + coverage + "[\\S\\s]*";
 					scriptParamMap.put("search_coverage0","[\\S\\s]*" + scriptParamMap.get("search_coverage0") + "[\\S\\s]*");
 					if (size == 1) {
