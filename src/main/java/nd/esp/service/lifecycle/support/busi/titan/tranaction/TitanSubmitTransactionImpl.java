@@ -157,7 +157,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
                 System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
             } catch (Exception e) {
-                e.printStackTrace();
                 return false;
             }
         }
@@ -171,7 +170,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
     }
 
-    public void updateRelationRedProperty(Map<String, String> educationIds){
+    private void updateRelationRedProperty(Map<String, String> educationIds){
         new Thread(new UpdateRelationRedPropertyRunnable(educationIds)).start();
     }
 
@@ -181,7 +180,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
     }
 
-    private static <T> List<List<T>> splitList(List<T> list, int pageSize) {
+    public static <T> List<List<T>> splitList(List<T> list, int pageSize) {
         int listSize = list.size();
         int page = (listSize + (pageSize-1))/ pageSize;
         List<List<T>> listArray = new ArrayList<List<T>>();
