@@ -2,19 +2,21 @@ package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
-import nd.esp.service.lifecycle.daos.titan.TitanResourceRepositoryImpl;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
-import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanOperationType;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperation;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanSubmitTransaction;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -33,40 +35,20 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncServiceImpl.class);
     @Autowired
     private TitanTechInfoRepository titanTechInfoRepository;
-
-    @Autowired
-    private TitanRelationRepository titanRelationRepository;
-
     @Autowired
     private CoverageDao coverageDao;
-
     @Autowired
     private NDResourceDao ndResourceDao;
-
     @Autowired
     private EducationRelationDao educationRelationdao;
-
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
-
-    @Autowired
-    private TitanImportRepository titanImportRepository;
-
     @Autowired
     private TitanResourceRepository<Education> titanResourceRepository;
-
-    @Autowired
-    private TitanCoverageRepository titanCoverageRepository;
-
-    @Autowired
-    private TitanCategoryRepository titanCategoryRepository;
-
-    @Autowired
-    private TitanStatisticalRepository titanStatisticalRepository;
-
     @Autowired
     private TitanCommonRepository titanCommonRepository;
-
+    @Autowired
+    private TitanSubmitTransaction titanSubmitTransaction;
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -196,13 +178,13 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(StringUtils.isEmpty(education.getPrimaryCategory())){
             return false;
         }
+        boolean success = true;
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
 
         Set<String> uuids = new HashSet<>();
         uuids.add(education.getIdentifier());
-
 
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
@@ -215,38 +197,27 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
         List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
 
-        Education resultEducation = titanResourceRepository.add(education);
-        if(resultEducation == null){
+        TitanTransaction titanTransaction = new TitanTransaction();
+        addStepEntity(titanTransaction, education,TitanOperationType.add);
+        addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
+        addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
+        addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
+
+        if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
             return false;
         }
-
-        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
-        if(coverageList.size() != resultCoverage.size()){
-            return false;
+        //覆盖范围、资源关系的数据量太大 需要单独处理
+        for (ResCoverage coverage : coverageList){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, coverage,TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                success = false;
+            }
         }
 
-        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
-        if(resourceCategoryList.size()!=resultCategory.size()){
-            return false;
-        }
-
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
-        if(techInfoList.size()!=resultTechInfos.size()){
-            return false;
-        }
-
-
-        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
-        if (statisticalList.size() != resultStatisticals.size()){
-            return false;
-        }
-        LOG.info("titan_sync : report {} success",education.getIdentifier());
-        return true;
+        return success;
     }
 
-    /**
-     *
-     * */
     private boolean report(Education education){
         if(education == null){
             return true;
@@ -255,6 +226,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(StringUtils.isEmpty(education.getPrimaryCategory())){
             return false;
         }
+
+        boolean success = true;
+
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
@@ -270,63 +244,58 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResourceCategory> resourceCategoryList = ndResourceDao.queryCategoriesUseHql(resourceTypes, uuids);
         List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
         List<ResourceStatistical> statisticalList = ndResourceDao.queryStatisticalUseHql(resourceTypes,uuids);
-
-//        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
-//        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
-
-//        Education resultEducation = titanResourceRepository.add(education);
-//        if(resultEducation == null){
-//            return false;
-//        }
-//
-//        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
-//        if(coverageList.size() != resultCoverage.size()){
-//            return false;
-//        }
-//
-//        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
-//        if(resourceCategoryList.size()!=resultCategory.size()){
-//            return false;
-//        }
-//
-//        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
-//        if(techInfoList.size()!=resultTechInfos.size()){
-//            return false;
-//        }
-
-
-
-        boolean success = titanImportRepository.importOneData(education,resCoverageList,resourceCategoryList,techInfos);
-        if (!success){
-            return false;
-        }
-
-        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
-        if (statisticalList.size() != resultStatisticals.size()){
-            return false;
-        }
-
         List<ResourceRelation> resourceRelations =
                 educationRelationdao.batchGetRelationByResourceSourceOrTarget(primaryCategory, uuids);
-        List<ResourceRelation> resultResourceRelations = titanRelationRepository.batchAdd(resourceRelations);
-        if(resourceRelations.size() != resultResourceRelations.size()){
+
+        List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
+        List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
+
+        TitanTransaction titanTransaction = new TitanTransaction();
+        addStepEntity(titanTransaction, education,TitanOperationType.add);
+        addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
+        addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
+        addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
+        //资源保存失败直接跳过后面的操作
+        if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
             return false;
         }
-        LOG.info("titan_sync : report {} success",education.getIdentifier());
-        return true;
+        //覆盖范围、资源关系的数据量可能会太大 单独处理
+        for (ResCoverage coverage : coverageList){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, coverage,TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                success = false;
+            }
+        }
+        for (ResourceRelation relation : resourceRelations){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, relation, TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                if(titanRepositoryUtils.checkRelationExistInMysql(relation)){
+                    titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, relation);
+                    success =false;
+                }
+            }
+        }
+
+        return success;
     }
 
-    private boolean checkExist(String primaryCategory, String identifier){
-        Long id = null;
-        try {
-            id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
-        } catch (Exception e) {
-            return false;
-        }
-        if (id == null){
-            return false;
-        }
+    private void addStepEntity(TitanTransaction titanTransaction, EspEntity entity, TitanOperationType type){
+        TitanRepositoryOperation operation = new TitanRepositoryOperation();
+        operation.setEntity(entity);
+        operation.setOperationType(type);
 
-        return true;
+        titanTransaction.addNextStep(operation);
     }
+
+    private void addStepEntity(TitanTransaction titanTransaction, List<? extends EspEntity> entityList , TitanOperationType type){
+        if (CollectionUtils.isEmpty(entityList)){
+            return;
+        }
+        for (EspEntity entity : entityList){
+            addStepEntity(titanTransaction, entity, type);
+        }
+    }
+
 }

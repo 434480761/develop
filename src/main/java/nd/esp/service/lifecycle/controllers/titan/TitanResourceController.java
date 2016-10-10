@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.InterceptingClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -207,7 +206,6 @@ public class TitanResourceController {
 		titanResourceService.timeTaskImport4Update(page, type);
 	}
 
-	@MarkAspect4ImportData
 	@RequestMapping(value = "/{resourceType}/{id}/script", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long importOneData4Script(@PathVariable String resourceType, @PathVariable String id) {
@@ -297,6 +295,13 @@ public class TitanResourceController {
         titanResourceService.checkAllResourceRelations();
         return 0;
     }
+
+	@RequestMapping(value = "/all/check/{type}/exist", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long checkAllResourceExist(@PathVariable String type) {
+		titanResourceService.checkResourceExist(type);
+		return 0;
+	}
 
 	@RequestMapping(value = "importStatus", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })

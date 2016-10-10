@@ -220,7 +220,7 @@ public class TitanResourceRepositoryImpl<M extends Education> implements
         script = new StringBuffer("g.V()has(primaryCategory,'identifier',identifier)");
         TitanScritpUtils.getSetScriptAndParam(script, param ,"search_coverage" ,searchCoverages);
 
-        String searchCoverageString = StringUtils.join(searchCoverages,",").toLowerCase();
+        String searchCoverageString = StringUtils.join(TitanScritpUtils.appendQuoMark(searchCoverages),",").toLowerCase();
         script.append(".property('search_coverage_string',searchCoverageString)");
         param.put("searchCoverageString", searchCoverageString);
 

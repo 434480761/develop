@@ -1,0 +1,8 @@
+public void updateRelationRedPropertyFromEdu(String primaryCategory,String identifier){
+    //对进来的边和出去的边同时进行更新
+    DefaultGraphTraversal rede=g.V().has('identifier',identifier).union(inE('has_relation'),outE('has_relation')).values('identifier');
+    while(rede.hasNext()){
+        //需要保证这个方法在titan中已经存在
+        updateRelationRedProperty(rede.next());
+    }
+};

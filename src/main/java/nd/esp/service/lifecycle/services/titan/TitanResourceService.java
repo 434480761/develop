@@ -48,4 +48,5 @@ public interface TitanResourceService {
 
 	public void updateRelationRedRelation(Integer page);
 
+	public void checkResourceExist(String primaryCategory);
 }

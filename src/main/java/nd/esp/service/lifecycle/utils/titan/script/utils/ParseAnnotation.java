@@ -335,9 +335,17 @@ public class ParseAnnotation {
     }
 
     @Test
-    public void testUpdateReationRedProperty(){
+    public void testUpdateRelationRedProperty(){
         TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
         scriptBuilder.updateRelationRedProperty("798798");
+        scriptBuilder.scriptEnd();
+    }
+
+    @Test
+    public void testUpdateRelationRedPropertyFromEdu(){
+        TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
+        scriptBuilder.updateRelationRedPropertyFromEdu("798798", "789456");
+        scriptBuilder.scriptEnd();
     }
 
     @Test

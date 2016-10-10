@@ -375,10 +375,10 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         boolean isPathEqual = isEqual(valueMap.get("search_path"), paths);
         boolean isCoverageEqual = isEqual(valueMap.get("search_coverage"), coverageSet);
         
-        boolean isCodeStringEqual = isEqual(valueMap.get("search_code_string"), codes);
-        boolean isPathStringEqual = isEqual(valueMap.get("search_path_string"), paths);
-        boolean isCoverageStringEqual = isEqual(valueMap.get("search_coverage_string"), coverageSet);
-        return !isCodeEqual || !isPathEqual || !isCoverageEqual || !isCodeStringEqual || !isPathStringEqual || !isPathStringEqual || !isCoverageStringEqual;
+        boolean isCodeStringEqual = isEqual(valueMap.get("search_code_string"), TitanScritpUtils.appendQuoMark(codes));
+        boolean isPathStringEqual = isEqual(valueMap.get("search_path_string"), TitanScritpUtils.appendQuoMark(paths));
+        boolean isCoverageStringEqual = isEqual(valueMap.get("search_coverage_string"), TitanScritpUtils.appendQuoMark(coverageSet));
+        return !isCodeEqual || !isPathEqual || !isCoverageEqual || !isCodeStringEqual || !isPathStringEqual || !isCoverageStringEqual;
     }
     
     private boolean isEqual(String value1, Set<String> value2) {

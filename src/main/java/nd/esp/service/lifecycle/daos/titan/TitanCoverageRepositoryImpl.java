@@ -339,7 +339,7 @@ public class TitanCoverageRepositoryImpl implements TitanCoverageRepository {
 		TitanScritpUtils.getSetScriptAndParam(addScript, param,
 				"search_coverage", searchCoverages);
 
-		String searchCoverageString = StringUtils.join(searchCoverages,",").toLowerCase();
+		String searchCoverageString = StringUtils.join(TitanScritpUtils.appendQuoMark(searchCoverages),",").toLowerCase();
 		addScript.append(".property('search_coverage_string',searchCoverageString)");
 		param.put("searchCoverageString", searchCoverageString);
 

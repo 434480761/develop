@@ -408,13 +408,13 @@ public class TitanCategoryRepositoryImpl implements TitanCategoryRepository {
 		TitanScritpUtils.getSetScriptAndParam(script, param ,"search_path",pathSet);
 
 		if(CollectionUtils.isNotEmpty(pathSet)){
-			String searchPathString = StringUtils.join(pathSet, ",").toLowerCase();
+			String searchPathString = StringUtils.join(TitanScritpUtils.appendQuoMark(pathSet), ",").toLowerCase();
 			script.append(".property('search_path_string',searchPathString)");
 			param.put("searchPathString", searchPathString);
 
 		}
 		if(CollectionUtils.isNotEmpty(codeSet)){
-			String searchCodeString = StringUtils.join(codeSet, ",").toLowerCase();
+			String searchCodeString = StringUtils.join(TitanScritpUtils.appendQuoMark(codeSet), ",").toLowerCase();
 			script.append(".property('search_code_string',searchCodeString)");
 			param.put("searchCodeString", searchCodeString);
 		}
