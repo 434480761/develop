@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.repository.Education;
+import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.*;
@@ -34,37 +35,20 @@ public class TitanSyncServiceImpl implements TitanSyncService{
     private final static Logger LOG = LoggerFactory.getLogger(TitanSyncServiceImpl.class);
     @Autowired
     private TitanTechInfoRepository titanTechInfoRepository;
-
     @Autowired
     private CoverageDao coverageDao;
-
     @Autowired
     private NDResourceDao ndResourceDao;
-
     @Autowired
     private EducationRelationDao educationRelationdao;
-
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
-
     @Autowired
     private TitanResourceRepository<Education> titanResourceRepository;
-
-    @Autowired
-    private TitanCoverageRepository titanCoverageRepository;
-
-    @Autowired
-    private TitanCategoryRepository titanCategoryRepository;
-
-    @Autowired
-    private TitanStatisticalRepository titanStatisticalRepository;
-
     @Autowired
     private TitanCommonRepository titanCommonRepository;
-
     @Autowired
     private TitanSubmitTransaction titanSubmitTransaction;
-
 
     @Override
     public boolean deleteResource(String primaryCategory, String identifier) {
@@ -201,7 +185,6 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         Set<String> uuids = new HashSet<>();
         uuids.add(education.getIdentifier());
 
-
         List<String> resourceTypes = new ArrayList<>();
         resourceTypes.add(primaryCategory);
 
@@ -213,33 +196,14 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<ResCoverage> coverageList = TitanResourceUtils.distinctCoverage(resCoverageList);
         List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
 
-        Education resultEducation = titanResourceRepository.add(education);
-        if(resultEducation == null){
-            return false;
-        }
+        TitanTransaction titanTransaction = new TitanTransaction();
+        addStepEntity(titanTransaction, education,TitanOperationType.add);
+        addStepEntity(titanTransaction, coverageList,TitanOperationType.add);
+        addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
+        addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
+        addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
 
-        List<ResCoverage> resultCoverage = titanCoverageRepository.batchAdd(coverageList);
-        if(coverageList.size() != resultCoverage.size()){
-            return false;
-        }
-
-        List<ResourceCategory> resultCategory = titanCategoryRepository.batchAdd(resourceCategoryList);
-        if(resourceCategoryList.size()!=resultCategory.size()){
-            return false;
-        }
-
-        List<TechInfo> resultTechInfos = titanTechInfoRepository.batchAdd(techInfoList);
-        if(techInfoList.size()!=resultTechInfos.size()){
-            return false;
-        }
-
-
-        List<ResourceStatistical> resultStatisticals = titanStatisticalRepository.batchAdd(statisticalList);
-        if (statisticalList.size() != resultStatisticals.size()){
-            return false;
-        }
-        LOG.info("titan_sync : report {} success",education.getIdentifier());
-        return true;
+        return titanSubmitTransaction.submit(titanTransaction);
     }
 
     private boolean report(Education education){
@@ -272,45 +236,31 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         List<TechInfo> techInfoList = TitanResourceUtils.distinctTechInfo(techInfos);
 
         TitanTransaction titanTransaction = new TitanTransaction();
-        TitanRepositoryOperation operationEducation = new TitanRepositoryOperation();
-        operationEducation.setEntity(education);
-        operationEducation.setOperationType(TitanOperationType.add);
-        titanTransaction.addNextStep(operationEducation);
-
-        for (ResCoverage resCoverage : coverageList){
-            TitanRepositoryOperation operation = new TitanRepositoryOperation();
-            operation.setEntity(resCoverage);
-            operation.setOperationType(TitanOperationType.add);
-            titanTransaction.addNextStep(operation);
-        }
-
-        for (ResourceCategory resourceCategory : resourceCategoryList){
-            TitanRepositoryOperation operation = new TitanRepositoryOperation();
-            operation.setEntity(resourceCategory);
-            operation.setOperationType(TitanOperationType.add);
-            titanTransaction.addNextStep(operation);
-        }
-        for (TechInfo techInfo : techInfoList){
-            TitanRepositoryOperation operation = new TitanRepositoryOperation();
-            operation.setEntity(techInfo);
-            operation.setOperationType(TitanOperationType.add);
-            titanTransaction.addNextStep(operation);
-        }
-        for (ResourceStatistical resourceStatistical : statisticalList){
-            TitanRepositoryOperation operation = new TitanRepositoryOperation();
-            operation.setEntity(resourceStatistical);
-            operation.setOperationType(TitanOperationType.add);
-            titanTransaction.addNextStep(operation);
-        }
-
-        for (ResourceRelation resourceRelation : resourceRelations){
-            TitanRepositoryOperation operation = new TitanRepositoryOperation();
-            operation.setEntity(resourceRelation);
-            operation.setOperationType(TitanOperationType.add);
-            titanTransaction.addNextStep(operation);
-        }
+        addStepEntity(titanTransaction, education,TitanOperationType.add);
+        addStepEntity(titanTransaction, coverageList,TitanOperationType.add);
+        addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
+        addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
+        addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
+        addStepEntity(titanTransaction, resourceRelations,TitanOperationType.add);
 
         return titanSubmitTransaction.submit(titanTransaction);
+    }
+
+    private void addStepEntity(TitanTransaction titanTransaction, EspEntity entity, TitanOperationType type){
+        TitanRepositoryOperation operation = new TitanRepositoryOperation();
+        operation.setEntity(entity);
+        operation.setOperationType(type);
+
+        titanTransaction.addNextStep(operation);
+    }
+
+    private void addStepEntity(TitanTransaction titanTransaction, List<? extends EspEntity> entityList , TitanOperationType type){
+        if (CollectionUtils.isEmpty(entityList)){
+            return;
+        }
+        for (EspEntity entity : entityList){
+            addStepEntity(titanTransaction, entity, type);
+        }
     }
 
     private boolean checkExist(String primaryCategory, String identifier){

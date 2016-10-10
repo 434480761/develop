@@ -191,7 +191,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 if(pageIndex == (i + 1)) {
                     subList.add(list.get(j));
                 }
-
                 if( (j + 1) == ((j + 1) * pageSize) ) {
                     break;
                 }
@@ -210,7 +209,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         public void run() {
             updateRelationRedProperty(educationIds);
         }
-
 
         private void updateRelationRedProperty(Map<String, String> educationIds){
             List<String> edgeIds = new ArrayList<>();
