@@ -65,7 +65,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-        // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
 
@@ -77,12 +76,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
         // 判断words是否要过滤edu_description
-        resourceQueryVertex.setIsFilter(resTypeSet);// FIXME
+        resourceQueryVertex.setIsFilter(resTypeSet);
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         // for now only deal with code
-        Map<String, List<String>> taxoncode,taxonpath,coverages = null;
+        Map<String, List<String>> taxoncode,taxonpath,coverages;
         if (iSMutiRelations) {
             taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
             taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
@@ -100,35 +99,35 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         dealWithSearchCoverage(resourceVertexPropertyMap,coverages);
         params.remove(ES_SearchField.coverages.toString());
-        // TODO　处理tags tag之间存在顺序问题需要修改逻辑
         dealTags4Statistics(resourceVertexPropertyMap,tags);
 
         resourceQueryVertex.setWords(words);
 
         resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldsCondtion(TitanKeyWords.primary_category.toString(), resTypeSet));// FIXME
-        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
-                generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
+        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(), generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
         // for count and result
-        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
+        String execScript = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
-        // TODO 优化多个关系的查询脚本
-        System.out.println(scriptForResultAndCount);
+        //System.out.println(execScript);
+
         if (iSMutiRelations) {
-            scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
+            // 优化:多个关系的查询脚本
+            execScript = TitanUtils.optimizeMultiRelationsQuery(execScript);
         } else {
-            scriptForResultAndCount = TitanUtils.optimizeMoveConditionsToEdge(scriptForResultAndCount, reverse, scriptParamMap);
+            // 优化:把条件移到边上
+            execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
         }
 
-        System.out.println(scriptForResultAndCount);
-        System.out.println(scriptParamMap);
+        System.out.println(execScript + "\n" + scriptParamMap);
+        //System.out.println(TitanUtils.addParamToScript(execScript, scriptParamMap));
         long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
+        ResultSet resultSet = titanResourceRepository.search(execScript, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModelResourceModel(resultSet,resTypeSet,includes);// FIXME
+        return getListViewModelResourceModel(resultSet,resTypeSet,includes);
 
     }
 
@@ -140,29 +139,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 String key = entry.getKey();
                 List<String> value = new ArrayList<>();
                 for (String k : list) {
-                    value.add("*" + k.toLowerCase() + "*");
+                    value.add("*\\\"" + k.toLowerCase() + "\\\"*");
                 }
                 re.put(key, value);
             }
         }
         return re;
     }
-
-/*    Map<String, List<String>> changeToLike4Coverage(Map<String, List<String>> map) {
-        Map<String, List<String>> re = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(map)) {
-            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-                List<String> list = entry.getValue();
-                String key = entry.getKey();
-                List<String> value = new ArrayList<>();
-                for (String k : list) {
-                    value.add("[\\S\\s]*" + k.toLowerCase() + "[\\S\\s]*");
-                }
-                re.put(key, value);
-            }
-        }
-        return re;
-    }*/
 
 
 
