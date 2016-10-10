@@ -233,11 +233,6 @@
 			<artifactId>fastjson</artifactId>
 			<version>1.2.1</version>
 		</dependency>
-		<dependency>
-		    <groupId>com.sun</groupId>
-		    <artifactId>jimi</artifactId>
-		    <version>1.0</version>
-		</dependency>
 		<!-- Hibernate -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
@@ -396,11 +391,6 @@
 			<id>nd.hy.repository</id>
 			<name>NetDragon HY Maven Repository</name>
 			<url>http://nexus.sdp.nd/nexus/content/groups/public/</url>
-		</repository>
-		<repository>
-			<id>3rdparty</id>
-			<name>nd_3rdparty</name>
-			<url>https://maven.atlassian.com/3rdparty/</url>
 		</repository>
 	</repositories>
 	<profiles>
