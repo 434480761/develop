@@ -258,7 +258,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"5bedae0e-abf6-4467-9904-ef33bb955204\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu/esp/test/a.xls\",\"target_location\":\"/qa_content_edu/esp/test\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"3e1031bf-d0a7-4f9f-93c2-83f6a8ef2e26\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu_product/esp/assets/259eb9be-e213-4e39-b055-d7606fb3fb11.pkg/AAAAAAAAAAAAAAAAA.txt\",\"target_location\":\"/qa_content_edu_product/esp/assets/259eb9be-e213-4e39-b055-d7606fb3fb11.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);

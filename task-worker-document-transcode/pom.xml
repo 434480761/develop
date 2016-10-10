@@ -236,6 +236,11 @@
 			<artifactId>itextpdf</artifactId>
 			<version>5.5.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.jacob</groupId>
+			<artifactId>com-jacob</artifactId>
+			<version>1.18</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>lifecycle-document-transcode</finalName>
