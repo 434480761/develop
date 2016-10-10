@@ -346,12 +346,12 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         if(!StringUtils.isEmpty(result)){
             Map<String, String> valueMap = TitanResultParse.toMap(result);
 
-//            boolean isDataNotExist = isDataExist(valueMap, getTaxonPath(categories), getTaxOnCode(categories), getResCoverage(coverages, education.getStatus()));
+            boolean isDataNotExist = isDataExist(valueMap, getTaxonPath(categories), getTaxOnCode(categories), getResCoverage(coverages, education.getStatus()));
 
-//            if (isDataNotExist) {
-//                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
-//                titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
-//            }
+            if (isDataNotExist) {
+                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
+                titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
+            }
         } else {
             LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
             titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
@@ -375,10 +375,10 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         boolean isPathEqual = isEqual(valueMap.get("search_path"), paths);
         boolean isCoverageEqual = isEqual(valueMap.get("search_coverage"), coverageSet);
         
-        boolean isCodeStringEqual = isEqual(valueMap.get("search_code_string"), codes);
-        boolean isPathStringEqual = isEqual(valueMap.get("search_path_string"), paths);
-        boolean isCoverageStringEqual = isEqual(valueMap.get("search_coverage_string"), coverageSet);
-        return !isCodeEqual || !isPathEqual || !isCoverageEqual || !isCodeStringEqual || !isPathStringEqual || !isPathStringEqual || !isCoverageStringEqual;
+        boolean isCodeStringEqual = isEqual(valueMap.get("search_code_string"), TitanScritpUtils.appendQuoMark(codes));
+        boolean isPathStringEqual = isEqual(valueMap.get("search_path_string"), TitanScritpUtils.appendQuoMark(paths));
+        boolean isCoverageStringEqual = isEqual(valueMap.get("search_coverage_string"), TitanScritpUtils.appendQuoMark(coverageSet));
+        return !isCodeEqual || !isPathEqual || !isCoverageEqual || !isCodeStringEqual || !isPathStringEqual || !isCoverageStringEqual;
     }
     
     private boolean isEqual(String value1, Set<String> value2) {
