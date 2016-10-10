@@ -346,12 +346,12 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         if(!StringUtils.isEmpty(result)){
             Map<String, String> valueMap = TitanResultParse.toMap(result);
 
-            boolean isDataNotExist = isDataExist(valueMap, getTaxonPath(categories), getTaxOnCode(categories), getResCoverage(coverages, education.getStatus()));
+//            boolean isDataNotExist = isDataExist(valueMap, getTaxonPath(categories), getTaxOnCode(categories), getResCoverage(coverages, education.getStatus()));
 
-            if (isDataNotExist) {
-                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
-                titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
-            }
+//            if (isDataNotExist) {
+//                LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
+//                titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
+//            }
         } else {
             LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), params);
             titanSync(TitanSyncType.CHECK_NR_NOT_EXIST, params.get(primaryCategory).toString(), params.get(educationIdentifier).toString());
