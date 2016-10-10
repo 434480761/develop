@@ -207,7 +207,6 @@ public class TitanResourceController {
 		titanResourceService.timeTaskImport4Update(page, type);
 	}
 
-	@MarkAspect4ImportData
 	@RequestMapping(value = "/{resourceType}/{id}/script", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
 	public long importOneData4Script(@PathVariable String resourceType, @PathVariable String id) {
