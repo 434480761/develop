@@ -71,9 +71,6 @@ public class CoverageController {
     @Autowired
     private AsynEsResourceService esResourceOperation;
     
-    @Autowired
-    private TitanCommonService titanCommonService;
-    
     /**
      * 增加资源覆盖范围	
      * <p>Create Time: 2015年6月18日   </p>
@@ -478,10 +475,7 @@ public class CoverageController {
             return MessageConvertUtil
                     .getMessageString(LifeCircleErrorMessageMapper.DeleteCoverageFail);
         }
-        
-      //TODO titan
-        titanCommonService.delete(TitanCommonServiceImpl.EDGE,rcid);
-        
+
 		// add by lsm offline to elasticsearch
         esResourceOperation.asynAdd(resource);
         
@@ -548,10 +542,7 @@ public class CoverageController {
             return MessageConvertUtil
                     .getMessageString(LifeCircleErrorMessageMapper.BatchDeleteCoverageFail);
         }
-        
-      //TODO titan
-        titanCommonService.batchDelete(TitanCommonServiceImpl.EDGE,rcids);
-        
+
 		// add by lsm offline to elasticsearch
         esResourceOperation.asynBatchAdd(resources);
         

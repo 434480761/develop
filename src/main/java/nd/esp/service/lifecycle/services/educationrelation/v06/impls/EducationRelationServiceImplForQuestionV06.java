@@ -25,6 +25,7 @@ import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelation
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -63,6 +64,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     private NotifyReportService nrs;
     
     @Override
+    @TitanTransaction
     public List<EducationRelationModel> createRelation(List<EducationRelationModel> educationRelationModels,
                                                        boolean isCreateWithResource) {
         // 待添加的资源关系集合
@@ -242,6 +244,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     }
 
     @Override
+    @TitanTransaction
     public EducationRelationModel updateRelation(String resType,
                                                  String sourceUuid,
                                                  String rid,
@@ -358,6 +361,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     }
     
     @Override
+    @TitanTransaction
     public boolean deleteRelation(String rid, String sourceUuid, String resType) {
         // 判断源资源是否存在,不存在将抛出not found的异常
         CommonHelper.resourceExist(resType, sourceUuid, ResourceType.RESOURCE_SOURCE);
@@ -390,6 +394,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     }
 
     @Override
+    @TitanTransaction
     public boolean deleteRelationByTarget(String resType,
                                           String sourceUuid,
                                           List<String> target,
@@ -496,6 +501,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     }
 
     @Override
+    @TitanTransaction
     public boolean deleteRelationByTargetType(String resType,
                                               String sourceUuid,
                                               List<String> targetType,
@@ -602,6 +608,7 @@ public class EducationRelationServiceImplForQuestionV06 implements EducationRela
     }
 
     @Override
+    @TitanTransaction
     public void batchAdjustRelationOrder(String resType,
                                          String sourceUuid,
                                          List<BatchAdjustRelationOrderModel> batchAdjustRelationOrderModels) {
