@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.elasticsearch;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
@@ -10,6 +11,7 @@ import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.springframework.http.HttpStatus;
 
 import java.util.*;
@@ -43,7 +45,7 @@ import java.util.*;
  */
 public class EsIndexQueryBuilder {
 
-    private String index="mixed_ndresource";
+    private String index=Constant.TITAN_ES_RESOURCE_INDEX;
     private String words;
     //private String resType;
     private Set<String> resTypeSet;
@@ -510,6 +512,11 @@ public class EsIndexQueryBuilder {
                 String codeKey = entry.getKey();
                 if (CollectionUtils.isEmpty(values)) continue;
                 for (String value : values) {
+                    if (TitanKeyWords.search_coverage.toString().equals(property)) {
+                        if (value.split("/").length == 3) {
+                            value = value + "/";
+                        }
+                    }
                     if (value.contains("$")) {
                         value = value.replace("$", "\\$");
                     }
