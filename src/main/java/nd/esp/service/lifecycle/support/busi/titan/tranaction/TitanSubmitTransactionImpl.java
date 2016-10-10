@@ -1,7 +1,6 @@
 package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanRepository;
 import nd.esp.service.lifecycle.daos.titan.inter.TitanRepositoryUtils;
 import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
@@ -9,6 +8,8 @@ import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,7 +142,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
          * */
         for (String identifier : educationIds.keySet()){
             builder.updateEducationRedProperty(identifier);
-            builder.updateRelationRedPropertyFromEdu(educationIds.get(identifier),identifier);
+//            builder.updateRelationRedPropertyFromEdu(educationIds.get(identifier),identifier);
         }
         builder.scriptEnd();
 
@@ -159,6 +160,10 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
         }
 
+        long time = System.currentTimeMillis();
+        updateRelationRedProperty(educationIds);
+        System.out.println("更新关系:"+(System.currentTimeMillis() - time));
+
         if ("2".equals(result)){
             return true;
         } else {
@@ -170,5 +175,69 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         if(titanRepositoryUtils.checkRelationExistInMysql(relation)){
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, relation);
         }
+    }
+
+    private void updateRelationRedProperty(Map<String, String> educationIds){
+        List<String> edgeIds = new ArrayList<>();
+        for (String identifier : educationIds.keySet()) {
+            edgeIds.addAll(getAllRelationId(identifier));
+        }
+        if (edgeIds.size() == 0){
+            return;
+        }
+        for (List<String> edges : splitList(edgeIds, 2)){
+            TitanScriptBuilder updateEdgeBuilder = new TitanScriptBuilder();
+            updateEdgeBuilder.butchUpdateRelationRedProperty(edges);
+            updateEdgeBuilder.scriptEnd();
+            try {
+                titanCommonRepository.executeScript(updateEdgeBuilder.getScript().toString(), updateEdgeBuilder.getParam());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private List<String> getAllRelationId(String resourceId){
+        String script = "g.V().has('identifier',resourceId).union(inE('has_relation'),outE('has_relation')).values('identifier')";
+        Map<String, Object> param = new HashMap<>();
+        param.put("resourceId",resourceId);
+        List<String> result = new LinkedList<>();
+        ResultSet resultSet = null;
+        try {
+            resultSet = titanCommonRepository.executeScriptResultSet(script, param);
+            Iterator<Result> iterator = resultSet.iterator();
+            while (iterator.hasNext()) {
+                String id = iterator.next().getString();
+                System.out.println(id);
+                result.add(id);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(result.size());
+
+        return result;
+    }
+
+    private static <T> List<List<T>> splitList(List<T> list, int pageSize) {
+        int listSize = list.size();
+        int page = (listSize + (pageSize-1))/ pageSize;
+        List<List<T>> listArray = new ArrayList<List<T>>();
+        for(int i=0;i<page;i++) {
+            List<T> subList = new ArrayList<T>();
+            for(int j=0;j<listSize;j++) {
+                int pageIndex = ( (j + 1) + (pageSize-1) ) / pageSize;
+                if(pageIndex == (i + 1)) {
+                    subList.add(list.get(j));
+                }
+
+                if( (j + 1) == ((j + 1) * pageSize) ) {
+                    break;
+                }
+            }
+            listArray.add(subList);
+        }
+        return listArray;
     }
 }

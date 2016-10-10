@@ -26,6 +26,7 @@ public class TitanScriptBuilder {
         UPDATE_EDUCATION_RED_PROPERTY("Long","updateEducationRedProperty"),
         UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty"),
         UPDATE_RELATION_RED_PROPERTY_FROM_EDU("void","updateRelationRedPropertyFromEdu"),
+        BUTCH_UPDATE_RELATION_RED_PROPERTY("void","butchUpdateRelationRedProperty"),
         MODIFY_PROPERTY("void","modifyProperty");
 
         final static String RESULT_PRE = "result";
@@ -136,6 +137,12 @@ public class TitanScriptBuilder {
             MODIFY_PROPERTY.resultName = null;
             MODIFY_PROPERTY.invokeMethod = MODIFY_PROPERTY.methodName +"("+element +","+field +","+value+")";
             return MODIFY_PROPERTY;
+        }
+
+        public static ScriptMethod butchUpdateRelationRedProperty(String edgeList){
+            BUTCH_UPDATE_RELATION_RED_PROPERTY.resultName = null;
+            BUTCH_UPDATE_RELATION_RED_PROPERTY.invokeMethod = BUTCH_UPDATE_RELATION_RED_PROPERTY.methodName +"("+edgeList+")";
+            return BUTCH_UPDATE_RELATION_RED_PROPERTY;
         }
 
     }
@@ -339,6 +346,30 @@ public class TitanScriptBuilder {
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);
+        }
+        this.param.putAll(param);
+        this.methodNames.add(updateEducationRedProperty.invokeMethod);
+        this.firstIndex ++ ;
+        return this;
+    }
+
+    public TitanScriptBuilder butchUpdateRelationRedProperty(List<String> identifierLies){
+        Variable variable = createVariable(TitanScriptModel.Type.E);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramName = "butchRelationRed" + variable.getSuffix();
+        ScriptMethod updateEducationRedProperty = ScriptMethod.butchUpdateRelationRedProperty(paramName);
+
+        param.put(paramName,identifierLies);
+        /**
+         * 保证不添加两个重复的方法
+         * */
+        if (!scriptMethodSet.contains(updateEducationRedProperty)){
+            scriptMethodSet.add(updateEducationRedProperty);
+            this.script.append(updateEducationRedProperty.script);
+            if (!scriptMethodSet.contains(ScriptMethod.UPDATE_RELATION_RED_PROPERTY)){
+                this.script.append(ScriptMethod.UPDATE_RELATION_RED_PROPERTY.script);
+                scriptMethodSet.add(ScriptMethod.UPDATE_RELATION_RED_PROPERTY);
+            }
         }
         this.param.putAll(param);
         this.methodNames.add(updateEducationRedProperty.invokeMethod);
