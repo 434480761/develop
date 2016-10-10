@@ -178,6 +178,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(StringUtils.isEmpty(education.getPrimaryCategory())){
             return false;
         }
+        boolean success = true;
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
@@ -198,12 +199,23 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
         TitanTransaction titanTransaction = new TitanTransaction();
         addStepEntity(titanTransaction, education,TitanOperationType.add);
-        addStepEntity(titanTransaction, coverageList,TitanOperationType.add);
         addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
         addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
         addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
 
-        return titanSubmitTransaction.submit(titanTransaction);
+        if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+            return false;
+        }
+        //覆盖范围、资源关系的数据量太大 需要单独处理
+        for (ResCoverage coverage : coverageList){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, coverage,TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                success = false;
+            }
+        }
+
+        return success;
     }
 
     private boolean report(Education education){
@@ -214,6 +226,9 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if(StringUtils.isEmpty(education.getPrimaryCategory())){
             return false;
         }
+
+        boolean success = true;
+
         LOG.info("titan_sync : report resource start primaryCategory：{}  identifier:{}",
                 education.getPrimaryCategory(),education.getIdentifier());
         String primaryCategory = education.getPrimaryCategory();
@@ -237,13 +252,33 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
         TitanTransaction titanTransaction = new TitanTransaction();
         addStepEntity(titanTransaction, education,TitanOperationType.add);
-        addStepEntity(titanTransaction, coverageList,TitanOperationType.add);
         addStepEntity(titanTransaction, resourceCategoryList,TitanOperationType.add);
         addStepEntity(titanTransaction, techInfoList,TitanOperationType.add);
         addStepEntity(titanTransaction, statisticalList,TitanOperationType.add);
-        addStepEntity(titanTransaction, resourceRelations,TitanOperationType.add);
+        //资源保存失败直接跳过后面的操作
+        if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+            return false;
+        }
+        //覆盖范围、资源关系的数据量可能会太大 单独处理
+        for (ResCoverage coverage : coverageList){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, coverage,TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                success = false;
+            }
+        }
+        for (ResourceRelation relation : resourceRelations){
+            titanTransaction = new TitanTransaction();
+            addStepEntity(titanTransaction, relation, TitanOperationType.add);
+            if (!titanSubmitTransaction.submit4Sync(titanTransaction)){
+                if(titanRepositoryUtils.checkRelationExistInMysql(relation)){
+                    titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, relation);
+                    success =false;
+                }
+            }
+        }
 
-        return titanSubmitTransaction.submit(titanTransaction);
+        return success;
     }
 
     private void addStepEntity(TitanTransaction titanTransaction, EspEntity entity, TitanOperationType type){
@@ -263,17 +298,4 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
     }
 
-    private boolean checkExist(String primaryCategory, String identifier){
-        Long id = null;
-        try {
-            id = titanCommonRepository.getVertexIdByLabelAndId(primaryCategory, identifier);
-        } catch (Exception e) {
-            return false;
-        }
-        if (id == null){
-            return false;
-        }
-
-        return true;
-    }
 }
