@@ -386,8 +386,14 @@ public class TitanScritpUtils {
             param.put(pathName, path);
             index ++;
         }
-        String searchPathString = StringUtils.join(values, ",").toLowerCase();
+
+        Set<String> newValues = new HashSet<>();
+        for (String value : values){
+            newValues.add("\""+value+"\"");
+        }
+        String searchPathString = StringUtils.join(newValues, ",").toLowerCase();
         script.append(",'").append(fieldString.toString()).append("',").append(fieldString.toString());
+        
         param.put(fieldString.toString(),searchPathString);
     }
 
