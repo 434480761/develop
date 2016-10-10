@@ -32,6 +32,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     @Autowired
     private TitanRepositoryUtils titanRepositoryUtils;
 
+    /**
+     * 自定义的处理流程可以手动掉用这个方法
+     * */
     @Override
     public boolean submit(TitanTransaction transaction) {
         //TODO 可以做事务的重试
@@ -43,7 +46,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         } else {
             LOG.info("成功");
         }
-        return true;
+        return success;
     }
 
     private boolean submit(LinkedList<TitanRepositoryOperation> repositoryOperations){
