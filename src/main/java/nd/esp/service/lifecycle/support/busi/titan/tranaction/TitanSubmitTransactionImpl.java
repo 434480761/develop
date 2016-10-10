@@ -6,6 +6,7 @@ import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
 import nd.esp.service.lifecycle.utils.titan.script.script.TitanScriptBuilder;
 import org.apache.tinkerpop.gremlin.driver.Result;
@@ -22,7 +23,7 @@ import java.util.*;
  */
 @Component
 public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
-    private final static Integer BUTCH_UPDATE_RELATION_RED_PAGE_SIZE =50;
+    private final static Integer BUTCH_UPDATE_RELATION_RED_PAGE_SIZE = 50;
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanSubmitTransactionImpl.class);
 
@@ -34,24 +35,43 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
     /**
      * 自定义的处理流程可以手动掉用这个方法
-     * */
+     */
     @Override
-    public boolean submit(TitanTransaction transaction) {
+    public void submit(TitanTransaction transaction) {
         //TODO 可以做事务的重试
         LinkedList<TitanRepositoryOperation> repositoryOperations = transaction.getAllStep();
+        if (CollectionUtils.isEmpty(repositoryOperations)) {
+            return;
+        }
         boolean success = submit(repositoryOperations);
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
-        if (!success){
+        if (!success) {
             LOG.info("失败");
+            Map<String, String> map = getAllEducation(transaction.getAllStep());
+            for (String identifier : map.keySet()){
+                titanSync(identifier, map.get(identifier), TitanSyncType.SAVE_OR_UPDATE_ERROR);
+            }
         } else {
             LOG.info("成功");
         }
-        return success;
     }
 
-    private boolean submit(LinkedList<TitanRepositoryOperation> repositoryOperations){
-        TitanScriptBuilder  builder = new TitanScriptBuilder();
-        Map<String, String> educationIds = new HashMap<>();
+    @Override
+    public boolean submit4Sync(TitanTransaction transaction) {
+        LinkedList<TitanRepositoryOperation> repositoryOperations = transaction.getAllStep();
+        if (CollectionUtils.isEmpty(repositoryOperations)) {
+            return true;
+        }
+        return submit(repositoryOperations);
+    }
+
+    /**
+     * 1、educationRed更新冗余字段：修改资源、维度数据、覆盖范围、删除维度数据、删除覆盖范围，
+     * 会触发生成更新资源冗余字段和关系冗余字段的脚本
+     * */
+    private boolean submit(LinkedList<TitanRepositoryOperation> repositoryOperations) {
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+        Map<String, String> educationRed = new HashMap<>();
         for (TitanRepositoryOperation operation : repositoryOperations) {
             TitanOperationType type = operation.getOperationType();
             EspEntity entity = operation.getEntity();
@@ -59,12 +79,12 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 case add: case update:
                     if (entity instanceof Education){
                         //需要更新冗余字段
-                        educationIds.put(entity.getIdentifier(),
+                        educationRed.put(entity.getIdentifier(),
                                 ((Education) entity).getPrimaryCategory());
                         builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(entity));
                     } else if (entity instanceof ResCoverage) {
                         //需要更新冗余字段
-                        educationIds.put(((ResCoverage) entity).getResource(),
+                        educationRed.put(((ResCoverage) entity).getResource(),
                                 ((ResCoverage)entity).getResType());
                         //删除边
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
@@ -72,7 +92,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         builder.add(EducationToTitanBeanUtils.toEdge(entity));
                     } else if(entity instanceof ResourceCategory){
                         //需要更新冗余字段
-                        educationIds.put(((ResourceCategory) entity).getResource(),
+                        educationRed.put(((ResourceCategory) entity).getResource(),
                                 ((ResourceCategory) entity).getPrimaryCategory());
                         //删除边
                         builder.delete(EducationToTitanBeanUtils.toEdge(entity));
@@ -106,7 +126,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         LOG.error("获取资源ID失败");
                     }
                     if (resourceId!=null && resourceId.length() > 10){
-                        educationIds.put(resourceId,"delete");
+                        educationRed.put(resourceId,"delete");
                     }
 
                     builder.deleteEdgeById(entity.getIdentifier());
@@ -135,15 +155,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     LOG.info("没有对应的处理方法");
             }
         }
-        /**
-         * 冗余字段更新策略：
-         * 1、只有delete操作，冗余字段更新放在delete操作之前
-         * 2、有delete操作，同时有update、add操作
-         *      update、add中有包括对资源、覆盖范围、维度数据等的操作
-         *      不包含对应的操作
-         * 3、只有update、add操作，更新冗余字段放在更新之后
-         * */
-        for (String identifier : educationIds.keySet()){
+
+        //添加更新资源冗余字段的脚本
+        for (String identifier : educationRed.keySet()) {
             builder.updateEducationRedProperty(identifier);
         }
         builder.scriptEnd();
@@ -161,7 +175,8 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
         }
 
-        updateRelationRedProperty(educationIds);
+        //启动批量更新关系冗余字段脚本
+        updateRelationRedProperty(educationRed);
 
         if ("2".equals(result)){
             return true;
@@ -170,7 +185,35 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
     }
 
-    private void updateRelationRedProperty(Map<String, String> educationIds){
+    /**
+     * 获取当前事务中所有的资源ID
+     * */
+    private Map<String, String> getAllEducation(LinkedList<TitanRepositoryOperation> repositoryOperations) {
+        Map<String, String> education = new HashMap<>();
+        for (TitanRepositoryOperation operation : repositoryOperations) {
+            EspEntity entity = operation.getEntity();
+            if (entity instanceof Education) {
+                education.put(entity.getIdentifier(), ((Education) entity).getPrimaryCategory());
+            } else if (entity instanceof ResCoverage) {
+                education.put(((ResCoverage) entity).getResource(),((ResCoverage) entity).getResType());
+            } else if (entity instanceof ResourceCategory) {
+                education.put(((ResourceCategory) entity).getResource(),((ResourceCategory) entity).getPrimaryCategory());
+            } else if (entity instanceof TechInfo) {
+                education.put(((TechInfo) entity).getResource(),((TechInfo) entity).getResType());
+            } else if (entity instanceof ResourceStatistical) {
+                education.put(((ResourceStatistical) entity).getResource(),((ResourceStatistical) entity).getResType());
+            } else if (entity instanceof KnowledgeRelation) {
+
+            } else if (entity instanceof ResourceRelation) {
+                //关系中有两个资源，单独做处理
+                titanSync((ResourceRelation) entity);
+            }
+        }
+
+        return education;
+    }
+
+    private void updateRelationRedProperty(Map<String, String> educationIds) {
         new Thread(new UpdateRelationRedPropertyRunnable(educationIds)).start();
     }
 
@@ -180,34 +223,25 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
     }
 
-    public static <T> List<List<T>> splitList(List<T> list, int pageSize) {
-        int listSize = list.size();
-        int page = (listSize + (pageSize-1))/ pageSize;
-        List<List<T>> listArray = new ArrayList<List<T>>();
-        for(int i=0;i<page;i++) {
-            List<T> subList = new ArrayList<T>();
-            for(int j=0;j<listSize;j++) {
-                int pageIndex = ( (j + 1) + (pageSize-1) ) / pageSize;
-                if(pageIndex == (i + 1)) {
-                    subList.add(list.get(j));
-                }
-                if( (j + 1) == ((j + 1) * pageSize) ) {
-                    break;
-                }
-            }
-            listArray.add(subList);
-        }
-        return listArray;
+    private void titanSync(String identifier, String primaryCategory, TitanSyncType type){
+        titanRepositoryUtils.titanSync4MysqlImportAdd(type, primaryCategory, identifier);
     }
 
-    private class UpdateRelationRedPropertyRunnable implements Runnable{
-        Map<String, String> educationIds ;
-        public UpdateRelationRedPropertyRunnable(Map<String, String> educationIds){
+    /**
+     * 更新关系冗余字段线程
+     * */
+    private class UpdateRelationRedPropertyRunnable implements Runnable {
+        Map<String, String> educationIds;
+
+        public UpdateRelationRedPropertyRunnable(Map<String, String> educationIds) {
             this.educationIds = educationIds;
         }
+
         @Override
         public void run() {
+            System.out.println(Thread.currentThread().getId() + "start");
             updateRelationRedProperty(educationIds);
+            System.out.println(Thread.currentThread().getId() + "end");
         }
 
         private void updateRelationRedProperty(Map<String, String> educationIds){
@@ -249,6 +283,26 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 e.printStackTrace();
             }
             return result;
+        }
+
+        private <T> List<List<T>> splitList(List<T> list, int pageSize) {
+            int listSize = list.size();
+            int page = (listSize + (pageSize - 1)) / pageSize;
+            List<List<T>> listArray = new ArrayList<List<T>>();
+            for (int i = 0; i < page; i++) {
+                List<T> subList = new ArrayList<T>();
+                for (int j = 0; j < listSize; j++) {
+                    int pageIndex = ((j + 1) + (pageSize - 1)) / pageSize;
+                    if (pageIndex == (i + 1)) {
+                        subList.add(list.get(j));
+                    }
+                    if ((j + 1) == ((j + 1) * pageSize)) {
+                        break;
+                    }
+                }
+                listArray.add(subList);
+            }
+            return listArray;
         }
     }
 }
