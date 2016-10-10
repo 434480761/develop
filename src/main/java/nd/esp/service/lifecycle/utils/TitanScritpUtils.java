@@ -206,6 +206,18 @@ public class TitanScritpUtils {
         return searchCoverages;
     }
 
+    public static Set<String> appendQuoMark(Set<String> values){
+        Set<String> newValues = new HashSet<>();
+        if (CollectionUtils.isEmpty(values)){
+            return newValues;
+        }
+        for (String value : values){
+            newValues.add("\""+value+"\"");
+        }
+
+        return newValues;
+    }
+
     static private void getAllDeclareField(Class<?> className,
                                            List<Field> fields) {
         if (className == null) {
@@ -386,14 +398,9 @@ public class TitanScritpUtils {
             param.put(pathName, path);
             index ++;
         }
-
-        Set<String> newValues = new HashSet<>();
-        for (String value : values){
-            newValues.add("\""+value+"\"");
-        }
-        String searchPathString = StringUtils.join(newValues, ",").toLowerCase();
+        String searchPathString = StringUtils.join(appendQuoMark(values), ",").toLowerCase();
         script.append(",'").append(fieldString.toString()).append("',").append(fieldString.toString());
-        
+
         param.put(fieldString.toString(),searchPathString);
     }
 
