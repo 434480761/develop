@@ -167,9 +167,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         String result = null;
         if (param != null && param.size() > 0) {
             try {
-                long time = System.currentTimeMillis();
+//                long time = System.currentTimeMillis();
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
-                System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
+//                System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
             } catch (Exception e) {
                 return false;
             }
@@ -239,9 +239,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
         @Override
         public void run() {
-            System.out.println(Thread.currentThread().getId() + "start");
+//            System.out.println(Thread.currentThread().getId() + "start");
             updateRelationRedProperty(educationIds);
-            System.out.println(Thread.currentThread().getId() + "end");
+//            System.out.println(Thread.currentThread().getId() + "end");
         }
 
         private void updateRelationRedProperty(Map<String, String> educationIds){
