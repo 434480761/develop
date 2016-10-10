@@ -22,6 +22,7 @@ import java.util.*;
  */
 @Component
 public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
+    private final static Integer BUTCH_UPDATE_RELATION_RED_PAGE_SIZE =50;
     private static final Logger LOG = LoggerFactory
             .getLogger(TitanSubmitTransactionImpl.class);
 
@@ -42,7 +43,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         } else {
             LOG.info("成功");
         }
-
         return true;
     }
 
@@ -142,7 +142,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
          * */
         for (String identifier : educationIds.keySet()){
             builder.updateEducationRedProperty(identifier);
-//            builder.updateRelationRedPropertyFromEdu(educationIds.get(identifier),identifier);
         }
         builder.scriptEnd();
 
@@ -160,9 +159,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
         }
 
-        long time = System.currentTimeMillis();
         updateRelationRedProperty(educationIds);
-        System.out.println("更新关系:"+(System.currentTimeMillis() - time));
 
         if ("2".equals(result)){
             return true;
@@ -171,53 +168,14 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         }
     }
 
+    public void updateRelationRedProperty(Map<String, String> educationIds){
+        new Thread(new UpdateRelationRedPropertyRunnable(educationIds)).start();
+    }
+
     private void titanSync(ResourceRelation relation){
         if(titanRepositoryUtils.checkRelationExistInMysql(relation)){
             titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR, relation);
         }
-    }
-
-    private void updateRelationRedProperty(Map<String, String> educationIds){
-        List<String> edgeIds = new ArrayList<>();
-        for (String identifier : educationIds.keySet()) {
-            edgeIds.addAll(getAllRelationId(identifier));
-        }
-        if (edgeIds.size() == 0){
-            return;
-        }
-        for (List<String> edges : splitList(edgeIds, 2)){
-            TitanScriptBuilder updateEdgeBuilder = new TitanScriptBuilder();
-            updateEdgeBuilder.butchUpdateRelationRedProperty(edges);
-            updateEdgeBuilder.scriptEnd();
-            try {
-                titanCommonRepository.executeScript(updateEdgeBuilder.getScript().toString(), updateEdgeBuilder.getParam());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private List<String> getAllRelationId(String resourceId){
-        String script = "g.V().has('identifier',resourceId).union(inE('has_relation'),outE('has_relation')).values('identifier')";
-        Map<String, Object> param = new HashMap<>();
-        param.put("resourceId",resourceId);
-        List<String> result = new LinkedList<>();
-        ResultSet resultSet = null;
-        try {
-            resultSet = titanCommonRepository.executeScriptResultSet(script, param);
-            Iterator<Result> iterator = resultSet.iterator();
-            while (iterator.hasNext()) {
-                String id = iterator.next().getString();
-                System.out.println(id);
-                result.add(id);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(result.size());
-
-        return result;
     }
 
     private static <T> List<List<T>> splitList(List<T> list, int pageSize) {
@@ -239,5 +197,58 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             listArray.add(subList);
         }
         return listArray;
+    }
+
+    private class UpdateRelationRedPropertyRunnable implements Runnable{
+        Map<String, String> educationIds ;
+        public UpdateRelationRedPropertyRunnable(Map<String, String> educationIds){
+            this.educationIds = educationIds;
+        }
+        @Override
+        public void run() {
+            updateRelationRedProperty(educationIds);
+        }
+
+
+        private void updateRelationRedProperty(Map<String, String> educationIds){
+            List<String> edgeIds = new ArrayList<>();
+            for (String identifier : educationIds.keySet()) {
+                edgeIds.addAll(getAllRelationId(identifier));
+            }
+            if (edgeIds.size() == 0){
+                return;
+            }
+
+            LOG.info("需要更新关系冗余字段:{};资源:{}",edgeIds.size(),educationIds.toString());
+            for (List<String> edges : splitList(edgeIds, BUTCH_UPDATE_RELATION_RED_PAGE_SIZE)){
+                TitanScriptBuilder updateEdgeBuilder = new TitanScriptBuilder();
+                updateEdgeBuilder.butchUpdateRelationRedProperty(edges);
+                updateEdgeBuilder.scriptEnd();
+                try {
+                    titanCommonRepository.executeScript(updateEdgeBuilder.getScript().toString(), updateEdgeBuilder.getParam());
+                } catch (Exception e) {
+                    LOG.info("更新关系冗余字段出现异常 {}",educationIds);
+                }
+            }
+        }
+
+        private List<String> getAllRelationId(String resourceId){
+            String script = "g.V().has('identifier',resourceId).union(inE('has_relation'),outE('has_relation')).values('identifier')";
+            Map<String, Object> param = new HashMap<>();
+            param.put("resourceId",resourceId);
+            List<String> result = new LinkedList<>();
+            ResultSet resultSet = null;
+            try {
+                resultSet = titanCommonRepository.executeScriptResultSet(script, param);
+                Iterator<Result> iterator = resultSet.iterator();
+                while (iterator.hasNext()) {
+                    String id = iterator.next().getString();
+                    result.add(id);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
     }
 }
