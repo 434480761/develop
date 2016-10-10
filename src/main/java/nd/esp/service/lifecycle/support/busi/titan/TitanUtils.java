@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
-import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
@@ -19,7 +18,22 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  */
 public class TitanUtils {
 
-	private final static String[] MOVE_FILEDS = {"primary_category", "lc_enable", "lc_create_time", "lc_last_update", "lc_status", "search_code", "search_path", "search_coverage"};
+	public static String addParamToScript(String script, Map<String, Object> scriptParamMap) {
+		for (Map.Entry<String, Object> entry : scriptParamMap.entrySet()) {
+			String value;
+			if (entry.getKey().contains("lc_last_update") || entry.getKey().contains("lc_create_time")) {
+				value = entry.getValue().toString();
+			} else {
+				value = "'" + entry.getValue().toString() + "'";
+			}
+			script = script.replace(entry.getKey(), value);
+		}
+		script = script.replace("lc_'true'", "true");
+		script = script.replace("'true'", "true");
+		return script;
+	}
+
+	private final static String[] MOVE_FIELDS = {"primary_category", "lc_enable", "lc_create_time", "lc_last_update", "lc_status", "search_code", "search_path", "search_coverage"};
 
 	/**
 	 * 优化：把过滤条件移到边上
@@ -30,7 +44,7 @@ public class TitanUtils {
 	public static String optimizeMoveConditionsToEdge(String script, boolean reverse,Map<String, Object> scriptParamMap) {
 		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
 		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
-		String vConditions, prefix = null;
+		String vConditions, prefix;
 		if (reverse) {
 			prefix = "source_r_";
 			vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
@@ -38,35 +52,41 @@ public class TitanUtils {
 			prefix = "target_r_";
 			vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
 		}
-		String move = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
-		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, move));
-		script = script.replace(result, result.replace(".as('e')" + vConditions, move));
+		String optimizeScript = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
+		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
+		script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
 		return script;
 	}
 
 	/**
 	 * primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
-	 * @param totalCountV
+	 * @param vConditions
 	 * @return
      */
-	private static String moveConditionsToEdge(String totalCountV, String prefix, Map<String, Object> scriptParamMap) {
-		String[] conditions = totalCountV.split("\\.");
+	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
+		String[] conditions = vConditions.split("\\.");
 		Map<String, String> optimizeConditions = optimizeConditions(conditions, scriptParamMap);
-		StringBuffer scriptBuffer = new StringBuffer();
-		//Set<String> fields = new HashSet<>();CollectionUtils.addAll(fields, MOVE_FILEDS);
-		for (String c : conditions) {
-			for (String f : MOVE_FILEDS) {
-				if (c.contains(f)) {
+		StringBuffer eConditions = new StringBuffer();
+		for (String condition : conditions) {
+			for (String field : MOVE_FIELDS) {
+				if (condition.contains(field)) {
 					String suffix = "";
-					if ("search_code".equals(f) || "search_path".equals(f) || "search_coverage".equals(f))
-						suffix = "_string";
-					totalCountV = totalCountV.replace("." + c, "");
-					scriptBuffer.append(".").append(optimizeConditions.get(c).replace("'" + f + "'", "'" + prefix + f + suffix + "'"));
-					//fields.remove(f);
+					if ("search_code".equals(field) || "search_path".equals(field) || "search_coverage".equals(field)) suffix = "_string";
+					vConditions = vConditions.replace("." + condition, "");// 点上把这个条件移除
+					String eCondition = optimizeConditions.get(condition).replace("'" + field + "'", "'" + prefix + field + suffix + "'");
+					eConditions.append(".").append(eCondition);// 边上加上这个条件
+					optimizeConditions.remove(condition);
 				}
 			}
 		}
-		return scriptBuffer.append(".as('e')").append(totalCountV).toString();
+		// 优化点上剩余条件
+		if (CollectionUtils.isNotEmpty(optimizeConditions)) {
+			for (Map.Entry<String, String> entry : optimizeConditions.entrySet()) {
+				vConditions = vConditions.replace(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return eConditions.append(".as('e')").append(vConditions).toString();
 	}
 
 	/**
