@@ -244,8 +244,14 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         if (statisticalList.size() != resultStatisticals.size()){
             return false;
         }
-        LOG.info("titan_sync : report {} success",education.getIdentifier());
-        return true;
+
+        TitanTransaction titanTransaction = new TitanTransaction();
+        TitanRepositoryOperation operation = new TitanRepositoryOperation();
+        operation.setEntity(education);
+        operation.setOperationType(TitanOperationType.update_relation_edu_red_property);
+        titanTransaction.addNextStep(operation);
+
+        return titanSubmitTransaction.submit4Sync(titanTransaction);
     }
 
     /**
@@ -292,8 +298,13 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             return false;
         }
 
-        LOG.info("titan_sync : report {} success",education.getIdentifier());
-        return true;
-    }
+        //
+        TitanTransaction titanTransaction = new TitanTransaction();
+        TitanRepositoryOperation operation = new TitanRepositoryOperation();
+        operation.setEntity(education);
+        operation.setOperationType(TitanOperationType.update_relation_edu_red_property);
+        titanTransaction.addNextStep(operation);
 
+        return titanSubmitTransaction.submit4Sync(titanTransaction);
+    }
 }
