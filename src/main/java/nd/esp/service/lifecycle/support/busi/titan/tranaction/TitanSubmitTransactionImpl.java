@@ -151,6 +151,12 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         }
                     }
                     break;
+                case update_relation_edu_red_property:
+                    if (entity instanceof Education) {
+                        //更新冗余字段
+                        educationRed.put(entity.getIdentifier(), ((Education) entity).getPrimaryCategory());
+                    }
+                    break;
                 default:
                     LOG.info("没有对应的处理方法");
             }
