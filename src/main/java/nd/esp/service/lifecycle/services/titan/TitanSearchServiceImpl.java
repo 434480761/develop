@@ -57,11 +57,14 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 多个关系走优化脚本
         Map<String, List<String>> re = params.get("relation");
         boolean iSMutiRelations = false;
+        boolean nullRelations = false;
         if (CollectionUtils.isNotEmpty(re)) {
             List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
             if (CollectionUtils.isNotEmpty(relations)) {
                 if (relations.size() > 1) iSMutiRelations = true;
             }
+        } else {
+            nullRelations = true;
         }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
@@ -85,12 +88,13 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (iSMutiRelations) {
             taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
             taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
-            coverages = params.get(ES_SearchField.coverages.toString());
+           // coverages = params.get(ES_SearchField.coverages.toString());
         } else {
             taxoncode = changeToLike(params.get(ES_SearchField.cg_taxoncode.toString()));
             taxonpath = changeToLike(params.get(ES_SearchField.cg_taxonpath.toString()));
-            coverages = changeToLike(params.get(ES_SearchField.coverages.toString()));
+            //coverages = changeToLike(params.get(ES_SearchField.coverages.toString()));
         }
+        coverages = params.get(ES_SearchField.coverages.toString());
         dealWithSearchCode(resourceQueryVertex, taxoncode);
         params.remove(ES_SearchField.cg_taxoncode.toString());
 
@@ -118,7 +122,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             execScript = TitanUtils.optimizeMultiRelationsQuery(execScript);
         } else {
             // 优化:把条件移到边上
-            execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
+            if (!nullRelations) execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
         }
 
         System.out.println(execScript + "\n" + scriptParamMap);
