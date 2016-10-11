@@ -95,8 +95,8 @@ public class TitanUtils {
 	 * @param scriptParamMap
      * @return
      */
-	private static Map<String,String> optimizeConditions(String[] tmpConditions,Map<String, Object> scriptParamMap) {
-		Map<String,String> conditions = new HashMap<>();
+	private static Map<String, String> optimizeConditions(String[] tmpConditions, Map<String, Object> scriptParamMap) {
+		Map<String, String> conditions = new HashMap<>();
 		for (String c : tmpConditions) {
 			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
 				// 暂时只处理 or
@@ -112,21 +112,21 @@ public class TitanUtils {
 				} else if (c.contains("'search_coverage'")) {
 					int size = CommonHelper.getSubStrAppearTimes(c, "search_coverage") - 1;
 					//coverage = "[\\S\\s]*" + coverage + "[\\S\\s]*";
-					scriptParamMap.put("search_coverage0","[\\S\\s]*" + scriptParamMap.get("search_coverage0") + "[\\S\\s]*");
+					scriptParamMap.put("search_coverage0", "[\\S\\s]*" + "\\\"" + scriptParamMap.get("search_coverage0").toString().toLowerCase() + "\\\"" + "[\\S\\s]*");
 					if (size == 1) {
 						value = "has('search_coverage',textRegex(search_coverage0))";
 					} else {
 						value = "or(has('search_coverage',textRegex(search_coverage0))";
 						for (int i = 1; i < size; i++) {
 							value = value + ",has('search_coverage',textRegex(search_coverage" + i + "))";
-							scriptParamMap.put("search_coverage" + i,"[\\S\\s]*" + scriptParamMap.get("search_coverage" + i) + "[\\S\\s]*");
+							scriptParamMap.put("search_coverage" + i, "[\\S\\s]*" + "\\\"" + scriptParamMap.get("search_coverage" + i).toString().toLowerCase() + "\\\"" + "[\\S\\s]*");
 						}
 						value = value + ")";
 					}
 				} else {
 					value = c;
 				}
-				conditions.put(c,value);
+				conditions.put(c, value);
 			}
 		}
 		return conditions;
