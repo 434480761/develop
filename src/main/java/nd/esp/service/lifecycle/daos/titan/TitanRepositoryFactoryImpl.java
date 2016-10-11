@@ -61,6 +61,8 @@ public class TitanRepositoryFactoryImpl implements TitanRepositoryFactory{
             return titanCoverageRepository;
         } else if(TitanKeyWords.has_category_code.toString().equals(label)){
             return titanCategoryRepository;
+        }else if (TitanKeyWords.has_knowledge_relation.toString().equals(label)){
+            return titanKnowledgeRelationRepository;
         }
 
         return null;

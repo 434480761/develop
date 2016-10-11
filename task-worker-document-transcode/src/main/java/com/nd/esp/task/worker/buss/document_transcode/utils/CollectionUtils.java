@@ -1,18 +1,12 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
 
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.nd.esp.task.worker.buss.document_transcode.utils.collection.CollectionFilter;
 import com.nd.esp.task.worker.buss.document_transcode.utils.collection.CollectionSelector;
 import com.nd.esp.task.worker.buss.document_transcode.utils.collection.MapExecutor;
 import com.nd.esp.task.worker.buss.document_transcode.utils.gson.ObjectUtils;
+
+import java.util.*;
 
 /**
  * 集合工具类

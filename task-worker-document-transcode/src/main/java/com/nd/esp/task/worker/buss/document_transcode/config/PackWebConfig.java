@@ -1,5 +1,6 @@
 package com.nd.esp.task.worker.buss.document_transcode.config;
 
+import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
@@ -8,8 +9,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-
-import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 
 @Configuration()
 @EnableWebMvc

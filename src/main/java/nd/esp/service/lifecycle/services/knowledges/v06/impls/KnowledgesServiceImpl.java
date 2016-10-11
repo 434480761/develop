@@ -30,6 +30,7 @@ import nd.esp.service.lifecycle.repository.sdk.ResourceRelationRepository;
 import nd.esp.service.lifecycle.services.knowledges.v06.KnowledgeService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
@@ -80,6 +81,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     private CommonServiceHelper commonServiceHelper;
 
     @Override
+    @TitanTransaction
     public KnowledgeModel createKnowledge(KnowledgeModel model) {
         // 检查title是否重复
         if (isExistKnowledgeTitle(model.getTitle())) {
@@ -93,6 +95,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
     
     @Override
+    @TitanTransaction
     public KnowledgeModel updateKnowledge(KnowledgeModel model) {
         Education oldBean;
         try {
@@ -123,6 +126,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public KnowledgeModel patchKnowledge(KnowledgeModel model) {
         return (KnowledgeModel)ndResourceService.patch(ResourceNdCode.knowledges.toString(), model);
     }
@@ -169,6 +173,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
     
     @Override
+    @TitanTransaction
     public void moveKnowledge(String kid, KnowledgeModel knowledgeModel) {
         //1.判断知识点是否存在
         Chapter knowledge = chapterDao.getChapterFromSdk(ResourceNdCode.knowledges.toString(),null,kid); 
@@ -298,6 +303,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public KnowledgeRelationsModel addKnowledgeRelation(KnowledgeRelationsModel knowledgeRelation) {
         try {
             Chapter knowledge = knowledgeRepository.get(knowledgeRelation.getSource());
@@ -446,6 +452,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public void deleteKnowledgeRelation(String id) {
         try {
             knowledgeRelationRepository.del(id);
@@ -461,6 +468,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public List<ChapterKnowledgeModel> addBatchChapterKnowledges(List<ChapterKnowledgeModel> models) {
         List<ResourceRelation> chapterKnowledges = new ArrayList<ResourceRelation>();
         ResourceRelation chapterKnowledge = null;
@@ -531,6 +539,7 @@ public class KnowledgesServiceImpl implements KnowledgeService {
     }
 
     @Override
+    @TitanTransaction
     public void deleteKnowledgeChapterKnowledge(String id, String tag, String outline) {
         ResourceRelation example = null;
         example = new ResourceRelation();
