@@ -228,7 +228,11 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
     }
 
     /**
-     * 更新关系冗余字段线程
+     * TODO
+     * 后期处理
+     * 以资源为中心够造线程
+     * 有需要再次更新覆盖范围的时候（取消上次的更新，并重新更新，更新结束后检查关系的条数是否和开始的时候一样）
+     *
      * */
     private class UpdateRelationRedPropertyRunnable implements Runnable {
         Map<String, String> educationIds;
@@ -253,6 +257,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                 return;
             }
 
+            Collections.sort(edgeIds);
             LOG.info("需要更新关系冗余字段:{};资源:{}",edgeIds.size(),educationIds.toString());
             for (List<String> edges : splitList(edgeIds, BUTCH_UPDATE_RELATION_RED_PAGE_SIZE)){
                 TitanScriptBuilder updateEdgeBuilder = new TitanScriptBuilder();

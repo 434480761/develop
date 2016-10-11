@@ -296,10 +296,20 @@ public class TitanResourceController {
         return 0;
     }
 
-	@RequestMapping(value = "/all/check/{type}/exist", method = RequestMethod.GET,
+	@RequestMapping(value = "/all/check/{type}/exist/simple", method = RequestMethod.GET,
 			produces = { MediaType.APPLICATION_JSON_VALUE })
-	public long checkAllResourceExist(@PathVariable String type) {
+	public long checkResourceExist(@PathVariable String type) {
 		titanResourceService.checkResourceExist(type);
+		return 0;
+	}
+
+	@RequestMapping(value = "/all/check/exist/simple", method = RequestMethod.GET,
+			produces = { MediaType.APPLICATION_JSON_VALUE })
+	public long checkAllResourceExist() {
+		titanResourceService.checkResourceExist(ResourceNdCode.chapters.toString());
+		for (String resourceType : ResourceTypeSupport.getAllValidEsResourceTypeList()) {
+			titanResourceService.checkResourceExist(resourceType);
+		}
 		return 0;
 	}
 
