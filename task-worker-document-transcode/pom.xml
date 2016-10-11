@@ -241,6 +241,11 @@
 			<artifactId>com-jacob</artifactId>
 			<version>1.18</version>
 		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>jimi-nd</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>lifecycle-document-transcode</finalName>

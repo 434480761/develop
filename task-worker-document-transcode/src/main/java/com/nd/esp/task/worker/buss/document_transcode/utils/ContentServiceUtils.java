@@ -25,6 +25,11 @@ public class ContentServiceUtils {
         request.setName(name);                        //目录项名（文件一般包括扩展名，支持重命名），必选
 
         //调用
+        try {
+            Dentry.deleteByPath(serviceName, path+"/"+name, session);
+        } catch (Exception e) {
+            LOG.info("Try del exist dentry: ", e);
+        }
         LOG.info("cs create " + serviceName + " " + session);
         request.create(serviceName, 0, 0, session);
     }
