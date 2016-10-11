@@ -35,6 +35,10 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		if(resourceRelation == null){
 			return null;
 		}
+
+		if (resourceRelation.getTarget() == null || resourceRelation.getSourceUuid() == null){
+			return resourceRelation;
+		}
 		ResourceRelation result = addRelation(resourceRelation);
 		if(result == null){
 			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
@@ -55,6 +59,10 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : resourceRelations) {
+			if (resourceRelation.getTarget() == null || resourceRelation.getSourceUuid() == null){
+				resourceRelationList.add(resourceRelation);
+				continue;
+			}
 			ResourceRelation rr = addRelation(resourceRelation);
 			if(rr != null){
 				resourceRelationList.add(rr);
@@ -76,6 +84,10 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 			return null;
 		}
 
+		if (resourceRelation.getTarget() == null || resourceRelation.getSourceUuid() == null){
+			return resourceRelation;
+		}
+
 		ResourceRelation result = updateRelation(resourceRelation);
 		if(result == null){
 			if(titanRepositoryUtils.checkRelationExistInMysql(resourceRelation)){
@@ -95,6 +107,10 @@ public class TitanRelationRepositoryImpl implements TitanRelationRepository {
 		}
 		List<ResourceRelation> resourceRelationList = new ArrayList<>();
 		for (ResourceRelation resourceRelation : entityList){
+			if (resourceRelation.getTarget() == null || resourceRelation.getSourceUuid() == null){
+				resourceRelationList.add(resourceRelation);
+				continue;
+			}
 			ResourceRelation result = updateRelation(resourceRelation);
 			if(result != null){
 				resourceRelationList.add(result);
