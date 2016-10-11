@@ -85,10 +85,10 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         // for now only deal with code
         Map<String, List<String>> taxoncode,taxonpath,coverages;
-        if (iSMutiRelations) {
+        if (iSMutiRelations || nullRelations) {
             taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
             taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
-           // coverages = params.get(ES_SearchField.coverages.toString());
+            // coverages = params.get(ES_SearchField.coverages.toString());
         } else {
             taxoncode = changeToLike(params.get(ES_SearchField.cg_taxoncode.toString()));
             taxonpath = changeToLike(params.get(ES_SearchField.cg_taxonpath.toString()));
