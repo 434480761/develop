@@ -167,9 +167,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         String result = null;
         if (param != null && param.size() > 0) {
             try {
-//                long time = System.currentTimeMillis();
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
-//                System.out.println("执行脚本:"+(System.currentTimeMillis() - time));
             } catch (Exception e) {
                 return false;
             }
@@ -243,9 +241,7 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
         @Override
         public void run() {
-//            System.out.println(Thread.currentThread().getId() + "start");
             updateRelationRedProperty(educationIds);
-//            System.out.println(Thread.currentThread().getId() + "end");
         }
 
         private void updateRelationRedProperty(Map<String, String> educationIds){
@@ -258,7 +254,6 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             }
 
             Collections.sort(edgeIds);
-            LOG.info("需要更新关系冗余字段:{};资源:{}",edgeIds.size(),educationIds.toString());
             for (List<String> edges : splitList(edgeIds, BUTCH_UPDATE_RELATION_RED_PAGE_SIZE)){
                 TitanScriptBuilder updateEdgeBuilder = new TitanScriptBuilder();
                 updateEdgeBuilder.butchUpdateRelationRedProperty(edges);
