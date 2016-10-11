@@ -1,0 +1,6 @@
+public void butchUpdateRelationRedProperty(Object obj){
+    List<String> edges=(List<String>)obj;
+    for(String edge:edges){
+        updateRelationRedProperty(edge);
+    }
+};

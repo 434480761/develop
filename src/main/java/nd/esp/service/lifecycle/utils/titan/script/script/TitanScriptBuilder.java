@@ -3,6 +3,8 @@ package nd.esp.service.lifecycle.utils.titan.script.script;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -11,6 +13,8 @@ import java.util.*;
  * Created by Administrator on 2016/8/24.
  */
 public class TitanScriptBuilder {
+    private static final Logger LOG = LoggerFactory
+            .getLogger(TitanScriptBuilder.class);
     private StringBuilder script = new StringBuilder();
     private Map<String, Object> param = new HashMap<>();
     private List<String> methodNames = new ArrayList<>();
@@ -19,8 +23,12 @@ public class TitanScriptBuilder {
     enum  ScriptMethod{
         DELETE_VERTEX_BY_IDENTIFIER("void", "deleteVertexByIdentifier"),
         DELETE_EDGE_BY_IDENTIFIER("void","deleteEdgeByIdentifier"),
-        UPDATE_EDUCATION_RED_PROPERTY("void","updateEducationRedProperty"),
-        UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty");
+        UPDATE_EDUCATION_RED_PROPERTY("Long","updateEducationRedProperty"),
+        UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty"),
+        UPDATE_RELATION_RED_PROPERTY_FROM_EDU("void","updateRelationRedPropertyFromEdu"),
+        BUTCH_UPDATE_RELATION_RED_PROPERTY("void","butchUpdateRelationRedProperty"),
+        MODIFY_PROPERTY("void","modifyProperty");
+
         final static String RESULT_PRE = "result";
         private static int methodIndex = 0;
 
@@ -30,7 +38,7 @@ public class TitanScriptBuilder {
         private String resultName;
         private String invokeMethod;
 
-        private ScriptMethod(String resultType,String methodName){
+        ScriptMethod(String resultType,String methodName){
             this.resultType = resultType;
             this.methodName = methodName;
             this.script = loadScript(methodName);
@@ -56,11 +64,15 @@ public class TitanScriptBuilder {
                 String line;
                 while ((line = reader.readLine())!=null){
                     if (StringUtils.isNotEmpty(line)){
-                        script.append(line.trim());
+                        line = line.trim();
+                        if (line.startsWith("//")){
+                            continue;
+                        }
+                        script.append(line);
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error("读取脚本文件{}出错",name);
             } finally {
                 if (reader != null){
                     try {
@@ -75,7 +87,7 @@ public class TitanScriptBuilder {
                 try {
                     throw new Exception("文件titan脚本加载不正确");
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.error("脚本文件{}有错",name);
                 }
             }
 
@@ -111,6 +123,26 @@ public class TitanScriptBuilder {
                     + UPDATE_RELATION_RED_PROPERTY.resultName +"=" +
                     UPDATE_RELATION_RED_PROPERTY.methodName +"("+identifier+")";
             return UPDATE_RELATION_RED_PROPERTY;
+        }
+
+        public static ScriptMethod updateRelationRedPropertyFromEdu(String primaryCategory,String identifier){
+            methodIndex ++;
+            UPDATE_RELATION_RED_PROPERTY_FROM_EDU.resultName = null;
+            UPDATE_RELATION_RED_PROPERTY_FROM_EDU.invokeMethod =
+                            UPDATE_RELATION_RED_PROPERTY_FROM_EDU.methodName +"("+primaryCategory+","+identifier+")";
+            return UPDATE_RELATION_RED_PROPERTY_FROM_EDU;
+        }
+
+        public static ScriptMethod modifyProperty(String element, String field, String value){
+            MODIFY_PROPERTY.resultName = null;
+            MODIFY_PROPERTY.invokeMethod = MODIFY_PROPERTY.methodName +"("+element +","+field +","+value+")";
+            return MODIFY_PROPERTY;
+        }
+
+        public static ScriptMethod butchUpdateRelationRedProperty(String edgeList){
+            BUTCH_UPDATE_RELATION_RED_PROPERTY.resultName = null;
+            BUTCH_UPDATE_RELATION_RED_PROPERTY.invokeMethod = BUTCH_UPDATE_RELATION_RED_PROPERTY.methodName +"("+edgeList+")";
+            return BUTCH_UPDATE_RELATION_RED_PROPERTY;
         }
 
     }
@@ -275,6 +307,9 @@ public class TitanScriptBuilder {
         String paramName = "redIdentifier" + variable.getSuffix();
         ScriptMethod scriptMethod = ScriptMethod.deleteEdgeByIdentifier(paramName);
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(scriptMethod)){
             scriptMethodSet.add(scriptMethod);
             this.script.append(scriptMethod.script);
@@ -285,10 +320,6 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public TitanScriptBuilder deleteVertexById(String identifier){
-        return this;
-    }
-
     /**
      * 整个脚本结束，组合脚本中的方法，边和点通用
      * */
@@ -296,14 +327,12 @@ public class TitanScriptBuilder {
         for (String methodName : methodNames){
             script.append(methodName).append(";");
         }
+        script.append("1+1");
         ScriptMethod.clean();
         return null;
     }
 
     public TitanScriptBuilder updateEducationRedProperty(String identifier){
-
-//        ScriptMethod deleteEdgeByIdentifier = ScriptMethod.deleteEdgeByIdentifier(identifier);
-//        ScriptMethod deleteVertexByIdentifier = ScriptMethod.deleteVertexByIdentifier(identifier);
 
         Variable variable = createVariable(TitanScriptModel.Type.V);
         HashMap<String,Object> param = new HashMap<>();
@@ -311,9 +340,64 @@ public class TitanScriptBuilder {
         ScriptMethod updateEducationRedProperty = ScriptMethod.updateEducationRedProperty(paramName);
 
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);
+        }
+        this.param.putAll(param);
+        this.methodNames.add(updateEducationRedProperty.invokeMethod);
+        this.firstIndex ++ ;
+        return this;
+    }
+
+    public TitanScriptBuilder butchUpdateRelationRedProperty(List<String> identifierLies){
+        Variable variable = createVariable(TitanScriptModel.Type.E);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramName = "butchRelationRed" + variable.getSuffix();
+        ScriptMethod updateEducationRedProperty = ScriptMethod.butchUpdateRelationRedProperty(paramName);
+
+        param.put(paramName,identifierLies);
+        /**
+         * 保证不添加两个重复的方法
+         * */
+        if (!scriptMethodSet.contains(updateEducationRedProperty)){
+            scriptMethodSet.add(updateEducationRedProperty);
+            this.script.append(updateEducationRedProperty.script);
+            if (!scriptMethodSet.contains(ScriptMethod.UPDATE_RELATION_RED_PROPERTY)){
+                this.script.append(ScriptMethod.UPDATE_RELATION_RED_PROPERTY.script);
+                scriptMethodSet.add(ScriptMethod.UPDATE_RELATION_RED_PROPERTY);
+            }
+        }
+        this.param.putAll(param);
+        this.methodNames.add(updateEducationRedProperty.invokeMethod);
+        this.firstIndex ++ ;
+        return this;
+    }
+
+    public TitanScriptBuilder updateRelationRedPropertyFromEdu(String primaryCategory, String identifier){
+
+        Variable variable = createVariable(TitanScriptModel.Type.V);
+        HashMap<String,Object> param = new HashMap<>();
+        String paramIdentifier = "redIdentifier" + variable.getSuffix();
+        String paramPrimaryCategory = "redPrimaryCategory"+variable.getSuffix();
+        ScriptMethod updateEducationRedProperty = ScriptMethod.updateRelationRedPropertyFromEdu(paramPrimaryCategory, paramIdentifier);
+
+        param.put(paramIdentifier,identifier);
+        param.put(paramPrimaryCategory, primaryCategory);
+
+        /**
+         * 保证不添加两个重复的方法
+         * */
+        if (!scriptMethodSet.contains(updateEducationRedProperty)){
+            scriptMethodSet.add(updateEducationRedProperty);
+            this.script.append(updateEducationRedProperty.script);
+            if (!scriptMethodSet.contains(ScriptMethod.UPDATE_RELATION_RED_PROPERTY)){
+                this.script.append(ScriptMethod.UPDATE_RELATION_RED_PROPERTY.script);
+                scriptMethodSet.add(ScriptMethod.UPDATE_RELATION_RED_PROPERTY);
+            }
         }
         this.param.putAll(param);
         this.methodNames.add(updateEducationRedProperty.invokeMethod);
@@ -328,6 +412,9 @@ public class TitanScriptBuilder {
         ScriptMethod updateEducationRedProperty = ScriptMethod.updateRelationRedProperty(paramName);
 
         param.put(paramName,identifier);
+        /**
+         * 保证不添加两个重复的方法
+         * */
         if (!scriptMethodSet.contains(updateEducationRedProperty)){
             scriptMethodSet.add(updateEducationRedProperty);
             this.script.append(updateEducationRedProperty.script);

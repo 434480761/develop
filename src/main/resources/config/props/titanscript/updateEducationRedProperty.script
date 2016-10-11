@@ -45,9 +45,9 @@ public Long updateEducationRedProperty(String identifier){
 	for(String str:coverageSet){
 		redv.property('search_coverage',str);
 		if(index==0){
-			string_coverage=string_coverage+str;
+			string_coverage=string_coverage+appendQuoMark(str);
 		}else{
-			string_coverage=string_coverage+','+str;
+			string_coverage=string_coverage+','+appendQuoMark(str);
 		};
 		index++;
 	};
@@ -56,9 +56,9 @@ public Long updateEducationRedProperty(String identifier){
 	for(String str:codeSet){
 		redv.property('search_code',str);
 		if(index==0){
-			string_code=string_code+str;
+			string_code=string_code+appendQuoMark(str);
 		}else{
-			string_code=string_code+","+str;
+			string_code=string_code+","+appendQuoMark(str);
 		};
 		index++;
 	};
@@ -66,11 +66,10 @@ public Long updateEducationRedProperty(String identifier){
 	index=0;
 	for(String str:pathSet){
 		redv.property('search_path',str);
-		string_path=string_path+str+',';
 		if(index==0){
-			string_code=string_code+str;
+			string_path=string_path+appendQuoMark(str);
 		}else{
-			string_code=string_code+','+str;
+			string_path=string_path+','+appendQuoMark(str);
 		};
 		index++;
 	};
@@ -98,4 +97,7 @@ public String getStatus(Vertex v){
 	}else{
 		return '';
 	}
+};
+public String appendQuoMark(String value){
+    return "\""+value+"\"";
 };

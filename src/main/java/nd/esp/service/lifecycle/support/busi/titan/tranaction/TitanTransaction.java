@@ -13,11 +13,14 @@ public class TitanTransaction {
     private int retryTimes ;
     private long crateTime;
     private String methodName;
-    public TitanTransaction(String methodName){
-        this.methodName = methodName;
+    public TitanTransaction(){
         repositoryOperations = new LinkedList<>();
         retryTimes = 0;
         crateTime = System.currentTimeMillis();
+    }
+    public TitanTransaction(String methodName){
+        this();
+        this.methodName = methodName;
     }
 
     public void addNextStep(TitanRepositoryOperation titanRepositoryOperation){

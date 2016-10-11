@@ -11,7 +11,7 @@ public String updateRelationRedProperty(String identifier){
     updateRelation(target,relation,'target');
     relation.id();
 };
-private void updateRelation(Vertex vertex, Edge edge,String type){
+public void updateRelation(Vertex vertex, Edge edge,String type){
     String primary_category=null;
     String lc_enable=null;
     String lc_create_time=null;
@@ -49,7 +49,7 @@ private void updateRelation(Vertex vertex, Edge edge,String type){
     addPropertyToEFromV(edge,search_coverage_string,vertex,'search_coverage_string');
 };
 
-private void addPropertyToEFromV(Edge e,String eField,Vertex v,String vField){
+public void addPropertyToEFromV(Edge e,String eField,Vertex v,String vField){
     if(v.properties(vField).hasNext()){
     	e.property(eField,v.property(vField).value())
     }
