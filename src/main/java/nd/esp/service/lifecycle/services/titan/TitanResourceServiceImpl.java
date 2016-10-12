@@ -568,7 +568,7 @@ public class TitanResourceServiceImpl implements TitanResourceService {
             this.startPage = 0;
         }
         public long pageQueryRelation(ResourceRepository resourceRepository) {
-            String fieldName = "identifier";
+            String fieldName = "lastUpdate";
 
             long indexNum = 0;
             // 分页
@@ -663,8 +663,14 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         }
         @Override
         public void method(List<ResourceRelation> resourceRelations) {
-            List<ResourceRelation> existRelation = getAllExistRelation(resourceRelations);
-            titanImportRepository.batchImportRelation(existRelation);
+            for (ResourceRelation relation : getAllExistRelation(resourceRelations)){
+                TitanTransaction titanTransaction = new TitanTransaction(null);
+                TitanRepositoryOperation operation = new TitanRepositoryOperation();
+                operation.setEntity(relation);
+                operation.setOperationType(TitanOperationType.update_relation_red_property);
+                titanTransaction.addNextStep(operation);
+                titanSubmitTransaction.submit(titanTransaction);
+            }
         }
     }
 

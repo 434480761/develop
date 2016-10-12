@@ -349,6 +349,50 @@ public class ParseAnnotation {
     }
 
     @Test
+    public void test2(){
+        String value1="aetwer,werwer,werqerw";
+        String value2 =" ";
+        String value3 = "   ,   ";
+        String value4="werwerwe";
+        String value5="\"wewer\",\"werxc";
+        System.out.println(appendQuoMark4SearchString(value1));
+        System.out.println(appendQuoMark4SearchString(value2));
+        System.out.println(appendQuoMark4SearchString(value3));
+        System.out.println(appendQuoMark4SearchString(value4));
+        System.out.println(appendQuoMark4SearchString(value5));
+
+
+    }
+
+    public String appendQuoMark4SearchString(String value){
+        if (value==null || "".equals(value)){
+            return value;
+        };
+        String[] values = value.split(",");
+        String newValue = "";
+        int index = 0;
+        for (String str : values){
+            if (str.trim().equals("")){
+                continue;
+            };
+            if (!str.startsWith("\"")||!str.endsWith("\"")){
+                str = "\""+str+"\"";
+            };
+            if (index==0){
+                newValue = newValue + str;
+            } else {
+                newValue = newValue +"," + str;
+            };
+            index ++;
+        };
+        return newValue;
+    };
+
+    public String appendQuoMark(String value){
+        return "\""+value+"\"";
+    }
+
+    @Test
     public void test(){
         String s= script.replace("\n","").replace("\t","");
         System.out.println(s);

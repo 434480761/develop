@@ -51,6 +51,35 @@ public void updateRelation(Vertex vertex, Edge edge,String type){
 
 public void addPropertyToEFromV(Edge e,String eField,Vertex v,String vField){
     if(v.properties(vField).hasNext()){
-    	e.property(eField,v.property(vField).value())
+        String fieldValue=v.property(vField).value();
+        //添加双引号
+        if('search_code_string'.equals(vField)||'search_path_string'.equals(vField)||'search_coverage_string'.equals(vField)){
+           fieldValue=appendQuoMark4SearchString(fieldValue);
+        };
+    	e.property(eField,fieldValue);
     }
+};
+
+public String appendQuoMark4SearchString(String value){
+    if (value==null || "".equals(value)){
+        return value;
+    };
+    String[] values = value.split(",");
+    String newValue = "";
+    int index = 0;
+    for (String str : values){
+        if (str.trim().equals("")){
+            continue;
+        };
+        if (!str.startsWith("\"")||!str.endsWith("\"")){
+            str = "\""+str+"\"";
+        };
+        if (index==0){
+            newValue = newValue + str;
+        } else {
+            newValue = newValue +"," + str;
+        };
+        index ++;
+    };
+    return newValue;
 };

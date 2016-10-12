@@ -43,16 +43,16 @@ public class TitanTransactionAspect {
     @AfterReturning("performanceAnnon()")
     public void afterReturnExecuteAnnon(JoinPoint point){
         String methodName = getMetodName(point);
-        String threadName = Thread.currentThread().getName();
+        String threadName = getTransactionName();
         TitanTransaction titanTransaction = titanTransactionCollection.getTransaction(threadName);
         if (methodName.equals(titanTransaction.getMethodName())) {
-            titanTransactionCollection.commit(Thread.currentThread().getName());
+            titanTransactionCollection.commit(threadName);
         }
     }
 
     @AfterThrowing("performanceAnnon()")
     public void exceptionExecuteAnnon(){
-        String threadName = Thread.currentThread().getName();
+        String threadName = getTransactionName();
         titanTransactionCollection.deleteTransaction(threadName);
     }
 
@@ -63,7 +63,7 @@ public class TitanTransactionAspect {
      * 3、_titan标记该事务被titan事务管理
      * */
     private void initTitanTransaction(JoinPoint point){
-        String transactionName = Thread.currentThread().getName();
+        String transactionName = getTransactionName();
         String method = getMetodName(point);
 
         titanTransactionCollection.initOneTransaction(transactionName, method);
@@ -76,6 +76,10 @@ public class TitanTransactionAspect {
         String method =  methodSignature.getMethod().getName();
 
         return className+"."+method;
+    }
+
+    private String getTransactionName(){
+        return Thread.currentThread().getName() + Thread.currentThread().getId();
     }
 
 }

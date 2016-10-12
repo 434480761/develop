@@ -46,13 +46,13 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         boolean success = submit(repositoryOperations);
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
         if (!success) {
-            LOG.info("失败");
+//            LOG.info("失败");
             Map<String, String> map = getAllEducation(transaction.getAllStep());
             for (String identifier : map.keySet()){
                 titanSync(identifier, map.get(identifier), TitanSyncType.SAVE_OR_UPDATE_ERROR);
             }
         } else {
-            LOG.info("成功");
+//            LOG.info("成功");
         }
     }
 
@@ -149,6 +149,8 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         if (relationId == null || relationId.equals("null")){
                             titanSync((ResourceRelation) entity);
                         }
+
+                        return true;
                     }
                     break;
                 case update_relation_edu_red_property:
@@ -173,7 +175,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         String result = null;
         if (param != null && param.size() > 0) {
             try {
+                long time = System.currentTimeMillis();
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
+                System.out.println("脚本执行时间:"+ (System.currentTimeMillis() - time));
             } catch (Exception e) {
                 return false;
             }
