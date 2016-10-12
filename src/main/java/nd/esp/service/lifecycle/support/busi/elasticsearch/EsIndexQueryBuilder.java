@@ -136,7 +136,7 @@ public class EsIndexQueryBuilder {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation = dealWithWordsContainsNot(this.words);
-        String coverage = dealWithParams4Exact();
+        String coverage = dealWithParams();
         String property = dealWithProp();
         if ("".endsWith(wordSegmentation.trim())) {
             coverage = coverage.trim().replaceFirst("AND", "").trim();
@@ -477,10 +477,10 @@ public class EsIndexQueryBuilder {
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (value.contains(PropOperationConstant.OP_AND)) {
                             String[] strs=value.split(PropOperationConstant.OP_AND);
-                            // TODO 处理成精确的
+                            // TODO 处理成精确的 加上引号 value = "(*\\\"" + strs[0].trim() + "\\\"*" + DOUBLE_BLANK_AND + "*\\\"" + strs[1].trim() + "\\\"*)";
                             value = "(*" + strs[0].trim() + "*" + DOUBLE_BLANK_AND + "*" + strs[1].trim() + "*)";
                         }else{
-                            // TODO 处理成精确的
+                            // TODO 处理成精确的 加上引号  value = "*\\\"" + value.trim() + "\\\"*";
                             value = "*" + value.trim() + "*";
                         }
                         queryCondition.append(value).append(" ");
