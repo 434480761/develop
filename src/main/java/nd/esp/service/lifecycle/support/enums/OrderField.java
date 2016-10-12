@@ -125,50 +125,68 @@ public enum OrderField {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
         	// 请求参数：orderby=statisticals desc&statistics_type=votes&statistics_platform=all
-            Double first = firstModel.getStatisticsNum();
-            Double second = secondModel.getStatisticsNum();
-            if (first != null && second == null) {
-                return 1;
-            }
-
-            if (first == null && second != null) {
-                return -1;
-            }
-
-            if (first == null && second == null) {
-                return 0;
-            }
-            return first.compareTo(second);
+            return compareStatisticsNum(firstModel.getStatisticsNum(), secondModel.getStatisticsNum());
         }
     },
     top {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel, "top");
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("top");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("top");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     scores {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel, "scores");
+			Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("scores");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("scores");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     votes {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel, "votes");
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("votes");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("votes");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     views {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-            return compareStatisticsNum(firstModel, secondModel, "views");
+        	Double first = null;
+        	Double second = null;
+        	if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
+        		first = firstModel.getStatisticsItems().get("views");
+			}
+        	if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
+        		second = secondModel.getStatisticsItems().get("views");
+			}
+			return compareStatisticsNum(first, second);
         }
     },
     m_identifier {
         @Override
         int compare(ResourceModel firstModel, ResourceModel secondModel) {
-
             if (firstModel.getmIdentifier() != null && secondModel.getmIdentifier() == null) {
                 return 1;
             }
@@ -202,22 +220,18 @@ public enum OrderField {
         // 默认什么都不做
     }
 
-    public int compareStatisticsNum(ResourceModel firstModel, ResourceModel secondModel, String type) {
-        Double first = 0D;
-        Double second = 0D;
-        if (CollectionUtils.isNotEmpty(firstModel.getStatisticsItems())) {
-            Double value = firstModel.getStatisticsItems().get(type);
-            if (value != null) {
-                first = value;
-            }
-        }
-        if (CollectionUtils.isNotEmpty(secondModel.getStatisticsItems())) {
-            Double value = secondModel.getStatisticsItems().get(type);
-            if (value != null ) {
-                second = value;
-            }
-        }
-
+    public int compareStatisticsNum(Double first, Double second) {
+    	if (first != null & second == null) {
+			return 1;
+		}
+		
+		if (first == null & second != null) {
+			return -1;	
+		}
+		
+		if (first == null & second == null) {
+			return 0;
+		}
 		return first.compareTo(second);
     }
     

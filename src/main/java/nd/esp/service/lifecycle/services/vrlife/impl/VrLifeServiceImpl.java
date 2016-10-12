@@ -14,7 +14,6 @@ import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.vrlife.VrLifeService;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.vrlife.VrLifeType;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -43,7 +42,6 @@ public class VrLifeServiceImpl implements VrLifeService{
     private VrLifeDao vrLifeDao;
 	
 	@Override
-	@TitanTransaction
 	public StatusReviewViewModel4Out statusReview(StatusReviewViewModel4In inViewModel) {
 		//获取包含维度信息的旧资源信息
 		List<String> includes = new ArrayList<String>();

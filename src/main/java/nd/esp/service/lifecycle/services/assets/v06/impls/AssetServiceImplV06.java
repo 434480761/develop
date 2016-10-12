@@ -1,28 +1,31 @@
 package nd.esp.service.lifecycle.services.assets.v06.impls;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import nd.esp.service.lifecycle.daos.assets.v06.AssetDao;
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
+import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.AssetModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.Asset;
 import nd.esp.service.lifecycle.repository.sdk.AssetRepository;
 import nd.esp.service.lifecycle.services.assets.v06.AssetServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
+import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 /**
  * 业务实现类
  * @author xuzy
@@ -41,8 +44,6 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	private AssetDao assetDao;
 	
 	@Override
-
-	@TitanTransaction
 	public AssetModel createAsset(AssetModel am) {
 		if("auto_increment".equals(am.getTitle())){
 			Pattern suitePattern = Pattern.compile("^套件[0-9]*$");
@@ -181,7 +182,6 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	}
 
 	@Override
-	@TitanTransaction
 	public AssetModel updateAsset(AssetModel am) {
 		return (AssetModel)ndResourceService.update(ResourceNdCode.assets.toString(), am);
 	}
@@ -222,7 +222,6 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 	}
 
 	@Override
-	@TitanTransaction
 	public AssetModel patchAsset(AssetModel am) {
 		return (AssetModel)ndResourceService.patch(ResourceNdCode.assets.toString(), am);
 	}

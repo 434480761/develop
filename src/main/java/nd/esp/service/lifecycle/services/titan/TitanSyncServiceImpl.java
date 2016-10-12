@@ -122,6 +122,7 @@ public class TitanSyncServiceImpl implements TitanSyncService{
             } else {
                 titanRepositoryUtils.titanSync4MysqlDeleteAll(primaryCategory,identifier);
             }
+
         } else {
             titanRepositoryUtils.titanSync4MysqlImportAdd(titanSyncType,primaryCategory,identifier);
         }

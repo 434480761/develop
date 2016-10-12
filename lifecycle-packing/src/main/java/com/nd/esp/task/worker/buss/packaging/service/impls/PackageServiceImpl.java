@@ -805,10 +805,10 @@ public class PackageServiceImpl implements PackageService {
                     else {
                         String encodedFilePath = "";
                         if(filePath.contains("?size=")) {
-                            encodedFilePath = URLEncoder.encodeURL(filePath.substring(0, filePath.lastIndexOf('?'))).replace("+", "%20").replace("*","%2A").replace("%7E", "~");
+                            encodedFilePath = URLEncoder.encodeURL(filePath.substring(0, filePath.lastIndexOf('?')));
                             encodedFilePath += filePath.substring(filePath.lastIndexOf('?'));
                         } else {
-                            encodedFilePath = URLEncoder.encodeURL(filePath).replace("+", "%20").replace("*","%2A").replace("%7E", "~");
+                            encodedFilePath = URLEncoder.encodeURL(filePath);
                         }
                         
                         String downloadURL = instanceMap.get(header).getUrl()+"/"
@@ -1029,7 +1029,7 @@ public class PackageServiceImpl implements PackageService {
             taskResult.setTracemsg(logMsg.toString());
             extFunService.callTraceLog(taskResult);
             if(e.getMessage() != null) {
-                failCallBackUrl += URLEncoder.encodeURL(e.getMessage()).replace("+", "%20").replace("*","%2A").replace("%7E","~");
+                failCallBackUrl += URLEncoder.encodeURL(e.getMessage());
             }
             LOG.error(logMsg.toString());
             taskResult.setCallBackUrl(failCallBackUrl);

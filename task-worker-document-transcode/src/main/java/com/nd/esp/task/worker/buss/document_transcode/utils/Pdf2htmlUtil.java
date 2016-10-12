@@ -1,5 +1,6 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
+import com.nd.esp.task.worker.buss.document_transcode.utils.CommandlineUtil;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +60,7 @@ public class Pdf2htmlUtil {
         }
     };
 
-    public static void transferPdf2Html(String inputFilePath, String outDirPath, StringBuffer logMsg) throws Exception {
+    public static void transferPdf2Html(String inputFilePath, String outDirPath) throws Exception {
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
             FileUtils.forceMkdir(outDir);
@@ -65,15 +68,13 @@ public class Pdf2htmlUtil {
         FileUtils.cleanDirectory(outDir);
 
         LOG.info("Convert to Html Begin.");
-        logMsg.append("Convert to Html Begin.");
         String command = "java -jar jpdf2html.jar " + inputFilePath + " " + outDirPath;
         StringBuffer output = new StringBuffer();
-        CommandlineUtil.runCommand(command, output, logMsg);
+        StringBuffer logMsg = new StringBuffer();
+        CommandlineUtil.RunCommand(command, output, logMsg);
         LOG.info("Convert to Html End.");
-        logMsg.append("Convert to Html End.");
 
         LOG.info("Deal Html Begin.");
-        logMsg.append("Deal Html Begin.");
         File htmlResultDir = new File(outDirPath+File.separator+"pdf");
         FileUtils.copyDirectory(htmlResultDir, outDir);
         FileUtils.deleteQuietly(htmlResultDir);
@@ -140,10 +141,8 @@ public class Pdf2htmlUtil {
             }
 
             LOG.info("Deal Html Font、Css End.");
-            logMsg.append("Deal Html Font、Css End.");
         }
         LOG.info("Deal Html End.");
-        logMsg.append("Deal Html End.");
     }
 
     private static String getNewName(String filename, int index)

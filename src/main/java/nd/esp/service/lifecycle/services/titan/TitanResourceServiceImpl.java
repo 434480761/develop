@@ -13,7 +13,6 @@ import java.util.Set;
 
 import nd.esp.service.lifecycle.daos.coverage.v06.CoverageDao;
 import nd.esp.service.lifecycle.daos.educationrelation.v06.EducationRelationDao;
-import nd.esp.service.lifecycle.daos.titan.TitanSyncTimerTask;
 import nd.esp.service.lifecycle.daos.titan.inter.*;
 import nd.esp.service.lifecycle.educommon.dao.NDResourceDao;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
@@ -32,10 +31,6 @@ import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.CheckResourceModel;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanOperationType;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperation;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanSubmitTransaction;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -135,9 +130,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     @Autowired
     private TitanCheckResourceExistRepository titanCheckResourceExistRepository;
 
-    @Autowired
-    private TitanSubmitTransaction titanSubmitTransaction;
-
     @Override
     public long importData4Script(String primaryCategory) {
         AbstractPageQuery abstractPageQuery = new ImprotData4ScriptPageQuery();
@@ -190,16 +182,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationCreate(page);
         abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
         abstractPageQueryRelation = new AbstractPageQueryRelationCreate(0);
-        abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
-    }
-
-    @Override
-    public void updateRelationRedRelation(Integer page) {
-        AbstractPageQueryRelation abstractPageQueryRelation
-                = new AbstractPageQueryRelationRedProperty(page);
-        abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
-
-        abstractPageQueryRelation = new AbstractPageQueryRelationRedProperty(0);
         abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
     }
 
@@ -432,8 +414,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         pageQueryTitanSync4Questions();
     }
 
-
-
     @Override
     public void checkResource(String primaryCategory) {
         AbstractPageQuery abstractPageQuery = new CheckResourcePageQuery();
@@ -489,16 +469,12 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 }
 
                 for (String primaryCategory : sourceMap.keySet()){
-                    if (!TitanSyncTimerTask.TITAN_SYNC_SWITCH){
-                        return;
-                    }
                     List<ResourceRelation> resourceRelations = educationRelationdao
                             .batchGetRelationByResourceSourceOrTarget(primaryCategory, sourceMap.get(primaryCategory));
                     titanImportRepository.batchImportRelation(resourceRelations);
-
+                    LOG.info("");
                 }
                 LOG.info("import relation:totalPage:{}  page:{}", resourcePage.getTotalPages(), page);
-                setStatisticParam("relation",resourcePage.getTotalPages(), page);
             } catch (Exception e) {
                 LOG.error(e.getMessage());
             }
@@ -610,24 +586,6 @@ public class TitanResourceServiceImpl implements TitanResourceService {
         }
 
         public abstract void method(List<ResourceRelation> resourceRelations);
-    }
-
-    public class AbstractPageQueryRelationRedProperty extends AbstractPageQueryRelation {
-        public AbstractPageQueryRelationRedProperty(Integer page){
-            super(page);
-        }
-        @Override
-        public void method(List<ResourceRelation> resourceRelations) {
-
-            for (ResourceRelation relation : getAllExistRelation(resourceRelations)){
-                TitanTransaction titanTransaction = new TitanTransaction(null);
-                TitanRepositoryOperation operation = new TitanRepositoryOperation();
-                operation.setEntity(relation);
-                operation.setOperationType(TitanOperationType.update_relation_red_property);
-                titanTransaction.addNextStep(operation);
-                titanSubmitTransaction.submit(titanTransaction);
-            }
-        }
     }
 
     public class AbstractPageQueryRelationCheck extends AbstractPageQueryRelation {

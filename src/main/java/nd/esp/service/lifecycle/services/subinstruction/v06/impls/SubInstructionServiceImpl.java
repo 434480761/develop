@@ -8,7 +8,6 @@ import nd.esp.service.lifecycle.services.educationrelation.v06.EducationRelation
 import nd.esp.service.lifecycle.services.subinstruction.v06.SubInstructionService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +53,6 @@ public class SubInstructionServiceImpl implements SubInstructionService {
 
 
     @Override
-    @TitanTransaction
     public SubInstructionModel createSubInstruction(SubInstructionModel subInstructionModel) {
         // 调用通用创建接口
         subInstructionModel.setTechInfoList(null);
@@ -67,7 +65,6 @@ public class SubInstructionServiceImpl implements SubInstructionService {
     }
 
     @Override
-    @TitanTransaction
     public SubInstructionModel updateSubInstruction(SubInstructionModel subInstructionModel) {
         SubInstructionModel rtSubInstructionModel = (SubInstructionModel)ndResourceService.update(ResourceNdCode.subInstruction.toString(), subInstructionModel);
         return rtSubInstructionModel;

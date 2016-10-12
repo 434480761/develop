@@ -1,10 +1,10 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import com.nd.esp.task.worker.buss.document_transcode.Constant;
-import com.nd.gaea.client.http.WafSecurityHttpClient;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.nd.esp.task.worker.buss.document_transcode.Constant;
+import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 public class SessionUtil {
     

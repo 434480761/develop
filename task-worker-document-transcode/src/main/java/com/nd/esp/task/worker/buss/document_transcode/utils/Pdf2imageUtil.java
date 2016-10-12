@@ -1,12 +1,15 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
+import com.nd.esp.task.worker.buss.document_transcode.utils.ImgCompress;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.exceptions.CryptographyException;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.util.PDFImageWriter;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.print.Printable;
 import java.io.File;
 import java.io.IOException;
 
@@ -18,7 +21,7 @@ public class Pdf2imageUtil {
     public static final int DEFAULT_THUMB_WIDTH = 200;
     public static final int DEFAULT_THUMB_HEIGHT = 200;
 
-    public static void transferPdf2Image(String inputFilePath, String outDirPath, StringBuffer logMsg) throws Exception {
+    public static void transferPdf2Image(String inputFilePath, String outDirPath) throws Exception {
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
             FileUtils.forceMkdir(outDir);

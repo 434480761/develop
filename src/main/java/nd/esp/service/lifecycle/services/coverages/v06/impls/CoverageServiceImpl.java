@@ -16,7 +16,6 @@ import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -31,7 +30,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service(value="coverageServiceImpl")
 @Transactional
@@ -50,7 +48,6 @@ public class CoverageServiceImpl implements CoverageService{
     private NotifyReportService nrs;
     
     @Override
-    @TitanTransaction
     public CoverageViewModel createCoverage(CoverageModel coverageModel) {
         //判断一个资源是否已经有OWNER的覆盖策略
         if(coverageModel.getStrategy().equals(CoverageConstant.STRATEGY_OWNER)){
@@ -94,9 +91,8 @@ public class CoverageServiceImpl implements CoverageService{
     }
 
     @Override
-    @TitanTransaction
     public List<CoverageViewModel> batchCreateCoverage(List<CoverageModel> coverageModels,boolean isCreateWithResource) {
-
+        
         for(CoverageModel cm : coverageModels){
             if(isCreateWithResource){
                 //参数校验,保证批量传入的覆盖范围,一个资源的覆盖范围，有且仅有一个OWNNER的覆盖范围策略
@@ -220,7 +216,6 @@ public class CoverageServiceImpl implements CoverageService{
     }
     
     @Override
-    @TitanTransaction
     public CoverageViewModel updateCoverage(CoverageModelForUpdate coverageModelForUpdate) {
         //判断一个资源是否已经有OWNER的覆盖策略
         if(coverageModelForUpdate.getStrategy().equals(CoverageConstant.STRATEGY_OWNER)){
@@ -247,7 +242,6 @@ public class CoverageServiceImpl implements CoverageService{
     }
     
     @Override
-    @TitanTransaction
     public boolean deleteCoverage(String rcid) {
         try {
             resCoverageRepository.del(rcid);
@@ -263,7 +257,6 @@ public class CoverageServiceImpl implements CoverageService{
     }
 
     @Override
-    @TitanTransaction
     public boolean batchDeleteCoverage(List<String> rcids) {
         try {
             resCoverageRepository.batchDel(rcids);
@@ -279,7 +272,6 @@ public class CoverageServiceImpl implements CoverageService{
     }
     
     @Override
-    @TitanTransaction
     public boolean batchDeleteCoverageByCondition(String resType, String resourceId, 
             String target, String targetType, String strategy) {
         //用于存放需要删除的资源关系id

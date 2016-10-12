@@ -22,6 +22,7 @@ import com.nd.sdp.cs.common.CsConfig;
 
 /**
  * @title
+ * @Desc TODO
  * @author liuwx
  * @version 1.0
  * @update 2015年3月9日 下午7:54:38
@@ -40,7 +41,6 @@ public class LifeCircleApplicationInitializer extends
 	public static Properties props_properties_db=null;
 	public static Properties tablenames_properties=null;
 	public static Properties ndCode_properties=null;
-	public static Properties ndppt_frontend_properties=null;
 	
 	//titan
 	public static Properties db_titan_field_ndresource=null;
@@ -71,8 +71,6 @@ public class LifeCircleApplicationInitializer extends
 			        .loadAllProperties("config/props/restype_corresponding_tablename.properties");
 			ndCode_properties = PropertiesLoaderUtils
 			        .loadAllProperties("config/props/ndcode_corresponding_tablename.properties");
-			ndppt_frontend_properties = PropertiesLoaderUtils
-					.loadAllProperties("config/props/101ppt_frontend_mapping.properties");
 			
 			//titan
 			db_titan_field_ndresource = PropertiesLoaderUtils

@@ -7,7 +7,6 @@ import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.CourseWareObjectServiceV06;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
 import nd.esp.service.lifecycle.support.DbName;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.PrePackUtil;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 
@@ -33,21 +32,18 @@ public class CourseWareObjectServiceImplV06 implements CourseWareObjectServiceV0
     private PrePackUtil prePackUtil;
 
     @Override
-    @TitanTransaction
     public CourseWareObjectModel createCourseWareObject(CourseWareObjectModel model) {
         CourseWareObjectModel rtModel = (CourseWareObjectModel)ndResourceService.create(ResourceNdCode.coursewareobjects.toString(), model,DbName.QUESTION);
         return rtModel;
     }
 
     @Override
-    @TitanTransaction
     public CourseWareObjectModel updateCourseWareObject(CourseWareObjectModel model) {
         CourseWareObjectModel rtModel = (CourseWareObjectModel)ndResourceService.update(ResourceNdCode.coursewareobjects.toString(), model,DbName.QUESTION);
         return rtModel;
     }
 
     @Override
-    @TitanTransaction
     public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model) {
         return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION);
     }

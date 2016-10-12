@@ -1,9 +1,9 @@
 package com.nd.esp.task.worker.buss.document_transcode.entity.lifecycle;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.io.Serializable;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @title 上传下载模型

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1094,6 +1095,36 @@ public class CommonHelper {
 		return false;
 	}
 	
+	/**
+     * 走数据库时对categories做处理
+     * <p>Description:              </p>
+     * <p>Create Time: 2015年9月15日   </p>
+     * <p>Create author: xiezy   </p>
+     * @param resType
+     * @param categories
+     * @return
+     */
+	public static Set<String> doAdapterCategories4DB(String resType,Set<String> categories){
+        Set<String> afterDeal = new HashSet<String>();
+        
+        for(String category : categories){
+            //1.将category中的*去掉
+//            category = category.replaceAll("\\*", "");//去掉,是为了支持path模糊匹配
+            
+            //2.category为path时特殊处理
+            if(category!=null && category.contains("/")){
+            	String categoryPattern = category.split("/")[0];
+            	if(!StaticDatas.CATEGORY_PATTERN_MAP.containsKey(categoryPattern)){
+            		category = "K12/" + category;
+            	}
+            }
+            //3.加入处理后的结果集
+            afterDeal.add(category);
+        }
+        
+        return afterDeal;
+    }
+
 	/**
 	 * 将model转为view
 	 *

@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class Txt2htmlUtil {
     public static void transferTxt2Html(String inputFilePath, String outDirPath) throws IOException {
         File input = new File(inputFilePath);
-        String strIn = FileUtils.readFileToString(input);
+        String strIn = FileUtils.readFileToString(input, "");
         String strOut = txtToHtml(strIn);
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
@@ -21,7 +21,7 @@ public class Txt2htmlUtil {
         }
         FileUtils.cleanDirectory(outDir);
 
-        FileUtils.writeStringToFile(new File(outDir, input.getName().replace(".txt", ".html")), strOut);
+        FileUtils.writeStringToFile(new File(input.getName().replace(".txt", ".html")), strOut);
     }
 
     public static String txtToHtml(String s) {

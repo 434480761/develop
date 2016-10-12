@@ -1700,8 +1700,7 @@ public class NDResourceController {
         if(CollectionUtils.isEmpty(categories)){
             categories = null;
         }else {
-        	categories = ParameterVerificationHelper.doAdapterCategories4101ppt(categories);
-            categories = ParameterVerificationHelper.doAdapterCategories4DB(categories);
+            categories = CommonHelper.doAdapterCategories4DB(resType, categories);
         }
 
         //categoryExclude

@@ -1,19 +1,17 @@
 package com.nd.esp.task.worker.buss.document_transcode.config;
 
-import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeParam;
-import com.nd.esp.task.worker.buss.document_transcode.model.TranscodeResult;
-import com.nd.esp.task.worker.buss.document_transcode.service.impls.TranscodeServiceImpl;
-import com.nd.esp.task.worker.buss.document_transcode.utils.gson.ObjectUtils;
-import com.nd.esp.task.worker.container.springcfg.AppConfig;
-import com.nd.gaea.rest.AbstractWafWebApplicationInitializer;
+import java.io.IOException;
+import java.util.Properties;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.util.Properties;
+import com.nd.esp.task.worker.container.springcfg.AppConfig;
+import com.nd.gaea.rest.AbstractWafWebApplicationInitializer;
 
 /**
  *
@@ -44,10 +42,8 @@ public class PackApplicationInitializer extends AbstractWafWebApplicationInitial
     public void onStartup(ServletContext servletContext) throws ServletException {
         LOG.info("startup lifecycle pack project..");
 
-
         super.onStartup(servletContext);
     }
-
 
     /*
      * @Override public void initUcConfig() { WafUcConfig config = new WafUcConfig();

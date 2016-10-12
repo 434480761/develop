@@ -24,7 +24,6 @@ import nd.esp.service.lifecycle.services.statisticals.v06.ResourceStatisticalSer
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
@@ -57,7 +56,6 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
      * @param resType 资源类型
      * @param id 资源ID
      * */
-    @TitanTransaction
     public List<ResourceStatisticalModel> addStatistical(List<ResourceStatisticalModel> sms, String resType, String id) {
     	checkResourceExist(resType, id);
     	
@@ -126,7 +124,6 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
     }
     
     @Override
-    @TitanTransaction
 	public List<ResourceStatisticalModel> addStatisticalByCumulative(List<ResourceStatisticalModel> sms, 
 			String resType, String id) {
     	
@@ -316,7 +313,6 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
     }
 
 	@Override
-    @TitanTransaction
 	public void addDownloadStatistical(String bsyskey, String resType, String id) {
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		List<ResourceStatistical> rsList = resourceStatisticalsDao.getAllRsByReousrceId(id);
@@ -376,7 +372,6 @@ public class ResourceStatisticalServiceImpl implements ResourceStatisticalServic
 	}
 
 	@Override
-    @TitanTransaction
 	public void resourceTop(String resType, String uuid, boolean effect) {
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
         /**

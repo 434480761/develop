@@ -15,7 +15,6 @@ import nd.esp.service.lifecycle.services.updatamediatype.dao.UpdateMediatypeDao;
 import nd.esp.service.lifecycle.services.updatamediatype.model.UpdateMediatypeModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
 import nd.esp.service.lifecycle.repository.sdk.ResourceCategoryRepository;
 import nd.esp.service.lifecycle.repository.sdk.TechInfoRepository;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service("UpdataMediatypeServiceImpl")
 public class UpdateMediatypeServiceImpl implements UpdateMediatypeService {
@@ -69,8 +67,6 @@ public class UpdateMediatypeServiceImpl implements UpdateMediatypeService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdapterDBDataController.class);
 
-    @Transactional
-    @TitanTransaction
     public UpdateMediatypeModel tupdate(String type, boolean save) {
         // 构造维度数据
         createNdcodeMap();

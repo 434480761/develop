@@ -83,7 +83,6 @@ import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.DbName;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
@@ -1171,7 +1170,6 @@ public class NDResourceServiceImpl implements NDResourceService{
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     @Transactional
-	@TitanTransaction
     public void delete(String resourceType, String uuid) {
         // 1、获取资源， 查询关系，更新enable(资源，关系)
         ResourceRepository resourceRepository = commonServiceHelper.getRepository(resourceType);
@@ -1255,7 +1253,6 @@ public class NDResourceServiceImpl implements NDResourceService{
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     @Transactional(value="questionTransactionManager")
-	@TitanTransaction
     public void deleteInQuestionDB(String resourceType, String uuid) {
         // 1、获取资源， 查询关系，更新enable(资源，关系)
         ResourceRepository resourceRepository = commonServiceHelper.getRepository(resourceType);
@@ -2383,7 +2380,6 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
     @Override
-	@TitanTransaction
     public void deleteInstructionalObjectives(String objectsId, List<String> parentNodes, String resType) {
         try {
             // 章节及挂载的课时Id集合
@@ -3293,7 +3289,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 
 	@Override
     @Transactional(value="transactionManager")
-	@TitanTransaction
 	public ResourceViewModel createNewVersion(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC,IncludesConstant.INCLUDE_EDU,IncludesConstant.INCLUDE_CR));
 		//1、判断是否可以创建版本
@@ -3380,7 +3375,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 	
 	@Override
 	@Transactional(value="questionTransactionManager")
-	@TitanTransaction
 	public ResourceViewModel createNewVersion4Question(String resType,String uuid,VersionViewModel vvm,UserInfo userInfo) {
 		ResourceModel rm = getDetail(resType, uuid, Arrays.asList(IncludesConstant.INCLUDE_LC,IncludesConstant.INCLUDE_EDU,IncludesConstant.INCLUDE_CR));
 		//1、判断是否可以创建版本

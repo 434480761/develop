@@ -1,21 +1,15 @@
 package nd.esp.service.lifecycle.educommon.support;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
-import nd.esp.service.lifecycle.app.LifeCircleApplicationInitializer;
 import nd.esp.service.lifecycle.educommon.vos.ResCoverageViewModel;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
-import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.vos.statics.CoverageConstant;
 import nd.esp.service.lifecycle.vos.statics.ResourceType;
@@ -163,121 +157,4 @@ public class ParameterVerificationHelper {
     	}
     	return false;
     }
-    
-    /**
-     * 针对category K12模式path自动添加 【K12/】的适配
-     * <p>Description:              </p>
-     * <p>Create Time: 2015年9月15日   </p>
-     * <p>Create author: xiezy   </p>
-     * @param resType
-     * @param categories
-     * @return
-     */
-	public static Set<String> doAdapterCategories4DB(Set<String> categories){
-        Set<String> afterDeal = new HashSet<String>();
-        
-        for(String category : categories){
-            //1.将category中的*去掉
-//            category = category.replaceAll("\\*", "");//去掉,是为了支持path模糊匹配
-            
-            //2.category为path时特殊处理
-            if(category!=null && category.contains("/")){
-            	String categoryPattern = category.split("/")[0];
-//            	if(!StaticDatas.CATEGORY_PATTERN_MAP.containsKey(categoryPattern)){
-            	if(categoryPattern.startsWith("$O")){
-            		category = "K12/" + category;
-            	}
-            }
-            //3.加入处理后的结果集
-            afterDeal.add(category);
-        }
-        
-        return afterDeal;
-    }
-	
-	/**
-	 * 适配101ppt前端维度
-	 * @author xiezy
-	 * @date 2016年10月10日
-	 * @param categories
-	 * @return
-	 */
-	public static Set<String> doAdapterCategories4101ppt(Set<String> categories){
-		Set<String> afterDeal = new HashSet<String>();
-		
-		if(CollectionUtils.isNotEmpty(categories)){
-			Properties properties = LifeCircleApplicationInitializer.ndppt_frontend_properties;
-			
-			for(String category : categories){
-				if(StringUtils.isNotEmpty(category) 
-						&& !category.contains("/") && category.contains("PF")){//需要处理的情况
-					if(category.contains(" and ")){
-						List<String> categoryAndOp = Arrays.asList(category.split(" and "));
-	                    categoryAndOp = CollectionUtils.removeEmptyDeep(categoryAndOp);// 主要是为了防止 A and B and 的情况
-					
-	                    if(CollectionUtils.isNotEmpty(categoryAndOp)){
-	                    	List<List<String>> values = new ArrayList<List<String>>();
-	                    	for(String cg : categoryAndOp){
-	                    		List<String> innerValues = new ArrayList<String>();
-	                    		if(properties.containsKey(cg)){
-	                    			String ukCategory = properties.getProperty(cg);
-	                    			if(StringUtils.hasText(ukCategory)){
-	                    				innerValues.addAll(Arrays.asList(ukCategory.split(",")));
-	                    			}else{
-	                    				values = null;
-	                    				break;
-	                    			}
-	                    		}else{
-	                    			innerValues.add(cg);
-	                    		}
-	                    		
-	                    		values.add(innerValues);
-	                    	}
-	                    	
-	                    	if(CollectionUtils.isNotEmpty(values)){
-	                    		afterDeal.addAll(combine(values));
-	                    	}
-	                    }
-					}else{//单个code的情况
-						if(properties.containsKey(category)){
-							String ukCategory = properties.getProperty(category);
-							if(StringUtils.hasText(ukCategory)){//没有对应UK维度的直接过滤掉
-								afterDeal.addAll(Arrays.asList(ukCategory.split(",")));
-							}
-						}else{//不是PF合法code,直接传递
-							afterDeal.add(category);
-						}
-					}
-				}else{//不处理,直接传递
-					afterDeal.add(category);
-				}
-			}
-		}
-		
-		return afterDeal;
-	}
-	
-	/**
-	 * 递归处理and category -- 101ppt前端维度替换需要
-	 * @author xiezy
-	 * @date 2016年10月10日
-	 * @param values
-	 * @return
-	 */
-	public static List<String> combine(List<List<String>> values) {
-		int size = values.size();
-		if (size == 1) {
-			return values.get(0);
-		}
-		List<String> firstValueList = values.remove(size - 1);
-		List<String> secondValueList = values.remove(size - 2);
-		List<String> result = new ArrayList<String>();
-		for (String a : firstValueList) {
-			for (String b : secondValueList) {
-				result.add(a + " and " + b);
-			}
-		}
-		values.add(result);
-		return combine(values);
-	}
 }
