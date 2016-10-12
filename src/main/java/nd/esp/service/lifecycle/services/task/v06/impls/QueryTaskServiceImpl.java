@@ -139,14 +139,16 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 										// 异步过程：同步元数据
 										// bylsm 同步数据到elasticsearch
 										// (与祁凌确认，都是callbackParams中的res_type,identifier)
+                                        String[] id_group = params.get("identifier").split("_");
+                                        String uuid = id_group[0];
                                         if(callbackUrl.contains("/transcode")){
-                                            offlineService.writeToCsAsync(resType, params.get("identifier"));
+                                            offlineService.writeToCsAsync(resType, uuid);
                                         }
 										esResourceOperation
 												.asynAdd(new Resource(
 														resType,
-														params.get("identifier")));
-                                        titanSyncService.syncEducation(resType,params.get("identifier"));
+                                                        uuid));
+                                        titanSyncService.syncEducation(resType,uuid);
 									} else {
                                         taskService.DealInvalidTask(taskId, "未取得任务执行结果");
                                     }

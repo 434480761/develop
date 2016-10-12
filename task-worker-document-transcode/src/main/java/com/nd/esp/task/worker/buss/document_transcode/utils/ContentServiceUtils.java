@@ -25,11 +25,11 @@ public class ContentServiceUtils {
         request.setName(name);                        //目录项名（文件一般包括扩展名，支持重命名），必选
 
         //调用
-        try {
-            Dentry.deleteByPath(serviceName, path+"/"+name, session);
-        } catch (Exception e) {
-            LOG.info("Try del exist dentry: ", e);
-        }
+//        try {
+//            Dentry.deleteByPath(serviceName, path+"/"+name, session);
+//        } catch (Exception e) {
+//            LOG.info("Try del exist dentry: ", e);
+//        }
         LOG.info("cs create " + serviceName + " " + session);
         request.create(serviceName, 0, 0, session);
     }
@@ -50,11 +50,23 @@ public class ContentServiceUtils {
     }
 
     public static List<Dentry> uploadDirectory(File localDir, String csPath, String session) throws Exception {
+        return  uploadDirectory(localDir, csPath, session, true);
+    }
+
+    public static List<Dentry> uploadDirectory(File localDir, String csPath, String session, boolean bInit) throws Exception {
         List<Dentry> response = new ArrayList<Dentry>();
 
         String name = csPath.substring(csPath.lastIndexOf('/')+1);
         String path = csPath.substring(0, csPath.lastIndexOf('/'));
 
+        if(bInit) {
+            String serviceName = getServiceName(path);
+            try {
+                Dentry.deleteByPath(serviceName, path + "/" + name, session);
+            } catch (Exception e) {
+                LOG.info("Try del exist dentry: ", e);
+            }
+        }
         createSync(path, name, session);
         if(localDir.exists() && localDir.isDirectory()) {
             File[] fileList = localDir.listFiles();
@@ -63,7 +75,7 @@ public class ContentServiceUtils {
                     Dentry uploadSync = uploadSync(file, csPath, session);
                     response.add(uploadSync);
                 } else {
-                    response.addAll(uploadDirectory(file, csPath+"/"+file.getName(), session));
+                    response.addAll(uploadDirectory(file, csPath+"/"+file.getName(), session, false));
                 }
             }
             return response;

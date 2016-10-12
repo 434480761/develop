@@ -6,11 +6,14 @@ import com.sun.jimi.core.JimiException;
 import com.sun.jimi.core.JimiReader;
 import com.sun.jimi.core.JimiWriter;
 import com.sun.jimi.core.options.JPGOptions;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.ImageProducer;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +30,7 @@ public class ImageUtils {
 	 * @param filePath	图片路径
 	 * @return			转换后的jpg图片路径
 	 */
-	public static Map<String,String> toJPG(String filePath, String dest){
+	public static Map<String,String> toJPG(String filePath, String dest) throws IOException {
 		try {
 			if(!filePath.contains(".")){
 				return null;
@@ -38,6 +41,7 @@ public class ImageUtils {
 			meta.put("width", String.valueOf(srcImg.getWidth(null)));
 			meta.put("height", String.valueOf(srcImg.getHeight(null)));
 			if(filePath.lastIndexOf(".jpg") > 0) {
+				FileUtils.copyFile(new File(filePath), new File(dest));
 				return meta;
 			}
 			String source = filePath;
