@@ -27,7 +27,7 @@ public class TitanScriptBuilder {
         UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty"),
         UPDATE_RELATION_RED_PROPERTY_FROM_EDU("void","updateRelationRedPropertyFromEdu"),
         BUTCH_UPDATE_RELATION_RED_PROPERTY("void","butchUpdateRelationRedProperty"),
-        MODIFY_PROPERTY("void","modifyProperty");
+        ;
 
         final static String RESULT_PRE = "result";
         private static int methodIndex = 0;
@@ -131,12 +131,6 @@ public class TitanScriptBuilder {
             UPDATE_RELATION_RED_PROPERTY_FROM_EDU.invokeMethod =
                             UPDATE_RELATION_RED_PROPERTY_FROM_EDU.methodName +"("+primaryCategory+","+identifier+")";
             return UPDATE_RELATION_RED_PROPERTY_FROM_EDU;
-        }
-
-        public static ScriptMethod modifyProperty(String element, String field, String value){
-            MODIFY_PROPERTY.resultName = null;
-            MODIFY_PROPERTY.invokeMethod = MODIFY_PROPERTY.methodName +"("+element +","+field +","+value+")";
-            return MODIFY_PROPERTY;
         }
 
         public static ScriptMethod butchUpdateRelationRedProperty(String edgeList){

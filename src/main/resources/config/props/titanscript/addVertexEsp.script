@@ -1,0 +1,4 @@
+public Vertex addVertexEsp(String label,Object values){
+    Vertex vertex = graph.addVertex(T.label,label);
+}
+
