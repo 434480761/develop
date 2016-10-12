@@ -65,9 +65,10 @@ public class TitanUtils {
      */
 	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
 		String[] conditions = vConditions.split("\\.");
-		Map<String, String> optimizeConditions = optimizeConditions(conditions, scriptParamMap);
+		List<String> clearConditions = clearConditions(conditions);
+		Map<String, String> optimizeConditions = optimizeConditions(clearConditions, scriptParamMap);
 		StringBuffer eConditions = new StringBuffer();
-		for (String condition : conditions) {
+		for (String condition : clearConditions) {
 			for (String field : MOVE_FIELDS) {
 				if (condition.contains(field)) {
 					String suffix = "";
@@ -89,13 +90,53 @@ public class TitanUtils {
 		return eConditions.append(".as('e')").append(vConditions).toString();
 	}
 
+	private static List<String> clearConditions(String[] tmpConditions) {
+		List<String> conditions = new ArrayList<>();
+		int length = tmpConditions.length;
+		for (int i = 0; i < length; i++) {
+			String c = tmpConditions[i];
+			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
+				if (CommonHelper.checkBrackets(c)) {
+					conditions.add(c);
+				} else {
+					String check = c;
+					while ((i + 1) < length) {
+						boolean f = findConditions(check,i, tmpConditions, conditions);
+						i++;
+						if (f) {
+							break;
+						} else {
+							check = check + tmpConditions[i];
+						}
+					}
+				}
+
+			}
+		}
+		return conditions;
+	}
+
+	private static boolean findConditions(String check, int i, String[] tmpConditions, List<String> conditions) {
+		boolean f = false;
+		String condition = check + "." + tmpConditions[i + 1];
+		if (CommonHelper.checkBrackets(condition)) {
+			if (condition.contains(")has")) {
+				condition = condition.replace(")has",").has");
+			}
+			conditions.add(condition);
+			f = true;
+		}
+		//}
+		return f;
+	}
+
 	/**
 	 *
 	 * @param tmpConditions
 	 * @param scriptParamMap
      * @return
      */
-	private static Map<String, String> optimizeConditions(String[] tmpConditions, Map<String, Object> scriptParamMap) {
+	private static Map<String, String> optimizeConditions(List<String> tmpConditions, Map<String, Object> scriptParamMap) {
 		Map<String, String> conditions = new HashMap<>();
 		for (String c : tmpConditions) {
 			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
@@ -103,8 +144,11 @@ public class TitanUtils {
 				String value = null;
 				if (c.startsWith("or(")) {
 					// or(has('search_code',search_code0))
-					if (CommonHelper.getSubStrAppearTimes(c, "has") == 1) {
-						value = c.substring(3, c.length() - 1);
+					if ((CommonHelper.getSubStrAppearTimes(c, "has") == 1) || (!c.contains(",has") && c.contains("search_code"))) {
+						value = c.substring(3, c.length()-1);
+					/*	if(!CommonHelper.checkBrackets(value)){
+
+						}*/
 					} else {
 						value = c;
 					}

@@ -67,7 +67,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     @Override
     public Long getVertexIdByLabelAndId(String primaryCategory, String identifier) throws Exception {
-        String script = "g.V().has(primaryCategory,'identifier',identifier).id()";
+        String script = "g.V().has('identifier',identifier).has('primary_category',primaryCategory).id()";
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory", primaryCategory);
         param.put("identifier", identifier);
@@ -121,7 +121,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
 
     @Override
     public void deleteVertexByLabelAndIdentifier(String primaryCategory, String identifier) throws Exception {
-        String script = "g.V().has(primaryCategory,'identifier',identifier).drop()";
+        String script = "g.V().has('identifier',identifier).has('primary_category',primaryCategory).drop()";
         Map<String,Object> param = new HashMap<>();
         param.put("identifier", identifier);
         param.put("primaryCategory", primaryCategory);
@@ -133,7 +133,7 @@ public class TitanCommonRepositoryImpl implements TitanCommonRepository {
     public void deleteAllOutVertexByResourceAndVertexLabel(String primaryCategory,
                                                            String identifier,
                                                            String vertexLabel) throws Exception {
-        String script = "g.V().has(primaryCategory,'identifier',identifier).outE().inV().hasLabel(vertexLabel).drop()";
+        String script = "g.V().has('identifier',identifier).has('primary_category',primaryCategory).outE().inV().hasLabel(vertexLabel).drop()";
         Map<String, Object> param = new HashMap<>();
         param.put("primaryCategory", primaryCategory);
         param.put("identifier", identifier);

@@ -115,7 +115,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // for count and result
         String execScript = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
-        //System.out.println(execScript);
+        System.out.println(execScript);
 
         if (iSMutiRelations) {
             // 优化:多个关系的查询脚本
@@ -137,13 +137,18 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
     Map<String, List<String>> changeToLike(Map<String, List<String>> map) {
         Map<String, List<String>> re = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(map)) {
+        if (CollectionUtils.isNotEmpty(map)) {
             for (Map.Entry<String, List<String>> entry : map.entrySet()) {
                 List<String> list = entry.getValue();
                 String key = entry.getKey();
                 List<String> value = new ArrayList<>();
                 for (String k : list) {
-                    value.add("*\\\"" + k.toLowerCase() + "\\\"*");
+                    if (k.contains(" and ")) {
+                        k = k.replaceAll(" and ", "\\\\\\\"" + "* and *" + "\\\\\\\"");
+                    }
+                    k = "*\\\"" + k.toLowerCase() + "\\\"*";
+                    value.add(k);
+
                 }
                 re.put(key, value);
             }
