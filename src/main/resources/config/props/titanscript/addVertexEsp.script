@@ -1,4 +1,14 @@
 public Vertex addVertexEsp(String label,Object values){
+    Map<String,Object> valueMap=null;
+    if(values!=null && values instances instanceof Map){
+        valueMap = (Map<String,Object>)values;
+    };
+    if(valueMap==null){
+        return null;
+    };
     Vertex vertex = graph.addVertex(T.label,label);
-}
+    for(String field:valueMap.keySet()){
+        modifyProperty(vertex,field,valueMap.get(field));
+    };
+};
 
