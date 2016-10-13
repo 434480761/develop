@@ -236,6 +236,19 @@
 			<artifactId>itextpdf</artifactId>
 			<version>5.5.1</version>
 		</dependency>
+<<<<<<< HEAD
+=======
+		<dependency>
+			<groupId>com.jacob</groupId>
+			<artifactId>com-jacob</artifactId>
+			<version>1.18</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>jimi-nd</artifactId>
+			<version>1.0</version>
+		</dependency>
+>>>>>>> remotes/origin/develop
 	</dependencies>
 	<build>
 		<finalName>lifecycle-document-transcode</finalName>

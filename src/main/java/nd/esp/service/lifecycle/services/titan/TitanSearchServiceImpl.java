@@ -57,15 +57,17 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         // 多个关系走优化脚本
         Map<String, List<String>> re = params.get("relation");
         boolean iSMutiRelations = false;
+        boolean nullRelations = false;
         if (CollectionUtils.isNotEmpty(re)) {
             List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
             if (CollectionUtils.isNotEmpty(relations)) {
                 if (relations.size() > 1) iSMutiRelations = true;
             }
+        } else {
+            nullRelations = true;
         }
 
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
-        // FIXME 处理order by
         List<TitanOrder> orderList = new ArrayList<>();
         dealWithOrderByEnum(titanExpression, scriptParamMap, orderMap, orderList,showVersion);
 
@@ -77,49 +79,81 @@ public class TitanSearchServiceImpl implements TitanSearchService {
 
         TitanQueryVertexWithWords resourceQueryVertex = new TitanQueryVertexWithWords();
         // 判断words是否要过滤edu_description
-        resourceQueryVertex.setIsFilter(resTypeSet);// FIXME
+        resourceQueryVertex.setIsFilter(resTypeSet);
 
         Map<String, Map<Titan_OP, List<Object>>> resourceVertexPropertyMap = new HashMap<String, Map<Titan_OP, List<Object>>>();
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         // for now only deal with code
-        dealWithSearchCode(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxoncode.toString()));
+        Map<String, List<String>> taxoncode,taxonpath,coverages;
+        if (iSMutiRelations || nullRelations) {
+            taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
+            taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
+            // coverages = params.get(ES_SearchField.coverages.toString());
+        } else {
+            taxoncode = changeToLike(params.get(ES_SearchField.cg_taxoncode.toString()));
+            taxonpath = changeToLike(params.get(ES_SearchField.cg_taxonpath.toString()));
+            //coverages = changeToLike(params.get(ES_SearchField.coverages.toString()));
+        }
+        coverages = params.get(ES_SearchField.coverages.toString());
+        dealWithSearchCode(resourceQueryVertex, taxoncode);
         params.remove(ES_SearchField.cg_taxoncode.toString());
 
-        dealWithSearchPath(resourceQueryVertex,
-                params.get(ES_SearchField.cg_taxonpath.toString()));
+        dealWithSearchPath(resourceQueryVertex,taxonpath);
         params.remove(ES_SearchField.cg_taxonpath.toString());
 
-        dealWithSearchCoverage(resourceVertexPropertyMap,
-                params.get(ES_SearchField.coverages.toString()));
+        dealWithSearchCoverage(resourceVertexPropertyMap,coverages);
         params.remove(ES_SearchField.coverages.toString());
-        // TODO　处理tags tag之间存在顺序问题需要修改逻辑
         dealTags4Statistics(resourceVertexPropertyMap,tags);
 
         resourceQueryVertex.setWords(words);
 
         resourceVertexPropertyMap.put(TitanKeyWords.primary_category.toString(),generateFieldsCondtion(TitanKeyWords.primary_category.toString(), resTypeSet));// FIXME
-        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(),
-                generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
+        resourceVertexPropertyMap.put(ES_SearchField.lc_enable.toString(), generateFieldCondtion( ES_SearchField.lc_enable.toString(), true));
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
         // for count and result
-        String scriptForResultAndCount = titanExpression.generateScriptForResultAndCount(scriptParamMap);
+        String execScript = titanExpression.generateScriptForResultAndCount(scriptParamMap);
         LOG.info("titan generate script consume times:" + (System.currentTimeMillis() - generateScriptBegin));
-        // TODO 优化多个关系的查询脚本
-        if(iSMutiRelations){
-            scriptForResultAndCount = TitanUtils.optimizeMultiRelationsQuery(scriptForResultAndCount);
+        System.out.println(execScript);
+
+        if (iSMutiRelations) {
+            // 优化:多个关系的查询脚本
+            execScript = TitanUtils.optimizeMultiRelationsQuery(execScript);
+        } else {
+            // 优化:把条件移到边上
+            if (!nullRelations) execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
         }
 
-        System.out.println(scriptForResultAndCount);
-        System.out.println(scriptParamMap);
+        System.out.println(execScript + "\n" + scriptParamMap);
+        //System.out.println(TitanUtils.addParamToScript(execScript, scriptParamMap));
         long searchBegin = System.currentTimeMillis();
-        ResultSet resultSet = titanResourceRepository.search(scriptForResultAndCount, scriptParamMap);
+        ResultSet resultSet = titanResourceRepository.search(execScript, scriptParamMap);
         LOG.info("titan search consume times:"+ (System.currentTimeMillis() - searchBegin));
 
-        return getListViewModelResourceModel(resultSet,resTypeSet,includes);// FIXME
+        return getListViewModelResourceModel(resultSet,resTypeSet,includes);
 
+    }
+
+    Map<String, List<String>> changeToLike(Map<String, List<String>> map) {
+        Map<String, List<String>> re = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(map)) {
+            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+                List<String> list = entry.getValue();
+                String key = entry.getKey();
+                List<String> value = new ArrayList<>();
+                for (String k : list) {
+                    if (k.contains(" and ")) {
+                        k = k.replaceAll(" and ", "\\\\\\\"" + "* and *" + "\\\\\\\"");
+                    }
+                    k = "*\\\"" + k.toLowerCase() + "\\\"*";
+                    value.add(k);
+
+                }
+                re.put(key, value);
+            }
+        }
+        return re;
     }
 
 
@@ -432,7 +466,6 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                     } else {
                         continue;
                     }
-
                     if (ES_OP.in.toString().equals(entry.getKey())) {
                         inCoverage.add(coverage);
                     } else if (ES_OP.ne.toString().equals(entry.getKey())) {

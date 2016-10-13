@@ -18,7 +18,7 @@ public class DocumentInfoUtil {
     private static final String [] HORIZONTAL_TYPES_ARR ={"ppt", "pptx", "img", "bmp", "jpg", "jpeg", "png", "gif"};
     private static final List<String> HORIZONTAL_TYPES = Arrays.asList(HORIZONTAL_TYPES_ARR);
 
-    public static String getDocumentInfo(String pdfPath, String fileType) throws IOException {
+    public static Map<String,String> getDocumentInfo(String pdfPath, String fileType, long size) throws IOException {
         Map<String, String> meta = new HashMap<>();
         PdfReader reader = new PdfReader(pdfPath);
         Rectangle rect = reader.getPageSize(1);
@@ -27,12 +27,13 @@ public class DocumentInfoUtil {
             meta.put("height", String.valueOf(rect.getHeight()));
         }
         meta.put("pagesize", String.valueOf(reader.getNumberOfPages()));
+        meta.put("FileSize", String.valueOf(size));
         if(HORIZONTAL_TYPES.contains(fileType)) {
             meta.put("displaymode", "horizontal");
         } else {
             meta.put("displaymode", "vertical");
         }
 
-        return ObjectUtils.toJson(meta);
+        return meta;
     }
 }

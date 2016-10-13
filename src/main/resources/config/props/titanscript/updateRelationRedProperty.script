@@ -1,0 +1,56 @@
+public String updateRelationRedProperty(String identifier){
+	DefaultGraphTraversal dgt_e=g.E().has('identifier',identifier);
+	if(!dgt_e.hasNext()){
+		return;
+	};
+	Edge relation=g.E().has('identifier',identifier).next();
+	Vertex source=g.E(relation).outV().next();
+	Vertex target=g.E(relation).inV().next();
+
+    updateRelation(source,relation,'source');
+    updateRelation(target,relation,'target');
+    relation.id();
+};
+public void updateRelation(Vertex vertex, Edge edge,String type){
+    String primary_category=null;
+    String lc_enable=null;
+    String lc_create_time=null;
+    String lc_last_update=null;
+    String lc_status=null;
+    String search_code_string=null;
+    String search_path_string=null;
+    String search_coverage_string=null;
+    if('source'.equals(type)){
+        primary_category='source_r_primary_category';
+        lc_enable='source_r_lc_enable';
+        lc_create_time='source_r_lc_create_time';
+        lc_last_update='source_r_lc_last_update';
+        lc_status='source_r_lc_status';
+        search_code_string='source_r_search_code_string';
+        search_path_string='source_r_search_path_string';
+        search_coverage_string='source_r_search_coverage_string';
+    }else{
+        primary_category='target_r_primary_category';
+        lc_enable='target_r_lc_enable';
+        lc_create_time='target_r_lc_create_time';
+        lc_last_update='target_r_lc_last_update';
+        lc_status='target_r_lc_status';
+        search_code_string='target_r_search_code_string';
+        search_path_string='target_r_search_path_string';
+        search_coverage_string='target_r_search_coverage_string';
+    };
+    addPropertyToEFromV(edge,primary_category,vertex,'primary_category');
+    addPropertyToEFromV(edge,lc_enable,vertex,'lc_enable');
+    addPropertyToEFromV(edge,lc_create_time,vertex,'lc_create_time');
+    addPropertyToEFromV(edge,lc_last_update,vertex,'lc_last_update');
+    addPropertyToEFromV(edge,lc_status,vertex,'lc_status');
+    addPropertyToEFromV(edge,search_code_string,vertex,'search_code_string');
+    addPropertyToEFromV(edge,search_path_string,vertex,'search_path_string');
+    addPropertyToEFromV(edge,search_coverage_string,vertex,'search_coverage_string');
+};
+
+public void addPropertyToEFromV(Edge e,String eField,Vertex v,String vField){
+    if(v.properties(vField).hasNext()){
+    	e.property(eField,v.property(vField).value())
+    }
+};

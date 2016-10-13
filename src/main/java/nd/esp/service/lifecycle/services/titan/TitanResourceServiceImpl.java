@@ -186,6 +186,25 @@ public class TitanResourceServiceImpl implements TitanResourceService {
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public void updateRelationRedRelation(Integer page) {
+        AbstractPageQueryRelation abstractPageQueryRelation
+                = new AbstractPageQueryRelationRedProperty(page);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
+
+        abstractPageQueryRelation = new AbstractPageQueryRelationRedProperty(0);
+        abstractPageQueryRelation.pageQueryRelation(resourceRelation4QuestionDBRepository);
+    }
+
+    @Override
+    public void checkResourceExist(String primaryCategory) {
+        CheckResourceExistPageQuery checkResourceExistPageQuery = new CheckResourceExistPageQuery();
+        checkResourceExistPageQuery.doing(primaryCategory);
+    }
+
+    @Override
+>>>>>>> remotes/origin/develop
     public void repairAllRelation() {
         AbstractPageQueryRelation abstractPageQueryRelation = new AbstractPageQueryRelationRepair();
         abstractPageQueryRelation.pageQueryRelation(resourceRelationRepository);
@@ -1604,6 +1623,18 @@ public class TitanResourceServiceImpl implements TitanResourceService {
                 sql.append(",").append("'").append(id).append("'");
             }
             index++;
+        }
+    }
+
+
+    class CheckResourceExistPageQuery extends  AbstractPageQuery{
+
+        @Override
+        long operate(List<Education> educations, String primaryCategory) {
+            for(Education education : educations){
+                titanImportRepository.checkResourceExistInTitan(education);
+            }
+            return 0;
         }
     }
 

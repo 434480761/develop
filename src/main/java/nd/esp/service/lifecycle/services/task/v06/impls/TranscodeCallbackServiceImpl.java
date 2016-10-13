@@ -51,6 +51,8 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String TECH_INFO_HREF_KEY="href";
     private static final String [] TECH_INFO_HREF_KEYS_ARR={"href","href-360p","href-480p","href-720p","href-360p-ogv","href-480p-ogv","href-720p-ogv","href-ogv"};
     private static final List<String> TECH_INFO_HREF_KEYS = Arrays.asList(TECH_INFO_HREF_KEYS_ARR);
+    private static final String [] TECH_INFO_DOC_KEYS_ARR={"href","pdf","html","image"};
+    private static final List<String> TECH_INFO_DOC_KEYS = Arrays.asList(TECH_INFO_DOC_KEYS_ARR);
     private static final String VIDEO_FORMAT_TARGET="mp4";
     private static final String VIDEO_THEORA_FORMAT="ogv";
     private static final String AUDIO_FORMAT_TARGET="mp3";
@@ -574,18 +576,19 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
         Map<String, String> metadataMap = argument.getMetadata();
         ResTechInfoModel sourceTechInfo = null;
         Map<String,ResTechInfoModel> newTechInfos = new HashMap<String,ResTechInfoModel>();
-        if(metadataMap != null && StringUtils.isNotEmpty(metadataMap.get(TECH_INFO_SOURCE_KEY))){
-            for(ResTechInfoModel resTechInfoModel:techInfos){
-                if(resTechInfoModel!= null && TECH_INFO_SOURCE_KEY.equals(resTechInfoModel.getTitle())){
-                    //update requirement
-                    addRequirement(resTechInfoModel, metadataMap.get(TECH_INFO_SOURCE_KEY));
-                    sourceTechInfo = resTechInfoModel;
-                }
 
-                if(resTechInfoModel!= null && TECH_INFO_HREF_KEYS.contains(resTechInfoModel.getTitle())){
-                    //newTechInfo = resTechInfoModel;
-                    newTechInfos.put(resTechInfoModel.getTitle(), resTechInfoModel);
+        for(ResTechInfoModel resTechInfoModel:techInfos){
+            if(resTechInfoModel!= null && TECH_INFO_SOURCE_KEY.equals(resTechInfoModel.getTitle())){
+                //update requirement
+                if(metadataMap != null && StringUtils.isNotEmpty(metadataMap.get(TECH_INFO_SOURCE_KEY))) {
+                    addRequirement(resTechInfoModel, metadataMap.get(TECH_INFO_SOURCE_KEY));
                 }
+                sourceTechInfo = resTechInfoModel;
+            }
+
+            if(resTechInfoModel!= null && TECH_INFO_DOC_KEYS.contains(resTechInfoModel.getTitle())){
+                //newTechInfo = resTechInfoModel;
+                newTechInfos.put(resTechInfoModel.getTitle(), resTechInfoModel);
             }
         }
 
@@ -611,7 +614,14 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 size = bigDecimal.longValue();
             }
             newTechInfo.setSize(size);
-            newTechInfo.setFormat(key);
+            if(targetMetadataMap!=null && targetMetadataMap.get("md5")!=null) {
+                newTechInfo.setMd5((String)targetMetadataMap.get("md5"));
+            }
+            if(TECH_INFO_HREF_KEY.equals(key)) {
+                newTechInfo.setFormat("image/jpg");
+            } else {
+                newTechInfo.setFormat(key);
+            }
             if(metadataMap != null){
                 if(StringUtils.isNotEmpty(metadataMap.get(key))) {
                     addRequirement(newTechInfo,metadataMap.get(key));

@@ -125,19 +125,20 @@ public class Pdf2htmlUtil {
             }
 
             int index = 0;
-            for (File fontFile : destFontDircetory.listFiles())
-            {
-                String name = fontFile.getName();
-                String newName = name.equals(name.getBytes("ASCII").toString()) ? name.toLowerCase() : getNewName(fontFile.getName(), index++);
-                for (File htmlFile : outDir.listFiles(fileFilter))
-                {
-                    String fileContent = FileUtils.readFileToString(htmlFile, "utf-8");
-                    if(fileContent.contains(name)) {
-                        fileContent = fileContent.replace(name, newName);
+            File[] listFontFiles = destFontDircetory.listFiles();
+            if(null!=listFontFiles) {
+                for (File fontFile : listFontFiles) {
+                    String name = fontFile.getName();
+                    String newName = name.equals(name.getBytes("ASCII").toString()) ? name.toLowerCase() : getNewName(fontFile.getName(), index++);
+                    for (File htmlFile : outDir.listFiles(fileFilter)) {
+                        String fileContent = FileUtils.readFileToString(htmlFile, "utf-8");
+                        if (fileContent.contains(name)) {
+                            fileContent = fileContent.replace(name, newName);
+                        }
+                        FileUtils.writeStringToFile(htmlFile, fileContent, "utf-8");
                     }
-                    FileUtils.writeStringToFile(htmlFile, fileContent, "utf-8");
+                    fontFile.renameTo(new File(destFontDircetory, newName));
                 }
-                fontFile.renameTo(new File(destFontDircetory, newName));
             }
 
             LOG.info("Deal Html Font、Css End.");

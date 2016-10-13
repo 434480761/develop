@@ -1,0 +1,103 @@
+public Long updateEducationRedProperty(String identifier){
+	Vertex redv=null;
+	DefaultGraphTraversal dgt_v=g.V().has('identifier',identifier);
+	DefaultGraphTraversal dgt_e=g.E().hasLabel('has_coverage','has_category_code').has('identifier',identifier).outV();
+	if(dgt_v.hasNext()){
+		redv=dgt_v.next();
+	}else if(dgt_e.hasNext()){
+		redv=dgt_e.next();
+	};
+	if(redv==null||'tech_info'==redv.label()||'statistical'==redv.label()){return;};
+	Iterator redvit=redv.properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string');
+	while(redvit.hasNext()){redvit.next().remove();};
+	String status=getStatus(redv);
+	Iterator<Edge> it=g.V(redv).outE();
+	HashSet<String> coverageSet=new HashSet<String>();
+	HashSet<String> codeSet=new HashSet<String>();
+	HashSet<String> pathSet=new HashSet<String>();
+	while(it.hasNext()){
+		Edge e=it.next();
+		if(e.label().equals('has_coverage')){
+			String value1=getCoverageProperty(e,'target_type')+"/"+getCoverageProperty(e,'target')+"/"+getCoverageProperty(e,'strategy')+"/"+status;
+			String value2=getCoverageProperty(e,'target_type')+"/"+getCoverageProperty(e,'target')+"//"+status;
+			String value3=getCoverageProperty(e,'target_type')+"/"+getCoverageProperty(e,'target')+"/"+getCoverageProperty(e,'strategy')+"/";
+			String value4=getCoverageProperty(e,'target_type')+"/"+getCoverageProperty(e,'target')+"//";
+			coverageSet.add(value1);
+			coverageSet.add(value2);
+			coverageSet.add(value3);
+			coverageSet.add(value4);
+		};
+		if(e.label().equals('has_category_code')){
+			String path=getEdgeProperty(e,'cg_taxonpath');
+			if(path!=null){
+				pathSet.add(path);
+			};
+			String code=getEdgeProperty(e,'cg_taxoncode');
+			if(code!=null){
+				codeSet.add(code);
+			}
+		}
+	};
+	String string_coverage='';
+	String string_code='';
+	String string_path='';
+	int index=0;
+	for(String str:coverageSet){
+		redv.property('search_coverage',str);
+		if(index==0){
+			string_coverage=string_coverage+appendQuoMark(str);
+		}else{
+			string_coverage=string_coverage+','+appendQuoMark(str);
+		};
+		index++;
+	};
+	redv.property('search_coverage_string',string_coverage.toLowerCase());
+	index=0;
+	for(String str:codeSet){
+		redv.property('search_code',str);
+		if(index==0){
+			string_code=string_code+appendQuoMark(str);
+		}else{
+			string_code=string_code+","+appendQuoMark(str);
+		};
+		index++;
+	};
+	redv.property('search_code_string',string_code.toLowerCase());
+	index=0;
+	for(String str:pathSet){
+		redv.property('search_path',str);
+		if(index==0){
+			string_path=string_path+appendQuoMark(str);
+		}else{
+			string_path=string_path+','+appendQuoMark(str);
+		};
+		index++;
+	};
+	redv.property('search_path_string',string_path.toLowerCase());
+	redv.id();
+};
+public String getCoverageProperty(Edge e,String name){
+	String pro=getEdgeProperty(e,name);
+	if(pro==null){
+		return "";
+	}else{
+		return pro;
+	}
+};
+public String getEdgeProperty(Edge e,String name){
+	if(e.properties(name).hasNext()){
+		return e.property(name).value();
+	}else{
+		return null;
+	}
+};
+public String getStatus(Vertex v){
+	if(v.properties('lc_status').hasNext()){
+		return v.property('lc_status').value();
+	}else{
+		return '';
+	}
+};
+public String appendQuoMark(String value){
+    return "\""+value+"\"";
+};

@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 import java.util.*;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
-import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -17,6 +17,164 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
  *
  */
 public class TitanUtils {
+
+	public static String addParamToScript(String script, Map<String, Object> scriptParamMap) {
+		for (Map.Entry<String, Object> entry : scriptParamMap.entrySet()) {
+			String value;
+			if (entry.getKey().contains("lc_last_update") || entry.getKey().contains("lc_create_time")) {
+				value = entry.getValue().toString();
+			} else {
+				value = "'" + entry.getValue().toString() + "'";
+			}
+			script = script.replace(entry.getKey(), value);
+		}
+		script = script.replace("lc_'true'", "true");
+		script = script.replace("'true'", "true");
+		return script;
+	}
+
+	private final static String[] MOVE_FIELDS = {"primary_category", "lc_enable", "lc_create_time", "lc_last_update", "lc_status", "search_code", "search_path", "search_coverage"};
+
+	/**
+	 * 优化：把过滤条件移到边上
+	 * @param script
+	 * @param reverse
+     * @return
+     */
+	public static String optimizeMoveConditionsToEdge(String script, boolean reverse,Map<String, Object> scriptParamMap) {
+		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
+		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
+		String vConditions, prefix;
+		if (reverse) {
+			prefix = "source_r_";
+			vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+		} else {
+			prefix = "target_r_";
+			vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+		}
+		String optimizeScript = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
+		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
+		script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
+		return script;
+	}
+
+	/**
+	 * primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
+	 * @param vConditions
+	 * @return
+     */
+	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
+		String[] conditions = vConditions.split("\\.");
+		List<String> clearConditions = clearConditions(conditions);
+		Map<String, String> optimizeConditions = optimizeConditions(clearConditions, scriptParamMap);
+		StringBuffer eConditions = new StringBuffer();
+		for (String condition : clearConditions) {
+			for (String field : MOVE_FIELDS) {
+				if (condition.contains(field)) {
+					String suffix = "";
+					if ("search_code".equals(field) || "search_path".equals(field) || "search_coverage".equals(field)) suffix = "_string";
+					vConditions = vConditions.replace("." + condition, "");// 点上把这个条件移除
+					String eCondition = optimizeConditions.get(condition).replace("'" + field + "'", "'" + prefix + field + suffix + "'");
+					eConditions.append(".").append(eCondition);// 边上加上这个条件
+					optimizeConditions.remove(condition);
+				}
+			}
+		}
+		// 优化点上剩余条件
+		if (CollectionUtils.isNotEmpty(optimizeConditions)) {
+			for (Map.Entry<String, String> entry : optimizeConditions.entrySet()) {
+				vConditions = vConditions.replace(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return eConditions.append(".as('e')").append(vConditions).toString();
+	}
+
+	private static List<String> clearConditions(String[] tmpConditions) {
+		List<String> conditions = new ArrayList<>();
+		int length = tmpConditions.length;
+		for (int i = 0; i < length; i++) {
+			String c = tmpConditions[i];
+			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
+				if (CommonHelper.checkBrackets(c)) {
+					conditions.add(c);
+				} else {
+					String check = c;
+					while ((i + 1) < length) {
+						boolean f = findConditions(check,i, tmpConditions, conditions);
+						i++;
+						if (f) {
+							break;
+						} else {
+							check = check + tmpConditions[i];
+						}
+					}
+				}
+
+			}
+		}
+		return conditions;
+	}
+
+	private static boolean findConditions(String check, int i, String[] tmpConditions, List<String> conditions) {
+		boolean f = false;
+		String condition = check + "." + tmpConditions[i + 1];
+		if (CommonHelper.checkBrackets(condition)) {
+			if (condition.contains(")has")) {
+				condition = condition.replace(")has",").has");
+			}
+			conditions.add(condition);
+			f = true;
+		}
+		//}
+		return f;
+	}
+
+	/**
+	 *
+	 * @param tmpConditions
+	 * @param scriptParamMap
+     * @return
+     */
+	private static Map<String, String> optimizeConditions(List<String> tmpConditions, Map<String, Object> scriptParamMap) {
+		Map<String, String> conditions = new HashMap<>();
+		for (String c : tmpConditions) {
+			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
+				// 暂时只处理 or
+				String value = null;
+				if (c.startsWith("or(")) {
+					// or(has('search_code',search_code0))
+					if ((CommonHelper.getSubStrAppearTimes(c, "has") == 1) || (!c.contains(",has") && c.contains("search_code"))) {
+						value = c.substring(3, c.length()-1);
+					/*	if(!CommonHelper.checkBrackets(value)){
+
+						}*/
+					} else {
+						value = c;
+					}
+
+				} else if (c.contains("'search_coverage'")) {
+					int size = CommonHelper.getSubStrAppearTimes(c, "search_coverage") - 1;
+					//coverage = "[\\S\\s]*" + coverage + "[\\S\\s]*";
+					scriptParamMap.put("search_coverage0", "[\\S\\s]*" + "\\\"" + scriptParamMap.get("search_coverage0").toString().toLowerCase() + "\\\"" + "[\\S\\s]*");
+					if (size == 1) {
+						value = "has('search_coverage',textRegex(search_coverage0))";
+					} else {
+						value = "or(has('search_coverage',textRegex(search_coverage0))";
+						for (int i = 1; i < size; i++) {
+							value = value + ",has('search_coverage',textRegex(search_coverage" + i + "))";
+							scriptParamMap.put("search_coverage" + i, "[\\S\\s]*" + "\\\"" + scriptParamMap.get("search_coverage" + i).toString().toLowerCase() + "\\\"" + "[\\S\\s]*");
+						}
+						value = value + ")";
+					}
+				} else {
+					value = c;
+				}
+				conditions.put(c, value);
+			}
+		}
+		return conditions;
+	}
 
 	/**
 	 * 优化多个关系时的查询脚本

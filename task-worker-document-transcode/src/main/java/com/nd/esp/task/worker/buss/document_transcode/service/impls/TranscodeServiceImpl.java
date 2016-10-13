@@ -68,11 +68,21 @@ public class TranscodeServiceImpl implements TranscodeService {
 
     public static final String ERR_JSONPARAM = "err_jsonparam";
     public static final String ERR_PACK_PATH = "err_pack_path";
+<<<<<<< HEAD
     
     public static final String TRANSCODE_SUBTYPE = "subtype";
     public static final String SUBTYPE_VIDEO = "video";
     public static final String SUBTYPE_AUDIO = "audio";
     
+=======
+
+    public static final String REF_PATH_HEADER = "${ref-path}";
+
+    private static final String [] IMAGE_EXTS_ARRAY={"jpg","jpeg","bmp","png","gif"};
+    private static final List<String> IMAGE_EXTS = Arrays.asList(IMAGE_EXTS_ARRAY);
+
+
+>>>>>>> remotes/origin/develop
     static {
         if(!zipFileTempDir.endsWith(File.separator)) {
             zipFileTempDir+=File.separator; 
@@ -378,6 +388,12 @@ public class TranscodeServiceImpl implements TranscodeService {
         String imageDir = destDir+File.separator+"image";
         String thumbDir = destDir+File.separator+"thumbnail";
 
+        File destDirectory = new File(destDir);
+        if(destDirectory.exists()) {
+            FileUtils.deleteQuietly(destDirectory);
+        }
+        FileUtils.forceMkdir(destDirectory);
+
         long timeStart = System.currentTimeMillis();
         StringBuffer errMsg = new StringBuffer();
         logMsg.append("  Download path:"+param.getLocation()+"&session="+param.getSession()+System.getProperty("line.separator"));
@@ -395,6 +411,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,String> targetsMap = new HashMap<String,String>();
         Map<String,String> targetsMetadata = new HashMap<String,String>();
         List<String> previews = new ArrayList<String>();
+<<<<<<< HEAD
         if(!srcFileName.endsWith(".txt")) {
             String pdfFilePath = destDir + File.separator + "pdf.pdf";
             if(!srcFileName.endsWith(".pdf")) {
@@ -410,25 +427,75 @@ public class TranscodeServiceImpl implements TranscodeService {
             Pdf2imageUtil.transferPdf2Image(pdfFilePath, imageDir);
             targetsMap.put("image", param.getTarget_location()+"/transcode/image");
             targetsMetadata.put("image", DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg"));
+=======
+        long sizeOfFile = 0;
+        Map<String,String> meta = new HashMap<>();
+        if(srcFileName.endsWith(".txt")) {
+            Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
+            targetsMap.put("html", REF_PATH_HEADER+param.getTarget_location()+"/transcode/html");
+            meta.put("FileSize", String.valueOf(FileUtils.sizeOfDirectory(new File(htmlDir))));
+            targetsMetadata.put("html", ObjectUtils.toJson(meta));
+        } else if(srcFileName.endsWith(".jpg") || srcFileName.endsWith(".jpeg") || srcFileName.endsWith(".bmp")
+                || srcFileName.endsWith(".png") || srcFileName.endsWith(".gif")) {
+            String destFilename = Pdf2htmlUtil.getFileNameNoEx(srcFileName)+".jpg";
+            meta = ImageUtils.toJPG(srcFilePath, destDir+File.separator+destFilename);
+            targetsMetadata.put("source", ObjectUtils.toJson(meta));
+            targetsMap.put("href", REF_PATH_HEADER+param.getTarget_location()+"/transcode/"+destFilename);
+            meta.put("FileSize", String.valueOf(FileUtils.sizeOf(new File(destDir + File.separator + destFilename))));
+        } else {
+            LOG.info("Office转pdf开始");
+            String pdfFilePath = destDir + File.separator + "pdf.pdf";
+            if (!srcFileName.endsWith(".pdf")) {
+                Office2pdfUtil.convert2PDF(srcFilePath, pdfFilePath);
+            } else {
+                FileUtils.copyFile(new File(srcFilePath), new File(pdfFilePath));
+            }
+            sizeOfFile = FileUtils.sizeOf(new File(pdfFilePath));
+            targetsMap.put("pdf", REF_PATH_HEADER + param.getTarget_location() + "/transcode/pdf.pdf");
+            meta = DocumentInfoUtil.getDocumentInfo(pdfFilePath, "pdf", sizeOfFile);
+            Pdf2htmlUtil.transferPdf2Html(pdfFilePath, htmlDir, logMsg);
+            sizeOfFile = FileUtils.sizeOfDirectory(new File(htmlDir));
+            targetsMap.put("html", REF_PATH_HEADER + param.getTarget_location() + "/transcode/html");
+            targetsMetadata.put("html", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, "html", sizeOfFile)));
+            Pdf2imageUtil.transferPdf2Image(pdfFilePath, imageDir, logMsg);
+            sizeOfFile = FileUtils.sizeOfDirectory(new File(imageDir));
+            targetsMap.put("image", REF_PATH_HEADER + param.getTarget_location() + "/transcode/image");
+            targetsMetadata.put("image", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg", sizeOfFile)));
+>>>>>>> remotes/origin/develop
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
             File[] thumbFiles = new File(thumbDir).listFiles();
-            Arrays.sort(thumbFiles, new Comparator<File>(){
+            Arrays.sort(thumbFiles, new Comparator<File>() {
                 @Override
-                public int compare(File o1,File o2) {
-                    return Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o1.getName()))-Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o2.getName()));
+                public int compare(File o1, File o2) {
+                    return Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o1.getName())) - Integer.valueOf(Pdf2htmlUtil.getFileNameNoEx(o2.getName()));
                 }
             });
-            for(File thumbFile:thumbFiles) {
-                previews.add(param.getTarget_location()+"/transcode/thumbnail/"+thumbFile.getName());
+            for (File thumbFile : thumbFiles) {
+                previews.add(param.getTarget_location() + "/transcode/thumbnail/" + thumbFile.getName());
             }
-        } else {
-            Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
-            targetsMap.put("html", param.getTarget_location()+"/transcode/html");
         }
 
         String csHost = param.getCs_api_url().substring(0, param.getCs_api_url().lastIndexOf('/')).replace("http://", "");
         CsConfig.setHost(csHost);
-        ContentServiceUtils.uploadDirectory(new File(destDir), param.getTarget_location()+"/transcode", param.getSession());
+        List<Dentry> response = ContentServiceUtils.uploadDirectory(new File(destDir), param.getTarget_location()+"/transcode", param.getSession());
+
+        if(targetsMap.containsKey("href")) {
+            for(Dentry dentry:response) {
+                if(dentry.getName().endsWith(".jpg") && dentry.getInode()!=null) {
+                    meta.put("md5", dentry.getInode().getMd5());
+                    targetsMetadata.put("href", ObjectUtils.toJson(meta));
+                    break;
+                }
+            }
+        } else if(targetsMap.containsKey("pdf")) {
+            for(Dentry dentry:response) {
+                if("pdf.pdf".equals(dentry.getName()) && dentry.getInode()!=null) {
+                    meta.put("md5", dentry.getInode().getMd5());
+                    targetsMetadata.put("pdf", ObjectUtils.toJson(meta));
+                    break;
+                }
+            }
+        }
 
         result.setStatus(1);
         result.setLocations(targetsMap);
@@ -590,7 +657,11 @@ public class TranscodeServiceImpl implements TranscodeService {
 //    }
 
     public static void main(String[] args) throws Exception {
+<<<<<<< HEAD
         String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"5bedae0e-abf6-4467-9904-ef33bb955204\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu/esp/test/a.xls\",\"target_location\":\"/qa_content_edu/esp/test\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+=======
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"b46d72dd-6fe7-4778-9827-85b479f36e84\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu_product/esp/assets/48bd2a25-677d-40df-bcea-68ea006c18ce.pkg/test3.pdf\",\"target_location\":\"/qa_content_edu_product/esp/assets/48bd2a25-677d-40df-bcea-68ea006c18ce.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+>>>>>>> remotes/origin/develop
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
@@ -599,7 +670,7 @@ public class TranscodeServiceImpl implements TranscodeService {
         StringBuffer errMsg = new StringBuffer();
         TranscodeResult result = new TranscodeResult();
         try {
-            result = transcode("d5714fd6-0d09-4cb5-9d4b-9627a67f5efe", param, errMsg);
+            result = transcode("cdffe", param, errMsg);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
