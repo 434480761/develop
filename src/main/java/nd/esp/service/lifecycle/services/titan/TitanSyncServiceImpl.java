@@ -165,6 +165,16 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         return false;
     }
 
+    public boolean syncTechInfo(TechInfo techInfo){
+        TitanTransaction titanTransaction = new TitanTransaction();
+        TitanRepositoryOperation operation = new TitanRepositoryOperation();
+        operation.setEntity(techInfo);
+        operation.setOperationType(TitanOperationType.add);
+        titanTransaction.addNextStep(operation);
+        titanSubmitTransaction.submit(titanTransaction);
+        return true;
+    }
+
     private boolean delete(String primaryCategory, String identifier){
         boolean techInfoDeleted = titanTechInfoRepository.deleteAllByResource(primaryCategory, identifier);
         boolean resourceDeleted = titanResourceRepository.delete(primaryCategory, identifier);
