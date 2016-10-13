@@ -325,7 +325,7 @@ public class TransCodeUtil {
         arg.put("location", location);
         arg.put("session", session);
         String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType()
-                + "/transcode/document_callback?identifier="+uuid;
+                + "/transcode/document_callback";
         arg.put("callback_api", callBackUrl);
 
         LOG.info("trigger document transcode, callback_api:" + callBackUrl);
@@ -911,7 +911,7 @@ public class TransCodeUtil {
 
         // 通过路径不同，走向视频转码回调
         String callBackUrl = Constant.LIFE_CYCLE_DOMAIN_URL + "/v0.6/" + codeParam.getResType()
-                + "/transcode/videoCallback?identifier="+codeParam.getResId();
+                + "/transcode/videoCallback";
 
         arg.put("callback_api", callBackUrl);
 
