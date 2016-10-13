@@ -1698,7 +1698,12 @@ public class NDResourceController {
 
         // 2.categories
         if(CollectionUtils.isEmpty(categories)){
-            categories = null;
+        	if(resType.equals(IndexSourceType.TeachingMaterialType.getName())){
+        		categories = new HashSet<String>();
+        		categories.add("K12/*");
+        	}else{
+        		categories = null;
+        	}
         }else {
         	categories = ParameterVerificationHelper.doAdapterCategories4101ppt(categories);
             categories = ParameterVerificationHelper.doAdapterCategories4DB(categories);
