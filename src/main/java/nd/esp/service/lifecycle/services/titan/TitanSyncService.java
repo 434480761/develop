@@ -14,5 +14,5 @@ public interface TitanSyncService {
     boolean reportResource(String primaryCategory, String identifier, TitanSyncType titanSyncType);
     boolean batchDeleteResource(Set<Resource> resourceSet);
     boolean syncEducation(String primaryCategory, String identifier);
-    boolean syncTechInfo(TechInfo techInfo);
+    boolean syncTechInfoAndEducation(String primaryCategory, String identifier);
 }

@@ -165,12 +165,38 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         return false;
     }
 
-    public boolean syncTechInfo(TechInfo techInfo){
+    public boolean syncTechInfoAndEducation(String primaryCategory, String identifier){
+        EspRepository<?> espRepository = ServicesManager.get(primaryCategory);
+        Education education;
+
+        Set<String> uuids = new HashSet<>();
+        uuids.add(identifier);
+
+        List<String> resourceTypes = new ArrayList<>();
+        resourceTypes.add(primaryCategory);
+        try {
+            education = (Education) espRepository.get(identifier);
+        } catch (EspStoreException e) {
+            titanRepositoryUtils.titanSync4MysqlAdd(TitanSyncType.SAVE_OR_UPDATE_ERROR,
+                    primaryCategory, identifier);
+            return false;
+        }
+
+        List<TechInfo> techInfos = ndResourceDao.queryTechInfosUseHql(resourceTypes,uuids);
+
         TitanTransaction titanTransaction = new TitanTransaction();
         TitanRepositoryOperation operation = new TitanRepositoryOperation();
-        operation.setEntity(techInfo);
-        operation.setOperationType(TitanOperationType.add);
+        operation.setEntity(education);
+        operation.setOperationType(TitanOperationType.update);
         titanTransaction.addNextStep(operation);
+
+        for (TechInfo techInfo : techInfos){
+            TitanRepositoryOperation techInfoOperation = new TitanRepositoryOperation();
+            techInfoOperation.setEntity(techInfo);
+            techInfoOperation.setOperationType(TitanOperationType.update);
+            titanTransaction.addNextStep(techInfoOperation);
+        }
+
         titanSubmitTransaction.submit(titanTransaction);
         return true;
     }
