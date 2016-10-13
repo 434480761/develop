@@ -47,6 +47,7 @@ import nd.esp.service.lifecycle.services.teachingmaterial.v06.ChapterService;
 import nd.esp.service.lifecycle.services.teachingmaterial.v06.TeachingMaterialServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
@@ -118,6 +119,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
 
 
     @Override
+	@TitanTransaction
     public InstructionalObjectiveModel createInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel) {
         // 调用通用创建接口
         instructionalObjectiveModel.setTechInfoList(null);
@@ -130,6 +132,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
     }
 
     @Override
+	@TitanTransaction
     public InstructionalObjectiveModel updateInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel) {
     	/**
     	 *由于教学目标的演示demo需要有版本的信息
@@ -743,6 +746,7 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
         return rListViewModel;
     }
     @Override
+	@TitanTransaction
     public InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel) {
         // 调用通用创建接口
         instructionalObjectiveModel.setTechInfoList(null);

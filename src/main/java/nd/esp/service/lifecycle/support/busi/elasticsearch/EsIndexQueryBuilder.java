@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.support.busi.elasticsearch;
 
 import nd.esp.service.lifecycle.educommon.vos.constant.PropOperationConstant;
+import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.busi.titan.TitanKeyWords;
@@ -10,6 +11,7 @@ import nd.esp.service.lifecycle.support.enums.ES_OP;
 import nd.esp.service.lifecycle.support.enums.ES_SearchField;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
+
 import org.springframework.http.HttpStatus;
 
 import java.util.*;
@@ -43,7 +45,7 @@ import java.util.*;
  */
 public class EsIndexQueryBuilder {
 
-    private String index="mixed_ndresource";
+    private String index=Constant.TITAN_ES_RESOURCE_INDEX;
     private String words;
     //private String resType;
     private Set<String> resTypeSet;
@@ -133,14 +135,14 @@ public class EsIndexQueryBuilder {
     public String generateScript() {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
-        String wordSegmentation=dealWithWordsContainsNot(this.words);
-        String other=dealWithParams();
+        String wordSegmentation = dealWithWordsContainsNot(this.words);
+        String coverage = dealWithParams4Exact();
         String property = dealWithProp();
         if ("".endsWith(wordSegmentation.trim())) {
-            other = other.trim().replaceFirst("AND", "");
+            coverage = coverage.trim().replaceFirst("AND", "").trim();
         }
         baseQuery.append(wordSegmentation);
-        baseQuery.append(other);
+        baseQuery.append(coverage);
         baseQuery.append(dealWithResType());
         if(!"".endsWith(property.trim())){
             baseQuery.append(DOUBLE_BLANK_AND).append(property);
@@ -429,6 +431,27 @@ public class EsIndexQueryBuilder {
         return query.toString();
     }
 
+    private String dealWithParams4Exact() {
+        if (CollectionUtils.isEmpty(this.params)) return "";
+        StringBuffer query = new StringBuffer();
+        String codeStr = dealWithSingleParam4Exact(TitanKeyWords.search_code.toString(), this.params.get(ES_SearchField.cg_taxoncode.toString()));
+        this.params.remove(ES_SearchField.cg_taxoncode.toString());
+        String pathStr = dealWithSingleParam4Exact(TitanKeyWords.search_path.toString(), this.params.get(ES_SearchField.cg_taxonpath.toString()));
+        this.params.remove(ES_SearchField.cg_taxonpath.toString());
+        String coverageStr = dealWithSingleParam4Exact(TitanKeyWords.search_coverage.toString(), this.params.get(ES_SearchField.coverages.toString()));
+        this.params.remove(ES_SearchField.coverages.toString());
+        if(!"".equals(codeStr)){
+            query.append(DOUBLE_BLANK_AND).append(codeStr);
+        }
+        if(!"".equals(pathStr)){
+            query.append(DOUBLE_BLANK_AND).append(pathStr);
+        }
+        if(!"".equals(coverageStr)){
+            query.append(DOUBLE_BLANK_AND).append(coverageStr);
+        }
+        return query.toString();
+    }
+
 
 
     private String dealWithSingleParam(String property, Map<String, List<String>> searchList) {
@@ -464,6 +487,55 @@ public class EsIndexQueryBuilder {
 
                     } else if (ES_OP.ne.toString().equals(codeKey)) {
                         queryCondition.append("-").append("*").append(value.trim()).append("*").append(" ");
+                    }
+                }
+            }
+
+            query.append(queryCondition.toString());
+            query.deleteCharAt(query.length()-1);
+            query.append(") ");
+        }else{
+            return "";
+        }
+        return query.toString();
+    }
+
+    private String dealWithSingleParam4Exact(String property, Map<String, List<String>> searchList) {
+        StringBuffer query = new StringBuffer();
+        if (CollectionUtils.isNotEmpty(searchList)) {
+            query.append("v.\\\"");
+            query.append(property);
+            query.append("\\\":(");
+            StringBuffer queryCondition = new StringBuffer();
+            for (Map.Entry<String, List<String>> entry : searchList.entrySet()) {
+                List<String> values = entry.getValue();
+                String codeKey = entry.getKey();
+                if (CollectionUtils.isEmpty(values)) continue;
+                for (String value : values) {
+                    if (TitanKeyWords.search_coverage.toString().equals(property)) {
+                        if (value.split("/").length == 3) {
+                            value = value + "/";
+                        }
+                    }
+                    if (value.contains("$")) {
+                        value = value.replace("$", "\\$");
+                    }
+                    if (value.contains("/")) {
+                        value = value.replace("/", "\\\\/");
+                    }
+                    //value = value.toLowerCase();
+
+                    if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
+                        if (value.contains(PropOperationConstant.OP_AND)) {
+                            String[] strs=value.split(PropOperationConstant.OP_AND);
+                            value = "(" + strs[0].trim() +  DOUBLE_BLANK_AND +  strs[1].trim() + ")";
+                        }else{
+                            value =  value.trim() ;
+                        }
+                        queryCondition.append(value).append(" ");
+
+                    } else if (ES_OP.ne.toString().equals(codeKey)) {
+                        queryCondition.append("-").append(value.trim()).append(" ");
                     }
                 }
             }

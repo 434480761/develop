@@ -15,8 +15,6 @@
  */
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import java.net.URI;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.net.URI;
 
 /**
  * @since 1.0.0

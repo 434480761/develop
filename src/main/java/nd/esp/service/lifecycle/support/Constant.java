@@ -309,6 +309,8 @@ public class Constant {
 			.getProperty("titan.search.pool.size");
 	public final static String TITAN_SINGLE_POOL_SIZE = LifeCircleApplicationInitializer.properties
 			.getProperty("titan.single.pool.size");
+	public final static String TITAN_ES_RESOURCE_INDEX = LifeCircleApplicationInitializer.properties
+			.getProperty("titan.es.resource.index");
 	
     //课件编辑器域名
     public final static String SLIDES_URI=LifeCircleApplicationInitializer.properties.getProperty("slides.uri");

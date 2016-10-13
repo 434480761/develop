@@ -368,6 +368,11 @@ public class TitanResourceController {
 		titanResourceService.detailErrorRelation();
 	}
 
+	@MarkAspect4ImportData
+	@RequestMapping(value = "/all/update/relation/red/{page}", method = RequestMethod.GET)
+	public void updateRelationRedProperty(@PathVariable Integer page){
+		titanResourceService.updateRelationRedRelation(page);
+	}
 
 	/**
 	 * 测试导数据时：一个环境只允许一个任务
