@@ -46,10 +46,7 @@ public interface TitanResourceService {
 
 	public void detailErrorRelation();
 
-<<<<<<< HEAD
-=======
 	public void updateRelationRedRelation(Integer page);
 
 	public void checkResourceExist(String primaryCategory);
->>>>>>> remotes/origin/develop
 }
