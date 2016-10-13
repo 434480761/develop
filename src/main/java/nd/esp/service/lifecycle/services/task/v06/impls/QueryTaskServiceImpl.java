@@ -148,7 +148,7 @@ public class QueryTaskServiceImpl implements QueryTaskService {
 												.asynAdd(new Resource(
 														resType,
                                                         uuid));
-                                        titanSyncService.syncEducation(resType,uuid);
+                                        titanSyncService.syncTechInfoAndEducation(resType,uuid);
 									} else {
                                         taskService.DealInvalidTask(taskId, "未取得任务执行结果");
                                     }

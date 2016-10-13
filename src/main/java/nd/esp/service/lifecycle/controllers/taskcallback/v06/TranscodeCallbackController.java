@@ -105,7 +105,7 @@ public class TranscodeCallbackController {
         offlineService.writeToCsAsync(res_type, id);
         esResourceOperation.asynAdd(new Resource(res_type, id));
 
-        titanSyncService.syncEducation(res_type,id);
+        titanSyncService.syncTechInfoAndEducation(res_type, id);
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }
@@ -146,7 +146,7 @@ public class TranscodeCallbackController {
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));
-            titanSyncService.syncEducation(res_type,id);
+            titanSyncService.syncTechInfoAndEducation(res_type,id);
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
@@ -189,7 +189,7 @@ public class TranscodeCallbackController {
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));
-            titanSyncService.syncEducation(res_type,id);
+            titanSyncService.syncTechInfoAndEducation(res_type,id);
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
@@ -231,7 +231,7 @@ public class TranscodeCallbackController {
             //异步过程：同步元数据
             offlineService.writeToCsAsync(res_type, id);
             esResourceOperation.asynAdd(new Resource(res_type, id));
-            titanSyncService.syncEducation(res_type,id);
+            titanSyncService.syncTechInfoAndEducation(res_type,id);
         }
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
