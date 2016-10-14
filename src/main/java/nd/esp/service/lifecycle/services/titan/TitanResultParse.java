@@ -95,6 +95,8 @@ public class TitanResultParse {
             if (StringUtils.isNotEmpty(countStr) && countStr.contains(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
                 resultStr.remove(resultSize - 1);
+            } else {
+                viewModels.setTotal(null);
             }
             // 解析items
             items = parseToItemsResourceModel(resTypeSet, resultStr, includes, isCommonQuery);// FIXME
