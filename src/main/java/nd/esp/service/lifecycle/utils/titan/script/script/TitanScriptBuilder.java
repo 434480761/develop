@@ -3,6 +3,7 @@ package nd.esp.service.lifecycle.utils.titan.script.script;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
+import nd.esp.service.lifecycle.utils.xstream.MapConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -271,16 +272,6 @@ public class TitanScriptBuilder {
      * 获取节点
      * */
     public TitanScriptBuilder get(TitanModel model){
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        if (titanScriptModel == null){
-            return this;
-        }
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-//        uniqueVertexOrNode(titanScriptModel, variable, script ,param);
-
-//        dealScriptAndParam(script, param);
         return this;
     }
 
@@ -419,6 +410,30 @@ public class TitanScriptBuilder {
         return this;
     }
 
+    public TitanScriptBuilder script(String script,Map<String, Object> params){
+        Variable variable = createVariable(TitanScriptModel.Type.S);
+        Map<String, Object> newParams = new HashMap<>();
+        if (params != null){
+            for (String key : params.keySet()){
+                newParams.put(key + variable.getSuffix(), params.get(key));
+            }
+        }
+        ScriptAndParam scriptAndParam = new ScriptAndParam(new StringBuilder(script), newParams);
+        dealScriptAndParam(scriptAndParam, null);
+        return this;
+    }
+
+    public TitanScriptBuilder patch(TitanModel titanModel){
+
+
+        return this;
+    }
+
+    public TitanScriptBuilder patchDelete(TitanModel titanModel, Set<String> deleteProperty){
+
+        return this;
+    }
+
 
     /**
      * 为脚本添加方法头不合尾部
@@ -435,7 +450,6 @@ public class TitanScriptBuilder {
         String method = "method" + firstIndex +"()";
         methodNames.add(method);
         this.script.append("public ").append(returnType).append(" ").append(method).append("{").append(scriptAndParam.getScript()).append(" ").append("}").append(";");
-//        this.script.append(scriptAndParam.getScript()).append(";");
         this.param.putAll(scriptAndParam.getParam());
         this.firstIndex ++ ;
     }

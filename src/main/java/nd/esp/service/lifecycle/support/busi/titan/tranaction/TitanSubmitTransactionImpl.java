@@ -132,6 +132,13 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     builder.deleteEdgeById(entity.getIdentifier());
                     break;
                 //更新关系冗余字段
+                case script:
+                    builder.script(operation.getCustomScript(), operation.getCustomScriptParam());
+                    break;
+
+                case patch:
+
+                    break;
                 case update_relation_red_property:
                     if (entity instanceof ResourceRelation){
                         TitanScriptBuilder addAndUpdate = new TitanScriptBuilder();

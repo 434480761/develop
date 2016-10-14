@@ -349,6 +349,15 @@ public class ParseAnnotation {
     }
 
     @Test
+    public void testScript(){
+        TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
+
+        scriptBuilder.script("g.V().has('identifier','fc21ecb8-247e-423c-a409-425b5dad3044')",null);
+        scriptBuilder.scriptEnd();
+
+    }
+
+    @Test
     public void test2(){
         String value1="aetwer,werwer,werqerw";
         String value2 =" ";

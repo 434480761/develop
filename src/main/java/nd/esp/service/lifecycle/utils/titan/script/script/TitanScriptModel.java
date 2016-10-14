@@ -8,7 +8,7 @@ import java.util.Objects;
  */
 public class TitanScriptModel {
     public enum Type {
-        E,V
+        E,V,S
     }
     private Type type;
     private String label;
