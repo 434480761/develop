@@ -40,6 +40,7 @@ public class ImageUtils {
 			Map<String,String> meta = new HashMap<>();
 			meta.put("width", String.valueOf(srcImg.getWidth(null)));
 			meta.put("height", String.valueOf(srcImg.getHeight(null)));
+			meta.put("displaymode", "horizontal");
 			if(filePath.lastIndexOf(".jpg") > 0) {
 				FileUtils.copyFile(new File(filePath), new File(dest));
 				return meta;
