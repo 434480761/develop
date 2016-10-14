@@ -57,7 +57,8 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String VIDEO_THEORA_FORMAT="ogv";
     private static final String AUDIO_FORMAT_TARGET="mp3";
     private static final String AUDIO_THEORA_FORMAT="ogg";
-    
+    public static final int PREVIEW_MAX_LIMIT = 50;
+
     @Autowired
     private NDResourceService ndResourceService;
     
@@ -345,8 +346,8 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             if(CollectionUtils.isNotEmpty(previewMap)) {
                 
                 List<String> urlList = (List<String>) previewMap.get("previewUrls");
-                if(urlList.size()>100) {
-                    urlList = urlList.subList(0, 100);
+                if(urlList.size()> PREVIEW_MAX_LIMIT) {
+                    urlList = urlList.subList(0, PREVIEW_MAX_LIMIT);
                 }
                 LOG.info("previewMap1:" );
                 for(String url:urlList) {
@@ -661,6 +662,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             // transcodeCut
             List<String> previewList = argument.getPreviews();
             if (CollectionUtils.isNotEmpty(argument.getPreviews())) {
+                int maxNum = previewList.size()> PREVIEW_MAX_LIMIT ? PREVIEW_MAX_LIMIT : previewList.size();
                 for (int i = 0; i < previewList.size(); i++) {
                     resource.getPreview().put(DOC_TRANSCODE_PAGE_KEY + String.valueOf(i + 1),
                             "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀

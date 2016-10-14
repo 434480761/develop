@@ -142,14 +142,20 @@ public class TranscodeServiceImpl implements TranscodeService {
         Map<String,String> meta = new HashMap<>();
         if(srcFileName.endsWith(".txt")) {
             Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
-            targetsMap.put("html", REF_PATH_HEADER+param.getTarget_location()+"/transcode/html");
-            meta.put("FileSize", String.valueOf(FileUtils.sizeOfDirectory(new File(htmlDir))));
+            targetsMap.put("html", REF_PATH_HEADER + param.getTarget_location() + "/transcode/html");
+            meta.put("FileSize", String.valueOf(FileUtils.sizeOf(new File(srcFilePath))));
+            meta.put("height", "0");
+            meta.put("width", "0");
+            meta.put("pagesize", "1");
+            meta.put("displaymode", "vertical");
             targetsMetadata.put("source", ObjectUtils.toJson(meta));
+            meta.put("FileSize", String.valueOf(FileUtils.sizeOfDirectory(new File(htmlDir))));
             targetsMetadata.put("html", ObjectUtils.toJson(meta));
         } else if(srcFileName.endsWith(".jpg") || srcFileName.endsWith(".jpeg") || srcFileName.endsWith(".bmp")
                 || srcFileName.endsWith(".png") || srcFileName.endsWith(".gif")) {
             String destFilename = Pdf2htmlUtil.getFileNameNoEx(srcFileName)+".jpg";
             meta = ImageUtils.toJPG(srcFilePath, destDir+File.separator+destFilename);
+            meta.put("FileSize", String.valueOf(FileUtils.sizeOf(new File(srcFilePath))));
             targetsMetadata.put("source", ObjectUtils.toJson(meta));
             targetsMap.put("href", REF_PATH_HEADER+param.getTarget_location()+"/transcode/"+destFilename);
             meta.put("FileSize", String.valueOf(FileUtils.sizeOf(new File(destDir + File.separator + destFilename))));
@@ -178,6 +184,9 @@ public class TranscodeServiceImpl implements TranscodeService {
             targetsMap.put("image", REF_PATH_HEADER + param.getTarget_location() + "/transcode/image");
             targetsMetadata.put("image", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
+            sizeOfFile = FileUtils.sizeOfDirectory(new File(thumbDir));
+            targetsMap.put("thumbnail", REF_PATH_HEADER + param.getTarget_location() + "/transcode/image");
+            targetsMetadata.put("thumbnail", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             File[] thumbFiles = new File(thumbDir).listFiles();
             Arrays.sort(thumbFiles, new Comparator<File>() {
                 @Override
