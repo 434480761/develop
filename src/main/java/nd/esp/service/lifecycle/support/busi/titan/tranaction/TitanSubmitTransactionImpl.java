@@ -133,7 +133,10 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                     break;
                 //更新关系冗余字段
                 case script:
-                    builder.script(operation.getCustomScript(), operation.getCustomScriptParam());
+                    if (operation instanceof TitanRepositoryOperationScript){
+                        builder.script(((TitanRepositoryOperationScript) operation).getCustomScript(),
+                                ((TitanRepositoryOperationScript) operation).getCustomScriptParam());
+                    }
                     break;
 
                 case patch:

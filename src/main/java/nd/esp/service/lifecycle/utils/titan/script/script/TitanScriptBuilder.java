@@ -14,8 +14,8 @@ import java.util.*;
  * Created by Administrator on 2016/8/24.
  */
 public class TitanScriptBuilder {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(TitanScriptBuilder.class);
+//    private static final Logger LOG = LoggerFactory
+//            .getLogger(TitanScriptBuilder.class);
     private StringBuilder script = new StringBuilder();
     private Map<String, Object> param = new HashMap<>();
     private List<String> methodNames = new ArrayList<>();
@@ -73,7 +73,7 @@ public class TitanScriptBuilder {
                     }
                 }
             } catch (IOException e) {
-                LOG.error("读取脚本文件{}出错",name);
+//                LOG.error("读取脚本文件{}出错",name);
             } finally {
                 if (reader != null){
                     try {
@@ -88,7 +88,7 @@ public class TitanScriptBuilder {
                 try {
                     throw new Exception("文件titan脚本加载不正确");
                 } catch (Exception e) {
-                    LOG.error("脚本文件{}有错",name);
+//                    LOG.error("脚本文件{}有错",name);
                 }
             }
 
@@ -313,7 +313,7 @@ public class TitanScriptBuilder {
             script.append(methodName).append(";");
         }
         script.append("1+1");
-        ScriptMethod.clean();
+//        ScriptMethod.clean();
         return null;
     }
 
@@ -423,14 +423,13 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public TitanScriptBuilder patch(TitanModel titanModel){
-
-
-        return this;
-    }
-
-    public TitanScriptBuilder patchDelete(TitanModel titanModel, Set<String> deleteProperty){
-
+    public TitanScriptBuilder patch(TitanModel titanModel, Map<String, Object> patchPropertyMap){
+        if (titanModel == null){
+            return this;
+        }
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(titanModel);
+        Variable variable = createVariable(titanScriptModel.getType());
+        dealScriptAndParam(patchElement(titanScriptModel,variable, patchPropertyMap),titanScriptModel);
         return this;
     }
 
@@ -614,6 +613,36 @@ public class TitanScriptBuilder {
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
     }
 
+
+    private ScriptAndParam patchElement(TitanScriptModel titanScriptModel,Variable variable, Map<String, Object> patchPropertyMap){
+
+        StringBuilder script = new StringBuilder();
+        Map<String, Object> param = new HashMap<>();
+        String ele = "ele";
+        if (titanScriptModel instanceof TitanScriptModelVertex){
+            script.append("Vertex ").append(ele).append("=g.V()");
+        }
+        if (titanScriptModel instanceof TitanScriptModelEdge){
+            script.append("Edge ").append(ele).append("=g.E()");
+        }
+        Map<String, Object> updateValues = new HashMap<>();
+        List<String> dropValues = new ArrayList<>();
+        for (String key : patchPropertyMap.keySet()){
+            Object obj = patchPropertyMap.get(key);
+            if (obj == null){
+                dropValues.add(key);
+            } else {
+                updateValues.put(key, obj);
+            }
+        }
+        appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
+        appendNext(script);
+        appendProperty4Next(ele, updateValues,variable,script,param);
+        appendRemoveAllProperty(ele,dropValues, script);
+
+        appendReturn(script, ele);
+        return new ScriptAndParam(script, param);
+    }
 
 
     private Variable createVariable(TitanScriptModel.Type type){

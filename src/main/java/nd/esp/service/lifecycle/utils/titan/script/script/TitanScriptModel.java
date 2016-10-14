@@ -14,6 +14,7 @@ public class TitanScriptModel {
     private String label;
     private Map<String, Object> compositeKeyMap;
     private Map<String, Object> fieldMap;
+    private Map<String, Object> fieldNameAndTitanNameMap;
 
     public Type getType() {
         return type;
@@ -45,5 +46,13 @@ public class TitanScriptModel {
 
     public void setFieldMap(Map<String, Object> fieldMap) {
         this.fieldMap = fieldMap;
+    }
+
+    public Map<String, Object> getFieldNameAndTitanNameMap() {
+        return fieldNameAndTitanNameMap;
+    }
+
+    public void setFieldNameAndTitanNameMap(Map<String, Object> fieldNameAndTitanNameMap) {
+        this.fieldNameAndTitanNameMap = fieldNameAndTitanNameMap;
     }
 }

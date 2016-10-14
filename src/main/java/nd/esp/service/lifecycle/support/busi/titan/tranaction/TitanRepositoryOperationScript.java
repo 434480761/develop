@@ -5,9 +5,13 @@ import java.util.Map;
 /**
  * Created by Administrator on 2016/10/14.
  */
-public class TitanRepositoryOperationScript extends TitanRepositoryOperationBase{
+public class TitanRepositoryOperationScript extends TitanRepositoryOperation{
     private Map<String, Object> customScriptParam;
     private String customScript;
+
+    public TitanRepositoryOperationScript(){
+        setOperationType(TitanOperationType.script);
+    }
 
     public String getCustomScript() {
         return customScript;
@@ -23,5 +27,10 @@ public class TitanRepositoryOperationScript extends TitanRepositoryOperationBase
 
     public void setCustomScriptParam(Map<String, Object> customScriptParam) {
         this.customScriptParam = customScriptParam;
+    }
+
+    @Override
+    public void setOperationType(TitanOperationType operationType) {
+        super.setOperationType(TitanOperationType.script);
     }
 }

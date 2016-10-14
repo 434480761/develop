@@ -42,12 +42,11 @@ public class ParseAnnotation {
             vertex.setLabel(annotation.label());
             Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
 
-            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            getTitanFieldNameAndValue(vertex, titanModel, annotationMap);
             Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
 
             vertex.setType(TitanScriptModel.Type.V);
             vertex.setCompositeKeyMap(compositeKeyMap);
-            vertex.setFieldMap(fieldMap);
 
             titanScriptModel = vertex;
 
@@ -60,14 +59,13 @@ public class ParseAnnotation {
 
             Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
 
-            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            getTitanFieldNameAndValue(edge, titanModel, annotationMap);
             Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
             Map<String, Object> resourceMap = getTitanEdgeResourceNameAndValue(titanModel,annotationMap);
             Map<String, Object> targetMap = getTitanEdgeTargetNameAndValue(titanModel, annotationMap);
 
             edge.setType(TitanScriptModel.Type.E);
             edge.setCompositeKeyMap(compositeKeyMap);
-            edge.setFieldMap(fieldMap);
             edge.setResourceKeyMap(resourceMap);
             edge.setTargetKeyMap(targetMap);
 
@@ -102,14 +100,20 @@ public class ParseAnnotation {
     /**
      * 获取所有的属性名和属性值
      * */
-    private static Map<String, Object> getTitanFieldNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
+    private static void getTitanFieldNameAndValue(TitanScriptModel titanScriptModel, TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
+        Map<String, Object> fieldNameAndTitanNameMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
-            fieldMap.putAll(getOneTitanFieldNameAndValue(field,model,annotations));
+            Map<String, Object> result =getOneTitanFieldNameAndValue(field,model,annotations);
+            fieldMap.putAll(result);
+            if (result !=null && result.size()!=0){
+                fieldNameAndTitanNameMap.put(field.getName(), new ArrayList<>(result.keySet()).get(0));
+            }
         }
 
-        return fieldMap;
+        titanScriptModel.setFieldMap(fieldMap);
+        titanScriptModel.setFieldNameAndTitanNameMap(fieldNameAndTitanNameMap);
     }
 
     /**
@@ -300,39 +304,46 @@ public class ParseAnnotation {
 
 
     public static void main(String[] args) {
-        TitanResCoverageVertex resCoverageVertex = new TitanResCoverageVertex();
-        resCoverageVertex.setStrategy("User");
-        resCoverageVertex.setTarget("123");
-        resCoverageVertex.setTargetType("999");
-        createScriptModel(resCoverageVertex);
-
-        TitanResCoverageEdge edge = new TitanResCoverageEdge();
-        edge.setResource(UUID.randomUUID().toString());
-        edge.setTarget("7897978");
-        edge.setTargetType("User");
-
+        String uuid = UUID.randomUUID().toString();
         Asset asset = new Asset();
-        asset.setIdentifier("0919127b-5536-454c-98f4-35c773d92061");
+        asset.setIdentifier(uuid);
         asset.setPrimaryCategory("assets");
         asset.setTitle("liuran_789");
         asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
+        builder.scriptEnd();
 
-//        createScriptModel(edge);
-
-        String s1 = "g.V().has('primary_category','assets').has('identifier','0919127b-5536-454c-98f4-35c773d92061')";
-//
-//        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
-//
-//        TitanScriptBuilder builder = new TitanScriptBuilder();
-//        builder.addBeforeCheckExist(titanAsset);
-//        builder.scriptEnd();
-//        builder.getScript();
-//
         ParseAnnotation parseAnnotation = new ParseAnnotation();
         parseAnnotation.init();
         Client client = parseAnnotation.getGremlinClient();
+        client.submit(builder.getScript().toString(), builder.getParam());
     }
+
+    @Test
+    public void testPatch(){
+        Asset asset = new Asset();
+        asset.setIdentifier("e04a4cd8-e93a-4320-ba20-15879952841e");
+        asset.setPrimaryCategory("assets");
+        asset.setTitle("liuran_789");
+        asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+
+        Map<String, Object> map = new HashMap<>();
+        asset.setTitle("liuran_789");
+        map.put("title", null);
+
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+//        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
+        builder.patch(EducationToTitanBeanUtils.toVertex(asset),map);
+        builder.scriptEnd();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        client.submit(builder.getScript().toString(), builder.getParam());
+    }
+
 
     @Test
     public void testUpdateRelationRedProperty(){
@@ -356,6 +367,8 @@ public class ParseAnnotation {
         scriptBuilder.scriptEnd();
 
     }
+
+
 
     @Test
     public void test2(){
