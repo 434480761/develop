@@ -12,7 +12,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 /**
  * titan 工具类
- * 
+ *
  * @author linsm
  *
  */
@@ -39,29 +39,56 @@ public class TitanUtils {
 	 * 优化：把过滤条件移到边上
 	 * @param script
 	 * @param reverse
+	 * @param scriptParamMap
      * @return
      */
-	public static String optimizeMoveConditionsToEdge(String script, boolean reverse,Map<String, Object> scriptParamMap) {
-		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
-		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
-		String vConditions, prefix;
+	public static String optimizeMoveConditionsToEdge(String script, boolean reverse, Map<String, Object> scriptParamMap) {
+		String totalCount = null;
+		if (script.contains("TOTALCOUNT=g.V()"))
+			totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
+		String result = null;
+		if (script.contains("RESULT=g.V()"))
+			result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
+		String vConditions = null;
+		String prefix;
+
 		if (reverse) {
 			prefix = "source_r_";
-			vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+			if (totalCount != null) {
+				vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+			} else {
+				if (result != null) {
+					vConditions = result.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+				}
+			}
 		} else {
 			prefix = "target_r_";
-			vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+			if (totalCount != null) {
+				vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+			} else {
+				if (result != null) {
+					vConditions = result.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+				}
+			}
 		}
-		String optimizeScript = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
-		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
-		script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
+
+		String optimizeScript = moveConditionsToEdge(vConditions, prefix, scriptParamMap);
+		if (vConditions != null) {
+			if (totalCount != null)
+				script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
+			if (result != null)
+				script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
+		}
+
 		return script;
 	}
 
 	/**
-	 * primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
+	 *  primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
 	 * @param vConditions
-	 * @return
+	 * @param prefix
+	 * @param scriptParamMap
+     * @return
      */
 	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
 		List<String> clearConditions = clearConditions(vConditions);
@@ -112,20 +139,19 @@ public class TitanUtils {
 	}
 
 	private static boolean checkCondition(String check, List<String> conditions) {
-		boolean f = false;
 		if (CommonHelper.checkBrackets(check)) {
 			conditions.add(check);
-			f = true;
+			return true;
 		}
-		return f;
+		return false;
 	}
 
 	/**
 	 *
 	 * @param tmpConditions
 	 * @param scriptParamMap
-     * @return
-     */
+	 * @return
+	 */
 	private static Map<String, String> optimizeConditions(List<String> tmpConditions, Map<String, Object> scriptParamMap) {
 		Map<String, String> conditions = new HashMap<>();
 		for (String c : tmpConditions) {
@@ -133,12 +159,8 @@ public class TitanUtils {
 				// 暂时只处理 or
 				String value = null;
 				if (c.startsWith("or(")) {
-					// or(has('search_code',search_code0))
 					if ((CommonHelper.getSubStrAppearTimes(c, "has") == 1) || (!c.contains(",has") && c.contains("search_code"))) {
 						value = c.substring(3, c.length()-1);
-					/*	if(!CommonHelper.checkBrackets(value)){
-
-						}*/
 					} else {
 						value = c;
 					}
@@ -299,8 +321,8 @@ public class TitanUtils {
 	 * @param relations
 	 * @param statisticsType
 	 * @param statisticsPlatform
-     * @return
-     */
+	 * @return
+	 */
 	public static Map<String, String> dealOrderMap(Map<String, String> orderMap, boolean showVersion, boolean reverse, List<Map<String, String>> relations, String statisticsType, String statisticsPlatform) {
 		Map<String, String> orders = new LinkedHashMap<>();
 		// show_version
@@ -351,7 +373,7 @@ public class TitanUtils {
 	 * 获取字段所对应的es数据类型
 	 * @param field
 	 * @return
-     */
+	 */
 	public static String convertToEsDataType(String field) {
 		if (ES_SearchField.lc_last_update.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field)) {
 			return convertToEsDataType(Long.class);
@@ -417,8 +439,8 @@ public class TitanUtils {
 	 * @param relationQuery （queryListByResType、batchQueryResources）
 	 * @param needStatistics 需要统计数据
 	 * @param statisticsScriptSet 统计数据脚本
-     * @return
-     */
+	 * @return
+	 */
 	public static String generateScriptForInclude(List<String> includes, Set<String> resTypeSet, boolean relationQuery, boolean needStatistics, Set<String> statisticsScriptSet) {
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
@@ -461,7 +483,7 @@ public class TitanUtils {
 
 	// 生成脚本参数名字，避免多个值冲突
 	public static String generateKey(Map<String, Object> scriptParamMap,
-			String originKey) {
+									 String originKey) {
 		int i = 0;
 		String key = null;
 		do {
@@ -475,7 +497,7 @@ public class TitanUtils {
 	 * 将参数类型转换成titan字段类型
 	 */
 	public static List<Object> changeToTitanType(String fieldName,
-			List<String> valueList) {
+												 List<String> valueList) {
 		if (ES_SearchField.lc_create_time.toString().equals(fieldName)
 				|| ES_SearchField.lc_last_update.toString().equals(fieldName)) {
 			List<Object> values = new ArrayList<Object>();
