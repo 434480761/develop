@@ -64,8 +64,7 @@ public class TitanUtils {
 	 * @return
      */
 	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
-		String[] conditions = vConditions.split("\\.");
-		List<String> clearConditions = clearConditions(conditions);
+		List<String> clearConditions = clearConditions(vConditions);
 		Map<String, String> optimizeConditions = optimizeConditions(clearConditions, scriptParamMap);
 		StringBuffer eConditions = new StringBuffer();
 		for (String condition : clearConditions) {
@@ -90,43 +89,34 @@ public class TitanUtils {
 		return eConditions.append(".as('e')").append(vConditions).toString();
 	}
 
-	private static List<String> clearConditions(String[] tmpConditions) {
+	private static List<String> clearConditions(String vConditions) {
+		String[] tmpConditions = vConditions.split("\\.");
 		List<String> conditions = new ArrayList<>();
 		int length = tmpConditions.length;
 		for (int i = 0; i < length; i++) {
 			String c = tmpConditions[i];
-			if (!"".equals(c) && !"outV()".equals(c) && !"inV()".equals(c)) {
-				if (CommonHelper.checkBrackets(c)) {
-					conditions.add(c);
-				} else {
-					String check = c;
-					while ((i + 1) < length) {
-						boolean f = findConditions(check,i, tmpConditions, conditions);
-						i++;
-						if (f) {
-							break;
-						} else {
-							check = check + tmpConditions[i];
-						}
-					}
+			if ("".equals(c) || "outV()".equals(c) || "inV()".equals(c)) continue;
+			if (CommonHelper.checkBrackets(c)) {
+				conditions.add(c);
+			} else {
+				String check = c;
+				while ((i + 1) < length) {
+					check = check + "." + tmpConditions[i + 1];
+					boolean isFind = checkCondition(check, conditions);
+					i++;
+					if (isFind) break;
 				}
-
 			}
 		}
 		return conditions;
 	}
 
-	private static boolean findConditions(String check, int i, String[] tmpConditions, List<String> conditions) {
+	private static boolean checkCondition(String check, List<String> conditions) {
 		boolean f = false;
-		String condition = check + "." + tmpConditions[i + 1];
-		if (CommonHelper.checkBrackets(condition)) {
-			if (condition.contains(")has")) {
-				condition = condition.replace(")has",").has");
-			}
-			conditions.add(condition);
+		if (CommonHelper.checkBrackets(check)) {
+			conditions.add(check);
 			f = true;
 		}
-		//}
 		return f;
 	}
 
