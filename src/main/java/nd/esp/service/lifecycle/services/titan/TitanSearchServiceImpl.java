@@ -58,6 +58,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, List<String>> re = params.get("relation");
         boolean iSMutiRelations = false;
         boolean nullRelations = false;
+        boolean isRollback = true;
         if (CollectionUtils.isNotEmpty(re)) {
             List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);
             if (CollectionUtils.isNotEmpty(relations)) {
@@ -85,7 +86,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         resourceQueryVertex.setPropertiesMap(resourceVertexPropertyMap);
         // for now only deal with code
         Map<String, List<String>> taxoncode,taxonpath,coverages;
-        if (iSMutiRelations || nullRelations) {
+        if (iSMutiRelations || nullRelations || isRollback) {
             taxoncode = params.get(ES_SearchField.cg_taxoncode.toString());
             taxonpath = params.get(ES_SearchField.cg_taxonpath.toString());
             // coverages = params.get(ES_SearchField.coverages.toString());
@@ -122,7 +123,8 @@ public class TitanSearchServiceImpl implements TitanSearchService {
             execScript = TitanUtils.optimizeMultiRelationsQuery(execScript);
         } else {
             // 优化:把条件移到边上
-            if (!nullRelations) execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
+            if (!nullRelations && !isRollback)
+                execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
         }
 
         System.out.println(execScript + "\n" + scriptParamMap);
