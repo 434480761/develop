@@ -144,6 +144,7 @@ public class TranscodeServiceImpl implements TranscodeService {
             Txt2htmlUtil.transferTxt2Html(srcFilePath, htmlDir);
             targetsMap.put("html", REF_PATH_HEADER+param.getTarget_location()+"/transcode/html");
             meta.put("FileSize", String.valueOf(FileUtils.sizeOfDirectory(new File(htmlDir))));
+            targetsMetadata.put("source", ObjectUtils.toJson(meta));
             targetsMetadata.put("html", ObjectUtils.toJson(meta));
         } else if(srcFileName.endsWith(".jpg") || srcFileName.endsWith(".jpeg") || srcFileName.endsWith(".bmp")
                 || srcFileName.endsWith(".png") || srcFileName.endsWith(".gif")) {
@@ -160,17 +161,22 @@ public class TranscodeServiceImpl implements TranscodeService {
             } else {
                 FileUtils.copyFile(new File(srcFilePath), new File(pdfFilePath));
             }
+            String suffix = "";
+            if(srcFilePath.lastIndexOf('.')>0 && srcFilePath.lastIndexOf('.')<srcFilePath.length()-1) {
+                suffix = srcFilePath.substring(srcFilePath.lastIndexOf('.')+1);
+            }
             sizeOfFile = FileUtils.sizeOf(new File(pdfFilePath));
             targetsMap.put("pdf", REF_PATH_HEADER + param.getTarget_location() + "/transcode/pdf.pdf");
             meta = DocumentInfoUtil.getDocumentInfo(pdfFilePath, "pdf", sizeOfFile);
+            targetsMetadata.put("source", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, FileUtils.sizeOf(new File(srcFilePath)))));
             Pdf2htmlUtil.transferPdf2Html(pdfFilePath, htmlDir, logMsg);
             sizeOfFile = FileUtils.sizeOfDirectory(new File(htmlDir));
             targetsMap.put("html", REF_PATH_HEADER + param.getTarget_location() + "/transcode/html");
-            targetsMetadata.put("html", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, "html", sizeOfFile)));
+            targetsMetadata.put("html", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             Pdf2imageUtil.transferPdf2Image(pdfFilePath, imageDir, logMsg);
             sizeOfFile = FileUtils.sizeOfDirectory(new File(imageDir));
             targetsMap.put("image", REF_PATH_HEADER + param.getTarget_location() + "/transcode/image");
-            targetsMetadata.put("image", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, "jpg", sizeOfFile)));
+            targetsMetadata.put("image", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
             File[] thumbFiles = new File(thumbDir).listFiles();
             Arrays.sort(thumbFiles, new Comparator<File>() {
@@ -302,7 +308,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.debug.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"b46d72dd-6fe7-4778-9827-85b479f36e84\",\"location\":\"http://betacs.101.com/v0.1/download?path=/qa_content_edu_product/esp/assets/48bd2a25-677d-40df-bcea-68ea006c18ce.pkg/test3.pdf\",\"target_location\":\"/qa_content_edu_product/esp/assets/48bd2a25-677d-40df-bcea-68ea006c18ce.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"830d00ff-7d79-4d4b-8c5b-a2b7b37a2191\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/c186535a-a664-486e-bfb7-f31ad3776fb6.pkg/pdf%20Android%e7%bb%88%e7%ab%af%e4%b8%93%e9%a1%b9%e5%ae%9d%e5%85%b8-%e4%b8%8a%e7%af%87%20(%e5%85%88%e8%a1%8c%e7%89%88)%20%20(1).pdf\",\"target_location\":\"/prepub_content_edu_product/esp/assets/c186535a-a664-486e-bfb7-f31ad3776fb6.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);
