@@ -238,7 +238,11 @@ public class CoverageConstant {
         /**
          * 提供服务支持
          */
-        STRATEGY_SUPPORT("SUPPORT",true,false);
+        STRATEGY_SUPPORT("SUPPORT",true,false),
+        /**
+         * 拒绝,应用隔离
+         */
+        STRATEGY_REJECTED("REJECTED",true,true);
 
         //属性
         String code;

@@ -310,8 +310,6 @@ public class InstructionalObjectiveControllerV06 {
         //reverse,默认为false
         boolean reverseBoolean = (boolean) paramMap.get("reverse");
 
-        String chapterId = "";
-
         //调用service,获取到业务模型的list
         ListViewModel<ResourceModel> rListViewModel = new ListViewModel<ResourceModel>();
 

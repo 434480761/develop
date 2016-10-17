@@ -75,7 +75,6 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.aop.ServiceAuthorAspect;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -86,6 +85,7 @@ import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.support.terminal.TerminalTypeEnum;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -1723,9 +1723,15 @@ public class NDResourceController {
 
         // 2.categories
         if(CollectionUtils.isEmpty(categories)){
-            categories = null;
+        	if(resType.equals(IndexSourceType.TeachingMaterialType.getName())){
+        		categories = new HashSet<String>();
+        		categories.add("K12/*");
+        	}else{
+        		categories = null;
+        	}
         }else {
-            categories = CommonHelper.doAdapterCategories4DB(resType, categories);
+        	categories = ParameterVerificationHelper.doAdapterCategories4101ppt(categories);
+            categories = ParameterVerificationHelper.doAdapterCategories4DB(categories);
         }
 
         //categoryExclude

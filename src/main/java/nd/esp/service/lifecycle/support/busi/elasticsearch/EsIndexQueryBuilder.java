@@ -477,10 +477,10 @@ public class EsIndexQueryBuilder {
                     if (ES_OP.eq.toString().equals(codeKey) || ES_OP.in.toString().equals(codeKey)) {
                         if (value.contains(PropOperationConstant.OP_AND)) {
                             String[] strs=value.split(PropOperationConstant.OP_AND);
-                            // TODO 处理成精确的 加上引号 value = "(*\\\"" + strs[0].trim() + "\\\"*" + DOUBLE_BLANK_AND + "*\\\"" + strs[1].trim() + "\\\"*)";
+                            // TODO 处理成精确的
                             value = "(*" + strs[0].trim() + "*" + DOUBLE_BLANK_AND + "*" + strs[1].trim() + "*)";
                         }else{
-                            // TODO 处理成精确的 加上引号  value = "*\\\"" + value.trim() + "\\\"*";
+                            // TODO 处理成精确的
                             value = "*" + value.trim() + "*";
                         }
                         queryCondition.append(value).append(" ");

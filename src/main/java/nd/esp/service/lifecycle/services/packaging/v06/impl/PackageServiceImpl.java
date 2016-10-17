@@ -1194,10 +1194,10 @@ public class PackageServiceImpl implements PackageService {
                     else {
                         String encodedFilePath = "";
                         if(filePath.contains("?size=")) {
-                            encodedFilePath = URLEncoder.encodeURL(filePath.substring(0, filePath.lastIndexOf('?')));
+                            encodedFilePath = URLEncoder.encodeURL(filePath.substring(0, filePath.lastIndexOf('?'))).replace("+", "%20").replace("*","%2A").replace("%7E", "~");
                             encodedFilePath += filePath.substring(filePath.lastIndexOf('?'));
                         } else {
-                            encodedFilePath = URLEncoder.encodeURL(filePath);
+                            encodedFilePath = URLEncoder.encodeURL(filePath).replace("+", "%20").replace("*","%2A").replace("%7E","~");
                         }
                         
                         String downloadURL = instanceMap.get(header).getUrl()+"/"

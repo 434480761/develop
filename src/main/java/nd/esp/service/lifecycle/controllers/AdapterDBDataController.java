@@ -14,8 +14,8 @@ import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.services.updatamediatype.UpdateMediatypeService;
 import nd.esp.service.lifecycle.services.updatamediatype.model.UpdateMediatypeModel;
 import nd.esp.service.lifecycle.support.Constant;
-import nd.esp.service.lifecycle.support.StaticDatas;
-import nd.esp.service.lifecycle.support.UpdateStaticDataTask;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
+import nd.esp.service.lifecycle.support.staticdata.UpdateStaticDataTask;
 import nd.esp.service.lifecycle.utils.FileUploadUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 

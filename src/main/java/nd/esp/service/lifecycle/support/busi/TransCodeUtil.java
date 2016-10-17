@@ -319,7 +319,7 @@ public class TransCodeUtil {
         codeParam.buildResId(uuid+"_doc");
 
         String location = Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey()).getUrl() + "/download?path="
-                + URLEncoder.encodeURL(codeParam.getSourceFileId());
+                + URLEncoder.encodeURL(codeParam.getSourceFileId()).replace("+", "%20").replace("*","%2A").replace("%7E","~");
 
         Map<String, Object> arg = new HashMap<>();
         arg.put("location", location);
@@ -369,7 +369,7 @@ public class TransCodeUtil {
         String url = Constant.TASK_SUBMIT_URL;
         String sourcePath = codeParam.getSourceFileId();
         String location = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
-                + "/download?path=" + URLEncoder.encodeURL(sourcePath) + "&session=" + session;
+                + "/download?path=" + URLEncoder.encodeURL(sourcePath).replace("+", "%20").replace("*","%2A").replace("%7E", "~") + "&session=" + session;
 
         LOG.error("转码发送的url地址:" + url);
         try {
@@ -442,7 +442,7 @@ public class TransCodeUtil {
         String csInstanceName=codeParam.getInstanceKey().substring(codeParam.getInstanceKey().indexOf("/")+1);
         Assert.assertNotNull("转码模板地址不能为空", templatePath);
         String location = Constant.CS_INSTANCE_MAP.get(Constant.CS_DEFAULT_INSTANCE).getUrl()
-                + "/download?path=" + URLEncoder.encodeURL(codeParam.getSourceFileId());
+                + "/download?path=" + URLEncoder.encodeURL(codeParam.getSourceFileId()).replace("+", "%20").replace("*","%2A").replace("%7E", "~");
 
         String url = taskUrl;
         LOG.error("转码发送的url地址:" + url);
@@ -897,7 +897,7 @@ public class TransCodeUtil {
         LOG.info("转码发送的url地址:" + url);
 
         String location = Constant.CS_INSTANCE_MAP.get(codeParam.getInstanceKey()).getUrl() + "/download?path="
-                + URLEncoder.encodeURL(codeParam.getSourceFileId());
+                + URLEncoder.encodeURL(codeParam.getSourceFileId()).replace("+", "%20").replace("*","%2A").replace("%7E","~");
 
         Map<String, Object> arg = new HashMap<>();
 

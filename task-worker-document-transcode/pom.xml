@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>task-worker-txt-transcode</artifactId>
+	<artifactId>task-worker-document-transcode</artifactId>
 	<packaging>war</packaging>
 	<version>0.0.1-SNAPSHOT</version>
  	 <name>lifecycle-document-transcode</name>
@@ -235,6 +235,22 @@
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
 			<version>5.5.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.49</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jacob</groupId>
+			<artifactId>com-jacob</artifactId>
+			<version>1.18</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>jimi-nd</artifactId>
+			<version>1.0</version>
 		</dependency>
 	</dependencies>
 	<build>
