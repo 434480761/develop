@@ -136,7 +136,7 @@ public class EsIndexQueryBuilder {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation = dealWithWordsContainsNot(this.words);
-        String coverage = dealWithParams();
+        String coverage = dealWithParams4Exact();
         String property = dealWithProp();
         if ("".endsWith(wordSegmentation.trim())) {
             coverage = coverage.trim().replaceFirst("AND", "").trim();
