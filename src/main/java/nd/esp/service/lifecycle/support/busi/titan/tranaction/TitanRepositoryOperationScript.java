@@ -1,15 +1,15 @@
 package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
-import java.util.Map;
-
 /**
  * Created by Administrator on 2016/10/14.
  */
 public class TitanRepositoryOperationScript extends TitanRepositoryOperation{
-    private Map<String, Object> customScriptParam;
+    private Object[] customScriptParam;
     private String customScript;
 
-    public TitanRepositoryOperationScript(){
+    public TitanRepositoryOperationScript(String script, Object ... params){
+        customScriptParam = params;
+        customScript = script;
         setOperationType(TitanOperationType.script);
     }
 
@@ -17,16 +17,8 @@ public class TitanRepositoryOperationScript extends TitanRepositoryOperation{
         return customScript;
     }
 
-    public void setCustomScript(String customScript) {
-        this.customScript = customScript;
-    }
-
-    public Map<String, Object> getCustomScriptParam() {
+    public Object[] getCustomScriptParam() {
         return customScriptParam;
-    }
-
-    public void setCustomScriptParam(Map<String, Object> customScriptParam) {
-        this.customScriptParam = customScriptParam;
     }
 
     @Override

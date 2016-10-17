@@ -131,16 +131,26 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
                     builder.deleteEdgeById(entity.getIdentifier());
                     break;
-                //更新关系冗余字段
+                //增加执行自定义脚本
                 case script:
                     if (operation instanceof TitanRepositoryOperationScript){
                         builder.script(((TitanRepositoryOperationScript) operation).getCustomScript(),
                                 ((TitanRepositoryOperationScript) operation).getCustomScriptParam());
                     }
                     break;
-
+                //patch需要配置支持的对象
                 case patch:
-
+                    if (operation instanceof TitanRepositoryOperationPatch){
+                        if (entity instanceof Education){
+                            builder.patch(EducationToTitanBeanUtils.toVertex(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                        } else if(entity instanceof  TechInfo){
+                            builder.patch(EducationToTitanBeanUtils.toVertex(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                            builder.patch(EducationToTitanBeanUtils.toEdge(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                        }
+                    }
                     break;
                 case update_relation_red_property:
                     if (entity instanceof ResourceRelation){

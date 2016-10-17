@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.support.busi.titan.tranaction;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -9,18 +10,18 @@ public class TitanRepositoryOperationPatch extends TitanRepositoryOperation{
     public TitanRepositoryOperationPatch(){
         setOperationType(TitanOperationType.patch);
     }
-    private Set<String> dropProperties;
+    private Map<String, Object> patchPropertyMap;
 
     @Override
     public void setOperationType(TitanOperationType operationType) {
         super.setOperationType(TitanOperationType.patch);
     }
 
-    public Set<String> getDropProperties() {
-        return dropProperties;
+    public Map<String, Object> getPatchPropertyMap() {
+        return patchPropertyMap;
     }
 
-    public void setDropProperties(Set<String> dropProperties) {
-        this.dropProperties = dropProperties;
+    public void setPatchPropertyMap(Map<String, Object> patchPropertyMap) {
+        this.patchPropertyMap = patchPropertyMap;
     }
 }

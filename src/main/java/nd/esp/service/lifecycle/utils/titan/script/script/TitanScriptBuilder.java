@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
@@ -14,8 +15,8 @@ import java.util.*;
  * Created by Administrator on 2016/8/24.
  */
 public class TitanScriptBuilder {
-//    private static final Logger LOG = LoggerFactory
-//            .getLogger(TitanScriptBuilder.class);
+    private static final Logger LOG = LoggerFactory
+            .getLogger(TitanScriptBuilder.class);
     private StringBuilder script = new StringBuilder();
     private Map<String, Object> param = new HashMap<>();
     private List<String> methodNames = new ArrayList<>();
@@ -73,7 +74,7 @@ public class TitanScriptBuilder {
                     }
                 }
             } catch (IOException e) {
-//                LOG.error("读取脚本文件{}出错",name);
+                LOG.error("读取脚本文件{}出错",name);
             } finally {
                 if (reader != null){
                     try {
@@ -88,7 +89,7 @@ public class TitanScriptBuilder {
                 try {
                     throw new Exception("文件titan脚本加载不正确");
                 } catch (Exception e) {
-//                    LOG.error("脚本文件{}有错",name);
+                    LOG.error("脚本文件{}有错",name);
                 }
             }
 
@@ -146,7 +147,7 @@ public class TitanScriptBuilder {
     }
 
     private enum KeyWords {
-        node,edge,source,target,addVertex,has,next,id,addEdge,property
+        node,edge,source,target,addVertex,has,next,id,addEdge,property,script
     }
     private int firstIndex =0;
     public TitanScriptBuilder(){
@@ -410,21 +411,31 @@ public class TitanScriptBuilder {
         return this;
     }
 
-    public TitanScriptBuilder script(String script,Map<String, Object> params){
+    /**
+     * script:g.V().has('identifier',{0}).has('primary_category',{1}).has('lc_enable',{2})
+     *
+     * */
+    public TitanScriptBuilder script(String script,Object ... params){
+
         Variable variable = createVariable(TitanScriptModel.Type.S);
         Map<String, Object> newParams = new HashMap<>();
-        if (params != null){
-            for (String key : params.keySet()){
-                newParams.put(key + variable.getSuffix(), params.get(key));
-            }
+        String preFix = "param";
+
+        int index = 0;
+        while (script.contains("{"+index+"}")){
+            String paramName = preFix + variable.getSuffix();
+            script = script.replace("{"+index+"}",paramName);
+            newParams.put(paramName, params[index]);
+            index ++;
         }
+
         ScriptAndParam scriptAndParam = new ScriptAndParam(new StringBuilder(script), newParams);
         dealScriptAndParam(scriptAndParam, null);
         return this;
     }
 
     public TitanScriptBuilder patch(TitanModel titanModel, Map<String, Object> patchPropertyMap){
-        if (titanModel == null){
+        if (titanModel == null || CollectionUtils.isEmpty(patchPropertyMap)){
             return this;
         }
         TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(titanModel);
@@ -615,7 +626,6 @@ public class TitanScriptBuilder {
 
 
     private ScriptAndParam patchElement(TitanScriptModel titanScriptModel,Variable variable, Map<String, Object> patchPropertyMap){
-
         StringBuilder script = new StringBuilder();
         Map<String, Object> param = new HashMap<>();
         String ele = "ele";
@@ -628,11 +638,17 @@ public class TitanScriptBuilder {
         Map<String, Object> updateValues = new HashMap<>();
         List<String> dropValues = new ArrayList<>();
         for (String key : patchPropertyMap.keySet()){
+            String titanKey = null;
+            titanKey = titanScriptModel.getFieldNameAndTitanNameMap().get(key);
+            if (titanKey == null){
+                continue;
+            }
             Object obj = patchPropertyMap.get(key);
+
             if (obj == null){
-                dropValues.add(key);
+                dropValues.add(titanKey);
             } else {
-                updateValues.put(key, obj);
+                updateValues.put(titanKey, obj);
             }
         }
         appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
@@ -653,6 +669,9 @@ public class TitanScriptBuilder {
         }
         if (type.equals(TitanScriptModel.Type.V)){
             variable = new Variable(KeyWords.node.toString()+suffix, suffix);
+        }
+        if (type.equals(TitanScriptModel.Type.S)){
+            variable = new Variable(KeyWords.script.toString()+suffix, suffix);
         }
 
         return variable;

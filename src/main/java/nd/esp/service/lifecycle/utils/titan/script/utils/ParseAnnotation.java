@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.utils.titan.script.utils;
 
 import nd.esp.service.lifecycle.repository.model.Asset;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationScript;
 import nd.esp.service.lifecycle.utils.BigDecimalUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
@@ -19,10 +20,14 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
 import org.junit.Test;
 
@@ -102,7 +107,7 @@ public class ParseAnnotation {
      * */
     private static void getTitanFieldNameAndValue(TitanScriptModel titanScriptModel, TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
-        Map<String, Object> fieldNameAndTitanNameMap = new HashMap<>();
+        Map<String, String> fieldNameAndTitanNameMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
             Map<String, Object> result =getOneTitanFieldNameAndValue(field,model,annotations);
@@ -304,25 +309,27 @@ public class ParseAnnotation {
 
 
     public static void main(String[] args) {
-        String uuid = UUID.randomUUID().toString();
-        Asset asset = new Asset();
-        asset.setIdentifier(uuid);
-        asset.setPrimaryCategory("assets");
-        asset.setTitle("liuran_789");
-        asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+//        String uuid = UUID.randomUUID().toString();
+//        Asset asset = new Asset();
+//        asset.setIdentifier(uuid);
+//        asset.setPrimaryCategory("assets");
+//        asset.setTitle("liuran_789");
+//        asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+//
+//        TitanScriptBuilder builder = new TitanScriptBuilder();
+//        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
+//        builder.scriptEnd();
+//
+//        ParseAnnotation parseAnnotation = new ParseAnnotation();
+//        parseAnnotation.init();
+//        Client client = parseAnnotation.getGremlinClient();
+//        client.submit(builder.getScript().toString(), builder.getParam());
 
-        TitanScriptBuilder builder = new TitanScriptBuilder();
-        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
-        builder.scriptEnd();
-
-        ParseAnnotation parseAnnotation = new ParseAnnotation();
-        parseAnnotation.init();
-        Client client = parseAnnotation.getGremlinClient();
-        client.submit(builder.getScript().toString(), builder.getParam());
+//        testPatch();
+        testReplace();
     }
 
-    @Test
-    public void testPatch(){
+    public static void testPatch(){
         Asset asset = new Asset();
         asset.setIdentifier("e04a4cd8-e93a-4320-ba20-15879952841e");
         asset.setPrimaryCategory("assets");
@@ -330,8 +337,10 @@ public class ParseAnnotation {
         asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
         Map<String, Object> map = new HashMap<>();
-        asset.setTitle("liuran_789");
-        map.put("title", null);
+        map.put("title", "liuran_789");
+        map.put("dblastUpdate",System.currentTimeMillis());
+        map.put("enable",null);
+        map.put("lc_enable",null);
 
         TitanScriptBuilder builder = new TitanScriptBuilder();
 //        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
@@ -341,7 +350,11 @@ public class ParseAnnotation {
         ParseAnnotation parseAnnotation = new ParseAnnotation();
         parseAnnotation.init();
         Client client = parseAnnotation.getGremlinClient();
-        client.submit(builder.getScript().toString(), builder.getParam());
+        ResultSet resultSet = client.submit(builder.getScript().toString(), builder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
     }
 
 
@@ -363,8 +376,56 @@ public class ParseAnnotation {
     public void testScript(){
         TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
 
-        scriptBuilder.script("g.V().has('identifier','fc21ecb8-247e-423c-a409-425b5dad3044')",null);
+        Map<String, Object> param = new HashMap<>();
+//        param.put("identifier","e04a4cd8-e93a-4320-ba20-15879952841e");
+//        param.put("name","liuran");
+
+//        scriptBuilder.script("g.V().has('identifier',identifier).property('name',name)",param);
         scriptBuilder.scriptEnd();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        ResultSet resultSet = client.submit(scriptBuilder.getScript().toString(), scriptBuilder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
+
+
+    }
+
+
+    @Test
+    public static void testReplace(){
+        String str = "qwe{0}r{1}q{2}we{3}rc{4}xbvertqe13ers{4}dr{}zxcvbqdrtqwerqwerxcvzxcv";
+        int index = 0;
+        String ss = "{"+index+"}";
+//        while (str.contains(ss)){
+//            str = str.replace(ss,"7777");
+//            System.out.print(ss);
+//            index ++;
+//            ss = "{"+index+"}";
+//        }
+
+        TitanRepositoryOperationScript script = new TitanRepositoryOperationScript("g.V().has('identifier',{0}).next().property('name',{1})",
+                "e04a4cd8-e93a-4320-ba20-15879952841e",
+                "hello word");
+
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+
+        builder.script(script.getCustomScript(), script.getCustomScriptParam());
+        builder.scriptEnd();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        ResultSet resultSet = client.submit(builder.getScript().toString(), builder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
+
 
     }
 
