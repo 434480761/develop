@@ -925,10 +925,21 @@ public class NDResourceController {
             }
             break;
             case ES:
-                rListViewModel = ndResourceService.resourceQueryByEla(resType,
-                        includesList, categories, categoryExclude, relationsMap,
-                        coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey);
+                if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
+                        && canQueryByRetrieve(printable, orderMap)) {
+                    words = (String)paramMap.get("words");
+                    List<String> fieldsList = (List<String>) paramMap.get("fields");
+                    Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
+                    rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,fieldsList,
+                            includesList, categories, categoryExclude, relationsMap,
+                            coveragesList, propsMap, orderMap, words, limit,
+                            isNotManagement, reverseBoolean,printable,printableKey);
+                } else {
+                    rListViewModel = ndResourceService.resourceQueryByEla(resType,
+                            includesList, categories, categoryExclude, relationsMap,
+                            coveragesList, propsMap, orderMap, words, limit,
+                            isNotManagement, reverseBoolean, printable, printableKey);
+                }
                 break;
             case TITAN:
                 /*rListViewModel = ndResourceService.resourceQueryByTitan(resType,
@@ -1468,6 +1479,20 @@ public class NDResourceController {
 						|| orderMap.containsKey("sort_num") || orderMap
 							.containsKey("taxOnCode"))));
     }
+
+    private boolean canQueryByRetrieve(Boolean printable, Map<String, String> orderMap) {
+        return (printable == null) && (CollectionUtils.isEmpty(orderMap) || (CollectionUtils
+                .isNotEmpty(orderMap) && !(orderMap.containsKey("size")
+                || orderMap.containsKey("key_value")
+                || orderMap.containsKey("top")
+                || orderMap.containsKey("scores")
+                || orderMap.containsKey("votes")
+                || orderMap.containsKey("status")
+                || orderMap.containsKey("views")
+                || orderMap.containsKey("sort_num") || orderMap
+                .containsKey("taxOnCode"))));
+    }
+
     /**
      * ES和DB prop和orderby之间key的转换
      * <p>Create Time: 2016年4月6日   </p>
