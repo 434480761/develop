@@ -20,7 +20,7 @@ import nd.esp.service.lifecycle.models.ivc.v06.IvcLoadModel;
 import nd.esp.service.lifecycle.models.ivc.v06.IvcUrlModel;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.StaticDatas;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
