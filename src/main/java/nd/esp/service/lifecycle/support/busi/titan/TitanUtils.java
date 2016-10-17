@@ -475,10 +475,129 @@ public class TitanUtils {
 			for (String statisticsScript : statisticsScriptSet) {
 				scriptBuffer.append(statisticsScript);
 			}
+			includes.add("needStatistics");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;
 		return begin + scriptBuffer.toString() + end + defaultStr;
+	}
+
+
+	/**
+	 *
+	 * @param resTypeSet
+	 * @param includes
+     * @return
+     */
+	public static String generateNecessaryFields(Set<String> resTypeSet, List<String> includes) {
+		Set<String> set = new HashSet<>();
+		set.addAll(includes);
+		StringBuffer scriptBuffer = new StringBuffer(".valueMap(true,");
+
+		scriptBuffer.append("'").append(ES_SearchField.identifier.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.title.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.description.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.language.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.m_identifier.toString()).append("'").append(",");
+		//scriptBuffer.append("'").append(ES_SearchField.ndres_code.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.custom_properties.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.preview.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.tags.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.keywords.toString()).append("'").append(",");
+
+		// 统计数据
+		if(set.contains("needStatistics")) {
+			scriptBuffer.append("'sta_key_value'").append(",");
+			scriptBuffer.append("'").append(TitanKeyWords.sta_key_title.toString()).append("'").append(",");
+		}
+
+		// 扩展字段
+		if (resTypeSet.contains(ResourceNdCode.teachingmaterials.toString()) || resTypeSet.contains(ResourceNdCode.guidancebooks.toString()) || resTypeSet.contains(ResourceNdCode.ebooks.toString())) {
+			scriptBuffer.append("'ext_isbn'").append(",");
+			scriptBuffer.append("'ext_criterion'").append(",");
+			scriptBuffer.append("'ext_attachments'").append(",");
+			scriptBuffer.append("'ext_edition'").append(",");
+			scriptBuffer.append("'ext_grade'").append(",");
+			scriptBuffer.append("'ext_phase'").append(",");
+			scriptBuffer.append("'ext_subject'").append(",");
+		}
+
+		if (resTypeSet.contains(ResourceNdCode.questions.toString()) ){
+			scriptBuffer.append("'ext_is_auto_remark'").append(",");
+			scriptBuffer.append("'ext_question_type'").append(",");
+			scriptBuffer.append("'ext_subject'").append(",");
+			scriptBuffer.append("'ext_suggest_duration'").append(",");
+			scriptBuffer.append("'ext_discrimination'").append(",");
+			scriptBuffer.append("'ext_answer'").append(",");
+			scriptBuffer.append("'ext_item_content'").append(",");
+			scriptBuffer.append("'ext_criterion'").append(",");
+			scriptBuffer.append("'ext_score'").append(",");
+			scriptBuffer.append("'ext_source'").append(",");
+			scriptBuffer.append("'ext_secrecy'").append(",");
+			scriptBuffer.append("'ext_modified_difficulty'").append(",");
+			scriptBuffer.append("'ext_ext_difficulty'").append(",");
+			scriptBuffer.append("'ext_modified_discrimination'").append(",");
+			scriptBuffer.append("'ext_used_time'").append(",");
+			scriptBuffer.append("'ext_exposal_date'").append(",");
+			scriptBuffer.append("'ext_auto_remark'").append(",");
+			scriptBuffer.append("'edu_context'").append(",");
+		}
+
+
+		if (set.contains(IncludesConstant.INCLUDE_LC)) {
+			scriptBuffer.append("'").append(ES_SearchField.lc_version.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_status.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_enable.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_creator.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_publisher.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider_source.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_create_time.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_last_update.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider_mode.toString()).append("'").append(",");
+
+		}
+		if (set.contains(IncludesConstant.INCLUDE_CR)) {
+			scriptBuffer.append("'").append(ES_SearchField.cr_author.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_description.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_has_right.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right_start_date.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right_end_date.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_CG)) {
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxoncode.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxonname.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_category_code.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_short_name.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_category_name.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxonpath.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_TI)) {
+			scriptBuffer.append("'").append(ES_SearchField.ti_title.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_format.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_location.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_md5.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_requirements.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_secure_key.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_size.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_entry.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_EDU)) {
+			scriptBuffer.append("'").append(ES_SearchField.edu_interactivity.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_interactivity_level.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_end_user_type.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_semantic_density.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_age_range.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_difficulty.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_learning_time.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_language.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_context.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_description.toString()).append("'").append(",");
+
+		}
+
+		return scriptBuffer.append(");").toString();
 	}
 
 	// 生成脚本参数名字，避免多个值冲突
