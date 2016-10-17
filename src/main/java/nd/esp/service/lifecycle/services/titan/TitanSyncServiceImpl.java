@@ -12,10 +12,7 @@ import nd.esp.service.lifecycle.repository.model.*;
 import nd.esp.service.lifecycle.repository.sdk.impl.ServicesManager;
 import nd.esp.service.lifecycle.support.busi.titan.TitanResourceUtils;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanOperationType;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperation;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanSubmitTransaction;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanTransaction;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.*;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
@@ -162,6 +159,11 @@ public class TitanSyncServiceImpl implements TitanSyncService{
         }
 
 
+        return false;
+    }
+
+    @Override
+    public boolean patch(TitanRepositoryOperationPatch patch) {
         return false;
     }
 
