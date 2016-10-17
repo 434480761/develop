@@ -1,6 +1,5 @@
 package nd.esp.service.lifecycle.repository.index;
 
-import org.apache.solr.client.solrj.util.ClientUtils;
 import org.springframework.util.StringUtils;
 
 

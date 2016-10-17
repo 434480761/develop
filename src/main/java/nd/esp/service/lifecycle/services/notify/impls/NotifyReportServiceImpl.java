@@ -28,8 +28,8 @@ import nd.esp.service.lifecycle.repository.sdk.report.ReportResourceUsingReposit
 import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.enums.OperationType;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;

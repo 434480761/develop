@@ -38,8 +38,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
-import com.nd.gaea.client.http.BearerAuthorizationProvider;
-import com.nd.gaea.client.support.DeliverBearerAuthorizationProvider;
+import com.nd.gaea.client.auth.ServerAuthorizationProvider;
+import com.nd.gaea.client.auth.bearer.SimpleBearerAuthorizationProvider;
 import com.nd.gaea.rest.config.WafWebMvcConfigurerAdapter;
 
 @Configuration
@@ -238,8 +238,8 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
 
 	@Bean
 	@Primary
-	public BearerAuthorizationProvider bearerAuthorizationProvider() {
-		return new DeliverBearerAuthorizationProvider();
+	public ServerAuthorizationProvider bearerAuthorizationProvider() {
+		return new SimpleBearerAuthorizationProvider();
 	}
 
 	/**

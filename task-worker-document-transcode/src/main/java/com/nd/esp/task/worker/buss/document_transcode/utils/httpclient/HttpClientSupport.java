@@ -1,13 +1,12 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils.httpclient;
 
+import com.nd.esp.task.worker.buss.document_transcode.utils.CollectionUtils;
+import com.nd.esp.task.worker.buss.document_transcode.utils.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicNameValuePair;
-
-import com.nd.esp.task.worker.buss.document_transcode.utils.CollectionUtils;
-import com.nd.esp.task.worker.buss.document_transcode.utils.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

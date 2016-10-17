@@ -1,5 +1,6 @@
 package nd.esp.service.lifecycle.services.impls;
 
+import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,7 +30,6 @@ import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.EspEntity;
 import nd.esp.service.lifecycle.repository.EspRepository;
 import nd.esp.service.lifecycle.repository.ResourceRepository;
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.ds.ComparsionOperator;
 import nd.esp.service.lifecycle.repository.ds.Item;
 import nd.esp.service.lifecycle.repository.ds.LogicalOperator;
@@ -65,12 +65,6 @@ import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 import nd.esp.service.lifecycle.vos.ListViewModel;
 
-
-
-
-
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -90,7 +84,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nd.gaea.client.http.BearerAuthorizationProvider;
+import com.nd.gaea.client.auth.ServerAuthorizationProvider;
 import com.nd.gaea.client.http.WafSecurityHttpClient;
 
 @Service
@@ -1010,16 +1004,23 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 	@Override
 	public void adapterDJGResource4Lc(){
 		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+		wafSecurityHttpClient.setServerAuthorizationProvider(new ServerAuthorizationProvider() {
 			
 			@Override
-			public String getUserid() {
+			public void resetToken() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public String getUserId() {
 				// TODO Auto-generated method stub
 				return null;
 			}
 			
 			@Override
-			public String getAuthorization() {
+			public String getAuthorization(URI uri, HttpMethod method) {
+				// TODO Auto-generated method stub
 				return "NDR_MAC";
 			}
 		});
@@ -1086,16 +1087,23 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 	@Override
 	public void adapterDJGResource4Status() {
 		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+		wafSecurityHttpClient.setServerAuthorizationProvider(new ServerAuthorizationProvider() {
 			
 			@Override
-			public String getUserid() {
+			public void resetToken() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public String getUserId() {
 				// TODO Auto-generated method stub
 				return null;
 			}
 			
 			@Override
-			public String getAuthorization() {
+			public String getAuthorization(URI uri, HttpMethod method) {
+				// TODO Auto-generated method stub
 				return "NDR_MAC";
 			}
 		});
@@ -1178,16 +1186,23 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 	@Override
 	public void repairProvider(String type,String pre,String now) {
 		WafSecurityHttpClient wafSecurityHttpClient = new WafSecurityHttpClient();
-		wafSecurityHttpClient.setBearerAuthorizationProvider(new BearerAuthorizationProvider() {
+		wafSecurityHttpClient.setServerAuthorizationProvider(new ServerAuthorizationProvider() {
 			
 			@Override
-			public String getUserid() {
+			public void resetToken() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public String getUserId() {
 				// TODO Auto-generated method stub
 				return null;
 			}
 			
 			@Override
-			public String getAuthorization() {
+			public String getAuthorization(URI uri, HttpMethod method) {
+				// TODO Auto-generated method stub
 				return "NDR_MAC";
 			}
 		});
