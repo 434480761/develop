@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,8 +17,6 @@ import nd.esp.service.lifecycle.app.LifeCircleWebConfig;
 import nd.esp.service.lifecycle.educommon.models.ResContributeModel;
 import nd.esp.service.lifecycle.educommon.services.impl.CommonServiceHelper;
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
-import nd.esp.service.lifecycle.repository.ResourceRepository;
-import nd.esp.service.lifecycle.repository.model.Contribute;
 import nd.esp.service.lifecycle.services.elasticsearch.AsynEsResourceService;
 import nd.esp.service.lifecycle.services.lifecycle.v06.LifecycleServiceV06;
 import nd.esp.service.lifecycle.services.offlinemetadata.OfflineService;
@@ -31,7 +28,6 @@ import nd.esp.service.lifecycle.vos.lifecycle.v06.ResContributeViewModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.i18n.LocaleContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.MediaType;

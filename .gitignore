@@ -7,3 +7,6 @@
 .idea/
 out/
 *.iml
+task-worker-media-transcode/target/
+task-worker-document-transcode/target/
+/bin/

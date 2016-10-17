@@ -95,6 +95,8 @@ public class TitanResultParse {
             if (StringUtils.isNotEmpty(countStr) && countStr.contains(TitanKeyWords.TOTALCOUNT.toString())) {
                 viewModels.setTotal(Long.parseLong(countStr.split("=")[1].trim()));
                 resultStr.remove(resultSize - 1);
+            } else {
+                viewModels.setTotal(null);
             }
             // 解析items
             items = parseToItemsResourceModel(resTypeSet, resultStr, includes, isCommonQuery);// FIXME
@@ -911,7 +913,7 @@ public class TitanResultParse {
      */
     private static void splitKeyValue(Map<String, String> tmpMap, String keyValue) {
         int begin = keyValue.indexOf("=");
-        tmpMap.put(keyValue.substring(0, begin), keyValue.substring(begin + 1, keyValue.length()));
+        tmpMap.put(keyValue.substring(0, begin).trim(), keyValue.substring(begin + 1, keyValue.length()));
     }
 
     /**
@@ -946,7 +948,7 @@ public class TitanResultParse {
         if (end > 0) {
             String label = field.substring(0, end);
             splitKeyValue(tmpMap,label);
-            String other = field.substring(end + 1, field.length()).trim();
+            String other = field.substring(end + 1, field.length());
             if (other.startsWith("label=") || other.startsWith("id=")) {
                 dealSpecialField(other, tmpMap);
             } else {

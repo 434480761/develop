@@ -20,7 +20,7 @@
 		<commons-codec.version>1.9</commons-codec.version>
 		<compilerArgument>-Xlint:unchecked</compilerArgument>
 		<httpclent-version>4.3.3</httpclent-version>
-		<waf-version>0.10.2</waf-version>
+		<waf-version>0.15.0</waf-version>
 		<!-- reference to pre -->
 		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 		<war.version>${maven.build.timestamp}</war.version>
@@ -233,6 +233,11 @@
 			<artifactId>fastjson</artifactId>
 			<version>1.2.1</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.sun</groupId>
+		    <artifactId>jimi-nd</artifactId>
+		    <version>1.0</version>
+		</dependency>
 		<!-- Hibernate -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
@@ -319,8 +324,6 @@
 			</resource>
 		</resources>
 
-
-
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -363,14 +366,21 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.4</version>
 			</plugin>
-			<plugin>
+			
+		</plugins>
+
+		
+		<defaultGoal>compile</defaultGoal>
+		
+		<pluginManagement>
+			<plugins>
+				<plugin>
 				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>3.0</version>
 			</plugin>
-
-		</plugins>
-		<defaultGoal>compile</defaultGoal>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<distributionManagement>
 		<repository>

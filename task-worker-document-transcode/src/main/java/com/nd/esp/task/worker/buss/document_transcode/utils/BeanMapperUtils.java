@@ -1,8 +1,8 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import java.io.IOException;
-
 import com.nd.gaea.rest.o2o.JacksonCustomObjectMapper;
+
+import java.io.IOException;
 
 /**
  * @title 将Object进行mapper操作

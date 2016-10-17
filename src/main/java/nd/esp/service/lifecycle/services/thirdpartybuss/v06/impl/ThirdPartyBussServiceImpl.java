@@ -18,7 +18,7 @@ import nd.esp.service.lifecycle.services.thirdpartybuss.v06.ThirdPartyBussServic
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.UpdateStaticDataTask;
+import nd.esp.service.lifecycle.support.staticdata.UpdateStaticDataTask;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;

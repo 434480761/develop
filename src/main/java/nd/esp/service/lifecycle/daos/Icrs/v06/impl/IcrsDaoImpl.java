@@ -15,9 +15,12 @@ import nd.esp.service.lifecycle.models.icrs.v06.TeacherOutputResource;
 import nd.esp.service.lifecycle.models.icrs.v06.TextbookModel;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.repository.model.CategoryData;
+import nd.esp.service.lifecycle.repository.model.TeachingMaterial;
 import nd.esp.service.lifecycle.repository.sdk.CategoryDataRepository;
+import nd.esp.service.lifecycle.repository.sdk.TeachingMaterialRepository;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
@@ -44,6 +47,8 @@ public class IcrsDaoImpl implements IcrsDao {
 
 	@Autowired
 	private CategoryDataRepository categoryDataRepository;
+	@Autowired
+	private TeachingMaterialRepository teachingMaterialRepository;
 
 	@Override
 	public List<ResourceTotalModel> getResourceTotal(String schoolId,
@@ -123,14 +128,13 @@ public class IcrsDaoImpl implements IcrsDao {
 	@Override
 	public List<TextbookModel> getTeacherResource(String schoolId,
 			String teacherId, String resType) {
-		String querySql = "SELECT distinct ndr.identifier AS uuid,ndr.title AS title FROM ndresource ndr INNER JOIN icrs_resource icrs ON "
-				+ "ndr.identifier=icrs.teachmaterial_uuid WHERE ndr.primary_category='teachingmaterials' "
-				+ "AND ndr.enable=1 AND icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId";
+		String querySql = "SELECT distinct icrs.teachmaterial_uuid AS uuid FROM icrs_resource icrs "
+				+ "WHERE icrs.teacher_id=:teacherId AND icrs.school_id=:schoolId";
 
-		final List<TextbookModel> resourceList = new ArrayList<TextbookModel>();
+		final List<String> tmList = new ArrayList<String>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (StringUtils.hasText(resType)) {
-			querySql = querySql + " AND icrs.res_type=:resType";
+			querySql += " AND icrs.res_type=:resType";
 			params.put("resType", resType);
 		}
 		params.put("schoolId", schoolId);
@@ -144,13 +148,30 @@ public class IcrsDaoImpl implements IcrsDao {
 		namedJdbcTemplate.query(querySql, params, new RowMapper<String>() {
 			@Override
 			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-				TextbookModel tbm = new TextbookModel();
-				tbm.setUuid(rs.getString("uuid"));
-				tbm.setTitle(rs.getString("title"));
-				resourceList.add(tbm);
+				tmList.add(rs.getString("uuid"));
 				return null;
 			}
 		});
+		
+		List<TextbookModel> resourceList = new ArrayList<TextbookModel>();
+		
+		if(CollectionUtils.isNotEmpty(tmList)){
+			try {
+				List<TeachingMaterial> materials = teachingMaterialRepository.getAll(tmList);
+				if(CollectionUtils.isNotEmpty(materials)){
+					for(TeachingMaterial tm : materials){
+						TextbookModel tbm = new TextbookModel();
+						tbm.setUuid(tm.getIdentifier());
+						tbm.setTitle(tm.getTitle());
+						resourceList.add(tbm);
+					}
+				}
+			} catch (EspStoreException e) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
 
 		return resourceList;
 	}

@@ -14,8 +14,8 @@ import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.services.updatamediatype.UpdateMediatypeService;
 import nd.esp.service.lifecycle.services.updatamediatype.model.UpdateMediatypeModel;
 import nd.esp.service.lifecycle.support.Constant;
-import nd.esp.service.lifecycle.support.StaticDatas;
-import nd.esp.service.lifecycle.support.UpdateStaticDataTask;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
+import nd.esp.service.lifecycle.support.staticdata.UpdateStaticDataTask;
 import nd.esp.service.lifecycle.utils.FileUploadUtil;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
@@ -528,6 +528,25 @@ public class AdapterDBDataController {
             staticDataService.updateNowStatus("QUERY_BY_TITAN_FIRST",1);
             staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
             StaticDatas.QUERY_BY_TITAN_FIRST = true;
+        }
+
+        return message;
+    }
+
+    @RequestMapping(value = "/titan/es/first/change", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+    public String changeTitanEsFirstSwitch(@RequestParam String open){
+        String message = "";
+
+        if(open.equals("false") && StaticDatas.QUERY_BY_TITAN_ES_FIRST){
+            message = "关闭ES查询优先通过Titan es查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUERY_BY_TITAN_ES_FIRST",0);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUERY_BY_TITAN_ES_FIRST = false;
+        }else if(open.equals("true") && !StaticDatas.QUERY_BY_TITAN_ES_FIRST){
+            message = "开启ES查询优先通过Titan es查询的开关(最多等待1分钟生效)";
+            staticDataService.updateNowStatus("QUERY_BY_TITAN_ES_FIRST",1);
+            staticDataService.updateLastTime(UpdateStaticDataTask.SWITCH_TASK_ID);
+            StaticDatas.QUERY_BY_TITAN_ES_FIRST = true;
         }
 
         return message;
