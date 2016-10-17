@@ -926,13 +926,13 @@ public class NDResourceController {
             break;
             case ES:
                 if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
-                        && canQueryByRetrieve(printable, orderMap)) {
-                    words = (String)paramMap.get("words");
-                    List<String> fieldsList = (List<String>) paramMap.get("fields");
+                        && canQueryByRetrieve(printable)) {
+//                    words = (String)paramMap.get("words");
+//                    List<String> fieldsList = (List<String>) paramMap.get("fields");
                     Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
-                    rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,fieldsList,
+                    rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
                             includesList, categories, categoryExclude, relationsMap,
-                            coveragesList, propsMap, orderMap, words, limit,
+                            coveragesList, propsMap, orderMap, null, limit,
                             isNotManagement, reverseBoolean,printable,printableKey);
                 } else {
                     rListViewModel = ndResourceService.resourceQueryByEla(resType,
@@ -1480,17 +1480,8 @@ public class NDResourceController {
 							.containsKey("taxOnCode"))));
     }
 
-    private boolean canQueryByRetrieve(Boolean printable, Map<String, String> orderMap) {
-        return (printable == null) && (CollectionUtils.isEmpty(orderMap) || (CollectionUtils
-                .isNotEmpty(orderMap) && !(orderMap.containsKey("size")
-                || orderMap.containsKey("key_value")
-                || orderMap.containsKey("top")
-                || orderMap.containsKey("scores")
-                || orderMap.containsKey("votes")
-                || orderMap.containsKey("status")
-                || orderMap.containsKey("views")
-                || orderMap.containsKey("sort_num") || orderMap
-                .containsKey("taxOnCode"))));
+    private boolean canQueryByRetrieve(Boolean printable) {
+        return printable == null;
     }
 
     /**
