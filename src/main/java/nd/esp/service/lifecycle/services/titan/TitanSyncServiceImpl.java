@@ -164,6 +164,18 @@ public class TitanSyncServiceImpl implements TitanSyncService{
 
     @Override
     public boolean patch(TitanRepositoryOperationPatch patch) {
+        TitanTransaction transaction = new TitanTransaction();
+        transaction.addNextStep(patch);
+        titanSubmitTransaction.submit(transaction);
+
+        return false;
+    }
+
+    @Override
+    public boolean script(TitanRepositoryOperation script) {
+        TitanTransaction transaction = new TitanTransaction();
+        transaction.addNextStep(script);
+        titanSubmitTransaction.submit(transaction);
         return false;
     }
 
