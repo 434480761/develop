@@ -13,8 +13,8 @@ import java.util.Set;
 import nd.esp.service.lifecycle.models.CategoryPatternModel;
 import nd.esp.service.lifecycle.models.ivc.v06.IvcConfigModel;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
-import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.utils.StringUtils;
 
 import org.slf4j.Logger;

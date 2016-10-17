@@ -2,8 +2,6 @@ package nd.esp.service.lifecycle.services.titan;
 
 import nd.esp.service.lifecycle.entity.elasticsearch.Resource;
 import nd.esp.service.lifecycle.support.busi.titan.TitanSyncType;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationPatch;
-import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationScript;
 
 import java.util.Set;
 
@@ -16,4 +14,5 @@ public interface TitanSyncService {
     boolean batchDeleteResource(Set<Resource> resourceSet);
     boolean syncEducation(String primaryCategory, String identifier);
     boolean patch(TitanRepositoryOperationPatch patch);
+    boolean syncTechInfoAndEducation(String primaryCategory, String identifier);
 }

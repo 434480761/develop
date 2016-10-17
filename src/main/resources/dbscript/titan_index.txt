@@ -26,6 +26,7 @@
 :> mgmt = graph.openManagement();mgmt.awaitRelationIndexStatus(graph, 'edge_index_key_value_with_statisticals', 'has_resource_statistical').call();
 
 3.7 techInfo新增属性
+:> mgmt = graph.openManagement();ti_entry = mgmt.makePropertyKey('ti_entry').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_format = mgmt.makePropertyKey('ti_format').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_location = mgmt.makePropertyKey('ti_location').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_md5 = mgmt.makePropertyKey('ti_md5').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_requirements = mgmt.makePropertyKey('ti_requirements').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_secure_key = mgmt.makePropertyKey('ti_secure_key').dataType(String.class).cardinality(Cardinality.SINGLE).make();ti_size = mgmt.makePropertyKey('ti_size').dataType(Long.class).cardinality(Cardinality.SINGLE).make();ti_title = mgmt.makePropertyKey('ti_title').dataType(String.class).cardinality(Cardinality.SINGLE).make();mgmt.commit();
 :> mgmt = graph.openManagement();ti_printable = mgmt.makePropertyKey('ti_printable').dataType(Boolean.class).cardinality(Cardinality.SINGLE).make();;mgmt.commit();
 
 3.8 关系新增冗余数据

@@ -227,22 +227,27 @@ public class TitanExpression implements TitanScriptGenerator {
         }
     }
 
-    public String generateScriptForResultAndCount(Map<String, Object> scriptParamMap) {
-        //this.end++;
+    public String generateExecScriptForResultAndCount(Map<String, Object> scriptParamMap) {
         String scriptForCount = generateScriptForCount(scriptParamMap);
         String scriptForResult = generateScript(scriptParamMap);
         return new StringBuffer(scriptForCount).append(scriptForResult)
-                .append("List<Object> resultList="
-                        + TitanKeyWords.RESULT.toString() +
-                        ".toList();")
-             /*   .append("List<Object> countsList="
-                        + TitanKeyWords.TOTALCOUNT.toString() +
-                        ".toList();")
-                .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" +
-                        "countsList[0];").toString();*/
-        .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" +
-                "count;").toString();
+                .append("List<Object> resultList=" + TitanKeyWords.RESULT.toString() +".toList();")
+                .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" + "count;").toString();
     }
+
+    public String generateExecScriptForResult(Map<String, Object> scriptParamMap) {
+        String scriptForResult = generateScript(scriptParamMap);
+        return new StringBuffer(scriptForResult).append("List<Object> resultList=" + TitanKeyWords.RESULT.toString() +".toList();").toString();
+    }
+
+    public String generateExecScriptForCount(Map<String, Object> scriptParamMap) {
+        String scriptForCount = generateScriptForCount(scriptParamMap);
+        return new StringBuffer(scriptForCount)
+                .append("List<Object> resultList=new ArrayList();")
+                .append("resultList << '" + TitanKeyWords.TOTALCOUNT.toString() + "='+" + "count;").toString();
+    }
+
+
 
     /************************************
      * TEST
@@ -250,7 +255,7 @@ public class TitanExpression implements TitanScriptGenerator {
     public static void main(String[] args) {
         Map<String, Object> scriptParamMap = new HashMap<String, Object>();
         // System.out.println(generateTestExample().generateScript(scriptParamMap));
-        System.out.println(generateTestExample().generateScriptForResultAndCount(scriptParamMap));
+        System.out.println(generateTestExample().generateExecScriptForResultAndCount(scriptParamMap));
         System.out.println(scriptParamMap);
     }
 

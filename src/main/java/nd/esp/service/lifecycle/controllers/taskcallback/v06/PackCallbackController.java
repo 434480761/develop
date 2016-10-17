@@ -112,7 +112,7 @@ public class PackCallbackController {
         esResourceOperation.asynAdd(new Resource(res_type, id));
 
 
-        titanSyncService.syncEducation(res_type,id);
+        titanSyncService.syncTechInfoAndEducation(res_type,id);
 
         return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.ConvertCallbackSuccess);
     }
