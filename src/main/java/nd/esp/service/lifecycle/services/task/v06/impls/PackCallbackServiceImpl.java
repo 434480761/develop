@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.repository.sdk.TechInfo4QuestionDBRepository;
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ public class PackCallbackServiceImpl implements PackCallbackService {
 //    private TaskService taskService;
     
     @Override
+    @TitanTransaction
     public void packCallback(Map<String, String> callbackParams, TaskStatusInfo taskInfo) throws IOException{ 
         String id = callbackParams.get("identifier");
         String target = callbackParams.get("target");

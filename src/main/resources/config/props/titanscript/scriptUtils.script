@@ -1,0 +1,3 @@
+public void modifyProperty(Element e,String field,Object val){
+    e.property(field,val);
+};

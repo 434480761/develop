@@ -5,10 +5,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import nd.esp.service.lifecycle.daos.common.CommonDao;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanCategoryRepository;
-import nd.esp.service.lifecycle.daos.titan.inter.TitanTechInfoRepository;
 import nd.esp.service.lifecycle.support.DbName;
 
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 /**
@@ -27,10 +26,7 @@ public class CommonDaoImpl implements CommonDao {
 	EntityManager questionEm;
 
 	@Autowired
-	private TitanTechInfoRepository titanTechInfoRepository;
-
-	@Autowired
-	private TitanCategoryRepository titanCategoryRepository;
+	private TitanSubmitTransaction titanSubmitTransaction;
 	
 	@Override
 	public int deleteTechInfoByResource(String resType,String resourceId,DbName name) {
@@ -41,7 +37,14 @@ public class CommonDaoImpl implements CommonDao {
 			query = questionEm.createNamedQuery("deleteTechInfoByResource");
 		}
 		query.setParameter("resourceId", resourceId);
-		titanTechInfoRepository.deleteAllByResource(resType,resourceId);
+
+		String script = "DefaultGraphTraversal dgt=g.V().has('identifier',{0}).has('primary_category',{1})" +
+				".outE().inV().hasLabel({2});while(dgt.hasNext()){dgt.next().remove()};";
+		TitanRepositoryOperation operation = new TitanRepositoryOperationScript(script,resourceId,resType,"tech_info");
+		TitanTransaction transaction = new TitanTransaction();
+		transaction.addNextStep(operation);
+		titanSubmitTransaction.submit(transaction);
+
 		return query.executeUpdate();
 	}
 
@@ -55,7 +58,14 @@ public class CommonDaoImpl implements CommonDao {
 		}
 		query.setParameter("resourceId", resourceId);
 		query.setParameter("rts", resType);
-		titanCategoryRepository.deleteAll(resType, resourceId);
+
+		String script = "DefaultGraphTraversal dgt=g.V().has('identifier',{0}).has('primary_category',{1})" +
+				".outE().or(hasLabel('has_categories_path'),hasLabel('has_category_code'));while(dgt.hasNext()){dgt.next().remove()};";
+		TitanRepositoryOperation operation = new TitanRepositoryOperationScript(script,resourceId,resType);
+		TitanTransaction transaction = new TitanTransaction();
+		transaction.addNextStep(operation);
+		titanSubmitTransaction.submit(transaction);
+
 		return query.executeUpdate();
 	}
 

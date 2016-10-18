@@ -46,13 +46,13 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         boolean success = submit(repositoryOperations);
         //TODO 每个事务中需要获取资源的类型和ID，方案一：在事务名中存放类型和ID；方案二：在需要的时候再进行解析
         if (!success) {
-            LOG.info("失败");
             Map<String, String> map = getAllEducation(transaction.getAllStep());
             for (String identifier : map.keySet()){
                 titanSync(identifier, map.get(identifier), TitanSyncType.SAVE_OR_UPDATE_ERROR);
             }
+            LOG.info("unsuccessful:{}",map.toString());
         } else {
-            LOG.info("成功");
+//            LOG.info("成功");
         }
     }
 
@@ -131,7 +131,29 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
 
                     builder.deleteEdgeById(entity.getIdentifier());
                     break;
-                //更新关系冗余字段
+                //增加执行自定义脚本
+                case script:
+                    if (operation instanceof TitanRepositoryOperationScript){
+                        builder.script(((TitanRepositoryOperationScript) operation).getCustomScript(),
+                                ((TitanRepositoryOperationScript) operation).getCustomScriptParam());
+                    }
+                    break;
+                //patch需要配置支持的对象
+                case patch:
+                    if (operation instanceof TitanRepositoryOperationPatch){
+                        if (entity instanceof Education){
+                            builder.patch(EducationToTitanBeanUtils.toVertex(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                            //更新冗余字段
+                            educationRed.put(entity.getIdentifier(), ((Education) entity).getPrimaryCategory());
+                        } else if(entity instanceof  TechInfo){
+                            builder.patch(EducationToTitanBeanUtils.toVertex(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                            builder.patch(EducationToTitanBeanUtils.toEdge(entity),
+                                    ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                        }
+                    }
+                    break;
                 case update_relation_red_property:
                     if (entity instanceof ResourceRelation){
                         TitanScriptBuilder addAndUpdate = new TitanScriptBuilder();
@@ -149,6 +171,8 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         if (relationId == null || relationId.equals("null")){
                             titanSync((ResourceRelation) entity);
                         }
+
+                        return true;
                     }
                     break;
                 case update_relation_edu_red_property:
@@ -173,7 +197,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         String result = null;
         if (param != null && param.size() > 0) {
             try {
+                long time = System.currentTimeMillis();
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
+                System.out.println("脚本执行时间:"+ (System.currentTimeMillis() - time));
             } catch (Exception e) {
                 return false;
             }

@@ -61,7 +61,7 @@ public class TitanTransactionUtils<M extends EspEntity> {
     }
 
     private void addStepEntity(EspEntity entity ,TitanOperationType type){
-        String name = Thread.currentThread().getName();
+        String name = getTransactionName();
         TitanRepositoryOperation operation = new TitanRepositoryOperation();
         operation.setEntity(entity);
         operation.setOperationType(type);
@@ -76,6 +76,11 @@ public class TitanTransactionUtils<M extends EspEntity> {
         for (M entity : entities){
             addStepEntity(entity, type);
         }
+    }
+
+
+    private String getTransactionName(){
+        return Thread.currentThread().getName() + Thread.currentThread().getId();
     }
 
 }
