@@ -904,7 +904,7 @@ public class NDResourceController {
                         rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                                 includesList, categories, categoryExclude, relationsMap,
                                 coveragesList, propsMap, orderMap, words, limit,
-                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
 
                         LOG.warn("Titan 查询完成");
                     }
@@ -942,15 +942,11 @@ public class NDResourceController {
                 }
                 break;
             case TITAN:
-                /*rListViewModel = ndResourceService.resourceQueryByTitan(resType,
-                        includesList, categories, categoryExclude, relationsMap,
-                        coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean, printable, printableKey);*/
                 Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
                 rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
                 break;
             case TITAN_REALTIME:
                 rListViewModel = resourceQueryByTitanRealTime(resType, resCodes,
@@ -1300,7 +1296,7 @@ public class NDResourceController {
               return ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                   includes, categories, categoryExclude, relations,
                   coverages, propsMap, orderMap, words, limit,
-                  isNotManagement, reverse, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                  isNotManagement, reverse, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
         }});
         return titanFuture;
     }

@@ -25,7 +25,7 @@ public interface TitanSearchService {
 	public ListViewModel<ResourceModel> searchWithStatistics(Set<String> resTypeSet,
 																	 List<String> includes,
 																	 Map<String, Map<String, List<String>>> params,
-																	 Map<String, String> orderMap, int from, int size, boolean reverse,String words, boolean forceStatus, List<String> tags, boolean showVersion);
+																	 Map<String, String> orderMap, int from, int size, boolean reverse,String words, boolean forceStatus, List<String> tags, boolean showVersion, boolean onlyCount, boolean onlyResult);
 
 
 	/**

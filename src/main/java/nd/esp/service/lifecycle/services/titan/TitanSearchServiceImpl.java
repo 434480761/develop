@@ -44,7 +44,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                                                              Map<String, Map<String, List<String>>> params,
                                                              Map<String, String> orderMap, int from, int size,
                                                              boolean reverse,String words, boolean forceStatus,
-                                                             List<String> tags, boolean showVersion){
+                                                             List<String> tags, boolean showVersion, boolean onlyCount, boolean onlyResult){
         long generateScriptBegin = System.currentTimeMillis();
         TitanExpression titanExpression = new TitanExpression();
         titanExpression.setIncludes(includes);
@@ -59,8 +59,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         boolean iSMutiRelations = false;
         boolean nullRelations = false;
         boolean isRollback = true;
-        boolean onlyCount = false;
-        boolean onlyResult = false;
+        //boolean onlyCount = false;boolean onlyResult = false;
 
         if (CollectionUtils.isNotEmpty(re)) {
             List<String> relations = params.get("relation").get(PropOperationConstant.OP_EQ);

@@ -289,7 +289,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
 															 List<Map<String, String>> relations, List<String> coverages,
 															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
-															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
+															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion, boolean onlyCount, boolean onlyResult) {
 		// 返回的结果集
 		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
 		// 参数整理
@@ -303,7 +303,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		listViewModel =
 				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orders,
-						result[0], result[1],reverse,words, forceStatus, tags, showVersion);
+						result[0], result[1],reverse,words, forceStatus, tags, showVersion, onlyCount, onlyResult);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
