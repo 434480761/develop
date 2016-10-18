@@ -79,7 +79,7 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
         jdbcTemplateInUse.execute(sql);
 
         Map<String, Object> values = new HashMap<>();
-        values.put("status",ObjectUtils.toJson(status));
+        values.put("status",status);
         updateEducation(resType,resId,values);
 
         return true;
