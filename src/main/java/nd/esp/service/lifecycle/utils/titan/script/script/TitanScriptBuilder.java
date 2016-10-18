@@ -314,7 +314,7 @@ public class TitanScriptBuilder {
             script.append(methodName).append(";");
         }
         script.append("1+1");
-//        ScriptMethod.clean();
+        ScriptMethod.clean();
         return null;
     }
 
