@@ -377,7 +377,7 @@ public class TitanUtils {
 	public static String convertToEsDataType(String field) {
 		if (ES_SearchField.lc_last_update.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field)) {
 			return convertToEsDataType(Long.class);
-		} else if (ES_SearchField.title.toString().equals(field)) {
+		} else if (ES_SearchField.title.toString().equals(field)||ES_SearchField.lc_status.toString().equals(field)) {
 			return convertToEsDataType(String.class);
 		}
 		return null;
