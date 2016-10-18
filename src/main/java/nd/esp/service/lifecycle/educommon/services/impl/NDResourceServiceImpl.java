@@ -3564,7 +3564,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		Map<String, Object> map = new HashMap<>();
 		map.put("status", status);
 		long lastUpdate = System.currentTimeMillis();
-		map.put("last_update",lastUpdate);
+		map.put("dblastUpdate",lastUpdate);
 
 		patch.setEntity(entity);
 		patch.setPatchPropertyMap(map);

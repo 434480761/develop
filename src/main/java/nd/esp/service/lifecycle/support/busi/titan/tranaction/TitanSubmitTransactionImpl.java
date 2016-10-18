@@ -144,6 +144,8 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
                         if (entity instanceof Education){
                             builder.patch(EducationToTitanBeanUtils.toVertex(entity),
                                     ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
+                            //更新冗余字段
+                            educationRed.put(entity.getIdentifier(), ((Education) entity).getPrimaryCategory());
                         } else if(entity instanceof  TechInfo){
                             builder.patch(EducationToTitanBeanUtils.toVertex(entity),
                                     ((TitanRepositoryOperationPatch) operation).getPatchPropertyMap());
