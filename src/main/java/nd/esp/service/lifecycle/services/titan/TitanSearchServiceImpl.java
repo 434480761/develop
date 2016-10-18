@@ -58,7 +58,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, List<String>> re = params.get("relation");
         boolean iSMutiRelations = false;
         boolean nullRelations = false;
-        boolean isRollback = true;
+        boolean isRollback = false;
         //boolean onlyCount = false;boolean onlyResult = false;
 
         if (CollectionUtils.isNotEmpty(re)) {
