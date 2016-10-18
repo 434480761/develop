@@ -1,8 +1,12 @@
 package nd.esp.service.lifecycle.daos.ResLifecycle.v06.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import nd.esp.service.lifecycle.repository.Education;
 import nd.esp.service.lifecycle.repository.common.IndexSourceType;
+import nd.esp.service.lifecycle.services.titan.TitanSyncService;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +34,10 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
     @Autowired
     @Qualifier("questionJdbcTemplate")
     private JdbcTemplate questionJdbcTemplate;
-    
+
+    @Autowired
+    private TitanSyncService titanSyncService;
+
     
     /**
      * 根据资源类型、id更新主表中status值，不变更last_update(修改转码状态使用)
@@ -50,6 +57,11 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
         
 //        contributeRepository.getEntityManager().createNativeQuery(sql).executeUpdate();
         jdbcTemplateInUse.execute(sql);
+
+        Map<String, Object> values = new HashMap<>();
+        values.put("dbpreview",ObjectUtils.toJson(preview));
+        updateEducation(resType,resId,values);
+
         return true;
     }
 
@@ -65,6 +77,21 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
         LOG.info(jdbcTemplateInUse.toString() + "; status更新sql:"+sql);
 
         jdbcTemplateInUse.execute(sql);
+
+        Map<String, Object> values = new HashMap<>();
+        values.put("status",ObjectUtils.toJson(status));
+        updateEducation(resType,resId,values);
+
         return true;
+    }
+
+
+    private void updateEducation(String resType, String resId, Map<String, Object> values){
+        Education education = new Education();
+        education.setIdentifier(resId);
+        education.setPrimaryCategory(resType);
+        TitanRepositoryOperationPatch patch = new TitanRepositoryOperationPatch();
+        patch.setPatchPropertyMap(values);
+        titanSyncService.patch(patch);
     }
 }
