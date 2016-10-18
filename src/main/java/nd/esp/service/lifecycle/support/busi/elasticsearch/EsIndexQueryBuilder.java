@@ -313,6 +313,25 @@ public class EsIndexQueryBuilder {
 
     }
 
+    private void transferredMeaning(String key, Map<String, List<String>> prop) {
+        Map<String, List<String>> newProp = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
+            List<String> optList = entry.getValue();
+            List<String> newOptList = new ArrayList<>();
+            for (String s : optList) {
+                s = s.trim();
+                if (s.startsWith("[")) s = s.replace("[", "");
+                if (s.startsWith("\"")) s = s.replace("\"", "");
+                if (s.endsWith("]")) s = s.replace("]", "");
+                if (s.endsWith("\"")) s = s.replace("\"", "");
+                s = "*\\\"" + s + "\\\"*";
+                newOptList.add(s);
+            }
+            newProp.put(entry.getKey(), newOptList);
+        }
+        this.params.put(key, newProp);
+    }
+
     /**
      *
      *  1）不同【属性】时，prop之间为 AND
@@ -330,7 +349,7 @@ public class EsIndexQueryBuilder {
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
             String propName = entry.getKey();
             // 不使用分词,,需要修改titan-core,升级后才支持
-            if ("keywords,language,tags,title".contains(propName)) {
+            if ("description,keywords,language,tags,title".contains(propName)) {
                 propName = propName + "__STRING";
             }
             int propSize = params.entrySet().size();// prop数量
