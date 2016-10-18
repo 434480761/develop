@@ -185,7 +185,7 @@ public class TranscodeServiceImpl implements TranscodeService {
             targetsMetadata.put("image", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             Pdf2imageUtil.makeThumbnails(imageDir, thumbDir);
             sizeOfFile = FileUtils.sizeOfDirectory(new File(thumbDir));
-            targetsMap.put("thumbnail", REF_PATH_HEADER + param.getTarget_location() + "/transcode/image");
+            targetsMap.put("thumbnail", REF_PATH_HEADER + param.getTarget_location() + "/transcode/thumbnail");
             targetsMetadata.put("thumbnail", ObjectUtils.toJson(DocumentInfoUtil.getDocumentInfo(pdfFilePath, suffix, sizeOfFile)));
             File[] thumbFiles = new File(thumbDir).listFiles();
             Arrays.sort(thumbFiles, new Comparator<File>() {
@@ -317,7 +317,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"830d00ff-7d79-4d4b-8c5b-a2b7b37a2191\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/c186535a-a664-486e-bfb7-f31ad3776fb6.pkg/pdf%20Android%e7%bb%88%e7%ab%af%e4%b8%93%e9%a1%b9%e5%ae%9d%e5%85%b8-%e4%b8%8a%e7%af%87%20(%e5%85%88%e8%a1%8c%e7%89%88)%20%20(1).pdf\",\"target_location\":\"/prepub_content_edu_product/esp/assets/c186535a-a664-486e-bfb7-f31ad3776fb6.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"9efe38d8-489b-40ca-ad4a-5d005960cc34\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/879ca409-353d-4afd-be62-0f4d894227bf.pkg/test1.jpg\",\"target_location\":\"/prepub_content_edu_product/esp/assets/879ca409-353d-4afd-be62-0f4d894227bf.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);

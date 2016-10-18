@@ -1,15 +1,14 @@
 package com.nd.esp.task.worker.buss.document_transcode.utils;
 
-import com.nd.esp.task.worker.buss.document_transcode.utils.gson.ObjectUtils;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
-import com.sun.jimi.core.JimiReader;
 import com.sun.jimi.core.JimiWriter;
 import com.sun.jimi.core.options.JPGOptions;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.ImageProducer;
 import java.io.File;
@@ -36,10 +35,10 @@ public class ImageUtils {
 				return null;
 			}
 
-			Image srcImg = Jimi.getImage(filePath);
+			Image srcImage = ImageIO.read(new File(filePath));
 			Map<String,String> meta = new HashMap<>();
-			meta.put("width", String.valueOf(srcImg.getWidth(null)));
-			meta.put("height", String.valueOf(srcImg.getHeight(null)));
+			meta.put("width", String.valueOf(srcImage.getWidth(null)));
+			meta.put("height", String.valueOf(srcImage.getHeight(null)));
 			meta.put("pagesize", "1");
 			meta.put("displaymode", "horizontal");
 			if(filePath.lastIndexOf(".jpg") > 0) {
@@ -62,4 +61,5 @@ public class ImageUtils {
 		}
 		return null;
 	}
+
 }

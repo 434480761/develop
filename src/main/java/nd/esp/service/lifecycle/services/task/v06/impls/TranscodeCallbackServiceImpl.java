@@ -663,7 +663,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             List<String> previewList = argument.getPreviews();
             if (CollectionUtils.isNotEmpty(argument.getPreviews())) {
                 int maxNum = previewList.size()> PREVIEW_MAX_LIMIT ? PREVIEW_MAX_LIMIT : previewList.size();
-                for (int i = 0; i < previewList.size(); i++) {
+                for (int i = 0; i < maxNum; i++) {
                     resource.getPreview().put(DOC_TRANSCODE_PAGE_KEY + String.valueOf(i + 1),
                             "${ref-path}" + previewList.get(i)); // FIXME key 待定？,手动添加前缀
                 }
