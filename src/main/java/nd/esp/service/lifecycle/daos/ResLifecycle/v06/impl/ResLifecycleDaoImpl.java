@@ -91,6 +91,7 @@ public class ResLifecycleDaoImpl implements ResLifecycleDao {
         education.setIdentifier(resId);
         education.setPrimaryCategory(resType);
         TitanRepositoryOperationPatch patch = new TitanRepositoryOperationPatch();
+        patch.setEntity(education);
         patch.setPatchPropertyMap(values);
         titanSyncService.patch(patch);
     }

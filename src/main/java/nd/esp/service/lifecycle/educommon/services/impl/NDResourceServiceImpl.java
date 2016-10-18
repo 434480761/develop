@@ -3560,13 +3560,13 @@ public class NDResourceServiceImpl implements NDResourceService{
 		Education entity = new Education();
 		entity.setIdentifier(uuid);
 		entity.setPrimaryCategory(resType);
-		patch.setEntity(entity);
-
-		long lastUpdate = System.currentTimeMillis();
 
 		Map<String, Object> map = new HashMap<>();
 		map.put("status", status);
+		long lastUpdate = System.currentTimeMillis();
 		map.put("last_update",lastUpdate);
+
+		patch.setEntity(entity);
 		patch.setPatchPropertyMap(map);
 		titanSyncService.patch(patch);
 
