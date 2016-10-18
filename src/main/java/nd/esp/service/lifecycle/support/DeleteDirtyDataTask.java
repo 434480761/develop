@@ -375,6 +375,7 @@ public class DeleteDirtyDataTask {
 		MDC.put("resource", "uuid");
         MDC.put("res_type", resType);
         MDC.put("operation_type", "清除脏数据");
+        MDC.put("creator", "LCMS");
         MDC.put("remark", message);
         DBLogUtil.getDBlog().info("清除脏数据，资源类型："+resType);
         MDC.clear();

@@ -55,7 +55,7 @@ public class AddFormatToCategoryAspect {
     @Before("performanceAnnon()")
     public void executeAnnon(JoinPoint point) {
 
-        LOG.info("切面方法--在create或update方法前，利用techInfo.format向categories中添加维度数据");
+        LOG.debug("切面方法--在create或update方法前，利用techInfo.format向categories中添加维度数据");
 
         List<Object> parms = Arrays.asList(point.getArgs());
 
@@ -73,7 +73,7 @@ public class AddFormatToCategoryAspect {
         // V06
         if (parm instanceof ResourceViewModel) {
 
-            LOG.info("V06处理" + parm.getClass().getName());
+            LOG.debug("V06处理" + parm.getClass().getName());
 
             ResourceViewModel viewModel = (ResourceViewModel) parm;
 
