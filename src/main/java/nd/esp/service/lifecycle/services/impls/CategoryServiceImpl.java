@@ -1210,13 +1210,7 @@ public class CategoryServiceImpl implements CategoryService {
 		ListViewModel<CategoryPatternModel> result = new ListViewModel<CategoryPatternModel>();
 
 		// requestParam
-//		QueryRequest queryRequest = new QueryRequest();
-//		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);// 这里其实只需要分解数据
-//		queryRequest.setKeyword(words);
-//		queryRequest.setLimit(limitResult[1]);
-//		queryRequest.setOffset(limitResult[0]);
-
-		AdaptQueryRequest adaptQueryRequest=new AdaptQueryRequest();
+		AdaptQueryRequest<CategoryPattern> adaptQueryRequest=new AdaptQueryRequest<CategoryPattern>();
 		adaptQueryRequest.and("gbCode", gbCode);
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);// 这里其实只需要分解数据
 		adaptQueryRequest.setKeyword(words);
@@ -1225,9 +1219,9 @@ public class CategoryServiceImpl implements CategoryService {
 
 		// 调用sdk
 		
-		LOG.debug("调用sdk方法:search");
+		LOG.debug("调用sdk方法:searchByExample");
 		
-		QueryResponse<CategoryPattern> response = categoryPatternRepository.search(adaptQueryRequest);
+		QueryResponse<CategoryPattern> response = categoryPatternRepository.searchByExample(adaptQueryRequest);
 
 		// 处理返回数据
 		long total = 0L;
