@@ -115,6 +115,12 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         dealWithResource(resourceQueryVertex, params);
         titanExpression.addCondition(resourceQueryVertex);
 
+        // 多个关系时：同时获取总数与分页（多关系优化脚本待改造--20161018）
+        if (iSMutiRelations) {
+            onlyCount = false;
+            onlyResult = false;
+        }
+
         String execScript;
         if (onlyCount) {
             // 只获取总数
