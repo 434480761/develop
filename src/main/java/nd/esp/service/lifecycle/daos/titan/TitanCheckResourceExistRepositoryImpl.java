@@ -99,12 +99,12 @@ public class TitanCheckResourceExistRepositoryImpl implements TitanCheckResource
         if (count == 0) {
             if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
                 LOG.info("mysql 中数据在titan 中不存在, script:{}, param:{}", builder.build(), paramMap);
-                titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResType(), relation.getSourceUuid());
+                titanSync(TitanSyncType.CHECK_RR_NOT_EXIST, relation.getResourceTargetType(), relation.getTarget());
             }
         } else if(count > 1){
             if (titanRepositoryUtils.checkRelationExistInMysql(relation)) {
                 LOG.info("titan 中数据重复, script:{}, param:{}", builder.build(), paramMap);
-                titanSync(TitanSyncType.CHECK_RR_REPEAT,relation.getResType(), relation.getSourceUuid());
+                titanSync(TitanSyncType.CHECK_RR_REPEAT, relation.getResourceTargetType(), relation.getTarget());
             }
         }
     }
