@@ -1,9 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewareobjects.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.ToolsServiceV06;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
 import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
