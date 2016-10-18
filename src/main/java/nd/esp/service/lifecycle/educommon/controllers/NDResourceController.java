@@ -926,9 +926,7 @@ public class NDResourceController {
             break;
             case ES:
                 if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
-                        && canQueryByRetrieve(printable)) {
-//                    words = (String)paramMap.get("words");
-//                    List<String> fieldsList = (List<String>) paramMap.get("fields");
+                        && canQueryByRetrieve(printable,propsMap)) {
                     Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
                     rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
                             includesList, categories, categoryExclude, relationsMap,
@@ -1476,7 +1474,10 @@ public class NDResourceController {
 							.containsKey("taxOnCode"))));
     }
 
-    private boolean canQueryByRetrieve(Boolean printable) {
+    private boolean canQueryByRetrieve(Boolean printable,Map<String,Set<String>> propsMap) {
+        for (Map.Entry<String, Set<String>> entry : propsMap.entrySet()) {
+            if (entry.getKey().contains("ndres_code")) return false;
+        }
         return printable == null;
     }
 
