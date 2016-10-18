@@ -1,4 +1,7 @@
 package nd.esp.service.lifecycle.support.al;
+
+import nd.esp.service.lifecycle.utils.StringUtils;
+
 /**
  * 地区语言枚举
  * @author xiezy
@@ -32,5 +35,23 @@ public enum AreaAndLanguage {
 	}
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	/**
+	 * 校验是否是合法的国际化语言
+	 * @author yzc
+	 * @date 2016年10月18日
+	 * @param gbCode
+	 * @return boolean
+	 */
+	public static boolean validGbCodeType(String gbCode){
+		if (StringUtils.hasText(gbCode)) {
+            for(AreaAndLanguage type: AreaAndLanguage.values()){
+                if(type.getCode().equalsIgnoreCase(gbCode)){
+                    return true;
+                }
+            }
+        }
+		
+		return false;
 	}
 }

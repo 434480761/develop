@@ -20,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.persistence.LockModeType;
-
 import nd.esp.service.lifecycle.entity.PackagingParam;
 import nd.esp.service.lifecycle.entity.WorkerParam;
 import nd.esp.service.lifecycle.repository.exception.EspStoreException;
@@ -29,7 +27,6 @@ import nd.esp.service.lifecycle.repository.model.TaskStatusInfo;
 import nd.esp.service.lifecycle.repository.sdk.TaskStatusInfoRepository;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
 import nd.esp.service.lifecycle.services.task.v06.TaskService;
-import nd.esp.service.lifecycle.services.task.v06.impls.TaskServiceImpl;
 import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;

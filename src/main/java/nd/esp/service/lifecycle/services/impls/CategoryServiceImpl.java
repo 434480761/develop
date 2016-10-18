@@ -1206,21 +1206,22 @@ public class CategoryServiceImpl implements CategoryService {
 	 */
 	@Override
 	public ListViewModel<CategoryPatternModel> queryCategoryPatterns(
-			String words, String limit) throws EspStoreException {
+			String words, String limit, String gbCode) throws EspStoreException {
 		ListViewModel<CategoryPatternModel> result = new ListViewModel<CategoryPatternModel>();
 
 		// requestParam
-		QueryRequest queryRequest = new QueryRequest();
+		AdaptQueryRequest<CategoryPattern> adaptQueryRequest=new AdaptQueryRequest<CategoryPattern>();
+		adaptQueryRequest.and("gbCode", gbCode);
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);// 这里其实只需要分解数据
-		queryRequest.setKeyword(words);
-		queryRequest.setLimit(limitResult[1]);
-		queryRequest.setOffset(limitResult[0]);
+		adaptQueryRequest.setKeyword(words);
+		adaptQueryRequest.setLimit(limitResult[1]);
+		adaptQueryRequest.setOffset(limitResult[0]);
 
 		// 调用sdk
 		
-		LOG.debug("调用sdk方法:search");
+		LOG.debug("调用sdk方法:searchByExample");
 		
-		QueryResponse<CategoryPattern> response = categoryPatternRepository.search(queryRequest);
+		QueryResponse<CategoryPattern> response = categoryPatternRepository.searchByExample(adaptQueryRequest);
 
 		// 处理返回数据
 		long total = 0L;

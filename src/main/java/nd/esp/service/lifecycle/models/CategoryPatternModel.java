@@ -31,6 +31,10 @@ public class CategoryPatternModel {
 	 */
 	private String scope;
 	/**
+	 * 国际化编码
+	 */
+	private String gbCode;
+	/**
 	 * 模式的英文标识
 	 */
 	private String patternName;
@@ -95,7 +99,13 @@ public class CategoryPatternModel {
 	public void setSegment(String segment) {
 		this.segment = segment;
 	}
-
+	
+	public String getGbCode() {
+		return gbCode;
+	}
+	public void setGbCode(String gbCode) {
+		this.gbCode = gbCode;
+	}
 
 
 }

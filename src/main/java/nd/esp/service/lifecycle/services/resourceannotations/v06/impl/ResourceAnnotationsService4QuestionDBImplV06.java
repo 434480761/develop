@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nd.esp.service.lifecycle.models.v06.ResourceAnnotationModel;
+import nd.esp.service.lifecycle.repository.exception.EspStoreException;
+import nd.esp.service.lifecycle.repository.index.AdaptQueryRequest;
+import nd.esp.service.lifecycle.repository.index.QueryResponse;
+import nd.esp.service.lifecycle.repository.model.ResourceAnnotation;
+import nd.esp.service.lifecycle.repository.sdk.ResourceAnnotation4QuestionDBRepository;
 import nd.esp.service.lifecycle.services.resourceannotations.v06.ResourceAnnotationsServiceV06;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
@@ -19,17 +24,9 @@ import nd.esp.service.lifecycle.vos.statics.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.index.AdaptQueryRequest;
-import nd.esp.service.lifecycle.repository.index.QueryResponse;
-import nd.esp.service.lifecycle.repository.model.ResourceAnnotation;
-import nd.esp.service.lifecycle.repository.sdk.ResourceAnnotation4QuestionDBRepository;
-import nd.esp.service.lifecycle.repository.sdk.ResourceAnnotationRepository;
 
 /**
  * Created by caocr on 2015/11/25 0025.

@@ -36,8 +36,12 @@ public class CategoryPattern extends EspEntity {
 	*/
 	@Column(name="scope")
  	private String scope; 
-	
-	
+	/**
+	* 国际化编码
+	*/
+	@Column(name="gb_code")
+ 	private String gbCode; 
+
 	@Column(name="pattern_path")
 	private String patternPath;
 	
@@ -85,6 +89,14 @@ public class CategoryPattern extends EspEntity {
 
 	public void setSegment(String segment) {
 		this.segment = segment;
+	}
+	
+	public String getGbCode() {
+		return gbCode;
+	}
+
+	public void setGbCode(String gbCode) {
+		this.gbCode = gbCode;
 	}
 	
 	
