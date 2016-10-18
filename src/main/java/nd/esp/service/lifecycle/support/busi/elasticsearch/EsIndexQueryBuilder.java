@@ -314,29 +314,45 @@ public class EsIndexQueryBuilder {
     }
 
     /**
-     * 暂时这样处理
-     * @param key
-     * @param prop
+     *  + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+     * @param props
      */
-    private void transferredMeaning(String key, Map<String, List<String>> prop) {
-        Map<String, List<String>> newProp = new HashMap<>();
-        for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
-            List<String> optList = entry.getValue();
-            List<String> newOptList = new ArrayList<>();
-            for (String s : optList) {
-                s = s.trim();
-                if (s.startsWith("[\"") && s.endsWith("\"]")) {
-                    if (s.startsWith("[")) s = s.replace("[", "");
-                    if (s.startsWith("\"")) s = s.replace("\"", "");
-                    if (s.endsWith("]")) s = s.replace("]", "");
-                    if (s.endsWith("\"")) s = s.replace("\"", "");
-                    s = "\\\\[" + "\\\\\\\"" + s + "\\\\\\\"" + "\\\\]";
+    private void transferredMeaning(Map<String, Map<String, List<String>>> props) {
+        for (Map.Entry<String, Map<String, List<String>>> propsEntry : props.entrySet()) {
+            Map<String, List<String>> newProp = new HashMap<>();
+            String key = propsEntry.getKey();
+            Map<String, List<String>> prop = propsEntry.getValue();
+            for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
+                List<String> optList = entry.getValue();
+                List<String> newOptList = new ArrayList<>();
+                for (String s : optList) {
+                    s = s.trim();
+                    if (s.contains("\\")) s = s.replaceAll("\\\\", "\\\\\\\\\\\\");
+                    if (s.contains("/")) s = s.replaceAll("/", "\\\\\\\\/");
+
+                    if (s.contains("[")) s = s.replaceAll("\\[", "\\\\\\\\[");
+                    if (s.contains("]")) s = s.replaceAll("]", "\\\\\\\\]");
+                    if (s.contains("\"")) s = s.replaceAll("\"", "\\\\\\\\\\\\\"");
+
+                    //if (s.contains("+"))
+                    if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
+                    if (s.contains("!")) s = s.replaceAll("!", "\\\\\\\\!");
+                    if (s.contains("(")) s = s.replaceAll("\\(", "\\\\\\\\(");
+                    if (s.contains(")")) s = s.replaceAll("\\)", "\\\\\\\\)");
+                    if (s.contains("{")) s = s.replaceAll("\\{", "\\\\\\\\{");
+                    if (s.contains("}")) s = s.replaceAll("\\}", "\\\\\\\\}");
+                    //if (s.contains("^")) s = s.replaceAll("^", "\\\\\\\\^");
+                    if (s.contains("?")) s = s.replaceAll("\\?", "\\\\\\\\?");
+                    if (s.contains(":")) s = s.replaceAll(":", "\\\\\\\\:");
+                    if (s.contains("~")) s = s.replaceAll("~", "\\\\\\\\~");
+                    if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");
+
+                    newOptList.add(s);
                 }
-                newOptList.add(s);
+                newProp.put(entry.getKey(), newOptList);
             }
-            newProp.put(entry.getKey(), newOptList);
+            this.params.put(key, newProp);
         }
-        this.params.put(key, newProp);
     }
 
     /**
@@ -351,12 +367,7 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
-        if (this.params.containsKey(ES_SearchField.keywords.toString())) {
-            transferredMeaning(ES_SearchField.keywords.toString(),this.params.get(ES_SearchField.keywords.toString()));
-        }
-        if(this.params.containsKey(ES_SearchField.tags.toString())){
-            transferredMeaning(ES_SearchField.tags.toString(),this.params.get(ES_SearchField.tags.toString()));
-        }
+        transferredMeaning(this.params);
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
