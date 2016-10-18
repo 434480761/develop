@@ -75,7 +75,6 @@ import nd.esp.service.lifecycle.support.Constant;
 import nd.esp.service.lifecycle.support.Constant.CSInstanceInfo;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
-import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.annotation.MarkAspect4OfflineJsonToCS;
 import nd.esp.service.lifecycle.support.aop.ServiceAuthorAspect;
 import nd.esp.service.lifecycle.support.busi.CommonHelper;
@@ -86,6 +85,7 @@ import nd.esp.service.lifecycle.support.enums.LifecycleStatus;
 import nd.esp.service.lifecycle.support.enums.OperationType;
 import nd.esp.service.lifecycle.support.enums.OrderField;
 import nd.esp.service.lifecycle.support.enums.ResourceNdCode;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.support.terminal.TerminalTypeEnum;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -904,7 +904,7 @@ public class NDResourceController {
                         rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                                 includesList, categories, categoryExclude, relationsMap,
                                 coveragesList, propsMap, orderMap, words, limit,
-                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                                isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
 
                         LOG.warn("Titan 查询完成");
                     }
@@ -925,21 +925,28 @@ public class NDResourceController {
             }
             break;
             case ES:
-                rListViewModel = ndResourceService.resourceQueryByEla(resType,
-                        includesList, categories, categoryExclude, relationsMap,
-                        coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey);
+                if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
+                        && canQueryByRetrieve(printable)) {
+//                    words = (String)paramMap.get("words");
+//                    List<String> fieldsList = (List<String>) paramMap.get("fields");
+                    Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
+                    rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
+                            includesList, categories, categoryExclude, relationsMap,
+                            coveragesList, propsMap, orderMap, null, limit,
+                            isNotManagement, reverseBoolean,printable,printableKey);
+                } else {
+                    rListViewModel = ndResourceService.resourceQueryByEla(resType,
+                            includesList, categories, categoryExclude, relationsMap,
+                            coveragesList, propsMap, orderMap, words, limit,
+                            isNotManagement, reverseBoolean, printable, printableKey);
+                }
                 break;
             case TITAN:
-                /*rListViewModel = ndResourceService.resourceQueryByTitan(resType,
-                        includesList, categories, categoryExclude, relationsMap,
-                        coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean, printable, printableKey);*/
                 Set<String> resTypeSet = checkAndDealResType(resType, resCodes);
                 rListViewModel = ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                         includesList, categories, categoryExclude, relationsMap,
                         coveragesList, propsMap, orderMap, words, limit,
-                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                        isNotManagement, reverseBoolean,printable,printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
                 break;
             case TITAN_REALTIME:
                 rListViewModel = resourceQueryByTitanRealTime(resType, resCodes,
@@ -1289,7 +1296,7 @@ public class NDResourceController {
               return ndResourceService.resourceQueryByTitanWithStatistics(resTypeSet,
                   includes, categories, categoryExclude, relations,
                   coverages, propsMap, orderMap, words, limit,
-                  isNotManagement, reverse, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion);
+                  isNotManagement, reverse, printable, printableKey, statisticsType, statisticsPlatform,forceStatus,tags,showVersion,false,false);
         }});
         return titanFuture;
     }
@@ -1468,6 +1475,11 @@ public class NDResourceController {
 						|| orderMap.containsKey("sort_num") || orderMap
 							.containsKey("taxOnCode"))));
     }
+
+    private boolean canQueryByRetrieve(Boolean printable) {
+        return printable == null;
+    }
+
     /**
      * ES和DB prop和orderby之间key的转换
      * <p>Create Time: 2016年4月6日   </p>

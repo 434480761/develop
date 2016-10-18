@@ -2,6 +2,7 @@ package nd.esp.service.lifecycle.utils.titan.script.utils;
 
 import nd.esp.service.lifecycle.repository.model.Asset;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationScript;
 import nd.esp.service.lifecycle.utils.BigDecimalUtils;
 import nd.esp.service.lifecycle.utils.titan.script.annotation.*;
 import nd.esp.service.lifecycle.utils.titan.script.model.EducationToTitanBeanUtils;
@@ -19,10 +20,14 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.Cluster.Builder;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
 import org.junit.Test;
 
@@ -42,12 +47,11 @@ public class ParseAnnotation {
             vertex.setLabel(annotation.label());
             Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
 
-            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            getTitanFieldNameAndValue(vertex, titanModel, annotationMap);
             Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
 
             vertex.setType(TitanScriptModel.Type.V);
             vertex.setCompositeKeyMap(compositeKeyMap);
-            vertex.setFieldMap(fieldMap);
 
             titanScriptModel = vertex;
 
@@ -60,14 +64,13 @@ public class ParseAnnotation {
 
             Map<Field, List<Annotation>> annotationMap = getAllFieldAnnotationMap(titanModel);
 
-            Map<String, Object> fieldMap = getTitanFieldNameAndValue(titanModel, annotationMap);
+            getTitanFieldNameAndValue(edge, titanModel, annotationMap);
             Map<String, Object> compositeKeyMap = getTitanCompositeKeyNameAndValue(titanModel,annotationMap);
             Map<String, Object> resourceMap = getTitanEdgeResourceNameAndValue(titanModel,annotationMap);
             Map<String, Object> targetMap = getTitanEdgeTargetNameAndValue(titanModel, annotationMap);
 
             edge.setType(TitanScriptModel.Type.E);
             edge.setCompositeKeyMap(compositeKeyMap);
-            edge.setFieldMap(fieldMap);
             edge.setResourceKeyMap(resourceMap);
             edge.setTargetKeyMap(targetMap);
 
@@ -102,14 +105,20 @@ public class ParseAnnotation {
     /**
      * 获取所有的属性名和属性值
      * */
-    private static Map<String, Object> getTitanFieldNameAndValue(TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
+    private static void getTitanFieldNameAndValue(TitanScriptModel titanScriptModel, TitanModel model, Map<Field, List<Annotation>> fieldListMap) {
         Map<String, Object> fieldMap = new HashMap<>();
+        Map<String, String> fieldNameAndTitanNameMap = new HashMap<>();
         for (Field field : fieldListMap.keySet()) {
             List<Annotation> annotations = fieldListMap.get(field);
-            fieldMap.putAll(getOneTitanFieldNameAndValue(field,model,annotations));
+            Map<String, Object> result =getOneTitanFieldNameAndValue(field,model,annotations);
+            fieldMap.putAll(result);
+            if (result !=null && result.size()!=0){
+                fieldNameAndTitanNameMap.put(field.getName(), new ArrayList<>(result.keySet()).get(0));
+            }
         }
 
-        return fieldMap;
+        titanScriptModel.setFieldMap(fieldMap);
+        titanScriptModel.setFieldNameAndTitanNameMap(fieldNameAndTitanNameMap);
     }
 
     /**
@@ -300,39 +309,54 @@ public class ParseAnnotation {
 
 
     public static void main(String[] args) {
-        TitanResCoverageVertex resCoverageVertex = new TitanResCoverageVertex();
-        resCoverageVertex.setStrategy("User");
-        resCoverageVertex.setTarget("123");
-        resCoverageVertex.setTargetType("999");
-        createScriptModel(resCoverageVertex);
+//        String uuid = UUID.randomUUID().toString();
+//        Asset asset = new Asset();
+//        asset.setIdentifier(uuid);
+//        asset.setPrimaryCategory("assets");
+//        asset.setTitle("liuran_789");
+//        asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+//
+//        TitanScriptBuilder builder = new TitanScriptBuilder();
+//        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
+//        builder.scriptEnd();
+//
+//        ParseAnnotation parseAnnotation = new ParseAnnotation();
+//        parseAnnotation.init();
+//        Client client = parseAnnotation.getGremlinClient();
+//        client.submit(builder.getScript().toString(), builder.getParam());
 
-        TitanResCoverageEdge edge = new TitanResCoverageEdge();
-        edge.setResource(UUID.randomUUID().toString());
-        edge.setTarget("7897978");
-        edge.setTargetType("User");
+//        testPatch();
+        testReplace();
+    }
 
+    public static void testPatch(){
         Asset asset = new Asset();
-        asset.setIdentifier("0919127b-5536-454c-98f4-35c773d92061");
+        asset.setIdentifier("e04a4cd8-e93a-4320-ba20-15879952841e");
         asset.setPrimaryCategory("assets");
         asset.setTitle("liuran_789");
         asset.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
+        Map<String, Object> map = new HashMap<>();
+        map.put("title", "liuran_789");
+        map.put("dblastUpdate",System.currentTimeMillis());
+        map.put("enable",null);
+        map.put("lc_enable",null);
 
-//        createScriptModel(edge);
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+//        builder.addOrUpdate(EducationToTitanBeanUtils.toVertex(asset));
+        builder.patch(EducationToTitanBeanUtils.toVertex(asset),map);
+        builder.scriptEnd();
 
-        String s1 = "g.V().has('primary_category','assets').has('identifier','0919127b-5536-454c-98f4-35c773d92061')";
-//
-//        TitanModel titanAsset = EducationToTitanBeanUtils.toVertex(asset);
-//
-//        TitanScriptBuilder builder = new TitanScriptBuilder();
-//        builder.addBeforeCheckExist(titanAsset);
-//        builder.scriptEnd();
-//        builder.getScript();
-//
         ParseAnnotation parseAnnotation = new ParseAnnotation();
         parseAnnotation.init();
         Client client = parseAnnotation.getGremlinClient();
+        ResultSet resultSet = client.submit(builder.getScript().toString(), builder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
     }
+
 
     @Test
     public void testUpdateRelationRedProperty(){
@@ -346,6 +370,109 @@ public class ParseAnnotation {
         TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
         scriptBuilder.updateRelationRedPropertyFromEdu("798798", "789456");
         scriptBuilder.scriptEnd();
+    }
+
+    @Test
+    public void testScript(){
+        TitanScriptBuilder scriptBuilder = new TitanScriptBuilder();
+
+        Map<String, Object> param = new HashMap<>();
+//        param.put("identifier","e04a4cd8-e93a-4320-ba20-15879952841e");
+//        param.put("name","liuran");
+
+//        scriptBuilder.script("g.V().has('identifier',identifier).property('name',name)",param);
+        scriptBuilder.scriptEnd();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        ResultSet resultSet = client.submit(scriptBuilder.getScript().toString(), scriptBuilder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
+
+
+    }
+
+
+    @Test
+    public static void testReplace(){
+        String str = "qwe{0}r{1}q{2}we{3}rc{4}xbvertqe13ers{4}dr{}zxcvbqdrtqwerqwerxcvzxcv";
+        int index = 0;
+        String ss = "{"+index+"}";
+//        while (str.contains(ss)){
+//            str = str.replace(ss,"7777");
+//            System.out.print(ss);
+//            index ++;
+//            ss = "{"+index+"}";
+//        }
+
+        TitanRepositoryOperationScript script = new TitanRepositoryOperationScript("g.V().has('identifier',{0}).next().property('name',{1})",
+                "e04a4cd8-e93a-4320-ba20-15879952841e",
+                "hello word");
+
+        TitanScriptBuilder builder = new TitanScriptBuilder();
+
+        builder.script(script.getCustomScript(), script.getCustomScriptParam());
+        builder.scriptEnd();
+
+        ParseAnnotation parseAnnotation = new ParseAnnotation();
+        parseAnnotation.init();
+        Client client = parseAnnotation.getGremlinClient();
+        ResultSet resultSet = client.submit(builder.getScript().toString(), builder.getParam());
+        Iterator<Result> iterator = resultSet.iterator();
+        if (iterator.hasNext()) {
+            System.out.println(iterator.next().getString());
+        }
+
+
+    }
+
+
+
+    @Test
+    public void test2(){
+        String value1="aetwer,werwer,werqerw";
+        String value2 =" ";
+        String value3 = "   ,   ";
+        String value4="werwerwe";
+        String value5="\"wewer\",\"werxc";
+        System.out.println(appendQuoMark4SearchString(value1));
+        System.out.println(appendQuoMark4SearchString(value2));
+        System.out.println(appendQuoMark4SearchString(value3));
+        System.out.println(appendQuoMark4SearchString(value4));
+        System.out.println(appendQuoMark4SearchString(value5));
+
+
+    }
+
+    public String appendQuoMark4SearchString(String value){
+        if (value==null || "".equals(value)){
+            return value;
+        };
+        String[] values = value.split(",");
+        String newValue = "";
+        int index = 0;
+        for (String str : values){
+            if (str.trim().equals("")){
+                continue;
+            };
+            if (!str.startsWith("\"")||!str.endsWith("\"")){
+                str = "\""+str+"\"";
+            };
+            if (index==0){
+                newValue = newValue + str;
+            } else {
+                newValue = newValue +"," + str;
+            };
+            index ++;
+        };
+        return newValue;
+    };
+
+    public String appendQuoMark(String value){
+        return "\""+value+"\"";
     }
 
     @Test

@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 
+import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
 import org.apache.log4j.MDC;
 import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
@@ -73,6 +74,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private ResLifecycleDao resLifecycleDao;
 
     @Override
+    @TitanTransaction
     public void transcodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException {
         String resType = taskInfo.getResType();
         String id = taskInfo.getUuid();
@@ -124,6 +126,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     }
 
     @Override
+    @TitanTransaction
     public void imageTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException {
         String resType = taskInfo.getResType();
         String id = taskInfo.getUuid();
@@ -163,6 +166,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     }
 
     @Override
+    @TitanTransaction
     public void documentTranscodeCallback(TransCodeCallBackParam argument, TaskStatusInfo taskInfo) throws IOException {
         String resType = taskInfo.getResType();
         String id = taskInfo.getUuid();

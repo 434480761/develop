@@ -88,6 +88,7 @@ import nd.esp.service.lifecycle.support.busi.CommonHelper;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.ResourceTypeSupport;
 import nd.esp.service.lifecycle.support.busi.titan.TitanUtils;
+import nd.esp.service.lifecycle.support.busi.titan.tranaction.TitanRepositoryOperationPatch;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeDirection;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeModel;
 import nd.esp.service.lifecycle.support.busi.tree.preorder.TreeService;
@@ -289,7 +290,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 															 List<String> includes, Set<String> categories, Set<String> categoryExclude,
 															 List<Map<String, String>> relations, List<String> coverages,
 															 Map<String, Set<String>> propsMap, Map<String, String> orderMap,
-															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion) {
+															 String words, String limit, boolean isNotManagement, boolean reverse,Boolean printable, String printableKey, String statisticsType, String statisticsPlatform, boolean forceStatus, List<String> tags, boolean showVersion, boolean onlyCount, boolean onlyResult) {
 		// 返回的结果集
 		ListViewModel<ResourceModel> listViewModel = new ListViewModel<ResourceModel>();
 		// 参数整理
@@ -303,7 +304,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 		listViewModel =
 				titanSearchService.searchWithStatistics(resTypeSet, includes, params, orders,
-						result[0], result[1],reverse,words, forceStatus, tags, showVersion);
+						result[0], result[1],reverse,words, forceStatus, tags, showVersion, onlyCount, onlyResult);
 		if (listViewModel != null)listViewModel.setLimit(limit);
 		return listViewModel;
 	}
@@ -3539,7 +3540,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(ResourceTypeSupport.isValidEsResourceType(resType) && CollectionUtils.isNotEmpty(ids)){
 			for (String id : ids) {
 				esResourceOperation.asynAdd(new Resource(resType, id));
-				titanSyncService.syncEducation(resType,id);
 				offlineService.writeToCsAsync(resType, id);
 			}
 		}
@@ -3556,7 +3556,21 @@ public class NDResourceServiceImpl implements NDResourceService{
 	}
 	
 	private String updateStatusSql(String resType,String uuid,String status){
-		return "update ndresource set estatus='"+status+"',last_update="+System.currentTimeMillis()+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
+		TitanRepositoryOperationPatch patch = new TitanRepositoryOperationPatch();
+		Education entity = new Education();
+		entity.setIdentifier(uuid);
+		entity.setPrimaryCategory(resType);
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("status", status);
+		long lastUpdate = System.currentTimeMillis();
+		map.put("dblastUpdate",lastUpdate);
+
+		patch.setEntity(entity);
+		patch.setPatchPropertyMap(map);
+		titanSyncService.patch(patch);
+
+		return "update ndresource set estatus='"+status+"',last_update="+lastUpdate+" where primary_category='"+resType+"' and identifier = '"+uuid+"' and enable = 1";
 	}
 
 	@Override

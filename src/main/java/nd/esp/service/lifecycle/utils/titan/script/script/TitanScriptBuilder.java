@@ -1,8 +1,10 @@
 package nd.esp.service.lifecycle.utils.titan.script.script;
 
+import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.StringUtils;
 import nd.esp.service.lifecycle.utils.titan.script.model.TitanModel;
 import nd.esp.service.lifecycle.utils.titan.script.utils.ParseAnnotation;
+import nd.esp.service.lifecycle.utils.xstream.MapConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +29,7 @@ public class TitanScriptBuilder {
         UPDATE_RELATION_RED_PROPERTY("String","updateRelationRedProperty"),
         UPDATE_RELATION_RED_PROPERTY_FROM_EDU("void","updateRelationRedPropertyFromEdu"),
         BUTCH_UPDATE_RELATION_RED_PROPERTY("void","butchUpdateRelationRedProperty"),
-        MODIFY_PROPERTY("void","modifyProperty");
+        ;
 
         final static String RESULT_PRE = "result";
         private static int methodIndex = 0;
@@ -133,12 +135,6 @@ public class TitanScriptBuilder {
             return UPDATE_RELATION_RED_PROPERTY_FROM_EDU;
         }
 
-        public static ScriptMethod modifyProperty(String element, String field, String value){
-            MODIFY_PROPERTY.resultName = null;
-            MODIFY_PROPERTY.invokeMethod = MODIFY_PROPERTY.methodName +"("+element +","+field +","+value+")";
-            return MODIFY_PROPERTY;
-        }
-
         public static ScriptMethod butchUpdateRelationRedProperty(String edgeList){
             BUTCH_UPDATE_RELATION_RED_PROPERTY.resultName = null;
             BUTCH_UPDATE_RELATION_RED_PROPERTY.invokeMethod = BUTCH_UPDATE_RELATION_RED_PROPERTY.methodName +"("+edgeList+")";
@@ -151,7 +147,7 @@ public class TitanScriptBuilder {
     }
 
     private enum KeyWords {
-        node,edge,source,target,addVertex,has,next,id,addEdge,property
+        node,edge,source,target,addVertex,has,next,id,addEdge,property,script
     }
     private int firstIndex =0;
     public TitanScriptBuilder(){
@@ -277,16 +273,6 @@ public class TitanScriptBuilder {
      * 获取节点
      * */
     public TitanScriptBuilder get(TitanModel model){
-        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(model);
-        if (titanScriptModel == null){
-            return this;
-        }
-        Variable variable = createVariable(titanScriptModel.getType());
-        StringBuilder script = new StringBuilder() ;
-        Map<String, Object> param = new HashMap<>();
-//        uniqueVertexOrNode(titanScriptModel, variable, script ,param);
-
-//        dealScriptAndParam(script, param);
         return this;
     }
 
@@ -425,6 +411,39 @@ public class TitanScriptBuilder {
         return this;
     }
 
+    /**
+     * script:g.V().has('identifier',{0}).has('primary_category',{1}).has('lc_enable',{2})
+     *
+     * */
+    public TitanScriptBuilder script(String script,Object ... params){
+
+        Variable variable = createVariable(TitanScriptModel.Type.S);
+        Map<String, Object> newParams = new HashMap<>();
+        String preFix = "param";
+
+        int index = 0;
+        while (script.contains("{"+index+"}")){
+            String paramName = preFix + variable.getSuffix();
+            script = script.replace("{"+index+"}",paramName);
+            newParams.put(paramName, params[index]);
+            index ++;
+        }
+
+        ScriptAndParam scriptAndParam = new ScriptAndParam(new StringBuilder(script), newParams);
+        dealScriptAndParam(scriptAndParam, null);
+        return this;
+    }
+
+    public TitanScriptBuilder patch(TitanModel titanModel, Map<String, Object> patchPropertyMap){
+        if (titanModel == null || CollectionUtils.isEmpty(patchPropertyMap)){
+            return this;
+        }
+        TitanScriptModel titanScriptModel = ParseAnnotation.createScriptModel(titanModel);
+        Variable variable = createVariable(titanScriptModel.getType());
+        dealScriptAndParam(patchElement(titanScriptModel,variable, patchPropertyMap),titanScriptModel);
+        return this;
+    }
+
 
     /**
      * 为脚本添加方法头不合尾部
@@ -441,7 +460,6 @@ public class TitanScriptBuilder {
         String method = "method" + firstIndex +"()";
         methodNames.add(method);
         this.script.append("public ").append(returnType).append(" ").append(method).append("{").append(scriptAndParam.getScript()).append(" ").append("}").append(";");
-//        this.script.append(scriptAndParam.getScript()).append(";");
         this.param.putAll(scriptAndParam.getParam());
         this.firstIndex ++ ;
     }
@@ -607,6 +625,41 @@ public class TitanScriptBuilder {
     }
 
 
+    private ScriptAndParam patchElement(TitanScriptModel titanScriptModel,Variable variable, Map<String, Object> patchPropertyMap){
+        StringBuilder script = new StringBuilder();
+        Map<String, Object> param = new HashMap<>();
+        String ele = "ele";
+        if (titanScriptModel instanceof TitanScriptModelVertex){
+            script.append("Vertex ").append(ele).append("=g.V()");
+        }
+        if (titanScriptModel instanceof TitanScriptModelEdge){
+            script.append("Edge ").append(ele).append("=g.E()");
+        }
+        Map<String, Object> updateValues = new HashMap<>();
+        List<String> dropValues = new ArrayList<>();
+        for (String key : patchPropertyMap.keySet()){
+            String titanKey = null;
+            titanKey = titanScriptModel.getFieldNameAndTitanNameMap().get(key);
+            if (titanKey == null){
+                continue;
+            }
+            Object obj = patchPropertyMap.get(key);
+
+            if (obj == null){
+                dropValues.add(titanKey);
+            } else {
+                updateValues.put(titanKey, obj);
+            }
+        }
+        appendHas(titanScriptModel.getCompositeKeyMap(),variable,script,param);
+        appendNext(script);
+        appendProperty4Next(ele, updateValues,variable,script,param);
+        appendRemoveAllProperty(ele,dropValues, script);
+
+        appendReturn(script, ele);
+        return new ScriptAndParam(script, param);
+    }
+
 
     private Variable createVariable(TitanScriptModel.Type type){
         Variable variable = null;
@@ -616,6 +669,9 @@ public class TitanScriptBuilder {
         }
         if (type.equals(TitanScriptModel.Type.V)){
             variable = new Variable(KeyWords.node.toString()+suffix, suffix);
+        }
+        if (type.equals(TitanScriptModel.Type.S)){
+            variable = new Variable(KeyWords.script.toString()+suffix, suffix);
         }
 
         return variable;

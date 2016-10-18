@@ -1,4 +1,4 @@
-package nd.esp.service.lifecycle.support;
+package nd.esp.service.lifecycle.support.staticdata;
 
 import java.util.List;
 import java.util.Map;

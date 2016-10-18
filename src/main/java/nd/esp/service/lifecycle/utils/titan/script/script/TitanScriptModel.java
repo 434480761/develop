@@ -8,12 +8,13 @@ import java.util.Objects;
  */
 public class TitanScriptModel {
     public enum Type {
-        E,V
+        E,V,S
     }
     private Type type;
     private String label;
     private Map<String, Object> compositeKeyMap;
     private Map<String, Object> fieldMap;
+    private Map<String, String> fieldNameAndTitanNameMap;
 
     public Type getType() {
         return type;
@@ -45,5 +46,13 @@ public class TitanScriptModel {
 
     public void setFieldMap(Map<String, Object> fieldMap) {
         this.fieldMap = fieldMap;
+    }
+
+    public Map<String, String> getFieldNameAndTitanNameMap() {
+        return fieldNameAndTitanNameMap;
+    }
+
+    public void setFieldNameAndTitanNameMap(Map<String, String> fieldNameAndTitanNameMap) {
+        this.fieldNameAndTitanNameMap = fieldNameAndTitanNameMap;
     }
 }

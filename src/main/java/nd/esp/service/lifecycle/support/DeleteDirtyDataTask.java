@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.services.elasticsearch.SyncResourceService;
 import nd.esp.service.lifecycle.services.titan.TitanSyncService;
 import nd.esp.service.lifecycle.support.enums.SynVariable;
 import nd.esp.service.lifecycle.support.logs.DBLogUtil;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 import org.apache.log4j.MDC;

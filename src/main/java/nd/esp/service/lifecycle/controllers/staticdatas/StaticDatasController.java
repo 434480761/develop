@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import nd.esp.service.lifecycle.support.StaticDatas;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
 import nd.esp.service.lifecycle.vos.staticdatas.StaticDatasViewModel;
 
 import org.slf4j.Logger;

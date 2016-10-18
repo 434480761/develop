@@ -1,8 +1,9 @@
 package nd.esp.service.lifecycle.daos.titan;
 
 import nd.esp.service.lifecycle.daos.titan.inter.TitanCommonRepository;
-import nd.esp.service.lifecycle.support.StaticDatas;
 import nd.esp.service.lifecycle.support.busi.titan.GremlinClientFactory;
+import nd.esp.service.lifecycle.support.staticdata.StaticDatas;
+
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;

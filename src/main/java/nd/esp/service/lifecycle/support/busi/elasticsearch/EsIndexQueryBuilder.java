@@ -136,7 +136,7 @@ public class EsIndexQueryBuilder {
         StringBuffer query=new StringBuffer();
         StringBuffer baseQuery=new StringBuffer("builder = graph.indexQuery(\"").append(this.index).append("\",\"");
         String wordSegmentation = dealWithWordsContainsNot(this.words);
-        String coverage = dealWithParams();
+        String coverage = dealWithParams4Exact();
         String property = dealWithProp();
         if ("".endsWith(wordSegmentation.trim())) {
             coverage = coverage.trim().replaceFirst("AND", "").trim();
@@ -314,6 +314,32 @@ public class EsIndexQueryBuilder {
     }
 
     /**
+     * 暂时这样处理
+     * @param key
+     * @param prop
+     */
+    private void transferredMeaning(String key, Map<String, List<String>> prop) {
+        Map<String, List<String>> newProp = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
+            List<String> optList = entry.getValue();
+            List<String> newOptList = new ArrayList<>();
+            for (String s : optList) {
+                s = s.trim();
+                if (s.startsWith("[\"") && s.endsWith("\"]")) {
+                    if (s.startsWith("[")) s = s.replace("[", "");
+                    if (s.startsWith("\"")) s = s.replace("\"", "");
+                    if (s.endsWith("]")) s = s.replace("]", "");
+                    if (s.endsWith("\"")) s = s.replace("\"", "");
+                    s = "\\\\[" + "\\\\\\\"" + s + "\\\\\\\"" + "\\\\]";
+                }
+                newOptList.add(s);
+            }
+            newProp.put(entry.getKey(), newOptList);
+        }
+        this.params.put(key, newProp);
+    }
+
+    /**
      *
      *  1）不同【属性】时，prop之间为 AND
      *  2）相同【属性】，不同【操作符】时，prop之间为 AND， eq和in两者之间除外，可理解为eq和in本质上一样
@@ -325,12 +351,18 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
+        if (this.params.containsKey(ES_SearchField.keywords.toString())) {
+            transferredMeaning(ES_SearchField.keywords.toString(),this.params.get(ES_SearchField.keywords.toString()));
+        }
+        if(this.params.containsKey(ES_SearchField.tags.toString())){
+            transferredMeaning(ES_SearchField.tags.toString(),this.params.get(ES_SearchField.tags.toString()));
+        }
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
             String propName = entry.getKey();
             // 不使用分词,,需要修改titan-core,升级后才支持
-            if ("keywords,language,tags,title".contains(propName)) {
+            if ("description,keywords,language,tags,title".contains(propName)) {
                 propName = propName + "__STRING";
             }
             int propSize = params.entrySet().size();// prop数量

@@ -12,7 +12,7 @@ import nd.esp.service.lifecycle.utils.CollectionUtils;
 
 /**
  * titan 工具类
- * 
+ *
  * @author linsm
  *
  */
@@ -39,29 +39,56 @@ public class TitanUtils {
 	 * 优化：把过滤条件移到边上
 	 * @param script
 	 * @param reverse
+	 * @param scriptParamMap
      * @return
      */
-	public static String optimizeMoveConditionsToEdge(String script, boolean reverse,Map<String, Object> scriptParamMap) {
-		String totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
-		String result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
-		String vConditions, prefix;
+	public static String optimizeMoveConditionsToEdge(String script, boolean reverse, Map<String, Object> scriptParamMap) {
+		String totalCount = null;
+		if (script.contains("TOTALCOUNT=g.V()"))
+			totalCount = script.substring(script.indexOf("TOTALCOUNT=g.V()"), script.indexOf(".count();"));
+		String result = null;
+		if (script.contains("RESULT=g.V()"))
+			result = script.substring(script.indexOf("RESULT=g.V()"), script.indexOf(".valueMap(true);"));
+		String vConditions = null;
+		String prefix;
+
 		if (reverse) {
 			prefix = "source_r_";
-			vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+			if (totalCount != null) {
+				vConditions = totalCount.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+			} else {
+				if (result != null) {
+					vConditions = result.substring(script.indexOf(".outV()"), script.indexOf(".as('x')"));
+				}
+			}
 		} else {
 			prefix = "target_r_";
-			vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+			if (totalCount != null) {
+				vConditions = totalCount.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+			} else {
+				if (result != null) {
+					vConditions = result.substring(script.indexOf(".inV()"), script.indexOf(".as('x')"));
+				}
+			}
 		}
-		String optimizeScript = moveConditionsToEdge(vConditions, prefix,scriptParamMap);
-		script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
-		script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
+
+		String optimizeScript = moveConditionsToEdge(vConditions, prefix, scriptParamMap);
+		if (vConditions != null) {
+			if (totalCount != null)
+				script = script.replace(totalCount, totalCount.replace(".as('e')" + vConditions, optimizeScript));
+			if (result != null)
+				script = script.replace(result, result.replace(".as('e')" + vConditions, optimizeScript));
+		}
+
 		return script;
 	}
 
 	/**
-	 * primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
+	 *  primary_category,lc_enable,lc_create_time,lc_last_update,lc_status,search_code_string,search_path_string,search_coverage_string
 	 * @param vConditions
-	 * @return
+	 * @param prefix
+	 * @param scriptParamMap
+     * @return
      */
 	private static String moveConditionsToEdge(String vConditions, String prefix, Map<String, Object> scriptParamMap) {
 		List<String> clearConditions = clearConditions(vConditions);
@@ -112,20 +139,19 @@ public class TitanUtils {
 	}
 
 	private static boolean checkCondition(String check, List<String> conditions) {
-		boolean f = false;
 		if (CommonHelper.checkBrackets(check)) {
 			conditions.add(check);
-			f = true;
+			return true;
 		}
-		return f;
+		return false;
 	}
 
 	/**
 	 *
 	 * @param tmpConditions
 	 * @param scriptParamMap
-     * @return
-     */
+	 * @return
+	 */
 	private static Map<String, String> optimizeConditions(List<String> tmpConditions, Map<String, Object> scriptParamMap) {
 		Map<String, String> conditions = new HashMap<>();
 		for (String c : tmpConditions) {
@@ -133,12 +159,8 @@ public class TitanUtils {
 				// 暂时只处理 or
 				String value = null;
 				if (c.startsWith("or(")) {
-					// or(has('search_code',search_code0))
 					if ((CommonHelper.getSubStrAppearTimes(c, "has") == 1) || (!c.contains(",has") && c.contains("search_code"))) {
 						value = c.substring(3, c.length()-1);
-					/*	if(!CommonHelper.checkBrackets(value)){
-
-						}*/
 					} else {
 						value = c;
 					}
@@ -299,8 +321,8 @@ public class TitanUtils {
 	 * @param relations
 	 * @param statisticsType
 	 * @param statisticsPlatform
-     * @return
-     */
+	 * @return
+	 */
 	public static Map<String, String> dealOrderMap(Map<String, String> orderMap, boolean showVersion, boolean reverse, List<Map<String, String>> relations, String statisticsType, String statisticsPlatform) {
 		Map<String, String> orders = new LinkedHashMap<>();
 		// show_version
@@ -351,11 +373,11 @@ public class TitanUtils {
 	 * 获取字段所对应的es数据类型
 	 * @param field
 	 * @return
-     */
+	 */
 	public static String convertToEsDataType(String field) {
 		if (ES_SearchField.lc_last_update.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field)) {
 			return convertToEsDataType(Long.class);
-		} else if (ES_SearchField.title.toString().equals(field)) {
+		} else if (ES_SearchField.title.toString().equals(field)||ES_SearchField.lc_status.toString().equals(field)) {
 			return convertToEsDataType(String.class);
 		}
 		return null;
@@ -417,8 +439,8 @@ public class TitanUtils {
 	 * @param relationQuery （queryListByResType、batchQueryResources）
 	 * @param needStatistics 需要统计数据
 	 * @param statisticsScriptSet 统计数据脚本
-     * @return
-     */
+	 * @return
+	 */
 	public static String generateScriptForInclude(List<String> includes, Set<String> resTypeSet, boolean relationQuery, boolean needStatistics, Set<String> statisticsScriptSet) {
 		StringBuffer scriptBuffer = new StringBuffer();
 		String begin = ".as('v').union(select('v')";
@@ -453,15 +475,134 @@ public class TitanUtils {
 			for (String statisticsScript : statisticsScriptSet) {
 				scriptBuffer.append(statisticsScript);
 			}
+			includes.add("needStatistics");
 		}
 
 		if ("".equals(scriptBuffer.toString())) return defaultStr;
 		return begin + scriptBuffer.toString() + end + defaultStr;
 	}
 
+
+	/**
+	 *
+	 * @param resTypeSet
+	 * @param includes
+     * @return
+     */
+	public static String generateNecessaryFields(Set<String> resTypeSet, List<String> includes) {
+		Set<String> set = new HashSet<>();
+		set.addAll(includes);
+		StringBuffer scriptBuffer = new StringBuffer(".valueMap(true,");
+
+		scriptBuffer.append("'").append(ES_SearchField.identifier.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.title.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.description.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.language.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.m_identifier.toString()).append("'").append(",");
+		//scriptBuffer.append("'").append(ES_SearchField.ndres_code.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.custom_properties.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.preview.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.tags.toString()).append("'").append(",");
+		scriptBuffer.append("'").append(ES_SearchField.keywords.toString()).append("'").append(",");
+
+		// 统计数据
+		if(set.contains("needStatistics")) {
+			scriptBuffer.append("'sta_key_value'").append(",");
+			scriptBuffer.append("'").append(TitanKeyWords.sta_key_title.toString()).append("'").append(",");
+		}
+
+		// 扩展字段
+		if (resTypeSet.contains(ResourceNdCode.teachingmaterials.toString()) || resTypeSet.contains(ResourceNdCode.guidancebooks.toString()) || resTypeSet.contains(ResourceNdCode.ebooks.toString())) {
+			scriptBuffer.append("'ext_isbn'").append(",");
+			scriptBuffer.append("'ext_criterion'").append(",");
+			scriptBuffer.append("'ext_attachments'").append(",");
+			scriptBuffer.append("'ext_edition'").append(",");
+			scriptBuffer.append("'ext_grade'").append(",");
+			scriptBuffer.append("'ext_phase'").append(",");
+			scriptBuffer.append("'ext_subject'").append(",");
+		}
+
+		if (resTypeSet.contains(ResourceNdCode.questions.toString()) ){
+			scriptBuffer.append("'ext_is_auto_remark'").append(",");
+			scriptBuffer.append("'ext_question_type'").append(",");
+			scriptBuffer.append("'ext_subject'").append(",");
+			scriptBuffer.append("'ext_suggest_duration'").append(",");
+			scriptBuffer.append("'ext_discrimination'").append(",");
+			scriptBuffer.append("'ext_answer'").append(",");
+			scriptBuffer.append("'ext_item_content'").append(",");
+			scriptBuffer.append("'ext_criterion'").append(",");
+			scriptBuffer.append("'ext_score'").append(",");
+			scriptBuffer.append("'ext_source'").append(",");
+			scriptBuffer.append("'ext_secrecy'").append(",");
+			scriptBuffer.append("'ext_modified_difficulty'").append(",");
+			scriptBuffer.append("'ext_ext_difficulty'").append(",");
+			scriptBuffer.append("'ext_modified_discrimination'").append(",");
+			scriptBuffer.append("'ext_used_time'").append(",");
+			scriptBuffer.append("'ext_exposal_date'").append(",");
+			scriptBuffer.append("'ext_auto_remark'").append(",");
+			scriptBuffer.append("'edu_context'").append(",");
+		}
+
+
+		if (set.contains(IncludesConstant.INCLUDE_LC)) {
+			scriptBuffer.append("'").append(ES_SearchField.lc_version.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_status.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_enable.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_creator.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_publisher.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider_source.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_create_time.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_last_update.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.lc_provider_mode.toString()).append("'").append(",");
+
+		}
+		if (set.contains(IncludesConstant.INCLUDE_CR)) {
+			scriptBuffer.append("'").append(ES_SearchField.cr_author.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_description.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_has_right.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right_start_date.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cr_right_end_date.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_CG)) {
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxoncode.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxonname.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_category_code.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_short_name.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_category_name.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.cg_taxonpath.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_TI)) {
+			scriptBuffer.append("'").append(ES_SearchField.ti_title.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_format.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_location.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_md5.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_requirements.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_secure_key.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_size.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.ti_entry.toString()).append("'").append(",");
+		}
+		if (set.contains(IncludesConstant.INCLUDE_EDU)) {
+			scriptBuffer.append("'").append(ES_SearchField.edu_interactivity.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_interactivity_level.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_end_user_type.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_semantic_density.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_age_range.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_difficulty.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_learning_time.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_language.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_context.toString()).append("'").append(",");
+			scriptBuffer.append("'").append(ES_SearchField.edu_description.toString()).append("'").append(",");
+
+		}
+
+		return scriptBuffer.append(");").toString();
+	}
+
 	// 生成脚本参数名字，避免多个值冲突
 	public static String generateKey(Map<String, Object> scriptParamMap,
-			String originKey) {
+									 String originKey) {
 		int i = 0;
 		String key = null;
 		do {
@@ -475,7 +616,7 @@ public class TitanUtils {
 	 * 将参数类型转换成titan字段类型
 	 */
 	public static List<Object> changeToTitanType(String fieldName,
-			List<String> valueList) {
+												 List<String> valueList) {
 		if (ES_SearchField.lc_create_time.toString().equals(fieldName)
 				|| ES_SearchField.lc_last_update.toString().equals(fieldName)) {
 			List<Object> values = new ArrayList<Object>();
