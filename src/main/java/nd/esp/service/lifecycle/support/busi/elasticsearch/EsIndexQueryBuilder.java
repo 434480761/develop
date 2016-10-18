@@ -313,6 +313,11 @@ public class EsIndexQueryBuilder {
 
     }
 
+    /**
+     * 暂时这样处理
+     * @param key
+     * @param prop
+     */
     private void transferredMeaning(String key, Map<String, List<String>> prop) {
         Map<String, List<String>> newProp = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
@@ -320,11 +325,13 @@ public class EsIndexQueryBuilder {
             List<String> newOptList = new ArrayList<>();
             for (String s : optList) {
                 s = s.trim();
-                if (s.startsWith("[")) s = s.replace("[", "");
-                if (s.startsWith("\"")) s = s.replace("\"", "");
-                if (s.endsWith("]")) s = s.replace("]", "");
-                if (s.endsWith("\"")) s = s.replace("\"", "");
-                s = "*\\\"" + s + "\\\"*";
+                if (s.startsWith("[\"") && s.endsWith("\"]")) {
+                    if (s.startsWith("[")) s = s.replace("[", "");
+                    if (s.startsWith("\"")) s = s.replace("\"", "");
+                    if (s.endsWith("]")) s = s.replace("]", "");
+                    if (s.endsWith("\"")) s = s.replace("\"", "");
+                    s = "\\\\[" + "\\\\\\\"" + s + "\\\\\\\"" + "\\\\]";
+                }
                 newOptList.add(s);
             }
             newProp.put(entry.getKey(), newOptList);
@@ -344,6 +351,12 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
+        if (this.params.containsKey(ES_SearchField.keywords.toString())) {
+            transferredMeaning(ES_SearchField.keywords.toString(),this.params.get(ES_SearchField.keywords.toString()));
+        }
+        if(this.params.containsKey(ES_SearchField.tags.toString())){
+            transferredMeaning(ES_SearchField.tags.toString(),this.params.get(ES_SearchField.tags.toString()));
+        }
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
