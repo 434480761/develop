@@ -58,7 +58,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         Map<String, List<String>> re = params.get("relation");
         boolean iSMutiRelations = false;
         boolean nullRelations = false;
-        boolean isRollback = false;
+        boolean isRollback = true;
         boolean onlyCount = false;
         boolean onlyResult = false;
 
@@ -142,7 +142,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
          //execScript = execScript.replace(".valueMap(true);", TitanUtils.generateNecessaryFields(resTypeSet, includes));
 
         System.out.println(execScript + "\n" + scriptParamMap);
-        System.out.println(TitanUtils.addParamToScript(execScript, scriptParamMap));
+        //System.out.println(TitanUtils.addParamToScript(execScript, scriptParamMap));
 
         long searchBegin = System.currentTimeMillis();
         ResultSet resultSet = titanResourceRepository.search(execScript, scriptParamMap);
@@ -737,7 +737,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
         if (CollectionUtils.isNotEmpty(orderMap)) {
             Set<String> orderFields = orderMap.keySet();
             for (String field : orderFields) {
-                if (ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
+                if (ES_SearchField.lc_status.toString().equals(field) ||ES_SearchField.title.toString().equals(field) || ES_SearchField.lc_create_time.toString().equals(field) || ES_SearchField.lc_last_update.toString().equals(field)) {
                     TitanOrder order = new TitanOrder();
                     // field,field,ASC/DESC,dataType
                     order.setOrderByField(field).setField(field).setSortOrder(orderMap.get(field).toUpperCase()).setDataType(TitanUtils.convertToEsDataType(field));
