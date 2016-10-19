@@ -332,7 +332,7 @@ public class EsIndexQueryBuilder {
                 if (s.contains("\"")) s = s.replaceAll("\"", "\\\\\\\\\\\\\"");
 
                 //if (s.contains("+"))
-                /*if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
+                if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
                 if (s.contains("!")) s = s.replaceAll("!", "\\\\\\\\!");
                 if (s.contains("(")) s = s.replaceAll("\\(", "\\\\\\\\(");
                 if (s.contains(")")) s = s.replaceAll("\\)", "\\\\\\\\)");
@@ -342,7 +342,7 @@ public class EsIndexQueryBuilder {
                 if (s.contains("?")) s = s.replaceAll("\\?", "\\\\\\\\?");
                 if (s.contains(":")) s = s.replaceAll(":", "\\\\\\\\:");
                 if (s.contains("~")) s = s.replaceAll("~", "\\\\\\\\~");
-                if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");*/
+                if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");
 
                 newOptList.add(s);
             }
