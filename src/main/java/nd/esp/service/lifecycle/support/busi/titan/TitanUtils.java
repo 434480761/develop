@@ -504,7 +504,8 @@ public class TitanUtils {
 		scriptBuffer.append("'").append(ES_SearchField.preview.toString()).append("'").append(",");
 		scriptBuffer.append("'").append(ES_SearchField.tags.toString()).append("'").append(",");
 		scriptBuffer.append("'").append(ES_SearchField.keywords.toString()).append("'").append(",");
-
+		//ndres_code
+		scriptBuffer.append("'").append(ES_SearchField.ndres_code.toString()).append("'").append(",");
 		// 统计数据
 		if(set.contains("needStatistics")) {
 			scriptBuffer.append("'sta_key_value'").append(",");
