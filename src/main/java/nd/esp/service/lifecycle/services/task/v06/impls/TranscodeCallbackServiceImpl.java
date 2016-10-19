@@ -52,7 +52,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String TECH_INFO_HREF_KEY="href";
     private static final String [] TECH_INFO_HREF_KEYS_ARR={"href","href-360p","href-480p","href-720p","href-360p-ogv","href-480p-ogv","href-720p-ogv","href-ogv"};
     private static final List<String> TECH_INFO_HREF_KEYS = Arrays.asList(TECH_INFO_HREF_KEYS_ARR);
-    private static final String [] TECH_INFO_DOC_KEYS_ARR={"href","pdf","html","image"};
+    private static final String [] TECH_INFO_DOC_KEYS_ARR={"href","pdf","html","image","thumbnail"};
     private static final List<String> TECH_INFO_DOC_KEYS = Arrays.asList(TECH_INFO_DOC_KEYS_ARR);
     private static final String VIDEO_FORMAT_TARGET="mp4";
     private static final String VIDEO_THEORA_FORMAT="ogv";
@@ -636,7 +636,12 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             }
 
             if("image".equals(key)) {
-                ResTechInfoModel copyOfImage = BeanMapperUtils.beanMapper(newTechInfo, ResTechInfoModel.class);
+                ResTechInfoModel copyOfImage = null;
+                try {
+                    copyOfImage = BeanMapperUtils.mapper(newTechInfo, ResTechInfoModel.class);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 if(null!=newTechInfos.get(TECH_INFO_HREF_KEY)) {
                     copyOfImage.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
                 }
