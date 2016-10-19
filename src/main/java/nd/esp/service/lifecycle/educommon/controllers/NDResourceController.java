@@ -867,10 +867,19 @@ public class NDResourceController {
                                 .get("propsMapNew");
                         orderMap = (Map<String, String>) changeMap
                                 .get("orderMapNew");
-                        rListViewModel = ndResourceService.resourceQueryByEla(
-                                resType, includesList, categories, categoryExclude,
-                                relationsMap, coveragesList, propsMap, orderMap,
-                                words, limit, isNotManagement, reverseBoolean,printable,printableKey);
+                        if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
+                                && canQueryByRetrieve(printable,propsMap)) {
+                            Set<String> resTypeSet3 = checkAndDealResType(resType, resCodes);
+                            rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet3,null,
+                                    includesList, categories, categoryExclude, relationsMap,
+                                    coveragesList, propsMap, orderMap, null, limit,
+                                    isNotManagement, reverseBoolean,printable,printableKey);
+                        } else {
+                            rListViewModel = ndResourceService.resourceQueryByEla(
+                                    resType, includesList, categories, categoryExclude,
+                                    relationsMap, coveragesList, propsMap, orderMap,
+                                    words, limit, isNotManagement, reverseBoolean,printable,printableKey);
+                        }
                         LOG.warn("ES 查询完成");
                     } catch (Exception e) {// 如果ES出错,通过数据库查一遍
                         LOG.error("ES查询出错,通用DB查询");
@@ -926,9 +935,7 @@ public class NDResourceController {
             break;
             case ES:
                 if (StaticDatas.QUERY_BY_TITAN_ES_FIRST
-                        && canQueryByRetrieve(printable)) {
-//                    words = (String)paramMap.get("words");
-//                    List<String> fieldsList = (List<String>) paramMap.get("fields");
+                        && canQueryByRetrieve(printable,propsMap)) {
                     Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
                     rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
                             includesList, categories, categoryExclude, relationsMap,
@@ -1476,7 +1483,10 @@ public class NDResourceController {
 							.containsKey("taxOnCode"))));
     }
 
-    private boolean canQueryByRetrieve(Boolean printable) {
+    private boolean canQueryByRetrieve(Boolean printable,Map<String,Set<String>> propsMap) {
+        for (Map.Entry<String, Set<String>> entry : propsMap.entrySet()) {
+            if (entry.getKey().contains("ndres_code")) return false;
+        }
         return printable == null;
     }
 
