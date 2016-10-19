@@ -324,15 +324,15 @@ public class EsIndexQueryBuilder {
             List<String> newOptList = new ArrayList<>();
             for (String s : optList) {
                 s = s.trim();
-                if (s.contains("\\")) s = s.replaceAll("\\\\", "\\\\\\\\\\\\");
-                if (s.contains("/")) s = s.replaceAll("/", "\\\\\\\\/");
+                //if (s.contains("\\")) s = s.replaceAll("\\\\", "\\\\\\\\\\\\");
+                //if (s.contains("/")) s = s.replaceAll("/", "\\\\\\\\/");
 
                 if (s.contains("[")) s = s.replaceAll("\\[", "\\\\\\\\[");
                 if (s.contains("]")) s = s.replaceAll("]", "\\\\\\\\]");
                 if (s.contains("\"")) s = s.replaceAll("\"", "\\\\\\\\\\\\\"");
 
                 //if (s.contains("+"))
-                if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
+                /*if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
                 if (s.contains("!")) s = s.replaceAll("!", "\\\\\\\\!");
                 if (s.contains("(")) s = s.replaceAll("\\(", "\\\\\\\\(");
                 if (s.contains(")")) s = s.replaceAll("\\)", "\\\\\\\\)");
@@ -342,11 +342,11 @@ public class EsIndexQueryBuilder {
                 if (s.contains("?")) s = s.replaceAll("\\?", "\\\\\\\\?");
                 if (s.contains(":")) s = s.replaceAll(":", "\\\\\\\\:");
                 if (s.contains("~")) s = s.replaceAll("~", "\\\\\\\\~");
-                if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");
+                if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");*/
 
                 newOptList.add(s);
             }
-            newProp.put(key, newOptList);
+            newProp.put(prop.getKey(), newOptList);
         }
         this.params.put(key, newProp);
     }
@@ -359,8 +359,8 @@ public class EsIndexQueryBuilder {
         for (Map.Entry<String, Map<String, List<String>>> propsEntry : props.entrySet()) {
             Map<String, List<String>> newProp = new HashMap<>();
             String key = propsEntry.getKey();
-            if (key.equals(ES_SearchField.lc_create_time.toString())) continue;
-            if (key.equals(ES_SearchField.lc_last_update.toString())) continue;
+            if (!key.equals(ES_SearchField.keywords.toString())) continue;
+            if (!key.equals(ES_SearchField.tags.toString())) continue;
             Map<String, List<String>> prop = propsEntry.getValue();
             for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
                 List<String> optList = entry.getValue();
