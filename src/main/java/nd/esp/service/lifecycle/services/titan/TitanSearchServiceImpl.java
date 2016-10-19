@@ -144,7 +144,7 @@ public class TitanSearchServiceImpl implements TitanSearchService {
                 execScript = TitanUtils.optimizeMoveConditionsToEdge(execScript, reverse, scriptParamMap);
         }
         // 取回必要字段
-         //execScript = execScript.replace(".valueMap(true);", TitanUtils.generateNecessaryFields(resTypeSet, includes));
+         execScript = execScript.replace(".valueMap(true);", TitanUtils.generateNecessaryFields(resTypeSet, includes));
 
         System.out.println(execScript + "\n" + scriptParamMap);
         //System.out.println(TitanUtils.addParamToScript(execScript, scriptParamMap));

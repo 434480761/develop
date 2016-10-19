@@ -1484,8 +1484,10 @@ public class NDResourceController {
     }
 
     private boolean canQueryByRetrieve(Boolean printable,Map<String,Set<String>> propsMap) {
-        for (Map.Entry<String, Set<String>> entry : propsMap.entrySet()) {
-            if (entry.getKey().contains("ndres_code")) return false;
+        if (CollectionUtils.isNotEmpty(propsMap)) {
+            for (Map.Entry<String, Set<String>> entry : propsMap.entrySet()) {
+                if (entry.getKey().contains("ndres_code")) return false;
+            }
         }
         return printable == null;
     }

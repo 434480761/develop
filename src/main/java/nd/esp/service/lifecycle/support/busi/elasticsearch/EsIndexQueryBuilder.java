@@ -317,10 +317,50 @@ public class EsIndexQueryBuilder {
      *  + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
      * @param props
      */
+    private void transferredMeaning(String key, Map<String, List<String>> props) {
+        Map<String, List<String>> newProp = new HashMap<>();
+        for (Map.Entry<String, List<String>> prop : props.entrySet()) {
+            List<String> optList = prop.getValue();
+            List<String> newOptList = new ArrayList<>();
+            for (String s : optList) {
+                s = s.trim();
+                //if (s.contains("\\")) s = s.replaceAll("\\\\", "\\\\\\\\\\\\");
+                //if (s.contains("/")) s = s.replaceAll("/", "\\\\\\\\/");
+
+                if (s.contains("[")) s = s.replaceAll("\\[", "\\\\\\\\[");
+                if (s.contains("]")) s = s.replaceAll("]", "\\\\\\\\]");
+                if (s.contains("\"")) s = s.replaceAll("\"", "\\\\\\\\\\\\\"");
+
+                //if (s.contains("+"))
+                if (s.contains("-")) s = s.replaceAll("-", "\\\\\\\\-");
+                if (s.contains("!")) s = s.replaceAll("!", "\\\\\\\\!");
+                if (s.contains("(")) s = s.replaceAll("\\(", "\\\\\\\\(");
+                if (s.contains(")")) s = s.replaceAll("\\)", "\\\\\\\\)");
+                if (s.contains("{")) s = s.replaceAll("\\{", "\\\\\\\\{");
+                if (s.contains("}")) s = s.replaceAll("\\}", "\\\\\\\\}");
+                //if (s.contains("^")) s = s.replaceAll("^", "\\\\\\\\^");
+                if (s.contains("?")) s = s.replaceAll("\\?", "\\\\\\\\?");
+                if (s.contains(":")) s = s.replaceAll(":", "\\\\\\\\:");
+                if (s.contains("~")) s = s.replaceAll("~", "\\\\\\\\~");
+                if (s.contains("*")) s = s.replaceAll("\\*", "\\\\\\\\*");
+
+                newOptList.add(s);
+            }
+            newProp.put(prop.getKey(), newOptList);
+        }
+        this.params.put(key, newProp);
+    }
+
+    /**
+     *  + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+     * @param props
+     */
     private void transferredMeaning(Map<String, Map<String, List<String>>> props) {
         for (Map.Entry<String, Map<String, List<String>>> propsEntry : props.entrySet()) {
             Map<String, List<String>> newProp = new HashMap<>();
             String key = propsEntry.getKey();
+            if (!key.equals(ES_SearchField.keywords.toString())) continue;
+            if (!key.equals(ES_SearchField.tags.toString())) continue;
             Map<String, List<String>> prop = propsEntry.getValue();
             for (Map.Entry<String, List<String>> entry : prop.entrySet()) {
                 List<String> optList = entry.getValue();
@@ -367,7 +407,21 @@ public class EsIndexQueryBuilder {
      */
     private String dealWithProp() {
         if (CollectionUtils.isEmpty(this.params)) return "";
-        transferredMeaning(this.params);
+
+        if (this.params.containsKey(ES_SearchField.keywords.toString())) {
+            transferredMeaning(ES_SearchField.keywords.toString(), this.params.get(ES_SearchField.keywords.toString()));
+        }
+        if (this.params.containsKey(ES_SearchField.tags.toString())) {
+            transferredMeaning(ES_SearchField.tags.toString(), this.params.get(ES_SearchField.tags.toString()));
+        }
+        /*if (this.params.containsKey(ES_SearchField.description.toString())) {
+            transferredMeaning(ES_SearchField.description.toString(), this.params.get(ES_SearchField.description.toString()));
+        }
+        if (this.params.containsKey(ES_SearchField.title.toString())) {
+            transferredMeaning(ES_SearchField.description.toString(), this.params.get(ES_SearchField.description.toString()));
+        }*/
+
+        //transferredMeaning(this.params);
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
@@ -693,6 +747,8 @@ public class EsIndexQueryBuilder {
         System.out.println(timestamp);
         System.out.println(StringUtils.strTimeStampToDate(timestamp));
         System.out.println(StringUtils.strTimeStampToDate("1467726614001"));
+       // System.out.println("1:"+toRangeByOpt("gt","2016-07-05 21:50:14"));
+        //System.out.println("2:"+toRangeByOpt("gt","2016\\\\-07\\\\-05 21\\\\:50\\\\:14"));
     }
 
 
