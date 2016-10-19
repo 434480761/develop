@@ -622,7 +622,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             if(targetMetadataMap!=null && targetMetadataMap.get("md5")!=null) {
                 newTechInfo.setMd5((String)targetMetadataMap.get("md5"));
             }
-            if(TECH_INFO_HREF_KEY.equals(key)) {
+            if(TECH_INFO_HREF_KEY.equals(key) || "image".equals(key) || "thumbnail".equals(key)) {
                 newTechInfo.setFormat("image/jpg");
             } else {
                 newTechInfo.setFormat(key);
