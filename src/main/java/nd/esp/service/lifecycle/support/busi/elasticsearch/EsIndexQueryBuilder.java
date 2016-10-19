@@ -317,7 +317,7 @@ public class EsIndexQueryBuilder {
      *  + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
      * @param props
      */
-   /* private void transferredMeaning(String key, Map<String, List<String>> props) {
+    private void transferredMeaning(String key, Map<String, List<String>> props) {
         Map<String, List<String>> newProp = new HashMap<>();
         for (Map.Entry<String, List<String>> prop : props.entrySet()) {
             List<String> optList = prop.getValue();
@@ -349,7 +349,7 @@ public class EsIndexQueryBuilder {
             newProp.put(key, newOptList);
         }
         this.params.put(key, newProp);
-    }*/
+    }
 
     /**
      *  + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
@@ -406,7 +406,7 @@ public class EsIndexQueryBuilder {
      * @return
      */
     private String dealWithProp() {
-        /*if (CollectionUtils.isEmpty(this.params)) return "";
+        if (CollectionUtils.isEmpty(this.params)) return "";
 
         if (this.params.containsKey(ES_SearchField.keywords.toString())) {
             transferredMeaning(ES_SearchField.keywords.toString(), this.params.get(ES_SearchField.keywords.toString()));
@@ -414,15 +414,14 @@ public class EsIndexQueryBuilder {
         if (this.params.containsKey(ES_SearchField.tags.toString())) {
             transferredMeaning(ES_SearchField.tags.toString(), this.params.get(ES_SearchField.tags.toString()));
         }
-        if (this.params.containsKey(ES_SearchField.description.toString())) {
+        /*if (this.params.containsKey(ES_SearchField.description.toString())) {
             transferredMeaning(ES_SearchField.description.toString(), this.params.get(ES_SearchField.description.toString()));
         }
         if (this.params.containsKey(ES_SearchField.title.toString())) {
             transferredMeaning(ES_SearchField.description.toString(), this.params.get(ES_SearchField.description.toString()));
-        }
-*/
+        }*/
 
-        transferredMeaning(this.params);
+        //transferredMeaning(this.params);
         StringBuffer query = new StringBuffer();
         int paramCount = 0;
         for (Map.Entry<String, Map<String, List<String>>> entry : params.entrySet()) {
