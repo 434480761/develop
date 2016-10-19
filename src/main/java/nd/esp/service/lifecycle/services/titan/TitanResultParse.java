@@ -358,7 +358,7 @@ public class TitanResultParse {
                     statisticsList.add(map);
                     //statistics.putAll(map);
                 } else {
-                    LOG.warn("未能识别");
+                    LOG.warn("未能识别:"+label);
                 }
             }
             item.setResource(resource);
@@ -949,6 +949,7 @@ public class TitanResultParse {
             String label = field.substring(0, end);
             splitKeyValue(tmpMap,label);
             String other = field.substring(end + 1, field.length());
+            other = moveHeadSpace(other);
             if (other.startsWith("label=") || other.startsWith("id=")) {
                 dealSpecialField(other, tmpMap);
             } else {
@@ -957,6 +958,16 @@ public class TitanResultParse {
         } else {
             splitKeyValue(tmpMap,field);
         }
+    }
+
+    private static String moveHeadSpace(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) != ' ') {
+                s = s.substring(i, s.length());
+                break;
+            }
+        }
+        return s;
     }
 
     /**
@@ -994,5 +1005,8 @@ public class TitanResultParse {
         }
         return tmpMap;
     }
-
+    public static void main(String[] args) {
+        String data="{identifier=[c664c644-e829-43dc-a8f0-00eca9e67f5e], id=111513808, label=tech_info, ti_title=[href], ti_printable=[false], ti_location=[${ref-path}/prepub_content_edu_product/esp/questions/00d30808-02c1-4dee-8fcd-dde3219753b8.pkg/item.xml], ti_size=[0], ti_format=[application/edu.nd-qti-editor], ti_entry=[${ref-path}/prepub_content_edu_product/esp/questions/00d30808-02c1-4dee-8fcd-dde3219753b8.pkg/item.xml], ti_requirements=[[]]}";
+       toMapForRelationQuery(data);
+    }
 }
