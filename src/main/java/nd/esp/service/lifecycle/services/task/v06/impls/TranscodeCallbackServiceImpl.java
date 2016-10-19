@@ -59,6 +59,8 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
     private static final String AUDIO_FORMAT_TARGET="mp3";
     private static final String AUDIO_THEORA_FORMAT="ogg";
     public static final int PREVIEW_MAX_LIMIT = 50;
+    public static final String TECH_INFO_IMAGE_KEY = "image";
+    public static final String TECH_INFO_THUMB_KEY = "thumbnail";
 
     @Autowired
     private NDResourceService ndResourceService;
@@ -622,7 +624,7 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
             if(targetMetadataMap!=null && targetMetadataMap.get("md5")!=null) {
                 newTechInfo.setMd5((String)targetMetadataMap.get("md5"));
             }
-            if(TECH_INFO_HREF_KEY.equals(key) || "image".equals(key) || "thumbnail".equals(key)) {
+            if(TECH_INFO_HREF_KEY.equals(key) || TECH_INFO_IMAGE_KEY.equals(key) || TECH_INFO_THUMB_KEY.equals(key)) {
                 newTechInfo.setFormat("image/jpg");
             } else {
                 newTechInfo.setFormat(key);
@@ -631,6 +633,15 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 if(StringUtils.isNotEmpty(metadataMap.get(key))) {
                     addRequirement(newTechInfo,metadataMap.get(key));
                 }
+            }
+
+            if("image".equals(key)) {
+                ResTechInfoModel copyOfImage = BeanMapperUtils.beanMapper(newTechInfo, ResTechInfoModel.class);
+                if(null!=newTechInfos.get(TECH_INFO_HREF_KEY)) {
+                    copyOfImage.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
+                }
+                copyOfImage.setTitle(TECH_INFO_HREF_KEY);
+                newTechInfos.put(TECH_INFO_HREF_KEY, copyOfImage);
             }
         }
         try {
