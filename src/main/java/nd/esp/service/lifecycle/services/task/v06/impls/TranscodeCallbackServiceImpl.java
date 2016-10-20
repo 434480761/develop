@@ -635,18 +635,19 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 }
             }
 
-            if("image".equals(key)) {
-                ResTechInfoModel copyOfImage = null;
+            if(TECH_INFO_IMAGE_KEY.equals(key) || (sourceTechInfo!=null&&sourceTechInfo.getLocation()!=null
+                    &&sourceTechInfo.getLocation().endsWith(".txt")&&"html".equals(key))) {
+                ResTechInfoModel copyOfTechInfo = null;
                 try {
-                    copyOfImage = BeanMapperUtils.mapper(newTechInfo, ResTechInfoModel.class);
+                    copyOfTechInfo = BeanMapperUtils.mapper(newTechInfo, ResTechInfoModel.class);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 if(null!=newTechInfos.get(TECH_INFO_HREF_KEY)) {
-                    copyOfImage.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
+                    copyOfTechInfo.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
                 }
-                copyOfImage.setTitle(TECH_INFO_HREF_KEY);
-                newTechInfos.put(TECH_INFO_HREF_KEY, copyOfImage);
+                copyOfTechInfo.setTitle(TECH_INFO_HREF_KEY);
+                newTechInfos.put(TECH_INFO_HREF_KEY, copyOfTechInfo);
             }
         }
         try {
