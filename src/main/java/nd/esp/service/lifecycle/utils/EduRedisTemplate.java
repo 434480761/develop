@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import nd.esp.service.lifecycle.utils.gson.ObjectUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -22,30 +24,56 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class EduRedisTemplate<T>{
-
+	private static final Logger LOG = LoggerFactory.getLogger(EduRedisTemplate.class);
+	
 	@Autowired
 	private StringRedisTemplate rt;
 	
 	public void set(String key, T value) {
-		rt.opsForValue().set(key, ObjectUtils.toJson(value));
+		try {
+			rt.opsForValue().set(key, ObjectUtils.toJson(value));
+		} catch (Exception e) {
+			LOG.error("保存redis异常",e);
+		}
+		
     }
 
     public void set(String key, T value, long timeout, TimeUnit unit){
-    	 rt.opsForValue().set(key, ObjectUtils.toJson(value), timeout, unit);
+    	try {
+    		rt.opsForValue().set(key, ObjectUtils.toJson(value), timeout, unit);
+		} catch (Exception e) {
+			LOG.error("保存redis异常",e);
+		}
     }
     
     public T get(String key, Class vClass) {
-    	String value = rt.opsForValue().get(key);
-    	return (T) ObjectUtils.fromJson(value, vClass);
+    	try {
+        	String value = rt.opsForValue().get(key);
+        	return (T) ObjectUtils.fromJson(value, vClass);
+		} catch (Exception e) {
+			LOG.error("获取redis异常",e);
+			return null;
+		}
+
     }
     
     public void hSet(String key, String hashKey, T value) {
-    	rt.opsForHash().put(key, hashKey, ObjectUtils.toJson(value));
+    	try {
+    		rt.opsForHash().put(key, hashKey, ObjectUtils.toJson(value));
+		} catch (Exception e) {
+			LOG.error("保存redis异常",e);
+		}
     }
 
     public T hGet(String key, String hashKey, Class vClass) {
-    	 String value = (String) rt.opsForHash().get(key, hashKey);
-         return (T) ObjectUtils.fromJson(value, vClass);
+    	try {
+			String value = (String) rt.opsForHash().get(key, hashKey);
+			return (T) ObjectUtils.fromJson(value, vClass);
+		} catch (Exception e) {
+			LOG.error("获取redis异常",e);
+			return null;
+		}
+    	 
     }
     
     /**
@@ -58,33 +86,37 @@ public class EduRedisTemplate<T>{
      * @param lists
      */
     public void zSet(String key,List<T> lists){
-    	if(CollectionUtils.isNotEmpty(lists)){
-    		Set<TypedTuple<String>> sets = new HashSet<ZSetOperations.TypedTuple<String>>();
-    		for (int i = 0; i < lists.size(); i++) {
-    			final T v = lists.get(i);
-    			final double score = i;
-				TypedTuple<String> tt = new TypedTuple<String>() {
-					@Override
-					public int compareTo(TypedTuple<String> o) {
-						return 0;
-					}
+    	try {
+    		if(CollectionUtils.isNotEmpty(lists)){
+        		Set<TypedTuple<String>> sets = new HashSet<ZSetOperations.TypedTuple<String>>();
+        		for (int i = 0; i < lists.size(); i++) {
+        			final T v = lists.get(i);
+        			final double score = i;
+    				TypedTuple<String> tt = new TypedTuple<String>() {
+    					@Override
+    					public int compareTo(TypedTuple<String> o) {
+    						return 0;
+    					}
 
-					@Override
-					public String getValue() {
-						return ObjectUtils.toJson(v);
-					}
+    					@Override
+    					public String getValue() {
+    						return ObjectUtils.toJson(v);
+    					}
 
-					@Override
-					public Double getScore() {
-						return score;
-					}
-				};
-				
-				sets.add(tt);
-			}
-    		
-    		rt.opsForZSet().add(key, sets);
-    	}
+    					@Override
+    					public Double getScore() {
+    						return score;
+    					}
+    				};
+    				
+    				sets.add(tt);
+    			}
+        		
+        		rt.opsForZSet().add(key, sets);
+        	}
+		} catch (Exception e) {
+			LOG.error("保存redis异常",e);
+		}
     }
     
     /**
@@ -97,7 +129,11 @@ public class EduRedisTemplate<T>{
      * @param score
      */
     public void zSetSingle(String key,T value,Double score){
-    	rt.opsForZSet().add(key,  ObjectUtils.toJson(value), score);
+    	try {
+    		rt.opsForZSet().add(key,  ObjectUtils.toJson(value), score);
+		} catch (Exception e) {
+			LOG.error("保存redis异常",e);
+		}
     }
     
     /**
@@ -112,14 +148,19 @@ public class EduRedisTemplate<T>{
      */
     public List<T> zRangeByScore(String key,Long start,Long end,Class vClass){
     	List<T> returnList = new ArrayList<T>();
-    	Set<String> sets = rt.opsForZSet().range(key, start, end);
-    	if(CollectionUtils.isNotEmpty(sets)){
-    		for (String s : sets) {
-				T t = (T)ObjectUtils.fromJson(s, vClass);
-				returnList.add(t);
-			}
-    	}
+    	try {
+        	Set<String> sets = rt.opsForZSet().range(key, start, end);
+        	if(CollectionUtils.isNotEmpty(sets)){
+        		for (String s : sets) {
+    				T t = (T)ObjectUtils.fromJson(s, vClass);
+    				returnList.add(t);
+    			}
+        	}
+		} catch (Exception e) {
+			LOG.error("获取redis异常",e);
+		}
     	return returnList;
+
     }
     
     /**
@@ -131,7 +172,13 @@ public class EduRedisTemplate<T>{
      * @return
      */
     public long zSetCount(String key){
-    	return rt.opsForZSet().size(key);
+    	try {
+    		return rt.opsForZSet().size(key);
+		} catch (Exception e) {
+			LOG.error("redis返回SortedSet 某个key的基数异常",e);
+			return 0l;
+		}
+    	
     }
     
     /**
@@ -144,7 +191,11 @@ public class EduRedisTemplate<T>{
      * @param unit
      */
     public void expire(String key,Long timeout,TimeUnit unit){
-    	rt.expire(key, timeout, unit);
+    	try {
+    		rt.expire(key, timeout, unit);
+		} catch (Exception e) {
+			LOG.error("设置redis某个KEY的过期时间异常",e);
+		}
     }
     
     /**
@@ -156,6 +207,11 @@ public class EduRedisTemplate<T>{
      * @return
      */
     public boolean existKey(String key){
-    	return rt.hasKey(key);
+    	try {
+    		return rt.hasKey(key);
+		} catch (Exception e) {
+			LOG.error("判断KEY是否存在异常",e);
+			return false;
+		}
     }
 }

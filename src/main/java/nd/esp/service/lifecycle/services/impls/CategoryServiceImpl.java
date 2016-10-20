@@ -37,6 +37,8 @@ import nd.esp.service.lifecycle.repository.sdk.CategoryRepository;
 import nd.esp.service.lifecycle.services.CategoryService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncConstant;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncServiceHelper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -85,6 +87,9 @@ public class CategoryServiceImpl implements CategoryService {
 	
 	@Autowired
 	CategoryRelationRepository categoryRelationRepository;
+	
+	@Autowired
+	private CategorySyncServiceHelper categorySyncServiceHelper;
 
 	/**
 	 * 通过ndCode获取分类维度详情
@@ -961,11 +966,20 @@ public class CategoryServiceImpl implements CategoryService {
 					LifeCircleErrorMessageMapper.CategoryRelationHasCategoryData);
 		}
 		
+		CategoryData categoryData = categoryDataRepository.get(did);
+		
 		LOG.debug("调用sdk方法:del");
 		
 		categoryDataRepository.del(did);
 		
 		LOG.debug("删除维度数据资源:{}",did);
+		
+		if(categoryData != null){
+			//维度数据同步
+			categorySyncServiceHelper.categorySync(
+					categoryData.getNdCode(), CategorySyncConstant.TYPE_CATEGORY_DATA, 
+					CategorySyncConstant.OPERATION_DELETE);
+		}
 	}
 
 
@@ -1206,21 +1220,22 @@ public class CategoryServiceImpl implements CategoryService {
 	 */
 	@Override
 	public ListViewModel<CategoryPatternModel> queryCategoryPatterns(
-			String words, String limit) throws EspStoreException {
+			String words, String limit, String gbCode) throws EspStoreException {
 		ListViewModel<CategoryPatternModel> result = new ListViewModel<CategoryPatternModel>();
 
 		// requestParam
-		QueryRequest queryRequest = new QueryRequest();
+		AdaptQueryRequest<CategoryPattern> adaptQueryRequest=new AdaptQueryRequest<CategoryPattern>();
+		adaptQueryRequest.and("gbCode", gbCode);
 		Integer limitResult[] = ParamCheckUtil.checkLimit(limit);// 这里其实只需要分解数据
-		queryRequest.setKeyword(words);
-		queryRequest.setLimit(limitResult[1]);
-		queryRequest.setOffset(limitResult[0]);
+		adaptQueryRequest.setKeyword(words);
+		adaptQueryRequest.setLimit(limitResult[1]);
+		adaptQueryRequest.setOffset(limitResult[0]);
 
 		// 调用sdk
 		
-		LOG.debug("调用sdk方法:search");
+		LOG.debug("调用sdk方法:searchByExample");
 		
-		QueryResponse<CategoryPattern> response = categoryPatternRepository.search(queryRequest);
+		QueryResponse<CategoryPattern> response = categoryPatternRepository.searchByExample(adaptQueryRequest);
 
 		// 处理返回数据
 		long total = 0L;

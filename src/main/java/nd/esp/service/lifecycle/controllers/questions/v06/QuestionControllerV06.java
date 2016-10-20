@@ -182,7 +182,8 @@ public class QuestionControllerV06 {
     @MarkAspect4Format2Category
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public QuestionViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody QuestionViewModel questionViewModel,BindingResult validResult,@PathVariable String id,
-                                   @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                   @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                   @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 
         questionViewModel.setIdentifier(id);
         //入参合法性校验
@@ -196,7 +197,7 @@ public class QuestionControllerV06 {
         QuestionModel questionModel = CommonHelper.convertViewModelIn(questionViewModel, QuestionModel.class,ResourceNdCode.questions, true);
 
         //修改习题
-        questionModel = questionService.patchQuestion(questionModel);
+        questionModel = questionService.patchQuestion(questionModel, isObvious);
 
         //model出参转换
         questionViewModel = CommonHelper.convertViewModelOut(questionModel,QuestionViewModel.class);

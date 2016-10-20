@@ -22,5 +22,5 @@ public interface AssetServiceV06{
 	 */
 	public AssetModel updateAsset(AssetModel am);
 
-	AssetModel patchAsset(AssetModel am);
+	AssetModel patchAsset(AssetModel am, boolean isObvious);
 }

@@ -121,7 +121,8 @@ public class TeachingactivitiesControllerV06 {
 	@MarkAspect4Format2Category
 	@RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public CoursewareViewModel patch(@Validated({Valid4UpdateGroup.class}) @RequestBody CoursewareViewModel viewModel,BindingResult validResult,@PathVariable String id,
-									 @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+									 @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+									 @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 		//入参合法性校验
 //		ValidResultHelper.valid(validResult, "LC/UPDATE_TEACHING_ACTIVITIES_PARAM_VALID_FAIL", "TeachingactivitiesControllerV06", "update");
 		viewModel.setIdentifier(id);
@@ -138,7 +139,7 @@ public class TeachingactivitiesControllerV06 {
 		CoursewareModel cm = CommonHelper.convertViewModelIn(viewModel, CoursewareModel.class,ResourceNdCode.coursewares, true);
 
 		//修改课件
-		cm = coursewareService.patchCourseware(IndexSourceType.SourceTeachingActivitiesType.getName(), cm);
+		cm = coursewareService.patchCourseware(IndexSourceType.SourceTeachingActivitiesType.getName(), cm, isObvious);
 
 		//model出参转换
 		viewModel = CommonHelper.convertViewModelOut(cm,CoursewareViewModel.class);

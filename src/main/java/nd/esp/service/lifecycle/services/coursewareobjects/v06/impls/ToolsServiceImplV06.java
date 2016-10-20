@@ -1,9 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewareobjects.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.ToolsServiceV06;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
 import nd.esp.service.lifecycle.support.annotation.TitanTransaction;
@@ -47,7 +45,7 @@ public class ToolsServiceImplV06 implements ToolsServiceV06 {
 
     @Override
     @TitanTransaction
-    public CourseWareObjectModel patchTools(CourseWareObjectModel model) {
-        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.tools.toString(), model);
+    public CourseWareObjectModel patchTools(CourseWareObjectModel model, boolean isObvious) {
+        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.tools.toString(), model, isObvious);
     }
 }

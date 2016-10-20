@@ -101,7 +101,8 @@ public class CoursewareObjectTemplateController {
     public CoursewareObjectTemplateViewModel patch(
             @Validated(Valid4UpdateGroup.class) @RequestBody CoursewareObjectTemplateViewModel ctvm,
             BindingResult validResult, @PathVariable String id,
-            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+            @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 
 //        checkParams(ctvm, validResult, id, CONTROLLER_UPDATE_TYPE);
         ctvm.setIdentifier(id);
@@ -111,7 +112,7 @@ public class CoursewareObjectTemplateController {
 
         LOG.info("课件颗粒模板操作--更新功能，业务逻辑处理");
 
-        ctm = courseTemplateService.patchCourseWareObjectTemplate(ctm);
+        ctm = courseTemplateService.patchCourseWareObjectTemplate(ctm, isObvious);
 
         ctvm=CommonHelper.convertViewModelOut(ctm, CoursewareObjectTemplateViewModel.class);
 

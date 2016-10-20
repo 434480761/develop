@@ -83,4 +83,12 @@ public interface AdapterDBDataService {
     public Map<String,Integer> adapterInstructionalobjectives();
 
     public Map<String,String> adapterCoverage(String oldUserId,String newUserId);
+
+    /**
+     * 设置国际化编码统一为zh-CN(主要是categorys，category_datas，category_patterns表)
+     * @param 
+     * @author yuzc
+     * @param 
+     * */
+	public boolean setGbCode(String gbCode);
 }

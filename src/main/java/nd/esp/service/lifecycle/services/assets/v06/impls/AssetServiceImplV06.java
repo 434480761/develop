@@ -223,7 +223,7 @@ public class AssetServiceImplV06 implements AssetServiceV06 {
 
 	@Override
 	@TitanTransaction
-	public AssetModel patchAsset(AssetModel am) {
-		return (AssetModel)ndResourceService.patch(ResourceNdCode.assets.toString(), am);
+	public AssetModel patchAsset(AssetModel am, boolean isObvious) {
+		return (AssetModel)ndResourceService.patch(ResourceNdCode.assets.toString(), am, isObvious);
 	}
 }

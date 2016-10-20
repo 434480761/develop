@@ -17,5 +17,5 @@ public interface CourseWareObjectTemplateServiceV06 {
      * */
     public CourseWareObjectTemplateModel updateCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm);
 
-    CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm);
+    CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm, boolean isObvious);
 }

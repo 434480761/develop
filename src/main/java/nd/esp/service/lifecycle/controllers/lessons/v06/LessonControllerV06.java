@@ -120,13 +120,14 @@ public class LessonControllerV06 {
     public LessonViewModel patch(@Validated(ValidUpdateLessPropertiesGroup.class) @RequestBody LessonViewModel viewModel,
                                   BindingResult validResult,
                                   @PathVariable String id,
-                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                  @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
         viewModel.setIdentifier(id);
 
         // 校验入参
 //        checkParams(viewModel, validResult, CONTROLLER_PATCH_TYPE);
 
-        viewModel = lessonApi(viewModel, CONTROLLER_PATCH_TYPE);
+        viewModel = lessonApi(viewModel, CONTROLLER_PATCH_TYPE, isObvious);
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.lessons.toString(), id);
@@ -177,6 +178,11 @@ public class LessonControllerV06 {
      * @since
      */
     private LessonViewModel lessonApi(LessonViewModel viewModel, int type){
+
+    	return lessonApi(viewModel, type, false);
+    }
+    
+    private LessonViewModel lessonApi(LessonViewModel viewModel, int type, boolean isObvious){
         // model入参转换
         LessonModel model = null;
 
@@ -200,7 +206,7 @@ public class LessonControllerV06 {
 
             LOG.info("课时v06局部更新课时操作，业务逻辑处理");
 
-            model = lessonsServiceV06.patch(model);
+            model = lessonsServiceV06.patch(model, isObvious);
         }
 
         // model出参转换
@@ -213,5 +219,4 @@ public class LessonControllerV06 {
 
         return viewModel;
     }
-
 }

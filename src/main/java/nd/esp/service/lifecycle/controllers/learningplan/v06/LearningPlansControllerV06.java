@@ -119,7 +119,8 @@ public class LearningPlansControllerV06 {
     @RequestMapping(value = "{uuid}", method = RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public LearningPlanViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody LearningPlanViewModel lpvm,
                                         BindingResult validResult, @PathVariable String uuid,
-                                        @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                        @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                        @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
         // 校验入参
 //        checkParams(lpvm, validResult, uuid, false);
 
@@ -131,7 +132,7 @@ public class LearningPlansControllerV06 {
         LOG.info("学案V06更新学案操作，业务逻辑处理");
 
         // 修改学案
-        model = learningPlansService.patch(model);
+        model = learningPlansService.patch(model, isObvious);
 
         // model出参转换
         lpvm = CommonHelper.convertViewModelOut(model, LearningPlanViewModel.class);

@@ -112,7 +112,8 @@ public class LessonPlansControllerV06 {
     @RequestMapping(value = "{uuid}", method = RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public LessonPlanViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody LessonPlanViewModel lpvm,
                                       BindingResult validResult, @PathVariable String uuid,
-                                      @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                      @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                      @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 //        checkParams(lpvm, validResult, uuid, CONTROLLER_UPDATE_TYPE);
 
         // model入参转换
@@ -121,7 +122,7 @@ public class LessonPlansControllerV06 {
         LOG.info("教案V06---更新教案操作，业务逻辑处理");
 
         // 修改教案
-        model = lessonPlansServiceV06.patch(model);
+        model = lessonPlansServiceV06.patch(model, isObvious);
 
         // model出参转换
         lpvm = CommonHelper.convertViewModelOut(model, LessonPlanViewModel.class);

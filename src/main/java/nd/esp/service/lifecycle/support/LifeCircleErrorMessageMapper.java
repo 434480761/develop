@@ -268,6 +268,7 @@ public enum LifeCircleErrorMessageMapper implements MessageMapper{
 	DeleteCategoryPatternFail("LC/DELETE_CATEGORYPATTERN_FAIL", getPropertyValue("categoryController.requestRemoveCategoryPattern.operation.fail")),
 	UpdateCategoryPatternFail("LC/UPDATE_CATEGORYPATTERN_FAIL", getPropertyValue("categoryController.requestModifyCategoryPattern.operation.fail")),
 	CategoryPatternQueryListFail("LC/CATEGORYPATTERN_QUERY_LIST_FAIL", getPropertyValue("categoryController.requestQueryCategoryPatterns.operation.fail")),
+	GbCodeNotExist("LC/GB_CODE_NOT_EXIST",getPropertyValue("categoryController.gbCodeNotExist")),
 	
 	//CategoryRelation
 	CreateCategoryRelationFail("LC/CREATE_CATEGORYRELATION_FAIL", getPropertyValue("categoryController.requestAddRelationData.operation.fail")),

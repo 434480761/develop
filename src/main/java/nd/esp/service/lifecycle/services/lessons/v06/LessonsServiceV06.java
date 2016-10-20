@@ -8,5 +8,5 @@ public interface LessonsServiceV06 {
 
 	public LessonModel update(LessonModel lessonPlansViewModel);
 
-	LessonModel patch(LessonModel model);
+	LessonModel patch(LessonModel model, boolean isObvious);
 }

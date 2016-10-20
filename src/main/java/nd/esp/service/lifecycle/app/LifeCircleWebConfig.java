@@ -11,6 +11,7 @@ import nd.esp.service.lifecycle.support.annotation.impl.MethodArgumentsLengthRes
 import nd.esp.service.lifecycle.support.busi.PackageUtil;
 import nd.esp.service.lifecycle.support.busi.TransCodeUtil;
 import nd.esp.service.lifecycle.support.busi.elasticsearch.EsClientSupport;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncServiceHelper;
 import nd.esp.service.lifecycle.support.icrs.IcrsServiceHelper;
 import nd.esp.service.lifecycle.support.interceptors.RoleResInterceptor;
 import nd.esp.service.lifecycle.utils.JDomUtils;
@@ -178,6 +179,20 @@ public class LifeCircleWebConfig extends WafWebMvcConfigurerAdapter implements S
     	IcrsServiceHelper icrsServiceHelper = new IcrsServiceHelper();
 
         return icrsServiceHelper;
+    }
+    
+    /**
+     * 加载 CategorySyncServiceHelper
+     * @author xiezy
+     * @date 2016年10月19日
+     * @return
+     */
+    @Bean
+    public CategorySyncServiceHelper getCategorySyncServiceHelper() {
+
+    	CategorySyncServiceHelper categorySyncServiceHelper = new CategorySyncServiceHelper();
+
+        return categorySyncServiceHelper;
     }
     
     /**

@@ -225,7 +225,8 @@ public class KnowledgeControllerV06 {
     @RequestMapping(value = "/{uuid}", method = { RequestMethod.PATCH }, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public KnowledgeViewModel4Out patchKnowledge(@Validated(ValidUpdateLessPropertiesGroup.class) @RequestBody KnowledgeViewModel4In viewModel,
                                                   BindingResult validResult, @PathVariable String uuid,
-                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                                  @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 //        ValidResultHelper.valid(validResult,
 //                "LC/UPDATE_KNOWLEDGE_PARAM_VALID_FAIL",
 //                "KnowledgeControllerV06",
@@ -237,7 +238,7 @@ public class KnowledgeControllerV06 {
         KnowledgeModel model = CommonHelper.convertViewModelIn(viewModel,
                 KnowledgeModel.class,
                 ResourceNdCode.knowledges, true);
-        model = knowledgeService.patchKnowledge(model);
+        model = knowledgeService.patchKnowledge(model, isObvious);
 
         KnowledgeViewModel4Out viewModelOut = CommonHelper.convertViewModelOut(model, KnowledgeViewModel4Out.class);
 

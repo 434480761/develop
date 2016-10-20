@@ -24,7 +24,10 @@ import nd.esp.service.lifecycle.services.notify.NotifyReportService;
 import nd.esp.service.lifecycle.services.staticdatas.StaticDataService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.al.AreaAndLanguage;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncConstant;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncServiceHelper;
 import nd.esp.service.lifecycle.support.staticdata.UpdateStaticDataTask;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -43,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,11 +55,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-
-
-
-
 
 /**
  * FIXME lsm:categorys ->categories (url路径中),暂时两种都先兼容，后期再把categorys 去除
@@ -71,28 +70,31 @@ import org.springframework.web.bind.annotation.RestController;
  * @created 20-4月-2015 15:26:21
  */
 @RestController
-@RequestMapping(value={"/v0.6"})
+@RequestMapping(value = { "/v0.6" })
 public class CategoryController {
 
-	
-    private static final Logger LOG = LoggerFactory.getLogger(CategoryController.class);
-	
-    @Autowired
+	private static final Logger LOG = LoggerFactory
+			.getLogger(CategoryController.class);
+
+	@Autowired
 	@Qualifier("CategoryServiceImpl")
 	private CategoryService categoryService;
-    
-    @Autowired
-    private StaticDataService staticDataService;
-    
-    @Autowired
+
+	@Autowired
+	private StaticDataService staticDataService;
+
+	@Autowired
 	private KnowledgeBaseService kbs;
-    
-    @Autowired
-    private NotifyReportService nrs;
+
+	@Autowired
+	private NotifyReportService nrs;
 	
-	//UUID格式
-	//这个用于验证uuid的正则表达式存在一定的问题（不够严格）
-    private final static String uuidReg = "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}";
+	@Autowired
+	private CategorySyncServiceHelper categorySyncServiceHelper;
+
+	// UUID格式
+	// 这个用于验证uuid的正则表达式存在一定的问题（不够严格）
+	private final static String uuidReg = "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}";
 
 	/**
 	 * 添加一个分类维度：分类维度的添加，需要明确其目的以及对于分类维度的schema的描述，这个模式的描述一般都是树形结构，描述其约束关系
@@ -102,17 +104,19 @@ public class CategoryController {
 	 * 
 	 * @param category
 	 */
-	@RequestMapping(value = {"/categorys","/categories"}, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys", "/categories" }, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryViewModel requestAddCategory(
-			@Valid @RequestBody CategoryViewModel categoryViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryViewModel categoryViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
-		//校验ndCode
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+		// 校验ndCode
 		checkCategoryNdCode(categoryViewModel.getNdCode());
-		
+
 		// 生成参数
-		CategoryModel paramModel = BeanMapperUtils.beanMapper(categoryViewModel,
-				CategoryModel.class);
+		CategoryModel paramModel = BeanMapperUtils.beanMapper(
+				categoryViewModel, CategoryModel.class);
 		paramModel.setIdentifier(UUID.randomUUID().toString());// 设置UUID;
 
 		// 调用service 接口
@@ -120,52 +124,54 @@ public class CategoryController {
 		try {
 			resultModel = categoryService.creatCategory(paramModel);
 		} catch (EspStoreException e) {
-		    
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-		    
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参
-		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel,
-				CategoryViewModel.class);
+		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(
+				resultModel, CategoryViewModel.class);
 
-		//同步推送至报表系统
+		// 同步推送至报表系统
 		nrs.addCategory(resultModel);
 		return resultViewModel;
 	}
 
 	/**
-     * 检查categoryNdCode 是不是符合规范且已经备案，若无，则抛出异常
-     * @param ndCode
-     * @since 
-     */
-    private void checkCategoryNdCode(String ndCode) {
-        // 有点没必要了正则校验了，现在都需要通过配置很把控，改成只有配置好了，才允许创建
-        // ndCode正则校验
-        boolean ndCodeFlag = checkNdCodeRegex(ndCode);
-        if (!ndCodeFlag) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.CheckNdCodeRegex.getMessage()+ndCode);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.CheckNdCodeRegex);
-        }
-        NdCodePattern ndCodePattern = NdCodePattern.fromString(ndCode);
-        if (ndCodePattern == null) {
-            // 不允许创建该分类维度，请到LC备案
-            
-            LOG.error("分类维度nd_code="+ndCode+" 还没有备案，有需要请与LC沟通");
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.CheckNdCodeRegex.getCode(),
-                                          "分类维度nd_code="+ndCode+" 还没有备案，有需要请与LC沟通");
-        }
-    }
+	 * 检查categoryNdCode 是不是符合规范且已经备案，若无，则抛出异常
+	 * 
+	 * @param ndCode
+	 * @since
+	 */
+	private void checkCategoryNdCode(String ndCode) {
+		// 有点没必要了正则校验了，现在都需要通过配置很把控，改成只有配置好了，才允许创建
+		// ndCode正则校验
+		boolean ndCodeFlag = checkNdCodeRegex(ndCode);
+		if (!ndCodeFlag) {
 
-    /**
+			LOG.error(LifeCircleErrorMessageMapper.CheckNdCodeRegex
+					.getMessage() + ndCode);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CheckNdCodeRegex);
+		}
+		NdCodePattern ndCodePattern = NdCodePattern.fromString(ndCode);
+		if (ndCodePattern == null) {
+			// 不允许创建该分类维度，请到LC备案
+
+			LOG.error("分类维度nd_code=" + ndCode + " 还没有备案，有需要请与LC沟通");
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CheckNdCodeRegex.getCode(),
+					"分类维度nd_code=" + ndCode + " 还没有备案，有需要请与LC沟通");
+		}
+	}
+
+	/**
 	 * 修改维度分类，主要修改维度分类的名称，缩写，介绍以及schema等信息
 	 * 
 	 * @URLPattern /categorys/{id}
@@ -176,37 +182,45 @@ public class CategoryController {
 	 * @param category
 	 *            修改后的入参数据
 	 */
-	@RequestMapping(value = {"/categorys/{cid}", "/categories/{cid}"}, method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/{cid}", "/categories/{cid}" }, method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryViewModel requestModifyCategory(
 			@PathVariable String cid,
-			@Valid @RequestBody CategoryViewModel categoryViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryViewModel categoryViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
-		//ndCode正则校验
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+		// ndCode正则校验
 		checkCategoryNdCode(categoryViewModel.getNdCode());
-		
+
 		categoryViewModel.setIdentifier(cid);
-		CategoryModel modifyModel = BeanMapperUtils.beanMapper(categoryViewModel,
-				CategoryModel.class);
+		CategoryModel modifyModel = BeanMapperUtils.beanMapper(
+				categoryViewModel, CategoryModel.class);
 
 		CategoryModel resultModel = null;
 		// 调用service接口：
 		try {
 			resultModel = categoryService.modifyCategory(modifyModel);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参：
-		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel,
-				CategoryViewModel.class);
-		//同步推送至报表系统
+		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(
+				resultModel, CategoryViewModel.class);
+		// 同步推送至报表系统
 		nrs.updateCategory(resultModel);
+		
+		//维度数据同步
+		categorySyncServiceHelper.categorySync(
+				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY, 
+				CategorySyncConstant.OPERATION_UPDATE);
+		
 		return resultViewModel;
 	}
 
@@ -219,9 +233,10 @@ public class CategoryController {
 	 * @param words
 	 * @param limit
 	 */
-	@RequestMapping(value = {"/categorys","/categories"}, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys", "/categories" }, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody ListViewModel<CategoryViewModel> requestQueryCategory(
-			@RequestParam(value ="words",required = true) String words, @RequestParam(value ="limit",required =true) String limit) {
+			@RequestParam(value = "words", required = true) String words,
+			@RequestParam(value = "limit", required = true) String limit) {
 		// 检查limit参数
 		ParamCheckUtil.checkLimit(limit);// 有抛出异常
 		// 调用service 接口
@@ -229,12 +244,12 @@ public class CategoryController {
 		try {
 			modelListResult = categoryService.queryCategory(words, limit);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 结果转换 ，数据转化，有没有更好的方式， 内部泛型数组，使用 ModelMapper 需要一个个转。
@@ -263,26 +278,26 @@ public class CategoryController {
 	 * @param id
 	 *            分类维度的唯一标识
 	 */
-	@RequestMapping(value = {"/categorys/{cid}","/categories/{cid}"}, method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/{cid}", "/categories/{cid}" }, method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody Map<String, String> requestRemoveCategory(
 			@PathVariable String cid) {
 		// 调用service 接口：
 		try {
-		    categoryService.removeCategory(cid);
+			categoryService.removeCategory(cid);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
-		
-		//同步推送至报表系统
+
+		// 同步推送至报表系统
 		nrs.deleteCategory(cid);
-		
+
 		return MessageConvertUtil
-				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategorySuccess); 
+				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategorySuccess);
 	}
 
 	/**
@@ -294,41 +309,41 @@ public class CategoryController {
 	 * @param categoryData
 	 *            维度数据入参结构
 	 */
-	@RequestMapping(value = {"/categorys/datas","/categories/datas"}, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/datas", "/categories/datas" }, method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryDataViewModel requestAddCategoryData(
-			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,BindingResult bindingResult,
-			@RequestParam(value = "is_kp", required=false, defaultValue = "false") Boolean iskp,
-            @RequestParam(value = "kc_code",required=false) String kcCode) {
+			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,
+			BindingResult bindingResult,
+			@RequestParam(value = "is_kp", required = false, defaultValue = "false") Boolean iskp,
+			@RequestParam(value = "kc_code", required = false) String kcCode) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 
-		
 		// 生成参数
 		CategoryDataModel paramModel = changeCategoryDataFromView(categoryDataViewModel);
 		paramModel.setIdentifier(UUID.randomUUID().toString());// 设置UUID;
-		
 
 		// 调用service 接口
 		CategoryDataModel resultModel = null;
 		try {
 			resultModel = categoryService.createCategoryData(paramModel);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参
 		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
-		
-		if(iskp){
+
+		if (iskp) {
 			kbs.batchAddKbWhenKpAdd(kcCode, resultModel.getIdentifier());
 		}
-		
-		//同步推送至报表系统
+
+		// 同步推送至报表系统
 		nrs.addCategoryData(resultModel);
 		return resultViewModel;
 	}
@@ -336,16 +351,18 @@ public class CategoryController {
 	/**
 	 * 将维度数据转换成view类型
 	 * 
-	 * <br>Created 2015年5月4日 下午12:13:03
+	 * <br>
+	 * Created 2015年5月4日 下午12:13:03
+	 * 
 	 * @param resultModel
 	 * @return
-	 * @author       linsm
+	 * @author linsm
 	 */
 	private CategoryDataViewModel changeCategoryDataToView(
 			CategoryDataModel resultModel) {
-	    if(resultModel == null){
-	        return null;
-	    }
+		if (resultModel == null) {
+			return null;
+		}
 		CategoryDataViewModel resultViewModel = BeanMapperUtils.beanMapper(
 				resultModel, CategoryDataViewModel.class);
 		resultViewModel.setCategory(resultModel.getCategory().getIdentifier());
@@ -356,16 +373,18 @@ public class CategoryController {
 	/**
 	 * 将维度数据转换成生命周期类型
 	 * 
-	 * <br>Created 2015年5月4日 下午12:13:41
+	 * <br>
+	 * Created 2015年5月4日 下午12:13:41
+	 * 
 	 * @param categoryDataViewModel
 	 * @return
-	 * @author       linsm
+	 * @author linsm
 	 */
 	private CategoryDataModel changeCategoryDataFromView(
 			CategoryDataViewModel categoryDataViewModel) {
-	    if(categoryDataViewModel == null){
-	        return null;
-	    }
+		if (categoryDataViewModel == null) {
+			return null;
+		}
 		CategoryDataModel paramModel = BeanMapperUtils.beanMapper(
 				categoryDataViewModel, CategoryDataModel.class);
 		CategoryModel category = new CategoryModel();
@@ -390,33 +409,43 @@ public class CategoryController {
 	 *            分类的维度标识
 	 * @param categoryData
 	 */
-	@RequestMapping(value = {"/categorys/datas/{did}","/categories/datas/{did}"}, method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public @ResponseBody CategoryDataViewModel requestModifyCategoryData( @PathVariable String did,
-			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,BindingResult bindingResult) {
+	@RequestMapping(value = { "/categorys/datas/{did}",
+			"/categories/datas/{did}" }, method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public @ResponseBody CategoryDataViewModel requestModifyCategoryData(
+			@PathVariable String did,
+			@Valid @RequestBody CategoryDataViewModel categoryDataViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 
 		categoryDataViewModel.setIdentifier(did);
 		CategoryDataModel modifyModel = changeCategoryDataFromView(categoryDataViewModel);
-		
+
 		CategoryDataModel resultModel = null;
 		// 调用service接口：
 		try {
 			resultModel = categoryService.modifyCategoryData(modifyModel);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参：
 		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
-		
-		//同步推送至报表系统
+
+		// 同步推送至报表系统
 		nrs.updateCategoryData(resultModel);
+		
+		//维度数据同步
+		categorySyncServiceHelper.categorySync(
+				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY_DATA, 
+				CategorySyncConstant.OPERATION_UPDATE);
+		
 		return resultViewModel;
 	}
 
@@ -430,32 +459,32 @@ public class CategoryController {
 	 *            分类维度的标识
 	 * @param did
 	 */
-	@RequestMapping(value = {"/categorys/datas/{did}","/categories/datas/{did}"}, method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/datas/{did}",
+			"/categories/datas/{did}" }, method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody Map<String, String> requestRemoveCategoryData(
 			@PathVariable String did) {
 		// 调用service 接口：
 		try {
-		    categoryService.removeCategoryData(did);
+			categoryService.removeCategoryData(did);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
-		//同步推送至报表系统
+		// 同步推送至报表系统
 		nrs.deleteCategoryData(did);
-		
+
 		return MessageConvertUtil
-				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryDataSuccess); 
+				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryDataSuccess);
 	}
 
 	/**
 	 * 查询分类信息。分类信息的查询是根据关联的树形结构进行查询，根据等级进行查询 根据上级节点类型和名称模糊匹配下级节点内容
 	 * 
-	 * @URLPattern 
-	 *             /categorys/{cid}/datas?{words=123}&{parent=988}&{limit
+	 * @URLPattern /categorys/{cid}/datas?{words=123}&{parent=988}&{limit
 	 *             =(0,20)}
 	 * @Method GET
 	 * 
@@ -469,7 +498,8 @@ public class CategoryController {
 	 * @param parent
 	 *            父节点的id，为ROOT的时候，表示当前分类维度下的根节点
 	 */
-	@RequestMapping(value = {"/categorys/{nd_code}/datas","/categories/{nd_code}/datas"}, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/{nd_code}/datas",
+			"/categories/{nd_code}/datas" }, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody ListViewModel<CategoryDataViewModel> requestQueryCategoryData(
 			@PathVariable("nd_code") String ndCode,
 			@RequestParam(value = "parent", required = false) String parent,
@@ -482,15 +512,16 @@ public class CategoryController {
 		// 调用service 接口
 		ListViewModel<CategoryDataModel> modelListResult = null;
 		try {
-			modelListResult = categoryService.queryCategoryData(ndCode, true, parent,
-					words, limit);  //暂时为了兼容其他地方 （如肖源导入 教材）不改变service 接口，all 可以随便赋值（在实现中不起作用）
+			modelListResult = categoryService.queryCategoryData(ndCode, true,
+					parent, words, limit); // 暂时为了兼容其他地方 （如肖源导入 教材）不改变service
+											// 接口，all 可以随便赋值（在实现中不起作用）
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 结果转换 ，数据转化，有没有更好的方式， 内部泛型数组，使用 ModelMapper 需要一个个转。
@@ -520,10 +551,21 @@ public class CategoryController {
 	 */
 	@RequestMapping(value = "/categorypatterns", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryPatternViewModel requestAddCategoryPattern(
-			@Valid @RequestBody CategoryPatternViewModel categoryPatternViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryPatternViewModel categoryPatternViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
-	
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryPatternViewModel.getGbCode())) {
+			if (!AreaAndLanguage.validGbCodeType(categoryPatternViewModel
+					.getGbCode())) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+		}
+
 		// 生成参数
 		CategoryPatternModel paramModel = BeanMapperUtils.beanMapper(
 				categoryPatternViewModel, CategoryPatternModel.class);
@@ -534,12 +576,12 @@ public class CategoryController {
 		try {
 			resultModel = categoryService.creatCategoryPattern(paramModel);
 		} catch (EspStoreException e) {
-		    
-			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
 			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参
@@ -564,10 +606,21 @@ public class CategoryController {
 	@RequestMapping(value = "/categorypatterns/{cpid}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryPatternViewModel requestModifyCategoryPattern(
 			@PathVariable String cpid,
-			@Valid @RequestBody CategoryPatternViewModel categoryPatternViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryPatternViewModel categoryPatternViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
-		
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryPatternViewModel.getGbCode())) {
+			if (!AreaAndLanguage.validGbCodeType(categoryPatternViewModel
+					.getGbCode())) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+		}
+
 		categoryPatternViewModel.setIdentifier(cpid);
 		CategoryPatternModel modifyModel = BeanMapperUtils.beanMapper(
 				categoryPatternViewModel, CategoryPatternModel.class);
@@ -577,12 +630,12 @@ public class CategoryController {
 		try {
 			resultModel = categoryService.modifyCategoryPattern(modifyModel);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参：
@@ -604,28 +657,30 @@ public class CategoryController {
 	 * @param words
 	 *            查询词
 	 */
-	@RequestMapping(value = "/categorypatterns",  method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = "/categorypatterns", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody ListViewModel<CategoryPatternViewModel> requestQueryCategoryPatterns(
 			@RequestParam(value = "limit", required = true) String limit,
-			@RequestParam(value = "words", required = true) String words) {
+			@RequestParam(value = "words", required = true) String words,
+			@RequestParam(value="gb_code",required=false) String gbCode) {
 		// 检查limit参数
 		ParamCheckUtil.checkLimit(limit);// 有抛出异常
 		// 调用service 接口
 		ListViewModel<CategoryPatternModel> modelListResult = null;
 		try {
-			modelListResult = categoryService.queryCategoryPatterns(words, limit);
+			modelListResult = categoryService.queryCategoryPatterns(words,
+					limit,gbCode);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 结果转换 ，数据转化，有没有更好的方式， 内部泛型数组，使用 ModelMapper 需要一个个转。
 		ListViewModel<CategoryPatternViewModel> viewListResult = new ListViewModel<CategoryPatternViewModel>();
-		if(modelListResult == null ||modelListResult.getItems().isEmpty()){
+		if (modelListResult == null || modelListResult.getItems().isEmpty()) {
 			viewListResult.setLimit(limit);
 			viewListResult.setTotal(0L);
 			viewListResult.setItems(new ArrayList<CategoryPatternViewModel>());
@@ -638,8 +693,8 @@ public class CategoryController {
 		if (modelItems != null && !modelItems.isEmpty()) {
 			viewItems = new ArrayList<CategoryPatternViewModel>();
 			for (CategoryPatternModel model : modelItems) {
-				CategoryPatternViewModel viewModel = BeanMapperUtils.beanMapper(
-						model, CategoryPatternViewModel.class);
+				CategoryPatternViewModel viewModel = BeanMapperUtils
+						.beanMapper(model, CategoryPatternViewModel.class);
 				viewItems.add(viewModel);
 			}
 		}
@@ -662,19 +717,19 @@ public class CategoryController {
 			@PathVariable String cpid) {
 		// 调用service 接口：
 		try {
-		    categoryService.removeCategoryPattern(cpid);
+			categoryService.removeCategoryPattern(cpid);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 		staticDataService.updateLastTime(UpdateStaticDataTask.CP_TASK_ID);
 		staticDataService.updateCPMapNow();
 		return MessageConvertUtil
-				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryPatternSuccess); 
+				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryPatternSuccess);
 	}
 
 	/**
@@ -687,10 +742,11 @@ public class CategoryController {
 	 */
 	@RequestMapping(value = "/categorypatterns/datas/relations", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody CategoryRelationViewModel requestAddRelationData(
-			@Valid @RequestBody CategoryRelationViewModel categoryRelationViewModel,BindingResult bindingResult) {
+			@Valid @RequestBody CategoryRelationViewModel categoryRelationViewModel,
+			BindingResult bindingResult) {
 		// 入参校验
-		ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
-		
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 
 		// 生成参数
 		CategoryRelationModel paramModel = changeCategoryRelationFromView(categoryRelationViewModel);
@@ -700,12 +756,12 @@ public class CategoryController {
 		try {
 			resultModel = categoryService.createCategoryRelation(paramModel);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 
 		// 转成出参
@@ -716,16 +772,18 @@ public class CategoryController {
 	/**
 	 * 维度数据关系转换为view类型
 	 * 
-	 * <br>Created 2015年5月4日 下午1:35:57
+	 * <br>
+	 * Created 2015年5月4日 下午1:35:57
+	 * 
 	 * @param resultModel
 	 * @return
-	 * @author       linsm
+	 * @author linsm
 	 */
 	private CategoryRelationViewModel changeCategoryRelationToView(
 			CategoryRelationModel resultModel) {
-	    if(resultModel == null){
-	        return null;
-	    }
+		if (resultModel == null) {
+			return null;
+		}
 		CategoryRelationViewModel resultViewModel = new CategoryRelationViewModel();
 		resultViewModel.setIdentifier(resultModel.getIdentifier());
 		resultViewModel.setRelationType(resultModel.getRelationType());
@@ -743,16 +801,18 @@ public class CategoryController {
 	/**
 	 * 维度数据关系转换为生命周期类型
 	 * 
-	 * <br>Created 2015年5月4日 下午1:36:39
+	 * <br>
+	 * Created 2015年5月4日 下午1:36:39
+	 * 
 	 * @param categoryRelationViewModel
 	 * @return
-	 * @author       linsm
+	 * @author linsm
 	 */
 	private CategoryRelationModel changeCategoryRelationFromView(
 			CategoryRelationViewModel categoryRelationViewModel) {
-	    if(categoryRelationViewModel == null){
-	        return  null;
-	    }
+		if (categoryRelationViewModel == null) {
+			return null;
+		}
 		CategoryRelationModel paramModel = BeanMapperUtils.beanMapper(
 				categoryRelationViewModel, CategoryRelationModel.class);
 		// pattern
@@ -784,25 +844,26 @@ public class CategoryController {
 			@PathVariable String cprid) {
 		// 调用service 接口：
 		try {
-//			isDeleteSuccess = 
-		    categoryService.removeCategoryRelation(cprid);
+			// isDeleteSuccess =
+			categoryService.removeCategoryRelation(cprid);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
 		return MessageConvertUtil
-				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryRelationSuccess); 
+				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryRelationSuccess);
 	}
 
 	/**
 	 * 查询分类维度之间的关系
 	 * 
 	 * @URLPattern 
-	 *             /categorys/relations/datas?{enable=true}&{patternPath=K12}&{levelParent=ndCode}
+	 *             /categorys/relations/datas?{enable=true}&{patternPath=K12}&{levelParent
+	 *             =ndCode}
 	 * @Method GET
 	 * 
 	 * @param levelParent
@@ -812,471 +873,511 @@ public class CategoryController {
 	 * @param patternPath
 	 *            模式的路径
 	 */
-	@RequestMapping(value = {"/categorys/relations","/categories/relations"}, method = RequestMethod.GET,produces = { MediaType.APPLICATION_JSON_VALUE })
+	@RequestMapping(value = { "/categorys/relations", "/categories/relations" }, method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public @ResponseBody List<QueryRelationViewModel> requestQueryRelationData(
-			@RequestParam(value = "patternPath",required=true) String patternPath,
-			@RequestParam(value = "enable",required=false,defaultValue="true") boolean enable,
-			@RequestParam(value = "levelParent",required=false) String levelParent){
+			@RequestParam(value = "patternPath", required = true) String patternPath,
+			@RequestParam(value = "enable", required = false, defaultValue = "true") boolean enable,
+			@RequestParam(value = "levelParent", required = false) String levelParent) {
 		// 校验入参: patternName
 		// 调用service 接口
 		List<QueryRelationViewModel> viewListResult = null;
 		try {
 			viewListResult = categoryService.queryCategoryRelation(levelParent,
-			 enable,  patternPath);
+					enable, patternPath);
 		} catch (EspStoreException e) {
-			
-		    LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-			
-		    throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
 		}
-		 return viewListResult;
+		return viewListResult;
 	}
 
-
 	/**
-	 * ND编码标识正则校验
-	 * 规则：两位大写英文字母标识，可以首位可以使用$符号开始，第二位不允许出现$符号
+	 * ND编码标识正则校验 规则：两位大写英文字母标识，可以首位可以使用$符号开始，第二位不允许出现$符号
+	 * 
 	 * @param ndCode
 	 * @return
 	 */
-	private static boolean checkNdCodeRegex(String ndCode){
+	private static boolean checkNdCodeRegex(String ndCode) {
 		Pattern pattern = Pattern.compile("^[A-Z]{2}$|^\\$[A-Z]{1}$");
 		Matcher matcher = pattern.matcher(ndCode);
 		boolean f = matcher.find();
 		return f;
 	}
-	
-    /**
-     * 以下是新增的接口（主要是各种获取详情的接口）
-     */
 
-    /**
-     * 查看分类维度
-     * 
-     * @param content  可能是ndCode和 uuid
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categories/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    @ResponseBody
-    CategoryViewModel requestGetDetailCategory(@PathVariable("content") String content) {
-        CategoryModel resultModel = null;
+	/**
+	 * 以下是新增的接口（主要是各种获取详情的接口）
+	 */
 
-        //两个接口，共用一个函数，需要判断是否为uuid
-        if(checkReg(content,uuidReg)){
-            
-            LOG.debug("通过id:{} 获取分类维度详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryById(content);
-            } catch (EspStoreException e) {
-               
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
-        }else{
-         // ndCode正则校验
-            boolean ndCodeFlag = checkNdCodeRegex(content);
-            if (!ndCodeFlag) {
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.CheckNdCodeRegex);
-            }
-            
-            LOG.debug("通过ndCode:{} 获取分类维度详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryByNdCode(content);
-            } catch (EspStoreException e) {
-               
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-               
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
-            
-        }
-        
-        if (resultModel == null) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.CategoryNotFound.getMessage()+content);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.CategoryNotFound);
-        }
-        // 转成出参
-        CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel, CategoryViewModel.class);
+	/**
+	 * 查看分类维度
+	 * 
+	 * @param content
+	 *            可能是ndCode和 uuid
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categories/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@ResponseBody
+	CategoryViewModel requestGetDetailCategory(
+			@PathVariable("content") String content) {
+		CategoryModel resultModel = null;
 
-        return resultViewModel;
-    }
+		// 两个接口，共用一个函数，需要判断是否为uuid
+		if (checkReg(content, uuidReg)) {
 
-    /**
-     * 查看维度数据 
-     * 
-     * @author linsm
-     * @param content  可能是ndCode和 uuid
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categories/datas/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    @ResponseBody
-    CategoryDataViewModel requestGetDetailCategoryData(@PathVariable("content") String content) {
-        CategoryDataModel resultModel = null;
-        // 两个接口，共用一个函数，需要判断是否为uuid
-        if (checkReg(content, uuidReg)) {
-            
-            LOG.debug("通过id:{} 获取维度数据详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryDataById(content);
-            } catch (EspStoreException e) {
-                
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
-        } else {
-            
-            LOG.debug("通过ndCode:{} 获取维度数据详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryDataByNdCode(content);
-            } catch (EspStoreException e) {
-               
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
-        }
-    
-        if (resultModel == null) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.CategoryDataNotFound.getMessage());
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.CategoryDataNotFound);
-        }
+			LOG.debug("通过id:{} 获取分类维度详情", content);
 
-        // 转成出参
-        CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
-        return resultViewModel;
-    }
+			// 调用service 接口
+			try {
+				resultModel = categoryService.loadCategoryById(content);
+			} catch (EspStoreException e) {
 
-    /**
-     * 查看分类维度应用模式
-     * 
-     * @param content  可能是ndCode和 uuid
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categorypatterns/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    @ResponseBody
-    CategoryPatternViewModel requestGetDetailCategoryPattern(@PathVariable("content") String content) {
-        CategoryPatternModel resultModel = null;
-        // 两个接口，共用一个函数，需要判断是否为uuid
-        if (checkReg(content, uuidReg)) {
-            
-            LOG.debug("通过id:{} 获取维度模式详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryPatternById(content);
-            } catch (EspStoreException e) {
-                
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
 
-        } else {
-            
-            LOG.debug("通过patternName:{} 获取维度模式详情",content);
-            
-            // 调用service 接口
-            try {
-                resultModel = categoryService.loadCategoryPatternByPatternName(content);
-            } catch (EspStoreException e) {
-                
-                LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                              e.getMessage());
-            }
-        }
-        if (resultModel == null) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.CategoryPatternNotFound.getMessage());
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.CategoryPatternNotFound);
-        }
-        // 转成出参
-        CategoryPatternViewModel resultViewModel = BeanMapperUtils.beanMapper(resultModel, CategoryPatternViewModel.class);
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		} else {
+			// ndCode正则校验
+			boolean ndCodeFlag = checkNdCodeRegex(content);
+			if (!ndCodeFlag) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckNdCodeRegex);
+			}
 
-        return resultViewModel;
-    }
-    
-    /**
-     * Ndcode批量查看分类维度
-     * 
-     * @param ndCodeSet
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "categories/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    @ResponseBody
-    Map<String, CategoryViewModel> requestBatchGetDetailCategory(@RequestParam(value = "nd_code", required = true) Set<String> ndCodeSet) {
-        //参数校验
-        // ndCode正则校验
-        for (String ndCode : ndCodeSet) {
-            boolean ndCodeFlag = checkNdCodeRegex(ndCode);
-            if (!ndCodeFlag) {
-                
-                LOG.error(LifeCircleErrorMessageMapper.CheckNdCodeRegex.getMessage()+ndCode);
-                
-                throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                              LifeCircleErrorMessageMapper.CheckNdCodeRegex);
-            }
-        }
-        Map<String, CategoryModel> modelMap = null;
-        try {
-            modelMap = categoryService.batchGetDetailCategory(ndCodeSet);
-        } catch (EspStoreException e) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
-        }
- 
-        //处理出参
-        Map<String, CategoryViewModel> viewModelMap = new HashMap<String, CategoryViewModel>();
-        if(modelMap != null && !modelMap.isEmpty()){
-            for(String ndCode: modelMap.keySet()){
-                CategoryViewModel viewModel = null;
-                CategoryModel model = modelMap.get(ndCode);
-                if(model != null){
-                    viewModel = BeanMapperUtils.beanMapper(model, CategoryViewModel.class);
-                }
-                viewModelMap.put(ndCode, viewModel);
-            }
-        }
+			LOG.debug("通过ndCode:{} 获取分类维度详情", content);
 
-        return viewModelMap;
-    }
-    
-    /**
-     * 批量加载维度数据
-     * 
-     * @param ndCodeSet
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categories/datas/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public Map<String, CategoryDataViewModel> requestBatchGetDetailCategoryData(@RequestParam(value = "nd_code", required = true) Set<String> ndCodeSet) {
+			// 调用service 接口
+			try {
+				resultModel = categoryService.loadCategoryByNdCode(content);
+			} catch (EspStoreException e) {
 
-        Map<String, CategoryDataModel> modelMap = null;
-        try {
-            modelMap = categoryService.batchGetDetailCategoryData(ndCodeSet);
-        } catch (EspStoreException e) {
-           
-            LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
-        }
-        // 处理出参
-        Map<String, CategoryDataViewModel> viewModelMap = new HashMap<String, CategoryDataViewModel>();
-        if (modelMap != null && !modelMap.isEmpty()) {
-            for (String ndCode : modelMap.keySet()) {
-                CategoryDataViewModel viewModel = null;
-                CategoryDataModel model = modelMap.get(ndCode);
-                if (model != null) {
-                    viewModel = changeCategoryDataToView(model);
-                }
-                viewModelMap.put(ndCode, viewModel);
-            }
-        }
-        return viewModelMap;
-    }
-    
-    /**
-     * 批量加载分类维度应用模式
-     * 
-     * @param patternNameSet
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categorypatterns/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public Map<String, CategoryPatternViewModel> requestBatchGetDetailCategoryPattern(@RequestParam(value = "pattern_name", required = true) Set<String> patternNameSet) {
-        Map<String, CategoryPatternModel> modelMap = null;
-        try {
-            modelMap = categoryService.batchGetDetailCategoryPattern(patternNameSet);
-        } catch (EspStoreException e) {
-            
-            LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
-        }
-        // 处理出参
-        Map<String, CategoryPatternViewModel> viewModelMap = new HashMap<String, CategoryPatternViewModel>();
-        if (modelMap != null && !modelMap.isEmpty()) {
-            for (String ndCode : modelMap.keySet()) {
-                CategoryPatternViewModel viewModel = null;
-                CategoryPatternModel model = modelMap.get(ndCode);
-                if (model != null) {
-                    viewModel = BeanMapperUtils.beanMapper(model, CategoryPatternViewModel.class);
-                }
-                viewModelMap.put(ndCode, viewModel);
-            }
-        }
-        return viewModelMap;
-    }
-    
-    /**
-     * 批量创建分类维度应用模式下的维度数据关系
-     * 
-     * @param paramList
-     * @param bindingResult
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "categorypatterns/datas/relations/bulk", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody List<CategoryRelationViewModel> requestBatchAddCategoryRelation(@Valid @RequestBody List<CategoryRelationViewModel> paramList,
-                                                                                         BindingResult bindingResult) {
-        // 入参校验
-        ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
 
-        // 判断批量数据中是否存在重复的关系：pattern_path,target这两个字段来确定：
-        if (paramList != null && paramList.size() > 1) {
-            Set<String> duplicateHelperSet = new HashSet<String>();
-            for(CategoryRelationViewModel view: paramList){
-                if (view != null) {
-                    String content = view.getPatternPath() + view.getTarget(); // 直接将这两个字段相加，能够保证惟一性（业务上）
-                    boolean isSuccess = duplicateHelperSet.add(content);
-                    if (!isSuccess) {
-                        
-                        LOG.error(LifeCircleErrorMessageMapper.CategoryRelationBatchAddDuplicate.getMessage()); 
-                        
-                        throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                                      LifeCircleErrorMessageMapper.CategoryRelationBatchAddDuplicate);
-                    }
-                }
-            }
-        }
-        
-        // 生成参数
-        List<CategoryRelationModel> changedParamList = new ArrayList<CategoryRelationModel>();
-        for (CategoryRelationViewModel categoryRelationViewModel : paramList) {
-            CategoryRelationModel paramModel = changeCategoryRelationFromView(categoryRelationViewModel);
-            paramModel.setIdentifier(UUID.randomUUID().toString());// 设置UUID;
-            changedParamList.add(paramModel);
-        }
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
 
-        // 调用service 接口
-        List<CategoryRelationModel> resultModelList = null;
-        resultModelList = categoryService.batchCreateCategoryRelation(changedParamList);
+		}
 
-        // 转成出参
-        List<CategoryRelationViewModel> resultViewModelList = new ArrayList<CategoryRelationViewModel>();
-        if (resultModelList != null && !resultModelList.isEmpty()) {
-            for (CategoryRelationModel model : resultModelList) {
-                if (model != null) {
-                    resultViewModelList.add(changeCategoryRelationToView(model));
-                }
-            }
-        }
+		if (resultModel == null) {
 
-        return resultViewModelList;
-    }
+			LOG.error(LifeCircleErrorMessageMapper.CategoryNotFound
+					.getMessage() + content);
 
-    /**
-     * 批量删除分类维度应用模式下的维度数据关系
-     * 
-     * @param idSet
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "categorypatterns/datas/relations/bulk", method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody Map<String, String> requestBatchDeleteCategoryRelation(@RequestParam(value = "crid", required = true) LinkedHashSet<String> idSet) {
- 
-        //异常信息已经在service  进行处理（当不成功时，在service  层会抛出异常）
-        categoryService.batchRemoveCategoryRelation(idSet);
-        return MessageConvertUtil.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryRelationSuccess);
-    }
-    
-    /**
-     * 正则校验
-     * @author 徐震宇
-     * @param value 值
-     * @param pattern 正则表达式
-     * @return
-     */
-    private boolean checkReg(String value,String pattern){
-        return Pattern.matches(pattern, value);
-    }
-    
-    
-    /**
-     * v1.0 
-     * 新增：修改分类维度应用模式下的维度数据关系
-     */
-    
-    /**
-     * 修改分类维度应用模式下的维度数据关系
-     * 
-     * @param categoryRelationViewModel
-     * @param bindingResult
-     * @param rid
-     * @return
-     * @since
-     */
-    @RequestMapping(value = "/categorypatterns/datas/relations/{rid}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody CategoryRelationViewModel requestModifyRelationData(@Valid @RequestBody CategoryRelationViewModel categoryRelationViewModel,
-                                                                             BindingResult bindingResult,
-                                                                             @PathVariable("rid") String rid) {
-        // 入参校验
-        ValidResultHelper.valid(bindingResult, LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CategoryNotFound);
+		}
+		// 转成出参
+		CategoryViewModel resultViewModel = BeanMapperUtils.beanMapper(
+				resultModel, CategoryViewModel.class);
 
-        // 生成参数
-        CategoryRelationModel paramModel = changeCategoryRelationFromView(categoryRelationViewModel);
-        paramModel.setIdentifier(rid);// 设置UUID;
-        // 调用service 接口
-        CategoryRelationModel resultModel = null;
-        try {
-            resultModel = categoryService.modifyCategoryRelation(paramModel);
-        } catch (EspStoreException e) {
-           
-            LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),e);
-            
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                          LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-                                          e.getMessage());
-        }
+		return resultViewModel;
+	}
 
-        // 转成出参
-        CategoryRelationViewModel resultViewModel = changeCategoryRelationToView(resultModel);
-        return resultViewModel;
-    }
+	/**
+	 * 查看维度数据
+	 * 
+	 * @author linsm
+	 * @param content
+	 *            可能是ndCode和 uuid
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categories/datas/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@ResponseBody
+	CategoryDataViewModel requestGetDetailCategoryData(
+			@PathVariable("content") String content) {
+		CategoryDataModel resultModel = null;
+		// 两个接口，共用一个函数，需要判断是否为uuid
+		if (checkReg(content, uuidReg)) {
+
+			LOG.debug("通过id:{} 获取维度数据详情", content);
+
+			// 调用service 接口
+			try {
+				resultModel = categoryService.loadCategoryDataById(content);
+			} catch (EspStoreException e) {
+
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		} else {
+
+			LOG.debug("通过ndCode:{} 获取维度数据详情", content);
+
+			// 调用service 接口
+			try {
+				resultModel = categoryService.loadCategoryDataByNdCode(content);
+			} catch (EspStoreException e) {
+
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
+
+		if (resultModel == null) {
+
+			LOG.error(LifeCircleErrorMessageMapper.CategoryDataNotFound
+					.getMessage());
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CategoryDataNotFound);
+		}
+
+		// 转成出参
+		CategoryDataViewModel resultViewModel = changeCategoryDataToView(resultModel);
+		return resultViewModel;
+	}
+
+	/**
+	 * 查看分类维度应用模式
+	 * 
+	 * @param content
+	 *            可能是ndCode和 uuid
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categorypatterns/{content}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@ResponseBody
+	CategoryPatternViewModel requestGetDetailCategoryPattern(
+			@PathVariable("content") String content) {
+		CategoryPatternModel resultModel = null;
+		// 两个接口，共用一个函数，需要判断是否为uuid
+		if (checkReg(content, uuidReg)) {
+
+			LOG.debug("通过id:{} 获取维度模式详情", content);
+
+			// 调用service 接口
+			try {
+				resultModel = categoryService.loadCategoryPatternById(content);
+			} catch (EspStoreException e) {
+
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+
+		} else {
+
+			LOG.debug("通过patternName:{} 获取维度模式详情", content);
+
+			// 调用service 接口
+			try {
+				resultModel = categoryService
+						.loadCategoryPatternByPatternName(content);
+			} catch (EspStoreException e) {
+
+				LOG.error(
+						LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(),
+						e);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+						e.getMessage());
+			}
+		}
+		if (resultModel == null) {
+
+			LOG.error(LifeCircleErrorMessageMapper.CategoryPatternNotFound
+					.getMessage());
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.CategoryPatternNotFound);
+		}
+		// 转成出参
+		CategoryPatternViewModel resultViewModel = BeanMapperUtils.beanMapper(
+				resultModel, CategoryPatternViewModel.class);
+
+		return resultViewModel;
+	}
+
+	/**
+	 * Ndcode批量查看分类维度
+	 * 
+	 * @param ndCodeSet
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "categories/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@ResponseBody
+	Map<String, CategoryViewModel> requestBatchGetDetailCategory(
+			@RequestParam(value = "nd_code", required = true) Set<String> ndCodeSet) {
+		// 参数校验
+		// ndCode正则校验
+		for (String ndCode : ndCodeSet) {
+			boolean ndCodeFlag = checkNdCodeRegex(ndCode);
+			if (!ndCodeFlag) {
+
+				LOG.error(LifeCircleErrorMessageMapper.CheckNdCodeRegex
+						.getMessage() + ndCode);
+
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.CheckNdCodeRegex);
+			}
+		}
+		Map<String, CategoryModel> modelMap = null;
+		try {
+			modelMap = categoryService.batchGetDetailCategory(ndCodeSet);
+		} catch (EspStoreException e) {
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
+		}
+
+		// 处理出参
+		Map<String, CategoryViewModel> viewModelMap = new HashMap<String, CategoryViewModel>();
+		if (modelMap != null && !modelMap.isEmpty()) {
+			for (String ndCode : modelMap.keySet()) {
+				CategoryViewModel viewModel = null;
+				CategoryModel model = modelMap.get(ndCode);
+				if (model != null) {
+					viewModel = BeanMapperUtils.beanMapper(model,
+							CategoryViewModel.class);
+				}
+				viewModelMap.put(ndCode, viewModel);
+			}
+		}
+
+		return viewModelMap;
+	}
+
+	/**
+	 * 批量加载维度数据
+	 * 
+	 * @param ndCodeSet
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categories/datas/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public Map<String, CategoryDataViewModel> requestBatchGetDetailCategoryData(
+			@RequestParam(value = "nd_code", required = true) Set<String> ndCodeSet) {
+
+		Map<String, CategoryDataModel> modelMap = null;
+		try {
+			modelMap = categoryService.batchGetDetailCategoryData(ndCodeSet);
+		} catch (EspStoreException e) {
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
+		}
+		// 处理出参
+		Map<String, CategoryDataViewModel> viewModelMap = new HashMap<String, CategoryDataViewModel>();
+		if (modelMap != null && !modelMap.isEmpty()) {
+			for (String ndCode : modelMap.keySet()) {
+				CategoryDataViewModel viewModel = null;
+				CategoryDataModel model = modelMap.get(ndCode);
+				if (model != null) {
+					viewModel = changeCategoryDataToView(model);
+				}
+				viewModelMap.put(ndCode, viewModel);
+			}
+		}
+		return viewModelMap;
+	}
+
+	/**
+	 * 批量加载分类维度应用模式
+	 * 
+	 * @param patternNameSet
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categorypatterns/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public Map<String, CategoryPatternViewModel> requestBatchGetDetailCategoryPattern(
+			@RequestParam(value = "pattern_name", required = true) Set<String> patternNameSet) {
+		Map<String, CategoryPatternModel> modelMap = null;
+		try {
+			modelMap = categoryService
+					.batchGetDetailCategoryPattern(patternNameSet);
+		} catch (EspStoreException e) {
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
+		}
+		// 处理出参
+		Map<String, CategoryPatternViewModel> viewModelMap = new HashMap<String, CategoryPatternViewModel>();
+		if (modelMap != null && !modelMap.isEmpty()) {
+			for (String ndCode : modelMap.keySet()) {
+				CategoryPatternViewModel viewModel = null;
+				CategoryPatternModel model = modelMap.get(ndCode);
+				if (model != null) {
+					viewModel = BeanMapperUtils.beanMapper(model,
+							CategoryPatternViewModel.class);
+				}
+				viewModelMap.put(ndCode, viewModel);
+			}
+		}
+		return viewModelMap;
+	}
+
+	/**
+	 * 批量创建分类维度应用模式下的维度数据关系
+	 * 
+	 * @param paramList
+	 * @param bindingResult
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "categorypatterns/datas/relations/bulk", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public @ResponseBody List<CategoryRelationViewModel> requestBatchAddCategoryRelation(
+			@Valid @RequestBody List<CategoryRelationViewModel> paramList,
+			BindingResult bindingResult) {
+		// 入参校验
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+
+		// 判断批量数据中是否存在重复的关系：pattern_path,target这两个字段来确定：
+		if (paramList != null && paramList.size() > 1) {
+			Set<String> duplicateHelperSet = new HashSet<String>();
+			for (CategoryRelationViewModel view : paramList) {
+				if (view != null) {
+					String content = view.getPatternPath() + view.getTarget(); // 直接将这两个字段相加，能够保证惟一性（业务上）
+					boolean isSuccess = duplicateHelperSet.add(content);
+					if (!isSuccess) {
+
+						LOG.error(LifeCircleErrorMessageMapper.CategoryRelationBatchAddDuplicate
+								.getMessage());
+
+						throw new LifeCircleException(
+								HttpStatus.INTERNAL_SERVER_ERROR,
+								LifeCircleErrorMessageMapper.CategoryRelationBatchAddDuplicate);
+					}
+				}
+			}
+		}
+
+		// 生成参数
+		List<CategoryRelationModel> changedParamList = new ArrayList<CategoryRelationModel>();
+		for (CategoryRelationViewModel categoryRelationViewModel : paramList) {
+			CategoryRelationModel paramModel = changeCategoryRelationFromView(categoryRelationViewModel);
+			paramModel.setIdentifier(UUID.randomUUID().toString());// 设置UUID;
+			changedParamList.add(paramModel);
+		}
+
+		// 调用service 接口
+		List<CategoryRelationModel> resultModelList = null;
+		resultModelList = categoryService
+				.batchCreateCategoryRelation(changedParamList);
+
+		// 转成出参
+		List<CategoryRelationViewModel> resultViewModelList = new ArrayList<CategoryRelationViewModel>();
+		if (resultModelList != null && !resultModelList.isEmpty()) {
+			for (CategoryRelationModel model : resultModelList) {
+				if (model != null) {
+					resultViewModelList
+							.add(changeCategoryRelationToView(model));
+				}
+			}
+		}
+
+		return resultViewModelList;
+	}
+
+	/**
+	 * 批量删除分类维度应用模式下的维度数据关系
+	 * 
+	 * @param idSet
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "categorypatterns/datas/relations/bulk", method = RequestMethod.DELETE, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public @ResponseBody Map<String, String> requestBatchDeleteCategoryRelation(
+			@RequestParam(value = "crid", required = true) LinkedHashSet<String> idSet) {
+
+		// 异常信息已经在service 进行处理（当不成功时，在service 层会抛出异常）
+		categoryService.batchRemoveCategoryRelation(idSet);
+		return MessageConvertUtil
+				.getMessageString(LifeCircleErrorMessageMapper.DeleteCategoryRelationSuccess);
+	}
+
+	/**
+	 * 正则校验
+	 * 
+	 * @author 徐震宇
+	 * @param value
+	 *            值
+	 * @param pattern
+	 *            正则表达式
+	 * @return
+	 */
+	private boolean checkReg(String value, String pattern) {
+		return Pattern.matches(pattern, value);
+	}
+
+	/**
+	 * v1.0 新增：修改分类维度应用模式下的维度数据关系
+	 */
+
+	/**
+	 * 修改分类维度应用模式下的维度数据关系
+	 * 
+	 * @param categoryRelationViewModel
+	 * @param bindingResult
+	 * @param rid
+	 * @return
+	 * @since
+	 */
+	@RequestMapping(value = "/categorypatterns/datas/relations/{rid}", method = RequestMethod.PUT, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
+	public @ResponseBody CategoryRelationViewModel requestModifyRelationData(
+			@Valid @RequestBody CategoryRelationViewModel categoryRelationViewModel,
+			BindingResult bindingResult, @PathVariable("rid") String rid) {
+		// 入参校验
+		ValidResultHelper.valid(bindingResult,
+				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+
+		// 生成参数
+		CategoryRelationModel paramModel = changeCategoryRelationFromView(categoryRelationViewModel);
+		paramModel.setIdentifier(rid);// 设置UUID;
+		// 调用service 接口
+		CategoryRelationModel resultModel = null;
+		try {
+			resultModel = categoryService.modifyCategoryRelation(paramModel);
+		} catch (EspStoreException e) {
+
+			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+			throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+					LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+					e.getMessage());
+		}
+
+		// 转成出参
+		CategoryRelationViewModel resultViewModel = changeCategoryRelationToView(resultModel);
+		return resultViewModel;
+	}
 
 }

@@ -13,6 +13,7 @@ public class ResRepositoryConstant {
     public final static String TARGET_TYPE_GROUP = "Group";
     public final static String TARGET_TYPE_DEBUG = "Debug";
     public final static String TARGET_TYPE_RSD = "RSD";
+    public final static String TARGET_TYPE_APP = "App";
     
     /**
      * status:私有库的状态信息
@@ -29,8 +30,9 @@ public class ResRepositoryConstant {
      * @return
      */
     public static boolean isRepositoryTargetType(String targetType) {
-        if(targetType.equals(ResRepositoryConstant.TARGET_TYPE_ORG)        ||
-                targetType.equals(ResRepositoryConstant.TARGET_TYPE_GROUP)){
+        if(targetType.equals(ResRepositoryConstant.TARGET_TYPE_ORG) ||
+                targetType.equals(ResRepositoryConstant.TARGET_TYPE_GROUP) ||
+                targetType.equals(ResRepositoryConstant.TARGET_TYPE_APP)){
                  return true;
              }
         return false;

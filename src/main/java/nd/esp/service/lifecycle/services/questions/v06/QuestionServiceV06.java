@@ -22,5 +22,5 @@ public interface QuestionServiceV06{
 	 */
 	public QuestionModel updateQuestion(QuestionModel questionModel);
 
-	QuestionModel patchQuestion(QuestionModel questionModel);
+	QuestionModel patchQuestion(QuestionModel questionModel, boolean isObvious);
 }

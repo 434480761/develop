@@ -1,9 +1,7 @@
 package nd.esp.service.lifecycle.services.coursewareobjects.v06.impls;
 
 import nd.esp.service.lifecycle.educommon.services.NDResourceService;
-import nd.esp.service.lifecycle.educommon.vos.constant.IncludesConstant;
 import nd.esp.service.lifecycle.models.v06.CourseWareObjectModel;
-import nd.esp.service.lifecycle.repository.common.IndexSourceType;
 import nd.esp.service.lifecycle.services.coursewareobjects.v06.CourseWareObjectServiceV06;
 import nd.esp.service.lifecycle.services.packaging.v06.PackageService;
 import nd.esp.service.lifecycle.support.DbName;
@@ -48,8 +46,8 @@ public class CourseWareObjectServiceImplV06 implements CourseWareObjectServiceV0
 
     @Override
     @TitanTransaction
-    public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model) {
-        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION);
+    public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model, boolean isObvious) {
+        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION, isObvious);
     }
 
 }

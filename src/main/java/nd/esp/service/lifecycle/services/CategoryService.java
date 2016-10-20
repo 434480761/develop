@@ -118,7 +118,7 @@ public interface CategoryService {
 	 * @param words
 	 * @param limit
 	 */
-	public ListViewModel<CategoryPatternModel> queryCategoryPatterns(String words, String limit) throws EspStoreException;
+	public ListViewModel<CategoryPatternModel> queryCategoryPatterns(String words, String limit,String gbCode) throws EspStoreException;
 	
 
 	

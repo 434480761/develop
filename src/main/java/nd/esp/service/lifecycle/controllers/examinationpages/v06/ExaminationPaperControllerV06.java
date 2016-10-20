@@ -119,13 +119,15 @@ public class ExaminationPaperControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ExaminationPaperViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody ExaminationPaperViewModel viewModel,
                                             BindingResult validResult, @PathVariable String id,
-                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,HttpServletRequest request){
+                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                            @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious,
+                                            HttpServletRequest request){
     	String resType = getResType(request);
     	
         // 校验入参
         checkParams(viewModel, validResult, id, CONTROLLER_PATCH_TYPE,resType);
 
-        viewModel = examinationPaperApi(viewModel, CONTROLLER_PATCH_TYPE,resType);
+        viewModel = examinationPaperApi(viewModel, CONTROLLER_PATCH_TYPE,resType,isObvious);
 
         if(notice) {
             offlineService.writeToCsAsync(resType, id);
@@ -180,6 +182,11 @@ public class ExaminationPaperControllerV06 {
      * @since
      */
     private ExaminationPaperViewModel examinationPaperApi(ExaminationPaperViewModel viewModel, int type,String resType) {
+
+    	return examinationPaperApi(viewModel, type, resType, false);
+    }
+    
+    private ExaminationPaperViewModel examinationPaperApi(ExaminationPaperViewModel viewModel, int type,String resType, boolean isObvious) {
         ExaminationPaperModel model = null;
         if (type == CONTROLLER_CREATE_TYPE) {
             model = CommonHelper.convertViewModelIn(viewModel,
@@ -207,7 +214,7 @@ public class ExaminationPaperControllerV06 {
 
             LOG.info(resType+"v06局部更新操作，业务逻辑处理");
 
-            model = examinationPaperService.patchExaminationPaper(model,resType);
+            model = examinationPaperService.patchExaminationPaper(model,resType,isObvious);
         }
 
         viewModel = CommonHelper.convertViewModelOut(model, ExaminationPaperViewModel.class);
