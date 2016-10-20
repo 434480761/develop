@@ -73,4 +73,18 @@ public class SubInstructionServiceImpl implements SubInstructionService {
         return rtSubInstructionModel;
     }
 
+	@Override
+    @TitanTransaction
+	public SubInstructionModel patchSubInstruction(SubInstructionModel subInstructionModel,boolean isObvious) {
+		
+	 subInstructionModel.setTechInfoList(null);
+	 subInstructionModel = (SubInstructionModel)ndResourceService.patch(ResourceNdCode.subInstruction.toString(), 
+			 subInstructionModel,isObvious);
+	 subInstructionModel.setPreview(null);
+	 subInstructionModel.setEducationInfo(null);
+		return subInstructionModel;
+		
+	}
+    
+
 }
