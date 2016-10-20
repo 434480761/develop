@@ -8,8 +8,8 @@ public Long updateEducationRedProperty(String identifier){
 		redv=dgt_e.next();
 	};
 	if(redv==null||'tech_info'==redv.label()||'statistical'==redv.label()){return;};
-	Iterator redvit=redv.properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string');
-	while(redvit.hasNext()){redvit.next().remove();};
+	//Iterator redvit=redv.properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string');
+	//while(redvit.hasNext()){redvit.next().remove();};
 	String status=getStatus(redv);
 	Iterator<Edge> it=g.V(redv).outE();
 	HashSet<String> coverageSet=new HashSet<String>();
