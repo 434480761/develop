@@ -51,6 +51,7 @@ public class CategoryViewModel {
 	/**
 	 * 国家标准编码
 	 */
+	@NotBlank(message="{categoryViewModel.gbCode.notBlank.validmsg}")
 	@Length(max=30,message="{categoryViewModel.gbCode.maxlength.validmsg}")
 	private String gbCode;
 	

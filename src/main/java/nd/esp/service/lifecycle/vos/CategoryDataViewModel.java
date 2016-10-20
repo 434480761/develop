@@ -50,6 +50,7 @@ public class CategoryDataViewModel {
 	/**
 	 * 国家标准编码
 	 */
+	@NotBlank(message="{categoryDataViewModel.gbCode.notBlank.validmsg}")
 	@Length(max=30,message="{categoryDataViewModel.gbCode.maxlength.validmsg}")
 	private String gbCode;
 	/**

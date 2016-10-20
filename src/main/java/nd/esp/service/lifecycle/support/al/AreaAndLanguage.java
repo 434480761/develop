@@ -43,15 +43,15 @@ public enum AreaAndLanguage {
 	 * @param gbCode
 	 * @return boolean
 	 */
-	public static boolean validGbCodeType(String gbCode){
+	public static String validGbCodeType(String gbCode){
 		if (StringUtils.hasText(gbCode)) {
             for(AreaAndLanguage type: AreaAndLanguage.values()){
                 if(type.getCode().equalsIgnoreCase(gbCode)){
-                    return true;
+                    return type.getCode();
                 }
             }
         }
 		
-		return false;
+		return "";
 	}
 }
