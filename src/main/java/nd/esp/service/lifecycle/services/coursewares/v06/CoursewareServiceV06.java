@@ -22,5 +22,5 @@ public interface CoursewareServiceV06{
 	 */
 	public CoursewareModel updateCourseware(String resType,CoursewareModel cm);
 
-	CoursewareModel patchCourseware(String resType, CoursewareModel cm);
+	CoursewareModel patchCourseware(String resType, CoursewareModel cm, boolean isObvious);
 }

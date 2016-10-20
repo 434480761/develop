@@ -25,5 +25,5 @@ public interface EbookService {
      */
     public EbookModel update(EbookModel ebookModel);
 
-    EbookModel patch(EbookModel ebookModel);
+    EbookModel patch(EbookModel ebookModel, boolean isObvious);
 }

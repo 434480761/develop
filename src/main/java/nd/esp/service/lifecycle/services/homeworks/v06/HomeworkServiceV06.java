@@ -23,5 +23,5 @@ public interface HomeworkServiceV06{
 	 */
 	public HomeworkModel updateHomework(HomeworkModel am);
 
-	HomeworkModel patchHomework(HomeworkModel hm);
+	HomeworkModel patchHomework(HomeworkModel hm, boolean isObvious);
 }

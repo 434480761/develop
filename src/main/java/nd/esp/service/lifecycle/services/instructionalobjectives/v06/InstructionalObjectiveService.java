@@ -66,5 +66,5 @@ public interface InstructionalObjectiveService{
      */
 	ListViewModel<ResourceModel> getResourcePageByChapterId(List<String> includesList, List<Map<String, String>> relationsMap, List<String> coveragesList, String limit, boolean reverseBoolean);
 
-	InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel);
+	InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel, boolean isObvious);
 }

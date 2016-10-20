@@ -2765,12 +2765,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
-		return patch(resourceType, resourceModel,DbName.DEFAULT);
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, boolean isObvious) {
+		return patch(resourceType, resourceModel, DbName.DEFAULT, isObvious);
 	}
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName, boolean isObvious) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2783,7 +2783,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 
 		// 2、基本属性的处理
-		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
+		dealBasicInfoPatch(resourceType, resourceModel, oldBean, isObvious);
 
 		// 3、categories属性处理
 		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
@@ -2871,13 +2871,35 @@ public class NDResourceServiceImpl implements NDResourceService{
 		ResourceRepository repository = commonServiceHelper.getResourceCategoryRepositoryByResType(resourceType);
 		String uuid = resourceModel.getIdentifier();
 		List<ResClassificationModel> categories = resourceModel.getCategoryList();
-		Set<ResClassificationModel> resClassificationModelSet = new HashSet<ResClassificationModel>(categories);
+		Set<ResClassificationModel> resClassificationModelSet = new HashSet<ResClassificationModel>();
 		List<ResourceCategory> resourceCategories = new ArrayList<ResourceCategory>();
 		if (CollectionUtils.isNotEmpty(categories)) {
 			Set<String> ndCodeSet = new HashSet<String>();
 			List<CategoryData> categoryDatas = null;
 			for (ResClassificationModel resClassificationModel : categories) {
-				ndCodeSet.add(resClassificationModel.getTaxoncode());
+				if(!"delete".equals(resClassificationModel.getOperation())) {
+					ndCodeSet.add(resClassificationModel.getTaxoncode());
+					resClassificationModelSet.add(resClassificationModel);
+				} else {
+					try {
+						if (resClassificationModel.getIdentifier() != null) {
+							repository.del(resClassificationModel.getIdentifier());
+						} else {
+							ResourceCategory resourceCategory = BeanMapperUtils.beanMapper(resClassificationModel,
+									ResourceCategory.class);
+							ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
+							if (null != bean) {
+								repository.del(bean.getIdentifier());
+							}
+						}
+					} catch (EspStoreException e) {
+						LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
+
+						throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+								LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
+								e.getLocalizedMessage());
+					}
+				}
 			}
 
 			LOG.debug("调用sdk方法：getListWhereInCondition");
@@ -2906,6 +2928,8 @@ public class NDResourceServiceImpl implements NDResourceService{
 			if (CollectionUtils.isEmpty(categoryDatas)) {
 				return;
 			}
+
+
 			for (CategoryData cd : categoryDatas) {
 				for (ResClassificationModel resClassificationModel : resClassificationModelSet) {
 					if (resClassificationModel.getTaxoncode().equals(cd.getNdCode())) {
@@ -2952,24 +2976,6 @@ public class NDResourceServiceImpl implements NDResourceService{
 									}
 								}
 								break;
-							case "delete":
-								try {
-									if (resourceCategory.getIdentifier() != null) {
-										repository.del(resourceCategory.getIdentifier());
-									} else {
-										ResourceCategory bean = (ResourceCategory) repository.getByExample(resourceCategory);
-										if (null != bean) {
-											repository.del(bean.getIdentifier());
-										}
-									}
-								} catch (EspStoreException e) {
-									LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);
-
-									throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-											LifeCircleErrorMessageMapper.StoreSdkFail.getCode(),
-											e.getLocalizedMessage());
-								}
-								break;
 						}
 					}
 				}
@@ -2993,7 +2999,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 	}
 
-	private void dealBasicInfoPatch(String resourceType, ResourceModel resourceModel, Education oldBean) {
+	private void dealBasicInfoPatch(String resourceType, ResourceModel resourceModel, Education oldBean, boolean isObvious) {
 		@SuppressWarnings("rawtypes")
 		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resourceType);
 		// 转换为数据模型
@@ -3035,8 +3041,11 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(StringUtils.isNotEmpty(education.getDescription())) {
 			oldBean.setDescription(education.getDescription());
 		}
-
-		oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		
+		if(isObvious){
+			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		}
+		
 		try {
 			education = (Education) resourceRepository.update(oldBean);
 		} catch (EspStoreException e) {

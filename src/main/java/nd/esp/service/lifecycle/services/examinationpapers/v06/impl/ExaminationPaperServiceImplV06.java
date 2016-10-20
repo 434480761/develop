@@ -37,8 +37,8 @@ public class ExaminationPaperServiceImplV06 implements ExaminationPaperServiceV0
 
     @Override
     @TitanTransaction
-    public ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model,String resType) {
-        return (ExaminationPaperModel)ndResourceService.patch(resType, model, DbName.DEFAULT);
+    public ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model,String resType, boolean isObvious) {
+        return (ExaminationPaperModel)ndResourceService.patch(resType, model, DbName.DEFAULT, isObvious);
     }
 
 }

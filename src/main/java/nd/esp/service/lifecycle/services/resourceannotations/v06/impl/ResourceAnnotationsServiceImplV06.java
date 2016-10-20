@@ -29,12 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import nd.esp.service.lifecycle.repository.exception.EspStoreException;
-import nd.esp.service.lifecycle.repository.index.AdaptQueryRequest;
-import nd.esp.service.lifecycle.repository.index.QueryResponse;
-import nd.esp.service.lifecycle.repository.model.ResourceAnnotation;
-import nd.esp.service.lifecycle.repository.sdk.ResourceAnnotationRepository;
-
 /**
  * Created by caocr on 2015/11/25 0025.
  */

@@ -102,7 +102,8 @@ public class HomeworkControllerV06 {
 	@MarkAspect4Format2Category
 	@RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public HomeworkViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody HomeworkViewModel hvm,BindingResult validResult,@PathVariable String id,
-								   @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+								   @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+								   @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 		//入参合法性校验
 //		ValidResultHelper.valid(validResult, "LC/UPDATE_HOMEWORK_PARAM_VALID_FAIL", "HomeworkControllerV06", "update");
 		hvm.setIdentifier(id);
@@ -114,7 +115,7 @@ public class HomeworkControllerV06 {
 		HomeworkModel hm = CommonHelper.convertViewModelIn(hvm, HomeworkModel.class,ResourceNdCode.homeworks, true);
 
 		//修改作业
-		hm = homeworkService.patchHomework(hm);
+		hm = homeworkService.patchHomework(hm, isObvious);
 
 		//model转换
 		hvm = CommonHelper.convertViewModelOut(hm,HomeworkViewModel.class);

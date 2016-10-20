@@ -5,7 +5,9 @@ package nd.esp.service.lifecycle.support.enums;
  *
  */
 public enum SynVariable {
-	deleteDirtyTask(1),queryAsyncTask(2),esSynTask(3),notifTask(4),importDataSync(5),icrsSyncTask(6);
+	deleteDirtyTask(1),queryAsyncTask(2),esSynTask(3),
+	notifTask(4),importDataSync(5),icrsSyncTask(6),
+	categorySyncTask(7);
 	
 	private final int pid;
 	SynVariable(int pid){

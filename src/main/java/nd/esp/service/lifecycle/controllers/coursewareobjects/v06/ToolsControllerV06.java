@@ -107,11 +107,12 @@ public class ToolsControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public CourseWareObjectViewModel patch(@Validated(ValidCoursewareObject4UpdateGroup.class) @RequestBody CourseWareObjectViewModel viewModel,
                                             BindingResult validResult, @PathVariable String id,
-                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                            @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
         // 校验入参
         checkParams(viewModel, validResult, id, CONTROLLER_PATCH_TYPE);
 
-        viewModel = toolsApi(viewModel, CONTROLLER_PATCH_TYPE);
+        viewModel = toolsApi(viewModel, CONTROLLER_PATCH_TYPE, isObvious);
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.tools.toString(), id);
@@ -164,6 +165,11 @@ public class ToolsControllerV06 {
      * @since
      */
     private CourseWareObjectViewModel toolsApi(CourseWareObjectViewModel viewModel, int type) {
+
+        return toolsApi(viewModel, type, false);
+    }
+    
+    private CourseWareObjectViewModel toolsApi(CourseWareObjectViewModel viewModel, int type, boolean isObvious) {
         CourseWareObjectModel model = null;
         
         if (type == CONTROLLER_CREATE_TYPE) {
@@ -191,12 +197,11 @@ public class ToolsControllerV06 {
 
             LOG.info("学科工具v06局部更新学科工具操作，业务逻辑处理");
 
-            model = toolsServiceV06.patchTools(model);
+            model = toolsServiceV06.patchTools(model, isObvious);
         }
 
         viewModel = CommonHelper.convertViewModelOut(model, CourseWareObjectViewModel.class);
 
         return viewModel;
     }
-
 }

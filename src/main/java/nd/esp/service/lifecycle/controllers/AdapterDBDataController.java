@@ -160,7 +160,21 @@ public class AdapterDBDataController {
         return updataMediatypeService.tupdate(type , save);
     }
 
-
+    /**
+     * 设置国际化编码统一为zh-CN(主要是categorys，category_datas，category_patterns表)
+     * @param 
+     * @author yuzc
+     * @param 
+     * */
+     @RequestMapping(value="/gbCode",method=RequestMethod.GET,produces={MediaType.APPLICATION_JSON_VALUE})
+     public Map<String,String> setGbCode(@RequestParam String gbCode){
+    	 adapterDBDataService.setGbCode(gbCode);
+    	 Map<String,String> map=new HashMap<String, String>();
+    	 map.put("code", "SETGbCodeSuccess");
+    	 map.put("message", "设置国际化编码成功");
+    	 return map;
+     }
+   
     /**
      * 触发习题(基础/互动)历史数据打包
      *

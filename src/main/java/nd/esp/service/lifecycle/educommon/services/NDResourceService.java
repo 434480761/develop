@@ -215,8 +215,16 @@ public interface NDResourceService {
      * @since
      */
     public ResourceModel update(String resourceType, ResourceModel resourceModel,DbName dbName);
-
-    ResourceModel patch(String resourceType, ResourceModel resourceModel);
+    
+    /**
+     * 部分更新资源(默认库)
+     * @author qil
+     * @param resourceType
+     * @param resourceModel
+     * @return
+     * @since
+     */
+    public ResourceModel patch(String resourceType, ResourceModel resourceModel, boolean isObvious);
 
     /**
      * 部分更新资源(支持分库)
@@ -226,7 +234,7 @@ public interface NDResourceService {
      * @return
      * @since
      */
-    public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName);
+    public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName, boolean isObvious);
     
     /**
      * 判断资源是否存在

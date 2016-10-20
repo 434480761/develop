@@ -127,8 +127,8 @@ public class KnowledgesServiceImpl implements KnowledgeService {
 
     @Override
     @TitanTransaction
-    public KnowledgeModel patchKnowledge(KnowledgeModel model) {
-        return (KnowledgeModel)ndResourceService.patch(ResourceNdCode.knowledges.toString(), model);
+    public KnowledgeModel patchKnowledge(KnowledgeModel model, boolean isObvious) {
+        return (KnowledgeModel)ndResourceService.patch(ResourceNdCode.knowledges.toString(), model, isObvious);
     }
     
     @Override

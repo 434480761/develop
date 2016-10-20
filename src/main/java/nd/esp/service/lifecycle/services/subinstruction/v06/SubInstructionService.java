@@ -22,5 +22,11 @@ public interface SubInstructionService {
 	 * @return
 	 */
     SubInstructionModel updateSubInstruction(SubInstructionModel sim);
-	
+    
+    /**
+     * 子教学目标的patch
+     * @param sim
+     * @return 
+     */
+	SubInstructionModel patchSubInstruction(SubInstructionModel sim,boolean isObvious);
 }

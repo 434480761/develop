@@ -72,14 +72,14 @@ public class TeachingMaterialServiceImplV06 implements
 	@Override
 	@TitanTransaction
 	public TeachingMaterialModel patchTeachingMaterial(String resType,
-													   TeachingMaterialModel tmm) {
+													   TeachingMaterialModel tmm, boolean isObvious) {
 		//1、校验资源是否存在
 		if(CollectionUtils.isNotEmpty(tmm.getCategoryList())) {
 			checkTeachingMaterial(resType, tmm, PATCH_TYPE);
 		}
 
 		//2、调用通用创建接口
-		return (TeachingMaterialModel)ndResourceService.patch(resType, tmm);
+		return (TeachingMaterialModel)ndResourceService.patch(resType, tmm, isObvious);
 	}
 
 	/**

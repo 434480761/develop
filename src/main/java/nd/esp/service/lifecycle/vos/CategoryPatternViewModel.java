@@ -44,6 +44,12 @@ public class CategoryPatternViewModel {
 	 * 应用场景描述
 	 */
 	private String scope;
+	/**
+	 * 国际编码
+	 */
+	@NotBlank(message="{categoryPatternViewModel.gbCode.notBlank.validmsg}")
+	@Length(max=30,message="{categoryPatternViewModel.gbCode.maxlength.validmsg}")
+	private String gbCode; 
 	
 	/**
 	 * 维度路径,比如：$O$S$E
@@ -91,5 +97,11 @@ public class CategoryPatternViewModel {
 	}
 	public void setScope(String scope) {
 		this.scope = scope;
+	}
+	public String getGbCode() {
+		return gbCode;
+	}
+	public void setGbCode(String gbCode) {
+		this.gbCode = gbCode;
 	}
 }

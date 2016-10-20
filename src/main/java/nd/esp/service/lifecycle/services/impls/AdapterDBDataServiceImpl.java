@@ -1,6 +1,7 @@
 package nd.esp.service.lifecycle.services.impls;
 
 import java.net.URI;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1336,6 +1338,37 @@ public class AdapterDBDataServiceImpl implements AdapterDBDataService {
 			}
 		}
 		return null;
+	}
+
+
+	@Override
+	public boolean setGbCode(final String gbCode) {
+		//设置category _patterns表的bg_code
+		String categoryPatternSql="update category_patterns set gb_code=?";
+		jdbcTemplate.update(categoryPatternSql, new PreparedStatementSetter() {	
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, gbCode);			
+			}
+		});
+		//设置categorys表的bg_code
+		String categorysSql="update categorys set gb_code=?";
+		jdbcTemplate.update(categorysSql, new PreparedStatementSetter() {	
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, gbCode);			
+			}
+		});
+		//设置category _datas表的bg_code
+		String categoryDatasSql="update category_datas set gb_code=?";
+		jdbcTemplate.update(categoryDatasSql, new PreparedStatementSetter() {	
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, gbCode);			
+			}
+		});
+		
+		return true;
 	}
     
 //	@Override
