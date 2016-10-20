@@ -35,8 +35,8 @@ public class LessonsServiceImplV06 implements LessonsServiceV06 {
 
     @Override
     @TitanTransaction
-    public LessonModel patch(LessonModel model) {
-        return (LessonModel)ndResourceService.patch(ResourceNdCode.lessons.toString(), model);
+    public LessonModel patch(LessonModel model, boolean isObvious) {
+        return (LessonModel)ndResourceService.patch(ResourceNdCode.lessons.toString(), model, isObvious);
     }
 
 }

@@ -39,8 +39,8 @@ public class QuestionServiceImplV06 implements QuestionServiceV06 {
 
     @Override
     @TitanTransaction
-    public QuestionModel patchQuestion(QuestionModel questionModel) {
-        return (QuestionModel)ndResourceService.patch(ResourceNdCode.questions.toString(), questionModel, DbName.QUESTION);
+    public QuestionModel patchQuestion(QuestionModel questionModel, boolean isObvious) {
+        return (QuestionModel)ndResourceService.patch(ResourceNdCode.questions.toString(), questionModel, DbName.QUESTION, isObvious);
     }
 
 }

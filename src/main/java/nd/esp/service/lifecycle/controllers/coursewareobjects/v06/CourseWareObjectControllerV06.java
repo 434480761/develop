@@ -106,11 +106,12 @@ public class CourseWareObjectControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public CourseWareObjectViewModel patch(@Validated(ValidCoursewareObject4UpdateGroup.class) @RequestBody CourseWareObjectViewModel viewModel,
                                             BindingResult validResult, @PathVariable String id,
-                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                            @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                            @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
         // 校验入参
         checkParams(viewModel, validResult, id, CONTROLLER_PATCH_TYPE);
 
-        viewModel = coursewareObjectApi(viewModel, CONTROLLER_PATCH_TYPE);
+        viewModel = coursewareObjectApi(viewModel, CONTROLLER_PATCH_TYPE, isObvious);
 
         if(notice) {
             offlineService.writeToCsAsync(ResourceNdCode.coursewareobjects.toString(), id);
@@ -164,6 +165,11 @@ public class CourseWareObjectControllerV06 {
      * @since
      */
     private CourseWareObjectViewModel coursewareObjectApi(CourseWareObjectViewModel viewModel, int type) {
+
+        return coursewareObjectApi(viewModel, type, false);
+    }
+    
+    private CourseWareObjectViewModel coursewareObjectApi(CourseWareObjectViewModel viewModel, int type, boolean isObvious) {
         CourseWareObjectModel model = null;
         if (type == CONTROLLER_CREATE_TYPE) {
             model = CommonHelper.convertViewModelIn(viewModel,
@@ -191,12 +197,11 @@ public class CourseWareObjectControllerV06 {
 
             LOG.info("课件颗粒v06局部更新课件颗粒操作，业务逻辑处理");
 
-            model = courseWareObjectService.patchCourseWareObject(model);
+            model = courseWareObjectService.patchCourseWareObject(model, isObvious);
         }
 
         viewModel = CommonHelper.convertViewModelOut(model, CourseWareObjectViewModel.class);
 
         return viewModel;
     }
-
 }

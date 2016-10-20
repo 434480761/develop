@@ -144,7 +144,8 @@ public class AssetControllerV06 {
 	@MarkAspect4Format2Category
 	@RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public AssetViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody AssetViewModel avm,BindingResult validResult,@PathVariable String id,
-								@RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+								@RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+								@RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 		//入参合法性校验
 //		ValidResultHelper.valid(validResult, "LC/UPDATE_ASSET_PARAM_VALID_FAIL", "AssetControllerV06", "update");
 		avm.setIdentifier(id);
@@ -165,7 +166,7 @@ public class AssetControllerV06 {
 		AssetModel am = CommonHelper.convertViewModelIn(avm, AssetModel.class,ResourceNdCode.assets,true);
 
 		//修改素材
-		am = assetService.patchAsset(am);
+		am = assetService.patchAsset(am, isObvious);
 
 		//model转换
 		avm = CommonHelper.convertViewModelOut(am, AssetViewModel.class, "assets_type");

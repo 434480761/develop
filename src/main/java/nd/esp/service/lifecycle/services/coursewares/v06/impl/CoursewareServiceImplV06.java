@@ -33,7 +33,7 @@ public class CoursewareServiceImplV06 implements CoursewareServiceV06 {
 
 	@Override
 	@TitanTransaction
-	public CoursewareModel patchCourseware(String resType, CoursewareModel cm) {
-		return (CoursewareModel)ndResourceService.patch(resType, cm);
+	public CoursewareModel patchCourseware(String resType, CoursewareModel cm, boolean isObvious) {
+		return (CoursewareModel)ndResourceService.patch(resType, cm, isObvious);
 	}
 }

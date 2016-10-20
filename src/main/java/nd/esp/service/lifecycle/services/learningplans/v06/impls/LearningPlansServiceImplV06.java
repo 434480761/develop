@@ -43,8 +43,8 @@ public class LearningPlansServiceImplV06 implements LearningPlansServiceV06 {
 
     @Override
     @TitanTransaction
-    public LearningPlanModel patch(LearningPlanModel learningPlansModel) {
-        return (LearningPlanModel)ndResourceService.patch(ResourceNdCode.learningplans.toString(), learningPlansModel);
+    public LearningPlanModel patch(LearningPlanModel learningPlansModel, boolean isObvious) {
+        return (LearningPlanModel)ndResourceService.patch(ResourceNdCode.learningplans.toString(), learningPlansModel, isObvious);
     }
 
 }

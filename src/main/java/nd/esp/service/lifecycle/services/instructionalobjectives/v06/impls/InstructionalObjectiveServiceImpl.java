@@ -747,11 +747,11 @@ public class InstructionalObjectiveServiceImpl implements InstructionalObjective
     }
     @Override
 	@TitanTransaction
-    public InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel) {
+    public InstructionalObjectiveModel patchInstructionalObjective(InstructionalObjectiveModel instructionalObjectiveModel, boolean isObvious) {
         // 调用通用创建接口
         instructionalObjectiveModel.setTechInfoList(null);
         instructionalObjectiveModel = (InstructionalObjectiveModel)ndResourceService.patch(ResourceNdCode.instructionalobjectives.toString(),
-                instructionalObjectiveModel);
+                instructionalObjectiveModel, isObvious);
         instructionalObjectiveModel.setPreview(null);
         instructionalObjectiveModel.setEducationInfo(null);
 

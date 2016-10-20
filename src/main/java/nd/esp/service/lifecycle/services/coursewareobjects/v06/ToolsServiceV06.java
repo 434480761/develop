@@ -26,5 +26,5 @@ public interface ToolsServiceV06 {
 	 */
 	public CourseWareObjectModel updateTools(CourseWareObjectModel cwom);
 
-	CourseWareObjectModel patchTools(CourseWareObjectModel model);
+	CourseWareObjectModel patchTools(CourseWareObjectModel model, boolean isObvious);
 }

@@ -193,7 +193,8 @@ public class TeachingMaterialControllerV06 {
 	@MarkAspect4Format2Category
 	@RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public TeachingMaterialViewModel patch(@PathVariable String resType,@Validated(Valid4UpdateGroup.class) @RequestBody TeachingMaterialViewModel tmvm,BindingResult validResult,
-										   @PathVariable String id, @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+										   @PathVariable String id, @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+										   @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 
 
 		if(!(ResourceNdCode.teachingmaterials.toString().equals(resType)||ResourceNdCode.guidancebooks.toString().equals(resType)||ResourceNdCode.metacurriculums.toString().equals(resType))){
@@ -211,7 +212,7 @@ public class TeachingMaterialControllerV06 {
 		TeachingMaterialModel tmm = CommonHelper.convertViewModelIn(tmvm, TeachingMaterialModel.class,ResourceNdCode.teachingmaterials, true);
 
 		//修改教材
-		tmm = teachingMaterialService.patchTeachingMaterial(resType,tmm);
+		tmm = teachingMaterialService.patchTeachingMaterial(resType,tmm,isObvious);
 
 		//model转换
 		tmvm = CommonHelper.convertViewModelOut(tmm,TeachingMaterialViewModel.class);

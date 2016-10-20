@@ -143,7 +143,8 @@ public class InstructionalObjectiveControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public InstructionalObjectiveViewModel patch(@Validated(ValidInstructionalObjectiveDefault4UpdateGroup.class) @RequestBody InstructionalObjectiveViewModel avm,
                                                   BindingResult validResult, @PathVariable String id,
-                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                                  @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                                  @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 
         // 入参合法性校验
 //        ValidResultHelper.valid(validResult,
@@ -160,7 +161,7 @@ public class InstructionalObjectiveControllerV06 {
         //更新操作要先保存其原有状态
         String oldStatus = notifyService.getResourceStatus(avm.getIdentifier());
 
-        am = instructionalObjectiveService.patchInstructionalObjective(am);
+        am = instructionalObjectiveService.patchInstructionalObjective(am, isObvious);
 
         //add by xiezy - 2016.04.15
         //异步通知智能出题

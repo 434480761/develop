@@ -446,7 +446,7 @@ public class CommonHelper {
         return resultMap;
     }
 	
-	private static String getResCategoryKey(String taxOnCode, String defaultKey) {
+	public static String getResCategoryKey(String taxOnCode, String defaultKey) {
 	    String key = defaultKey;
 	    
 	    if(StringUtils.isNotEmpty(taxOnCode)) {

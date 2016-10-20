@@ -34,7 +34,7 @@ public class HomeworkServiceImplV06 implements HomeworkServiceV06 {
 
 	@Override
 	@TitanTransaction
-	public HomeworkModel patchHomework(HomeworkModel hm) {
-		return (HomeworkModel)ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm);
+	public HomeworkModel patchHomework(HomeworkModel hm, boolean isObvious) {
+		return (HomeworkModel)ndResourceService.patch(ResourceNdCode.homeworks.toString(), hm, isObvious);
 	}
 }

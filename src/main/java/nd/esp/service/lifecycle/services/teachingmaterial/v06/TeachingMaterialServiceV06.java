@@ -30,7 +30,7 @@ public interface TeachingMaterialServiceV06{
 	public TeachingMaterialModel updateTeachingMaterial(String resType,TeachingMaterialModel tmm);
 
 	TeachingMaterialModel patchTeachingMaterial(String resType,
-												TeachingMaterialModel tmm);
+												TeachingMaterialModel tmm, boolean isObvious);
 	
 	public List<Map<String,Object>> queryResourcesByTmId(String tmId,Set<String> resTypes,List<String> includes,String coverage);
 

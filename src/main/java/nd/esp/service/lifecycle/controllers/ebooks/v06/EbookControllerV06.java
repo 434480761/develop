@@ -92,7 +92,8 @@ public class EbookControllerV06 {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH, consumes = { MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_JSON_VALUE })
     public EbookViewModel patch(@Validated(Valid4UpdateGroup.class) @RequestBody EbookViewModel ebookViewModel,
                                  BindingResult validResult, @PathVariable String id,
-                                 @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice){
+                                 @RequestParam(value = "notice_file", required = false,defaultValue = "true") boolean notice,
+                                 @RequestParam(value = "is_obvious", required = false,defaultValue = "true") boolean isObvious){
 //        ValidResultHelper.valid(validResult, "LC/UPDATE_EBOOK_PARAM_VALID_FAIL", "EbookControllerV06", "update");
         ebookViewModel.setIdentifier(id);
         // 业务校验
@@ -100,7 +101,7 @@ public class EbookControllerV06 {
         EbookModel ebookModel = CommonHelper.convertViewModelIn(ebookViewModel, EbookModel.class, ResourceNdCode.ebooks, true);
 
         // 更新电子教材
-        ebookModel = ebookService.patch(ebookModel);
+        ebookModel = ebookService.patch(ebookModel, isObvious);
 
         ebookViewModel = CommonHelper.convertViewModelOut(ebookModel, EbookViewModel.class);
 

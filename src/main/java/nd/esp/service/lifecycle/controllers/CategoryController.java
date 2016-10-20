@@ -26,6 +26,8 @@ import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
 import nd.esp.service.lifecycle.support.al.AreaAndLanguage;
 import nd.esp.service.lifecycle.support.busi.ValidResultHelper;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncConstant;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncServiceHelper;
 import nd.esp.service.lifecycle.support.staticdata.UpdateStaticDataTask;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.MessageConvertUtil;
@@ -86,6 +88,9 @@ public class CategoryController {
 
 	@Autowired
 	private NotifyReportService nrs;
+	
+	@Autowired
+	private CategorySyncServiceHelper categorySyncServiceHelper;
 
 	// UUID格式
 	// 这个用于验证uuid的正则表达式存在一定的问题（不够严格）
@@ -210,6 +215,12 @@ public class CategoryController {
 				resultModel, CategoryViewModel.class);
 		// 同步推送至报表系统
 		nrs.updateCategory(resultModel);
+		
+		//维度数据同步
+		categorySyncServiceHelper.categorySync(
+				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY, 
+				CategorySyncConstant.OPERATION_UPDATE);
+		
 		return resultViewModel;
 	}
 
@@ -429,6 +440,12 @@ public class CategoryController {
 
 		// 同步推送至报表系统
 		nrs.updateCategoryData(resultModel);
+		
+		//维度数据同步
+		categorySyncServiceHelper.categorySync(
+				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY_DATA, 
+				CategorySyncConstant.OPERATION_UPDATE);
+		
 		return resultViewModel;
 	}
 

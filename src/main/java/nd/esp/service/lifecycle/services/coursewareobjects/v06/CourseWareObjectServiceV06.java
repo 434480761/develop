@@ -26,5 +26,5 @@ public interface CourseWareObjectServiceV06 {
 	 */
 	public CourseWareObjectModel updateCourseWareObject(CourseWareObjectModel cwom);
 
-	CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model);
+	CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model, boolean isObvious);
 }

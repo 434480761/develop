@@ -20,5 +20,5 @@ public interface ExaminationPaperServiceV06 {
 	 */
 	public ExaminationPaperModel updateExaminationPaper(ExaminationPaperModel model,String resType);
 
-	ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model,String resType);
+	ExaminationPaperModel patchExaminationPaper(ExaminationPaperModel model,String resType, boolean isObvious);
 }

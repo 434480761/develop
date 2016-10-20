@@ -2764,12 +2764,12 @@ public class NDResourceServiceImpl implements NDResourceService{
     }
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel) {
-		return patch(resourceType, resourceModel,DbName.DEFAULT);
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, boolean isObvious) {
+		return patch(resourceType, resourceModel, DbName.DEFAULT, isObvious);
 	}
 
 	@Override
-	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName) {
+	public ResourceModel patch(String resourceType, ResourceModel resourceModel, DbName dbName, boolean isObvious) {
 		// 0、校验资源是否存在
 		Education oldBean = checkResourceExist(resourceType, resourceModel.getIdentifier());
 
@@ -2782,7 +2782,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 
 		// 2、基本属性的处理
-		dealBasicInfoPatch(resourceType, resourceModel, oldBean);
+		dealBasicInfoPatch(resourceType, resourceModel, oldBean, isObvious);
 
 		// 3、categories属性处理
 		if(resourceModel.getCategoryList()!=null && CollectionUtils.isNotEmpty(resourceModel.getCategoryList())) {
@@ -2992,7 +2992,7 @@ public class NDResourceServiceImpl implements NDResourceService{
 		}
 	}
 
-	private void dealBasicInfoPatch(String resourceType, ResourceModel resourceModel, Education oldBean) {
+	private void dealBasicInfoPatch(String resourceType, ResourceModel resourceModel, Education oldBean, boolean isObvious) {
 		@SuppressWarnings("rawtypes")
 		ResourceRepository resourceRepository =  commonServiceHelper.getRepository(resourceType);
 		// 转换为数据模型
@@ -3034,8 +3034,11 @@ public class NDResourceServiceImpl implements NDResourceService{
 		if(StringUtils.isNotEmpty(education.getDescription())) {
 			oldBean.setDescription(education.getDescription());
 		}
-
-		oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		
+		if(isObvious){
+			oldBean.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+		}
+		
 		try {
 			education = (Education) resourceRepository.update(oldBean);
 		} catch (EspStoreException e) {

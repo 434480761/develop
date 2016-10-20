@@ -45,7 +45,7 @@ public class ToolsServiceImplV06 implements ToolsServiceV06 {
 
     @Override
     @TitanTransaction
-    public CourseWareObjectModel patchTools(CourseWareObjectModel model) {
-        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.tools.toString(), model);
+    public CourseWareObjectModel patchTools(CourseWareObjectModel model, boolean isObvious) {
+        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.tools.toString(), model, isObvious);
     }
 }

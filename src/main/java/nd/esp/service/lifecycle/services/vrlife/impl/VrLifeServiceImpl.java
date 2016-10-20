@@ -111,7 +111,7 @@ public class VrLifeServiceImpl implements VrLifeService{
 		}
 		
 		//调用局部更新的service方法
-		newResourceModel = ndResourceService.patch(inViewModel.getResType(), newResourceModel);
+		newResourceModel = ndResourceService.patch(inViewModel.getResType(), newResourceModel, true);
 		
 		//创建资源生命周期  -- 记录审核人
         ResContributeModel contributeModel = new ResContributeModel();

@@ -46,8 +46,8 @@ public class CourseWareObjectServiceImplV06 implements CourseWareObjectServiceV0
 
     @Override
     @TitanTransaction
-    public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model) {
-        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION);
+    public CourseWareObjectModel patchCourseWareObject(CourseWareObjectModel model, boolean isObvious) {
+        return (CourseWareObjectModel)ndResourceService.patch(ResourceNdCode.coursewareobjects.toString(), model, DbName.QUESTION, isObvious);
     }
 
 }

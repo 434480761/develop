@@ -35,8 +35,8 @@ public class EbookServiceImpl implements EbookService {
 
     @Override
     @TitanTransaction
-    public EbookModel patch(EbookModel ebookModel) {
-        return (EbookModel)ndResourceService.patch(ResourceNdCode.ebooks.toString(), ebookModel);
+    public EbookModel patch(EbookModel ebookModel, boolean isObvious) {
+        return (EbookModel)ndResourceService.patch(ResourceNdCode.ebooks.toString(), ebookModel, isObvious);
     }
 
 }

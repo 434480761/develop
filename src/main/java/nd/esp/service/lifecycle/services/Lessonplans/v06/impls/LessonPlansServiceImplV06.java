@@ -46,7 +46,7 @@ public class LessonPlansServiceImplV06 implements LessonPlansServiceV06 {
 	 */
 	@Override
 	@TitanTransaction
-	public LessonPlanModel patch(LessonPlanModel lessonPlansModel) {
-		return (LessonPlanModel)ndResourceService.patch(ResourceNdCode.lessonplans.toString(), lessonPlansModel);
+	public LessonPlanModel patch(LessonPlanModel lessonPlansModel, boolean isObvious) {
+		return (LessonPlanModel)ndResourceService.patch(ResourceNdCode.lessonplans.toString(), lessonPlansModel, isObvious);
 	}
 }

@@ -42,7 +42,7 @@ public class CourseWareObjectTemplateServiceImplV06 implements CourseWareObjectT
 
     @Override
     @TitanTransaction
-    public CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm) {
-        return (CourseWareObjectTemplateModel)ndResourceService.patch(ResourceNdCode.coursewareobjecttemplates.toString(), ctm);
+    public CourseWareObjectTemplateModel patchCourseWareObjectTemplate(CourseWareObjectTemplateModel ctm, boolean isObvious) {
+        return (CourseWareObjectTemplateModel)ndResourceService.patch(ResourceNdCode.coursewareobjecttemplates.toString(), ctm, isObvious);
     }
 }

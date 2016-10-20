@@ -37,6 +37,8 @@ import nd.esp.service.lifecycle.repository.sdk.CategoryRepository;
 import nd.esp.service.lifecycle.services.CategoryService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncConstant;
+import nd.esp.service.lifecycle.support.categorysync.CategorySyncServiceHelper;
 import nd.esp.service.lifecycle.utils.BeanMapperUtils;
 import nd.esp.service.lifecycle.utils.CollectionUtils;
 import nd.esp.service.lifecycle.utils.ParamCheckUtil;
@@ -85,6 +87,9 @@ public class CategoryServiceImpl implements CategoryService {
 	
 	@Autowired
 	CategoryRelationRepository categoryRelationRepository;
+	
+	@Autowired
+	private CategorySyncServiceHelper categorySyncServiceHelper;
 
 	/**
 	 * 通过ndCode获取分类维度详情
@@ -961,11 +966,20 @@ public class CategoryServiceImpl implements CategoryService {
 					LifeCircleErrorMessageMapper.CategoryRelationHasCategoryData);
 		}
 		
+		CategoryData categoryData = categoryDataRepository.get(did);
+		
 		LOG.debug("调用sdk方法:del");
 		
 		categoryDataRepository.del(did);
 		
 		LOG.debug("删除维度数据资源:{}",did);
+		
+		if(categoryData != null){
+			//维度数据同步
+			categorySyncServiceHelper.categorySync(
+					categoryData.getNdCode(), CategorySyncConstant.TYPE_CATEGORY_DATA, 
+					CategorySyncConstant.OPERATION_DELETE);
+		}
 	}
 
 
