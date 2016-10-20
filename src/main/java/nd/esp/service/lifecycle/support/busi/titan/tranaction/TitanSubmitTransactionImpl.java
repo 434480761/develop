@@ -189,6 +189,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         //添加更新资源冗余字段的脚本
         for (String identifier : educationRed.keySet()) {
             builder.updateEducationRedProperty(identifier);
+//            long time = System.currentTimeMillis();
+            deleteRedProperty(identifier, educationRed.get(identifier));
+//            System.out.println("脚本执行时间:"+ (System.currentTimeMillis() - time));
         }
         builder.scriptEnd();
 
@@ -197,9 +200,9 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
         String result = null;
         if (param != null && param.size() > 0) {
             try {
-                long time = System.currentTimeMillis();
+//                long time = System.currentTimeMillis();
                 result = titanCommonRepository.executeScriptUniqueString(script.toString(), param);
-                System.out.println("脚本执行时间:"+ (System.currentTimeMillis() - time));
+//                System.out.println("脚本执行时间:"+ (System.currentTimeMillis() - time));
             } catch (Exception e) {
                 return false;
             }
@@ -212,6 +215,27 @@ public class TitanSubmitTransactionImpl implements TitanSubmitTransaction {
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void deleteRedProperty(String identifier, String primaryCategory){
+        if(identifier == null || primaryCategory==null){
+            return;
+        }
+//        String script = "g.V().has('identifier',identifier).has('primary_category',primaryCategory)" +
+//                ".properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string').drop();";
+        String script = "Vertex redv=g.V().has('identifier',identifier).has('primary_category',primaryCategory).next();" +
+                "Iterator redvit=redv.properties('search_coverage','search_code','search_path','search_path_string','search_code_string','search_coverage_string');" +
+                "while(redvit.hasNext()){redvit.next().remove();};";
+
+        Map<String, Object> param = new HashMap<>();
+        param.put("identifier",identifier);
+        param.put("primaryCategory",primaryCategory);
+
+        try {
+            titanCommonRepository.executeScript(script, param);
+        } catch (Exception e) {
+            LOG.info("");
         }
     }
 
