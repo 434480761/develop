@@ -88,7 +88,7 @@ public class CategoryController {
 
 	@Autowired
 	private NotifyReportService nrs;
-	
+
 	@Autowired
 	private CategorySyncServiceHelper categorySyncServiceHelper;
 
@@ -113,6 +113,18 @@ public class CategoryController {
 				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 		// 校验ndCode
 		checkCategoryNdCode(categoryViewModel.getNdCode());
+
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryViewModel.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+
+			categoryViewModel.setGbCode(realGbCode);
+		}
 
 		// 生成参数
 		CategoryModel paramModel = BeanMapperUtils.beanMapper(
@@ -193,6 +205,18 @@ public class CategoryController {
 		// ndCode正则校验
 		checkCategoryNdCode(categoryViewModel.getNdCode());
 
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryViewModel.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+
+			categoryViewModel.setGbCode(realGbCode);
+		}
+
 		categoryViewModel.setIdentifier(cid);
 		CategoryModel modifyModel = BeanMapperUtils.beanMapper(
 				categoryViewModel, CategoryModel.class);
@@ -215,12 +239,12 @@ public class CategoryController {
 				resultModel, CategoryViewModel.class);
 		// 同步推送至报表系统
 		nrs.updateCategory(resultModel);
-		
-		//维度数据同步
-		categorySyncServiceHelper.categorySync(
-				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY, 
+
+		// 维度数据同步
+		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
+				CategorySyncConstant.TYPE_CATEGORY,
 				CategorySyncConstant.OPERATION_UPDATE);
-		
+
 		return resultViewModel;
 	}
 
@@ -318,6 +342,18 @@ public class CategoryController {
 		// 入参校验
 		ValidResultHelper.valid(bindingResult,
 				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
+
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryDataViewModel.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryDataViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+
+			categoryDataViewModel.setGbCode(realGbCode);
+		}
 
 		// 生成参数
 		CategoryDataModel paramModel = changeCategoryDataFromView(categoryDataViewModel);
@@ -419,6 +455,18 @@ public class CategoryController {
 		ValidResultHelper.valid(bindingResult,
 				LifeCircleErrorMessageMapper.InvalidArgumentsError.getCode());
 
+		// 校验gbCode类型
+		if (StringUtils.hasText(categoryDataViewModel.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryDataViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
+				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
+						LifeCircleErrorMessageMapper.GbCodeNotExist);
+			}
+
+			categoryDataViewModel.setGbCode(realGbCode);
+		}
+
 		categoryDataViewModel.setIdentifier(did);
 		CategoryDataModel modifyModel = changeCategoryDataFromView(categoryDataViewModel);
 
@@ -440,12 +488,12 @@ public class CategoryController {
 
 		// 同步推送至报表系统
 		nrs.updateCategoryData(resultModel);
-		
-		//维度数据同步
-		categorySyncServiceHelper.categorySync(
-				resultViewModel.getNdCode(), CategorySyncConstant.TYPE_CATEGORY_DATA, 
+
+		// 维度数据同步
+		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
+				CategorySyncConstant.TYPE_CATEGORY_DATA,
 				CategorySyncConstant.OPERATION_UPDATE);
-		
+
 		return resultViewModel;
 	}
 
@@ -559,11 +607,14 @@ public class CategoryController {
 
 		// 校验gbCode类型
 		if (StringUtils.hasText(categoryPatternViewModel.getGbCode())) {
-			if (!AreaAndLanguage.validGbCodeType(categoryPatternViewModel
-					.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryPatternViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 						LifeCircleErrorMessageMapper.GbCodeNotExist);
 			}
+
+			categoryPatternViewModel.setGbCode(realGbCode);
 		}
 
 		// 生成参数
@@ -614,11 +665,14 @@ public class CategoryController {
 
 		// 校验gbCode类型
 		if (StringUtils.hasText(categoryPatternViewModel.getGbCode())) {
-			if (!AreaAndLanguage.validGbCodeType(categoryPatternViewModel
-					.getGbCode())) {
+			String realGbCode = AreaAndLanguage
+					.validGbCodeType(categoryPatternViewModel.getGbCode());
+			if (StringUtils.isEmpty(realGbCode)) {
 				throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
 						LifeCircleErrorMessageMapper.GbCodeNotExist);
 			}
+
+			categoryPatternViewModel.setGbCode(realGbCode);
 		}
 
 		categoryPatternViewModel.setIdentifier(cpid);
@@ -661,14 +715,14 @@ public class CategoryController {
 	public @ResponseBody ListViewModel<CategoryPatternViewModel> requestQueryCategoryPatterns(
 			@RequestParam(value = "limit", required = true) String limit,
 			@RequestParam(value = "words", required = true) String words,
-			@RequestParam(value="gb_code",required=false) String gbCode) {
+			@RequestParam(value = "gb_code", required = false) String gbCode) {
 		// 检查limit参数
 		ParamCheckUtil.checkLimit(limit);// 有抛出异常
 		// 调用service 接口
 		ListViewModel<CategoryPatternModel> modelListResult = null;
 		try {
 			modelListResult = categoryService.queryCategoryPatterns(words,
-					limit,gbCode);
+					limit, gbCode);
 		} catch (EspStoreException e) {
 
 			LOG.error(LifeCircleErrorMessageMapper.StoreSdkFail.getMessage(), e);

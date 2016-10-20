@@ -48,6 +48,7 @@ public class CategoryPatternViewModel {
 	 * 国际编码
 	 */
 	@NotBlank(message="{categoryPatternViewModel.gbCode.notBlank.validmsg}")
+	@Length(max=30,message="{categoryPatternViewModel.gbCode.maxlength.validmsg}")
 	private String gbCode; 
 	
 	/**
