@@ -1385,12 +1385,12 @@ public class NDResourceController {
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,List<Map<String, String>> relationExclude,
                                   Map<String, String> orderMap, String words, List<String> coveragesList, boolean isNotManagement,
                                   boolean forceStatus,List<String> tags,boolean showVersion,boolean firstKnLevel){
-        boolean haveUserCoverage = false;
+        boolean haveOnlyOrgNdCoverage = true;//覆盖范围不可能为空
         if(CollectionUtils.isNotEmpty(coveragesList)){
             for(String coverage : coveragesList){
                 if(StringUtils.isNotEmpty(coverage)){
-                    if(coverage.startsWith("User")){
-                        haveUserCoverage = true;
+                    if(!coverage.startsWith("Org/nd/")){
+                    	haveOnlyOrgNdCoverage = false;
                         break;
                     }
                 }
@@ -1400,7 +1400,7 @@ public class NDResourceController {
 		if (isNotManagement
 				&& !forceStatus
 				&& !showVersion
-				&& !haveUserCoverage
+				&& haveOnlyOrgNdCoverage
 				&& CollectionUtils.isEmpty(tags)
 				&& !resType.equals(Constant.RESTYPE_EDURESOURCE)
 				&& CollectionUtils.isEmpty(relations)
