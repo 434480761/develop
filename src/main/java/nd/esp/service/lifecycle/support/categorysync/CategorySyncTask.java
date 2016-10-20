@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * @author xiezy
  * @date 2016年10月19日
  */
-@Component
+//@Component
 public class CategorySyncTask {
 	private final static Logger LOG= LoggerFactory.getLogger(CategorySyncTask.class);
 	
@@ -27,7 +27,7 @@ public class CategorySyncTask {
 	 * @author xiezy
 	 * @date 2016年10月19日
 	 */
-	@Scheduled(cron="0 0 1 * * ?")
+//	@Scheduled(cron="0 0 1 * * ?")
 	public void runTask(){
 		if(commonServiceHelper.queryAndUpdateSynVariable(SynVariable.categorySyncTask.getValue()) == 0){
 			return;

@@ -1051,7 +1051,7 @@ public class CategoryServiceImpl implements CategoryService {
 					LifeCircleErrorMessageMapper.CategoryRelationHasCategoryData);
 		}
 
-		CategoryData categoryData = categoryDataRepository.get(did);
+//		CategoryData categoryData = categoryDataRepository.get(did);
 
 		LOG.debug("调用sdk方法:del");
 
@@ -1059,12 +1059,12 @@ public class CategoryServiceImpl implements CategoryService {
 
 		LOG.debug("删除维度数据资源:{}", did);
 
-		if (categoryData != null) {
-			// 维度数据同步
-			categorySyncServiceHelper.categorySync(categoryData.getNdCode(),
-					CategorySyncConstant.TYPE_CATEGORY_DATA,
-					CategorySyncConstant.OPERATION_DELETE);
-		}
+//		if (categoryData != null) {
+//			// 维度数据同步
+//			categorySyncServiceHelper.categorySync(categoryData.getNdCode(),
+//					CategorySyncConstant.TYPE_CATEGORY_DATA,
+//					CategorySyncConstant.OPERATION_DELETE);
+//		}
 	}
 
 	/**

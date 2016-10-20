@@ -241,9 +241,9 @@ public class CategoryController {
 		nrs.updateCategory(resultModel);
 
 		// 维度数据同步
-		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
-				CategorySyncConstant.TYPE_CATEGORY,
-				CategorySyncConstant.OPERATION_UPDATE);
+//		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
+//				CategorySyncConstant.TYPE_CATEGORY,
+//				CategorySyncConstant.OPERATION_UPDATE);
 
 		return resultViewModel;
 	}
@@ -490,9 +490,9 @@ public class CategoryController {
 		nrs.updateCategoryData(resultModel);
 
 		// 维度数据同步
-		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
-				CategorySyncConstant.TYPE_CATEGORY_DATA,
-				CategorySyncConstant.OPERATION_UPDATE);
+//		categorySyncServiceHelper.categorySync(resultViewModel.getNdCode(),
+//				CategorySyncConstant.TYPE_CATEGORY_DATA,
+//				CategorySyncConstant.OPERATION_UPDATE);
 
 		return resultViewModel;
 	}

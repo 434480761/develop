@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/category/sync")
+//@RestController
+//@RequestMapping("/category/sync")
 public class CategorySyncController {
 	
 	@Autowired
@@ -21,7 +21,7 @@ public class CategorySyncController {
 	 * @date 2016年10月20日
 	 * @return
 	 */
-	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//	@RequestMapping(value = "/init", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public Map<String, Integer> init(){
 		return categorySyncServiceHelper.initSync();
 	}
@@ -31,7 +31,7 @@ public class CategorySyncController {
 	 * @author xiezy
 	 * @date 2016年10月19日
 	 */
-	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+//	@RequestMapping(value = "/fresh", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public void realTimeFresh(){
 		categorySyncServiceHelper.syncCategory();
 	}
