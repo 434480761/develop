@@ -587,8 +587,8 @@ public class NDResourceController {
             @RequestParam String limit) {
 
         return requestQuering(resType,fields, resCodes, includes, categories,
-                categoryExclude, relations,null, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
-                reverse,printable, printableKey,null,null,false,null,false,false);
+                categoryExclude, null,null, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
+                reverse,null, null,null,null,false,null,false,false);
     }
 
     /**
@@ -855,11 +855,8 @@ public class NDResourceController {
         switch (queryType) {
             case DB:
                 if (StaticDatas.QUERY_BY_ES_FIRST
-                        && (canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
-                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel)
-                        || (StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST && !isNotManagement 
-                        		&& CommonServiceHelper.isQuestionDb(resType)
-                        		&& CollectionUtils.isNotEmpty(categories) && categories.size() > 5))) {// 数据库走ES查询判断
+                        && canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
+                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel,categories)) {// 数据库走ES查询判断
                     try {
                         Map<String, Object> changeMap = changeKey(propsMap,
                                 orderMap, false);
@@ -871,7 +868,7 @@ public class NDResourceController {
                                 && canQueryByRetrieve(printable,propsMap)) {
                             Set<String> resTypeSet3 = checkAndDealResType(resType, resCodes);
                             rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet3,null,
-                                    includesList, categories, categoryExclude, relationsMap,
+                                    includesList, categories, categoryExclude, null,
                                     coveragesList, propsMap, orderMap, null, limit,
                                     isNotManagement, reverseBoolean,printable,printableKey);
                         } else {
@@ -938,7 +935,7 @@ public class NDResourceController {
                         && canQueryByRetrieve(printable,propsMap)) {
                     Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
                     rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
-                            includesList, categories, categoryExclude, relationsMap,
+                            includesList, categories, categoryExclude, null,
                             coveragesList, propsMap, orderMap, null, limit,
                             isNotManagement, reverseBoolean,printable,printableKey);
                 } else {
@@ -966,7 +963,7 @@ public class NDResourceController {
                 List<String> fieldsList = (List<String>) paramMap.get("fields");
                 resTypeSet = checkAndDealResType(resType, resCodes);
                 rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet,fieldsList,
-                        includesList, categories, categoryExclude, relationsMap,
+                        includesList, categories, categoryExclude, null,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
@@ -1384,7 +1381,7 @@ public class NDResourceController {
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,List<Map<String, String>> relationExclude,
                                   Map<String, String> orderMap, String words, List<String> coveragesList, boolean isNotManagement,
-                                  boolean forceStatus,List<String> tags,boolean showVersion,boolean firstKnLevel){
+                                  boolean forceStatus,List<String> tags,boolean showVersion,boolean firstKnLevel, Set<String> categories){
         boolean haveOnlyOrgNdCoverage = true;
         if(CollectionUtils.isNotEmpty(coveragesList)){
             for(String coverage : coveragesList){
@@ -1399,7 +1396,9 @@ public class NDResourceController {
         	haveOnlyOrgNdCoverage=false;
         }
 
-		if (isNotManagement
+		if ((isNotManagement || (StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST && !isNotManagement 
+        		&& CommonServiceHelper.isQuestionDb(resType)
+        		&& CollectionUtils.isNotEmpty(categories) && categories.size() > 5)) 
 				&& !forceStatus
 				&& !showVersion
 				&& haveOnlyOrgNdCoverage
