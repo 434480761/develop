@@ -15,6 +15,7 @@ import nd.esp.service.lifecycle.repository.exception.EspStoreException;
 import nd.esp.service.lifecycle.services.CategoryService;
 import nd.esp.service.lifecycle.support.LifeCircleErrorMessageMapper;
 import nd.esp.service.lifecycle.support.LifeCircleException;
+import nd.esp.service.lifecycle.support.al.AreaAndLanguage;
 import nd.esp.service.lifecycle.utils.category.NdCodePattern;
 import nd.esp.service.lifecycle.vos.CategoryDataApplyForNdCodeViewModel;
 import nd.esp.service.lifecycle.vos.QueryRelationAllViewModel;
@@ -203,6 +204,7 @@ public class CategoryControllerV06 {
         viewModelResult.setNdCode(newNdCode);
         viewModelResult.setOrderNum(orderNum);
         viewModelResult.setCategory(categoryId);
+        viewModelResult.setGbCode(AreaAndLanguage.ZH_CN.getCode());
         return viewModelResult;
     }
     
