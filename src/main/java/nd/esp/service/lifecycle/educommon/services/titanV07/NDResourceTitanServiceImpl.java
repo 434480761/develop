@@ -499,7 +499,7 @@ public class NDResourceTitanServiceImpl implements NDResourceTitanService {
             repoInfo.setTargetType(coverageChunk[0]);
             repoInfo.setTarget(coverageChunk[1]);
             repoInfo.setTitle(coverage);
-            repoInfo.setRepositoryPath(Constant.CS_SESSION_PATH + "/" + coverage);
+            repoInfo.setRepositoryPath(Constant.CS_SESSION_PATH + "/" + coverageChunk[0]+"/"+coverageChunk[1]);
 
             try {
                 repoInfo = resRepoInfoRepository.add(repoInfo);
