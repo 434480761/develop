@@ -855,11 +855,8 @@ public class NDResourceController {
         switch (queryType) {
             case DB:
                 if (StaticDatas.QUERY_BY_ES_FIRST
-                        && (canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
-                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel)
-                        || (StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST && !isNotManagement 
-                        		&& CommonServiceHelper.isQuestionDb(resType)
-                        		&& CollectionUtils.isNotEmpty(categories) && categories.size() > 5))) {// 数据库走ES查询判断
+                        && canQueryByEla(resType, relationsMap,relationsExcludeMap, orderMap, words,
+                        coveragesList, isNotManagement,forceStatus,tags,showVersion,firstKnLevel,categories)) {// 数据库走ES查询判断
                     try {
                         Map<String, Object> changeMap = changeKey(propsMap,
                                 orderMap, false);
@@ -1384,7 +1381,7 @@ public class NDResourceController {
      */
     private boolean canQueryByEla(String resType, List<Map<String, String>> relations,List<Map<String, String>> relationExclude,
                                   Map<String, String> orderMap, String words, List<String> coveragesList, boolean isNotManagement,
-                                  boolean forceStatus,List<String> tags,boolean showVersion,boolean firstKnLevel){
+                                  boolean forceStatus,List<String> tags,boolean showVersion,boolean firstKnLevel, Set<String> categories){
         boolean haveOnlyOrgNdCoverage = true;
         if(CollectionUtils.isNotEmpty(coveragesList)){
             for(String coverage : coveragesList){
@@ -1399,7 +1396,9 @@ public class NDResourceController {
         	haveOnlyOrgNdCoverage=false;
         }
 
-		if (isNotManagement
+		if ((isNotManagement || (StaticDatas.QUESTION_DB_QUERY_BY_ES_FIRST && !isNotManagement 
+        		&& CommonServiceHelper.isQuestionDb(resType)
+        		&& CollectionUtils.isNotEmpty(categories) && categories.size() > 5)) 
 				&& !forceStatus
 				&& !showVersion
 				&& haveOnlyOrgNdCoverage
