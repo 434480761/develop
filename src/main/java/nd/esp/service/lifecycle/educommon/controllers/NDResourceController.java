@@ -587,8 +587,8 @@ public class NDResourceController {
             @RequestParam String limit) {
 
         return requestQuering(resType,fields, resCodes, includes, categories,
-                categoryExclude, relations,null, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
-                reverse,printable, printableKey,null,null,false,null,false,false);
+                categoryExclude, null,null, coverages, props, orderBy, words, limit, QueryType.TITAN_ES, !isAll,
+                reverse,null, null,null,null,false,null,false,false);
     }
 
     /**
@@ -871,7 +871,7 @@ public class NDResourceController {
                                 && canQueryByRetrieve(printable,propsMap)) {
                             Set<String> resTypeSet3 = checkAndDealResType(resType, resCodes);
                             rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet3,null,
-                                    includesList, categories, categoryExclude, relationsMap,
+                                    includesList, categories, categoryExclude, null,
                                     coveragesList, propsMap, orderMap, null, limit,
                                     isNotManagement, reverseBoolean,printable,printableKey);
                         } else {
@@ -938,7 +938,7 @@ public class NDResourceController {
                         && canQueryByRetrieve(printable,propsMap)) {
                     Set<String> resTypeSet2 = checkAndDealResType(resType, resCodes);
                     rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet2,null,
-                            includesList, categories, categoryExclude, relationsMap,
+                            includesList, categories, categoryExclude, null,
                             coveragesList, propsMap, orderMap, null, limit,
                             isNotManagement, reverseBoolean,printable,printableKey);
                 } else {
@@ -966,7 +966,7 @@ public class NDResourceController {
                 List<String> fieldsList = (List<String>) paramMap.get("fields");
                 resTypeSet = checkAndDealResType(resType, resCodes);
                 rListViewModel = ndResourceService.resourceQueryByTitanES(resTypeSet,fieldsList,
-                        includesList, categories, categoryExclude, relationsMap,
+                        includesList, categories, categoryExclude, null,
                         coveragesList, propsMap, orderMap, words, limit,
                         isNotManagement, reverseBoolean,printable,printableKey);
                 break;
