@@ -180,7 +180,7 @@
 		<dependency>
 			<groupId>com.nd.gaea</groupId>
 			<artifactId>nd-rest</artifactId>
-			<version>0.9.5</version>
+			<version>0.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-collections</groupId>
@@ -229,18 +229,23 @@
 		<dependency>
 			<groupId>com.nd.component.java</groupId>
 			<artifactId>sdpcs_java_sdk</artifactId>
-			<version>3.0.0</version>
+			<version>3.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
-			<version>5.5.1</version>
+			<version>5.5.10</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+		<!--<dependency>-->
+			<!--<groupId>org.bouncycastle</groupId>-->
+			<!--<artifactId>bcprov-jdk15on</artifactId>-->
+			<!--<version>1.55</version>-->
+		<!--</dependency>-->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.49</version>
+			<artifactId>bcmail-jdk15</artifactId>
+			<version>1.46</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jacob</groupId>
@@ -250,6 +255,16 @@
 		<dependency>
 			<groupId>com.sun</groupId>
 			<artifactId>jimi-nd</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>info.monitorenter.cpdetector</groupId>
+			<artifactId>cpdetector</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mozilla.intl.chardet</groupId>
+			<artifactId>chardet</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>

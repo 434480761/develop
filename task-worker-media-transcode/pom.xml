@@ -222,10 +222,16 @@
 		    <version>0.0.1</version>
 		</dependency> -->
 		<dependency>
-    <groupId>org.aspectj</groupId>
-    <artifactId>aspectjweaver</artifactId>
-    <version>1.7.4</version>
-</dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>1.7.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.nd.component.java</groupId>
+			<artifactId>sdpcs_java_sdk</artifactId>
+			<version>3.0.1</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>lifecycle-media-transcode</finalName>
