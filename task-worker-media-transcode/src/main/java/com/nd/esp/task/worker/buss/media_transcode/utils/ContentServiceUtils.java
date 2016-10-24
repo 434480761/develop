@@ -1,6 +1,6 @@
-package com.nd.esp.task.worker.buss.document_transcode.utils;
+package com.nd.esp.task.worker.buss.media_transcode.utils;
 
-import com.nd.esp.task.worker.buss.document_transcode.support.LifeCircleException;
+import com.nd.esp.task.worker.buss.media_transcode.support.LifeCircleException;
 import com.nd.sdp.cs.sdk.Dentry;
 import com.nd.sdp.cs.sdk.ExtendUploadData;
 import org.apache.commons.logging.Log;
@@ -40,7 +40,7 @@ public class ContentServiceUtils {
         Dentry request = new Dentry();
 
         ExtendUploadData requestData = new ExtendUploadData();
-        requestData.setFilePath(csPath+"/"+name);
+        requestData.setFilePath(csPath + "/" + name);
         LOG.info("cs upload " + localFile.getAbsolutePath());
 
         Dentry upload = request.upload(getServiceName(csPath), localFile.getAbsoluteFile(),
@@ -108,7 +108,6 @@ public class ContentServiceUtils {
         }
         return csPath;
     }
-
 
     public static String getServiceName(String csPath) {
         int index = csPath.indexOf('/', 1);

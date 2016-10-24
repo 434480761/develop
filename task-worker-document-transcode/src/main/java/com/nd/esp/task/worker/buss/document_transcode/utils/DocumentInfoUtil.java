@@ -22,16 +22,16 @@ public class DocumentInfoUtil {
         Map<String, String> meta = new HashMap<>();
         PdfReader reader = new PdfReader(pdfPath);
         int nPages = reader.getNumberOfPages();
-        float width = 0;
-        float height = 0;
+        int width = 0;
+        int height = 0;
         for (int i=1; i<=nPages; ++i) {
             Rectangle rect = reader.getPageSize(i);
             if (null != rect) {
                 if(rect.getWidth()>width) {
-                    width = rect.getWidth();
+                    width = (int)Math.ceil((double)rect.getWidth()*4/3);
                 }
                 if(rect.getHeight()>height) {
-                    height = rect.getHeight();
+                    height =  (int)Math.ceil((double)rect.getHeight()*4/3);
                 }
             }
         }

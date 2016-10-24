@@ -69,39 +69,39 @@ public class TranscodeServiceImpl implements TranscodeService {
 
 
     
-    /**
-     * 从cs下载文件到本地
-     *
-     * @param url 文件所在下载路径
-     *
-     * @return
-     */
-    private static boolean DownloadFile(String url, String destPath, StringBuffer errMsg, String session) throws Exception{
-        File destFile = new File(destPath);
-
-        HttpURLConnection connection = (HttpURLConnection)new URL(url+"&session="+session).openConnection();
-        connection.setRequestMethod("GET");
-        connection.connect();
-        
-        int responseCode = connection.getResponseCode();
-        if (responseCode < 200 || responseCode >= 300)
-        {
-            InputStream in = connection.getErrorStream();
-            StringBuffer out = new StringBuffer(); 
-            byte[] b = new byte[4096]; 
-            for (int n; (n = in.read(b)) != -1;) { 
-                out.append(new String(b, 0, n)); 
-            } 
-            errMsg.append("下载文件："+url+"失败:"+out.toString());
-            LOG.info(errMsg.toString());
-            return false;
-        }
-        
-        InputStream input = connection.getInputStream();
-        FileUtils.copyInputStreamToFile(input, destFile);
-        
-        return true;
-    }
+//    /**
+//     * 从cs下载文件到本地
+//     *
+//     * @param url 文件所在下载路径
+//     *
+//     * @return
+//     */
+//    private static boolean DownloadFile(String url, String destPath, StringBuffer errMsg, String session) throws Exception{
+//        File destFile = new File(destPath);
+//
+//        HttpURLConnection connection = (HttpURLConnection)new URL(url+"&session="+session).openConnection();
+//        connection.setRequestMethod("GET");
+//        connection.connect();
+//
+//        int responseCode = connection.getResponseCode();
+//        if (responseCode < 200 || responseCode >= 300)
+//        {
+//            InputStream in = connection.getErrorStream();
+//            StringBuffer out = new StringBuffer();
+//            byte[] b = new byte[4096];
+//            for (int n; (n = in.read(b)) != -1;) {
+//                out.append(new String(b, 0, n));
+//            }
+//            errMsg.append("下载文件："+url+"失败:"+out.toString());
+//            LOG.info(errMsg.toString());
+//            return false;
+//        }
+//
+//        InputStream input = connection.getInputStream();
+//        FileUtils.copyInputStreamToFile(input, destFile);
+//
+//        return true;
+//    }
 
 
     
@@ -126,10 +126,9 @@ public class TranscodeServiceImpl implements TranscodeService {
         logMsg.append("  Download path:"+param.getLocation()+"&session="+param.getSession()+System.getProperty("line.separator"));
         LOG.info("Download path:"+param.getLocation()+"&session="+param.getSession());
         String srcFilePath = srcDir + File.separator + srcFileName;
-        if(!DownloadFile(param.getLocation(), srcFilePath, errMsg, param.getSession())) {
-            throw new LifeCircleException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "LC/DOCUMENT_TRANSCODE_FAIL",errMsg.toString());
-        }
+        String csHost = param.getCs_api_url().substring(0, param.getCs_api_url().lastIndexOf('/')).replace("http://", "");
+        CsConfig.setHost(csHost);
+        ContentServiceUtils.downloadSync(ContentServiceUtils.getCsPathFromUrl(param.getLocation()), srcFilePath, param.getSession());
 
         LOG.info("下载消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms");
         logMsg.append("下载消耗时间: "+(System.currentTimeMillis()-timeStart)+"ms"+System.getProperty("line.separator"));
@@ -199,8 +198,6 @@ public class TranscodeServiceImpl implements TranscodeService {
             }
         }
 
-        String csHost = param.getCs_api_url().substring(0, param.getCs_api_url().lastIndexOf('/')).replace("http://", "");
-        CsConfig.setHost(csHost);
         List<Dentry> response = ContentServiceUtils.uploadDirectory(new File(destDir), param.getTarget_location()+"/transcode", param.getSession());
 
         if(targetsMap.containsKey("href")) {
@@ -317,7 +314,7 @@ public class TranscodeServiceImpl implements TranscodeService {
 
 
     public static void main(String[] args) throws Exception {
-        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"9efe38d8-489b-40ca-ad4a-5d005960cc34\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/879ca409-353d-4afd-be62-0f4d894227bf.pkg/test1.jpg\",\"target_location\":\"/prepub_content_edu_product/esp/assets/879ca409-353d-4afd-be62-0f4d894227bf.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
+        String paramStr = "{\"callback_api\":\"http://esp-lifecycle.pre1.web.nd/v0.6/assets/transcode/document_callback\",\"session\":\"03cbca56-8612-429a-9220-5b3965a7e378\",\"location\":\"http://betacs.101.com/v0.1/download?path=/prepub_content_edu_product/esp/assets/57b82272-d9fe-4714-b10c-037054bbf59b.pkg/%e6%96%87%e6%9c%ac%e6%96%87%e6%a1%a3-2.txt\",\"target_location\":\"/prepub_content_edu_product/esp/assets/57b82272-d9fe-4714-b10c-037054bbf59b.pkg\",\"cs_api_url\":\"http://betacs.101.com/v0.1\"}";
 
         TranscodeParam param = ObjectUtils.fromJson(paramStr,
                 TranscodeParam.class);

@@ -33,6 +33,14 @@ public class ParameterVerificationHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ParameterVerificationHelper.class);
     
     /**
+     * @author xiezy
+     * 这应该是一个不可能存在的维度数据
+     * 作用在于当PF的维度没有找到对应的code的时候用这个值替代
+     */
+    private static final String NO_MAPPING_101PPT_DEFAULT_CATEGORY 
+    		= "UNKNOW000000000000000000";
+    
+    /**
      * Coverage的校验	
      * <p>Create Time: 2015年9月28日   </p>
      * <p>Create author: xiezy   </p>
@@ -225,6 +233,7 @@ public class ParameterVerificationHelper {
 	                    				innerValues.addAll(Arrays.asList(ukCategory.split(",")));
 	                    			}else{
 	                    				values = null;
+	                    				afterDeal.add(NO_MAPPING_101PPT_DEFAULT_CATEGORY);
 	                    				break;
 	                    			}
 	                    		}else{
@@ -243,6 +252,8 @@ public class ParameterVerificationHelper {
 							String ukCategory = properties.getProperty(category);
 							if(StringUtils.hasText(ukCategory)){//没有对应UK维度的直接过滤掉
 								afterDeal.addAll(Arrays.asList(ukCategory.split(",")));
+							}else{
+								afterDeal.add(NO_MAPPING_101PPT_DEFAULT_CATEGORY);
 							}
 						}else{//不是PF合法code,直接传递
 							afterDeal.add(category);
