@@ -640,14 +640,14 @@ public class TranscodeCallbackServiceImpl implements TranscodeCallbackService {
                 ResTechInfoModel copyOfTechInfo = null;
                 try {
                     copyOfTechInfo = BeanMapperUtils.mapper(newTechInfo, ResTechInfoModel.class);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException e) {}
+                if(null!=copyOfTechInfo) {
+                    if (null != newTechInfos.get(TECH_INFO_HREF_KEY)) {
+                        copyOfTechInfo.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
+                    }
+                    copyOfTechInfo.setTitle(TECH_INFO_HREF_KEY);
+                    newTechInfos.put(TECH_INFO_HREF_KEY, copyOfTechInfo);
                 }
-                if(null!=newTechInfos.get(TECH_INFO_HREF_KEY)) {
-                    copyOfTechInfo.setIdentifier(newTechInfos.get(TECH_INFO_HREF_KEY).getIdentifier());
-                }
-                copyOfTechInfo.setTitle(TECH_INFO_HREF_KEY);
-                newTechInfos.put(TECH_INFO_HREF_KEY, copyOfTechInfo);
             }
         }
         try {
